@@ -65,6 +65,14 @@ public partial class InputHandler : Node
         // Only process key presses, not key releases or repeats
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            // Check for wait action first
+            if (IsWaitKey(keyEvent.Keycode))
+            {
+                _player.Wait();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
             Vector2I direction = GetDirectionFromKey(keyEvent.Keycode);
 
             if (direction != Vector2I.Zero)
@@ -120,6 +128,19 @@ public partial class InputHandler : Node
             Key.Kp3 => new Vector2I(1, 1),   // Southeast
 
             _ => Vector2I.Zero
+        };
+    }
+
+    /// <summary>
+    /// Checks if the given keycode is a wait action key.
+    /// </summary>
+    private bool IsWaitKey(Key keycode)
+    {
+        return keycode switch
+        {
+            Key.Space => true,   // Spacebar
+            Key.Kp5 => true,     // Numpad 5
+            _ => false
         };
     }
 }

@@ -14,6 +14,9 @@ public partial class Player : BaseEntity
     [Signal]
     public delegate void TurnCompletedEventHandler();
 
+    [Signal]
+    public delegate void WaitedEventHandler();
+
     private MovementComponent? _movementComponent;
     private GridPosition _previousPosition;
 
@@ -74,6 +77,25 @@ public partial class Player : BaseEntity
 
         // Request move via component - MovementSystem will validate and update position
         _movementComponent.RequestMove(direction);
+    }
+
+    /// <summary>
+    /// Wait for one turn, recovering 1 HP.
+    /// </summary>
+    public void Wait()
+    {
+        // Heal the player
+        var healthComponent = GetNodeOrNull<HealthComponent>("HealthComponent");
+        if (healthComponent != null)
+        {
+            healthComponent.Heal(1);
+        }
+
+        // Emit waited signal for message log
+        EmitSignal(SignalName.Waited);
+
+        // End the turn
+        EmitSignal(SignalName.TurnCompleted);
     }
 
     /// <summary>
