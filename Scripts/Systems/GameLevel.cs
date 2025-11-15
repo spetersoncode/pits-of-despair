@@ -7,9 +7,16 @@ namespace PitsOfDespair.Systems;
 /// <summary>
 /// Main game level controller that wires together all game systems.
 /// Orchestrates initialization flow for component-based entity system.
+/// Represents a single dungeon floor that can be reused with different depths.
 /// </summary>
 public partial class GameLevel : Node
 {
+    /// <summary>
+    /// Current floor depth (1-based). Used for difficulty scaling.
+    /// </summary>
+    [Export]
+    public int FloorDepth { get; set; } = 1;
+
     private MapSystem _mapSystem;
     private ASCIIRenderer _renderer;
     private Player _player;
@@ -17,6 +24,7 @@ public partial class GameLevel : Node
     private MovementSystem _movementSystem;
     private EntityManager _entityManager;
     private EntityFactory _entityFactory;
+    private SpawnManager _spawnManager;
 
     public override void _Ready()
     {
@@ -28,6 +36,7 @@ public partial class GameLevel : Node
         _movementSystem = GetNode<MovementSystem>("MovementSystem");
         _entityManager = GetNode<EntityManager>("EntityManager");
         _entityFactory = GetNode<EntityFactory>("EntityFactory");
+        _spawnManager = GetNode<SpawnManager>("SpawnManager");
 
         // Initialize component-based systems
         // This must happen AFTER MapSystem._Ready() generates the map,
@@ -36,8 +45,11 @@ public partial class GameLevel : Node
         // Wire up the movement system
         _movementSystem.SetMapSystem(_mapSystem);
 
-        // Wire up entity factory to entity manager
-        _entityManager.SetEntityFactory(_entityFactory);
+        // Wire up spawn manager
+        _spawnManager.SetEntityFactory(_entityFactory);
+        _spawnManager.SetEntityManager(_entityManager);
+        _spawnManager.SetMapSystem(_mapSystem);
+        _spawnManager.SetFloorDepth(FloorDepth);
 
         // Initialize player at valid spawn position
         var playerSpawn = _mapSystem.GetValidSpawnPosition();
@@ -62,9 +74,8 @@ public partial class GameLevel : Node
         // Wire up input handler
         _inputHandler.SetPlayer(_player);
 
-        // Spawn goblins in all rooms (except player's starting room)
-        var roomTiles = _mapSystem.GetRoomFloorTiles();
-        _entityManager.SpawnGoblins(roomTiles, playerSpawn);
+        // Populate dungeon with creatures, items, etc.
+        _spawnManager.PopulateDungeon();
 
         // Register all entity movement components with movement system
         foreach (var entity in _entityManager.GetAllEntities())
