@@ -24,7 +24,7 @@ public partial class EntityFactory : Node
         var entity = new BaseEntity
         {
             GridPosition = position,
-            Glyph = data.Glyph,
+            Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?', // Convert string to char
             GlyphColor = data.GlyphColor,
             Name = data.Name // Set node name for debugging
         };

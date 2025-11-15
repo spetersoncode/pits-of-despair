@@ -16,10 +16,34 @@ public partial class EntityData : Resource
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// ASCII character representing this entity (e.g., 'g' for goblin, '@' for player).
+    /// Single character representing this entity (e.g., "g" for goblin, "@" for player).
+    /// Must be exactly one character. Using string instead of char because Godot's
+    /// inspector treats char properties as integer fields (ASCII codes), making them
+    /// unintuitive to edit. String properties display as text fields in the inspector.
     /// </summary>
     [Export]
-    public char Glyph { get; set; } = '?';
+    public string Glyph
+    {
+        get => _glyph;
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                GD.PushWarning("EntityData.Glyph cannot be empty. Defaulting to '?'.");
+                _glyph = "?";
+            }
+            else if (value.Length > 1)
+            {
+                GD.PushWarning($"EntityData.Glyph must be exactly 1 character. Received '{value}'. Using first character '{value[0]}'.");
+                _glyph = value[0].ToString();
+            }
+            else
+            {
+                _glyph = value;
+            }
+        }
+    }
+    private string _glyph = "?";
 
     /// <summary>
     /// Color to render the glyph.
