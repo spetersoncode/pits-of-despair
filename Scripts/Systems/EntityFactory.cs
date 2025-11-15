@@ -73,8 +73,19 @@ public partial class EntityFactory : Node
             entity.AddChild(attackComponent);
         }
 
-        // Future component additions based on data:
-        // if (data.AI != null) { entity.AddChild(new AIComponent()); }
+        // Add AIComponent if entity has AI behavior enabled
+        if (data.HasAI)
+        {
+            var aiComponent = new AIComponent
+            {
+                Name = "AIComponent"
+            };
+            entity.AddChild(aiComponent);
+
+            // Initialize AI with spawn position
+            // Note: Must be called after AddChild so component is in tree
+            aiComponent.Initialize(position);
+        }
 
         return entity;
     }

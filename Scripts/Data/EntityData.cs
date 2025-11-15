@@ -59,6 +59,13 @@ public partial class EntityData : Resource
     public bool HasMovement { get; set; }
 
     /// <summary>
+    /// Whether this entity has AI behavior. If true, an AIComponent will be added.
+    /// Typically used for creatures/monsters that should chase/investigate the player.
+    /// </summary>
+    [Export]
+    public bool HasAI { get; set; }
+
+    /// <summary>
     /// Vision range in tiles. If greater than 0, a VisionComponent will be added with this range.
     /// </summary>
     [Export]

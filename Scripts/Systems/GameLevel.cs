@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Systems;
 
 namespace PitsOfDespair.Systems;
 
@@ -28,6 +29,8 @@ public partial class GameLevel : Node
     private PlayerVisionSystem _visionSystem;
     private NonPlayerVisionSystem _nonPlayerVisionSystem;
     private CombatSystem _combatSystem;
+    private TurnManager _turnManager;
+    private AISystem _aiSystem;
 
     public override void _Ready()
     {
@@ -43,6 +46,8 @@ public partial class GameLevel : Node
         _visionSystem = GetNode<PlayerVisionSystem>("PlayerVisionSystem");
         _nonPlayerVisionSystem = GetNode<NonPlayerVisionSystem>("NonPlayerVisionSystem");
         _combatSystem = GetNode<CombatSystem>("CombatSystem");
+        _turnManager = GetNode<TurnManager>("TurnManager");
+        _aiSystem = GetNode<AISystem>("AISystem");
 
         // Initialize component-based systems
         // This must happen AFTER MapSystem._Ready() generates the map,
@@ -94,6 +99,13 @@ public partial class GameLevel : Node
 
         // Wire up input handler
         _inputHandler.SetPlayer(_player);
+        _inputHandler.SetTurnManager(_turnManager);
+
+        // Wire up AI system
+        _aiSystem.SetMapSystem(_mapSystem);
+        _aiSystem.SetPlayer(_player);
+        _aiSystem.SetEntityManager(_entityManager);
+        _aiSystem.SetTurnManager(_turnManager);
 
         // Populate dungeon with creatures, items, etc.
         _spawnManager.PopulateDungeon();
@@ -114,9 +126,19 @@ public partial class GameLevel : Node
             {
                 _combatSystem.RegisterAttackComponent(attack);
             }
+
+            // Register AI components
+            var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+            if (aiComponent != null)
+            {
+                _aiSystem.RegisterAIComponent(aiComponent);
+            }
         }
 
         // Initialize non-player vision system
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
+
+        // Start the first player turn
+        _turnManager.StartFirstPlayerTurn();
     }
 }

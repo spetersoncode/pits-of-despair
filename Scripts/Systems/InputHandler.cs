@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Systems;
 
 namespace PitsOfDespair.Systems;
 
@@ -9,18 +10,54 @@ namespace PitsOfDespair.Systems;
 public partial class InputHandler : Node
 {
     private Player _player;
+    private TurnManager _turnManager;
 
     /// <summary>
     /// Sets the player to control.
     /// </summary>
     public void SetPlayer(Player player)
     {
+        // Unsubscribe from old player if exists
+        if (_player != null)
+        {
+            _player.TurnCompleted -= OnPlayerTurnCompleted;
+        }
+
         _player = player;
+
+        // Subscribe to new player's turn completion
+        if (_player != null)
+        {
+            _player.TurnCompleted += OnPlayerTurnCompleted;
+        }
+    }
+
+    /// <summary>
+    /// Sets the turn manager to coordinate turn flow.
+    /// </summary>
+    public void SetTurnManager(TurnManager turnManager)
+    {
+        _turnManager = turnManager;
+    }
+
+    public override void _ExitTree()
+    {
+        // Clean up signal connections
+        if (_player != null)
+        {
+            _player.TurnCompleted -= OnPlayerTurnCompleted;
+        }
     }
 
     public override void _Input(InputEvent @event)
     {
-        if (_player == null)
+        if (_player == null || _turnManager == null)
+        {
+            return;
+        }
+
+        // Only process input during player turn
+        if (!_turnManager.IsPlayerTurn)
         {
             return;
         }
@@ -37,6 +74,14 @@ public partial class InputHandler : Node
                 GetViewport().SetInputAsHandled();
             }
         }
+    }
+
+    /// <summary>
+    /// Called when the player completes their turn (after successful action).
+    /// </summary>
+    private void OnPlayerTurnCompleted()
+    {
+        _turnManager?.EndPlayerTurn();
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="EntityData" load_steps=3 format=3 uid="uid://7pfmb2ksm4x8"]
+[gd_resource type="Resource" script_class="EntityData" load_steps=4 format=3 uid="uid://7pfmb2ksm4x8"]
 
+[ext_resource type="Script" uid="uid://5548eo3f7046" path="res://Scripts/Data/AttackData.cs" id="1_5xp3a"]
 [ext_resource type="Script" uid="uid://cvhusubtaw43m" path="res://Scripts/Data/EntityData.cs" id="1_entity"]
 [ext_resource type="Resource" path="res://Resources/Attacks/goblin_club.tres" id="2_attack"]
 
@@ -9,6 +10,7 @@ Name = "Goblin"
 Glyph = "g"
 GlyphColor = Color(0.6, 0.6, 0.6, 1)
 HasMovement = true
+HasAI = true
 VisionRange = 10
 MaxHP = 8
-Attacks = Array[Resource("res://Scripts/Data/AttackData.cs")]([ExtResource("2_attack")])
+Attacks = Array[ExtResource("1_5xp3a")]([ExtResource("2_attack")])
