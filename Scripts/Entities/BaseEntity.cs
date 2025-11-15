@@ -22,6 +22,11 @@ public partial class BaseEntity : Node2D
     public GridPosition GridPosition { get; set; }
 
     /// <summary>
+    /// Display name of this entity (e.g., "Rat", "Goblin", "Player").
+    /// </summary>
+    public string DisplayName { get; set; } = "Unknown";
+
+    /// <summary>
     /// ASCII character representing this entity.
     /// </summary>
     public char Glyph { get; set; } = '?';

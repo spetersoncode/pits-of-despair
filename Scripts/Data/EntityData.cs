@@ -52,10 +52,16 @@ public partial class EntityData : Resource
     public Color GlyphColor { get; set; } = Colors.White;
 
     /// <summary>
-    /// Movement configuration. If null, entity will not have a MovementComponent.
+    /// Whether this entity can move. If true, a MovementComponent will be added.
     /// </summary>
     [Export]
-    public MovementData? Movement { get; set; }
+    public bool HasMovement { get; set; }
+
+    /// <summary>
+    /// Vision range in tiles. If greater than 0, a VisionComponent will be added with this range.
+    /// </summary>
+    [Export]
+    public int VisionRange { get; set; }
 
     // Future component data properties:
     // [Export] public HealthData? Health { get; set; }

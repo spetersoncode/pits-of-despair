@@ -24,19 +24,31 @@ public partial class EntityFactory : Node
         var entity = new BaseEntity
         {
             GridPosition = position,
+            DisplayName = data.Name,
             Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?', // Convert string to char
             GlyphColor = data.GlyphColor,
             Name = data.Name // Set node name for debugging
         };
 
-        // Add MovementComponent if movement data is present
-        if (data.Movement != null)
+        // Add MovementComponent if entity can move
+        if (data.HasMovement)
         {
             var movementComponent = new MovementComponent
             {
                 Name = "MovementComponent"
             };
             entity.AddChild(movementComponent);
+        }
+
+        // Add VisionComponent if vision range is specified
+        if (data.VisionRange > 0)
+        {
+            var visionComponent = new VisionComponent
+            {
+                Name = "VisionComponent",
+                VisionRange = data.VisionRange
+            };
+            entity.AddChild(visionComponent);
         }
 
         // Future component additions based on data:
