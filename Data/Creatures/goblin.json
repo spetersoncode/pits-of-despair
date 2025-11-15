@@ -1,0 +1,17 @@
+{
+  "name": "Goblin",
+  "glyph": "g",
+  "color": "#808080",
+  "maxHP": 8,
+  "visionRange": 10,
+  "hasMovement": true,
+  "hasAI": true,
+  "attacks": [
+    {
+      "name": "Goblin Club",
+      "minDamage": 2,
+      "maxDamage": 4,
+      "range": 1
+    }
+  ]
+}

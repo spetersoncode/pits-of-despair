@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 
 namespace PitsOfDespair.Entities;
 
@@ -25,6 +26,20 @@ public partial class Player : BaseEntity
 
         // Get MovementComponent child
         _movementComponent = GetNode<MovementComponent>("MovementComponent");
+
+        // Initialize attack component with player's default attack
+        var attackComponent = GetNodeOrNull<AttackComponent>("AttackComponent");
+        if (attackComponent != null)
+        {
+            var playerPunch = new AttackData
+            {
+                AttackName = "Punch",
+                MinDamage = 1,
+                MaxDamage = 4,
+                Range = 1
+            };
+            attackComponent.Attacks = new Godot.Collections.Array<AttackData> { playerPunch };
+        }
 
         // Track position changes to emit Moved signal for backwards compatibility
         PositionChanged += OnPositionChanged;

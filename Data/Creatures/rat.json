@@ -1,0 +1,17 @@
+{
+  "name": "Rat",
+  "glyph": "r",
+  "color": "#808080",
+  "maxHP": 5,
+  "visionRange": 10,
+  "hasMovement": true,
+  "hasAI": true,
+  "attacks": [
+    {
+      "name": "Rat Bite",
+      "minDamage": 1,
+      "maxDamage": 3,
+      "range": 1
+    }
+  ]
+}

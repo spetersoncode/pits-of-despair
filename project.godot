@@ -15,6 +15,10 @@ run/main_scene="res://Scenes/Main/GameLevel.tscn"
 config/features=PackedStringArray("4.5", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+DataLoader="*res://Scripts/Data/DataLoader.cs"
+
 [display]
 
 window/size/viewport_width=1920

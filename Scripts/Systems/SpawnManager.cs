@@ -12,12 +12,13 @@ namespace PitsOfDespair.Systems;
 public partial class SpawnManager : Node
 {
     /// <summary>
-    /// Spawn tables for creatures, indexed by floor depth (0-based).
-    /// Example: [0] = Floor 1, [1] = Floor 2, etc.
+    /// Spawn table IDs for creatures, indexed by floor depth (0-based).
+    /// Example: [0] = "floor_1_creatures", [1] = "floor_2_creatures", etc.
     /// </summary>
     [Export]
-    public SpawnTable[] CreatureSpawnTablesByFloor { get; set; } = System.Array.Empty<SpawnTable>();
+    public string[] CreatureSpawnTableIdsByFloor { get; set; } = new[] { "floor_1_creatures" };
 
+    private DataLoader? _dataLoader;
     private EntityFactory? _entityFactory;
     private EntityManager? _entityManager;
     private MapSystem? _mapSystem;
@@ -28,6 +29,8 @@ public partial class SpawnManager : Node
     {
         _rng = new RandomNumberGenerator();
         _rng.Randomize();
+
+        _dataLoader = GetNode<DataLoader>("/root/DataLoader");
     }
 
     /// <summary>
@@ -105,21 +108,21 @@ public partial class SpawnManager : Node
             if (roomFloorTiles.Count == 0)
                 continue;
 
+            // Select random entry from spawn table
+            var entry = SelectRandomSpawnEntry(spawnTable);
+            if (entry == null)
+                continue;
+
             // Determine how many creatures to spawn
-            int creatureCount = spawnTable.GetSpawnCount(_rng);
+            int creatureCount = _rng.RandiRange(entry.MinCount, entry.MaxCount);
 
             for (int i = 0; i < creatureCount; i++)
             {
-                // Select random creature from spawn table
-                var entityData = spawnTable.SelectRandom(_rng);
-                if (entityData == null)
-                    continue;
-
                 // Select random position in room
                 var position = SelectRandomPosition(roomFloorTiles);
 
                 // Spawn the creature
-                Spawn(entityData, position);
+                Spawn(entry.CreatureId, position);
                 totalCreatures++;
             }
         }
@@ -129,10 +132,10 @@ public partial class SpawnManager : Node
     /// Spawn a single entity at the specified position.
     /// Works for any entity type (creature, item, furniture, decoration).
     /// </summary>
-    /// <param name="entityData">The entity data defining what to spawn.</param>
+    /// <param name="creatureId">The creature ID to spawn.</param>
     /// <param name="position">The grid position to spawn at.</param>
     /// <returns>The spawned entity, or null if spawning failed.</returns>
-    public BaseEntity? Spawn(EntityData entityData, GridPosition position)
+    public BaseEntity? Spawn(string creatureId, GridPosition position)
     {
         if (_entityFactory == null)
         {
@@ -147,7 +150,9 @@ public partial class SpawnManager : Node
         }
 
         // Create entity via factory
-        var entity = _entityFactory.CreateEntity(entityData, position);
+        var entity = _entityFactory.CreateEntity(creatureId, position);
+        if (entity == null)
+            return null;
 
         // Register with entity manager
         _entityManager.AddEntity(entity);
@@ -156,12 +161,24 @@ public partial class SpawnManager : Node
     }
 
     /// <summary>
+    /// DEPRECATED: Spawn a single entity using old EntityData resource.
+    /// </summary>
+    [System.Obsolete("Use Spawn(string creatureId, GridPosition position) instead")]
+    public BaseEntity? Spawn(EntityData entityData, GridPosition position)
+    {
+        return Spawn(entityData.Name.ToLower(), position);
+    }
+
+    /// <summary>
     /// Get the creature spawn table for the current floor.
     /// </summary>
     /// <returns>The spawn table, or null if not available.</returns>
-    private SpawnTable? GetCreatureSpawnTable()
+    private JsonSpawnTable? GetCreatureSpawnTable()
     {
-        if (CreatureSpawnTablesByFloor == null || CreatureSpawnTablesByFloor.Length == 0)
+        if (_dataLoader == null)
+            return null;
+
+        if (CreatureSpawnTableIdsByFloor == null || CreatureSpawnTableIdsByFloor.Length == 0)
             return null;
 
         int index = _currentFloor - 1; // Convert to 0-based index
@@ -169,10 +186,44 @@ public partial class SpawnManager : Node
         // Clamp to available tables
         if (index < 0)
             index = 0;
-        if (index >= CreatureSpawnTablesByFloor.Length)
-            index = CreatureSpawnTablesByFloor.Length - 1;
+        if (index >= CreatureSpawnTableIdsByFloor.Length)
+            index = CreatureSpawnTableIdsByFloor.Length - 1;
 
-        return CreatureSpawnTablesByFloor[index];
+        string tableId = CreatureSpawnTableIdsByFloor[index];
+        return _dataLoader.GetSpawnTable(tableId);
+    }
+
+    /// <summary>
+    /// Select a random spawn entry from a spawn table using weighted random selection.
+    /// </summary>
+    private JsonSpawnTableEntry? SelectRandomSpawnEntry(JsonSpawnTable table)
+    {
+        if (table.Entries.Count == 0)
+            return null;
+
+        // Calculate total weight
+        int totalWeight = 0;
+        foreach (var entry in table.Entries)
+        {
+            totalWeight += entry.Weight;
+        }
+
+        // Select random value
+        int roll = _rng.RandiRange(1, totalWeight);
+
+        // Find the entry that matches the roll
+        int currentWeight = 0;
+        foreach (var entry in table.Entries)
+        {
+            currentWeight += entry.Weight;
+            if (roll <= currentWeight)
+            {
+                return entry;
+            }
+        }
+
+        // Fallback to first entry (should never happen)
+        return table.Entries[0];
     }
 
     /// <summary>
