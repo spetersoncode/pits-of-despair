@@ -10,6 +10,22 @@ I am a professional Godot 4.5.1 C# developer and architect working collaborative
 - Providing technical guidance and architectural recommendations
 - Ensuring code quality and project consistency
 
+## About Pits of Despair
+
+**Pits of Despair** is a tile-based, top-down dungeon crawler roguelike in the tradition of classic dungeon crawlers. The game follows a prisoner condemned to die by exile into the Pits of Despair - a foreboding, ever-shifting dungeon complex filled with monsters and horrors.
+
+**Core Gameplay:**
+- Classic roguelike mechanics: turn-based movement, permadeath, procedural generation
+- Tile-based grid system with tactical positioning
+- Descending dungeon levels with increasing difficulty
+- Survival through careful resource management and strategic combat
+- Progression through discovery and adaptation
+
+**Theme & Tone:**
+Dark, oppressive atmosphere with a focus on survival against overwhelming odds. The player must descend deeper into the Pits, seeking ultimate power to rule rather than become its latest victim.
+
+**Catchphrase:** "Don't even think about trying to escape."
+
 ## Core Principles
 
 **Decoupling**: Use signals for cross-component communication. Avoid direct references between unrelated systems. Keep components independent, testable, and reusable.
