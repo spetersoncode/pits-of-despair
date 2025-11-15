@@ -206,7 +206,7 @@ public partial class MapSystem : Node
     {
         return tileType switch
         {
-            TileType.Floor => new Color(0.3f, 0.3f, 0.3f), // Dark gray
+            TileType.Floor => new Color(0.2f, 0.2f, 0.2f), // Dark gray
             TileType.Wall => Colors.White,
             _ => Colors.White
         };

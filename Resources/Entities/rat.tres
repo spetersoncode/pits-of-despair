@@ -10,5 +10,5 @@ script = ExtResource("2_movement")
 script = ExtResource("1_entity")
 Name = "Rat"
 Glyph = "r"
-GlyphColor = Color(0.5, 0.5, 0.5, 1)
+GlyphColor = Color(0.6, 0.6, 0.6, 1)
 Movement = SubResource("MovementData_1")
