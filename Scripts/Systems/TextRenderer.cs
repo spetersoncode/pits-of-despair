@@ -5,9 +5,9 @@ using PitsOfDespair.Entities;
 namespace PitsOfDespair.Systems;
 
 /// <summary>
-/// Renders the game map and entities using ASCII characters with a monospace font.
+/// Renders the game map and entities using text glyphs with a monospace font.
 /// </summary>
-public partial class ASCIIRenderer : Control
+public partial class TextRenderer : Control
 {
     [Export] public int TileSize { get; set; } = 16;
     [Export] public int FontSize { get; set; } = 14;

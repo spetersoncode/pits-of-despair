@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cs5h74dswjne3" path="res://Scripts/Systems/GameLevel.cs" id="1"]
 [ext_resource type="Script" uid="uid://b7uo07b7byn87" path="res://Scripts/Systems/MapSystem.cs" id="2"]
-[ext_resource type="Script" uid="uid://bcldy5ltgorvx" path="res://Scripts/Systems/ASCIIRenderer.cs" id="3"]
+[ext_resource type="Script" uid="uid://c5hc555j4xhih" path="res://Scripts/Systems/TextRenderer.cs" id="3"]
 [ext_resource type="Script" uid="uid://cv4lwpmujpdon" path="res://Scripts/Generation/Generators/BSPConfig.cs" id="3_3llyg"]
 [ext_resource type="PackedScene" uid="uid://dy0k0f46hdsj4" path="res://Scenes/Entities/Player.tscn" id="4"]
 [ext_resource type="Script" uid="uid://ho1xma5n2udq" path="res://Scripts/Systems/InputHandler.cs" id="5"]
@@ -10,8 +10,8 @@
 [ext_resource type="Script" uid="uid://c5qm4mqaaosr4" path="res://Scripts/Systems/EntityManager.cs" id="7"]
 [ext_resource type="Script" uid="uid://686004qfqb00" path="res://Scripts/Systems/EntityFactory.cs" id="8"]
 [ext_resource type="Script" uid="uid://2wfxpioo4ux6" path="res://Scripts/Systems/SpawnManager.cs" id="9"]
-[ext_resource type="Resource" path="res://Resources/SpawnTables/floor_1_creatures.tres" id="10_floor1"]
-[ext_resource type="Script" path="res://Scripts/Systems/PlayerVisionSystem.cs" id="11"]
+[ext_resource type="Resource" uid="uid://evn62uaiiaky" path="res://Resources/SpawnTables/floor_1_creatures.tres" id="10_floor1"]
+[ext_resource type="Script" uid="uid://dwy7wykqnarxe" path="res://Scripts/Systems/PlayerVisionSystem.cs" id="11"]
 
 [sub_resource type="Resource" id="Resource_ej2ef"]
 script = ExtResource("3_3llyg")
@@ -24,7 +24,7 @@ script = ExtResource("1")
 script = ExtResource("2")
 BSPConfig = SubResource("Resource_ej2ef")
 
-[node name="ASCIIRenderer" type="Control" parent="."]
+[node name="TextRenderer" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("3")

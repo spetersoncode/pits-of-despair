@@ -18,7 +18,7 @@ public partial class GameLevel : Node
     public int FloorDepth { get; set; } = 1;
 
     private MapSystem _mapSystem;
-    private ASCIIRenderer _renderer;
+    private TextRenderer _renderer;
     private Player _player;
     private InputHandler _inputHandler;
     private MovementSystem _movementSystem;
@@ -31,7 +31,7 @@ public partial class GameLevel : Node
     {
         // Get references to child nodes
         _mapSystem = GetNode<MapSystem>("MapSystem");
-        _renderer = GetNode<ASCIIRenderer>("ASCIIRenderer");
+        _renderer = GetNode<TextRenderer>("TextRenderer");
         _player = GetNode<Player>("Player");
         _inputHandler = GetNode<InputHandler>("InputHandler");
         _movementSystem = GetNode<MovementSystem>("MovementSystem");
