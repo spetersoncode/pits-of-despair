@@ -217,20 +217,14 @@ public partial class AISystem : Node
         GridPosition target = _player.GridPosition;
         int distanceToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, target);
 
-        // If adjacent to player, attack directly instead of trying to path
+        // If adjacent to player, attack explicitly (not bump-to-attack)
         if (distanceToPlayer <= 1)
         {
-            // Calculate direction to player
-            Vector2I direction = new Vector2I(
-                target.X - entity.GridPosition.X,
-                target.Y - entity.GridPosition.Y
-            );
-
-            // Attack the player
-            MovementComponent movement = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
-            if (movement != null)
+            // Explicit attack action
+            AttackComponent attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+            if (attackComponent != null)
             {
-                movement.RequestMove(direction);
+                attackComponent.RequestAttack(_player, 0);
             }
             return;
         }

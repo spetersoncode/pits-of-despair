@@ -84,21 +84,26 @@ public partial class MovementSystem : Node
 
         if (targetEntity != null)
         {
-            // Check if target has health (can be attacked)
-            var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
-            if (targetHealth != null)
+            // Bump-to-attack is PLAYER-ONLY mechanic
+            // Creatures use explicit attack actions instead
+            if (entity == _player)
             {
-                // Check if moving entity can attack
-                var attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
-                if (attackComponent != null)
+                // Check if target has health (can be attacked)
+                var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
+                if (targetHealth != null)
                 {
-                    // Bump-to-attack: request attack instead of moving
-                    attackComponent.RequestAttack(targetEntity, 0);
-                    return; // Attack replaces movement as turn action
+                    // Check if player can attack
+                    var attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+                    if (attackComponent != null)
+                    {
+                        // Bump-to-attack: request attack instead of moving
+                        attackComponent.RequestAttack(targetEntity, 0);
+                        return; // Attack replaces movement as turn action
+                    }
                 }
             }
-            // Target exists but can't be attacked, or attacker can't attack
-            // Treat as blocked tile
+            // Target exists - treat as blocked tile
+            // (Creatures don't bump-to-attack, they're just blocked)
             return;
         }
 
