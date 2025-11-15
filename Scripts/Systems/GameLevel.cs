@@ -25,6 +25,7 @@ public partial class GameLevel : Node
     private EntityManager _entityManager;
     private EntityFactory _entityFactory;
     private SpawnManager _spawnManager;
+    private PlayerVisionSystem _visionSystem;
 
     public override void _Ready()
     {
@@ -37,6 +38,7 @@ public partial class GameLevel : Node
         _entityManager = GetNode<EntityManager>("EntityManager");
         _entityFactory = GetNode<EntityFactory>("EntityFactory");
         _spawnManager = GetNode<SpawnManager>("SpawnManager");
+        _visionSystem = GetNode<PlayerVisionSystem>("PlayerVisionSystem");
 
         // Initialize component-based systems
         // This must happen AFTER MapSystem._Ready() generates the map,
@@ -70,6 +72,10 @@ public partial class GameLevel : Node
         _renderer.SetMapSystem(_mapSystem);
         _renderer.SetPlayer(_player);
         _renderer.SetEntityManager(_entityManager);
+
+        // Initialize vision system
+        _visionSystem.Initialize(_mapSystem, _player);
+        _renderer.SetPlayerVisionSystem(_visionSystem);
 
         // Wire up input handler
         _inputHandler.SetPlayer(_player);

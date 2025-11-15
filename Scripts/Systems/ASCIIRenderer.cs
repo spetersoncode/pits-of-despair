@@ -15,6 +15,7 @@ public partial class ASCIIRenderer : Control
     private MapSystem _mapSystem;
     private Player _player;
     private EntityManager? _entityManager;
+    private PlayerVisionSystem _visionSystem;
     private Font _font;
     private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 
@@ -98,6 +99,25 @@ public partial class ASCIIRenderer : Control
         }
     }
 
+    /// <summary>
+    /// Sets the player vision system for fog-of-war rendering.
+    /// </summary>
+    public void SetPlayerVisionSystem(PlayerVisionSystem visionSystem)
+    {
+        if (_visionSystem != null)
+        {
+            _visionSystem.VisionChanged -= OnVisionChanged;
+        }
+
+        _visionSystem = visionSystem;
+
+        if (_visionSystem != null)
+        {
+            _visionSystem.VisionChanged += OnVisionChanged;
+            QueueRedraw();
+        }
+    }
+
     private void OnMapChanged()
     {
         QueueRedraw();
@@ -123,6 +143,11 @@ public partial class ASCIIRenderer : Control
     }
 
     private void OnEntityMoved(int x, int y)
+    {
+        QueueRedraw();
+    }
+
+    private void OnVisionChanged()
     {
         QueueRedraw();
     }
@@ -156,10 +181,26 @@ public partial class ASCIIRenderer : Control
             for (int y = 0; y < _mapSystem.MapHeight; y++)
             {
                 GridPosition pos = new GridPosition(x, y);
-                TileType tile = _mapSystem.GetTileAt(pos);
 
+                // Check visibility for fog-of-war
+                bool isVisible = _visionSystem?.IsVisible(pos) ?? true;
+                bool isExplored = _visionSystem?.IsExplored(pos) ?? true;
+
+                // Hidden tiles (not explored) are not drawn
+                if (!isExplored && !isVisible)
+                {
+                    continue;
+                }
+
+                TileType tile = _mapSystem.GetTileAt(pos);
                 char glyph = _mapSystem.GetGlyphForTile(tile);
                 Color color = _mapSystem.GetColorForTile(tile);
+
+                // Dim explored-but-not-visible tiles (fog-of-war)
+                if (isExplored && !isVisible)
+                {
+                    color = new Color(0.25f, 0.25f, 0.25f);  // Dark grey
+                }
 
                 // World position of this tile
                 Vector2 tileWorldPos = new Vector2(x * TileSize, y * TileSize);
@@ -170,8 +211,16 @@ public partial class ASCIIRenderer : Control
         }
 
         // Draw entities (goblins, monsters, etc.) - between tiles and player
+        // Only draw entities on visible tiles
         foreach (var entity in _entities)
         {
+            // Check if entity is on a visible tile
+            bool entityVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
+            if (!entityVisible)
+            {
+                continue;
+            }
+
             Vector2 entityWorldPos = new Vector2(
                 entity.GridPosition.X * TileSize,
                 entity.GridPosition.Y * TileSize

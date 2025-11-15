@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://c23ds3lwe378f"]
+[gd_scene load_steps=14 format=3 uid="uid://c23ds3lwe378f"]
 
 [ext_resource type="Script" uid="uid://cs5h74dswjne3" path="res://Scripts/Systems/GameLevel.cs" id="1"]
 [ext_resource type="Script" uid="uid://b7uo07b7byn87" path="res://Scripts/Systems/MapSystem.cs" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://686004qfqb00" path="res://Scripts/Systems/EntityFactory.cs" id="8"]
 [ext_resource type="Script" uid="uid://2wfxpioo4ux6" path="res://Scripts/Systems/SpawnManager.cs" id="9"]
 [ext_resource type="Resource" path="res://Resources/SpawnTables/floor_1_creatures.tres" id="10_floor1"]
+[ext_resource type="Script" path="res://Scripts/Systems/PlayerVisionSystem.cs" id="11"]
 
 [sub_resource type="Resource" id="Resource_ej2ef"]
 script = ExtResource("3_3llyg")
@@ -45,3 +46,6 @@ script = ExtResource("8")
 [node name="SpawnManager" type="Node" parent="."]
 script = ExtResource("9")
 CreatureSpawnTablesByFloor = [ExtResource("10_floor1")]
+
+[node name="PlayerVisionSystem" type="Node" parent="."]
+script = ExtResource("11")
