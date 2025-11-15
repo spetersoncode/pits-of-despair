@@ -1,5 +1,7 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Generation;
+using PitsOfDespair.Generation.Generators;
 
 namespace PitsOfDespair.Systems;
 
@@ -11,6 +13,12 @@ public partial class MapSystem : Node
     [Export] public int MapWidth { get; set; } = 100;
     [Export] public int MapHeight { get; set; } = 100;
 
+    /// <summary>
+    /// Configuration for BSP dungeon generation.
+    /// Create a BSPConfig resource to customize generation parameters.
+    /// </summary>
+    [Export] public BSPConfig BSPConfig { get; set; }
+
     [Signal]
     public delegate void MapChangedEventHandler();
 
@@ -18,12 +26,34 @@ public partial class MapSystem : Node
 
     public override void _Ready()
     {
-        InitializeMap();
+        // Create default config if none is set
+        if (BSPConfig == null)
+        {
+            BSPConfig = new BSPConfig();
+        }
+
+        GenerateMap();
+    }
+
+    /// <summary>
+    /// Generates a new map using the BSP dungeon generator.
+    /// </summary>
+    public void GenerateMap()
+    {
+        // Create BSP generator instance
+        var generator = DungeonGeneratorFactory.CreateBSP(BSPConfig);
+
+        // Generate the map
+        _grid = generator.Generate(MapWidth, MapHeight);
+
+        EmitSignal(SignalName.MapChanged);
     }
 
     /// <summary>
     /// Initializes the map with floors and a border of walls.
+    /// DEPRECATED: Use GenerateMap() instead.
     /// </summary>
+    [System.Obsolete("Use GenerateMap() instead")]
     public void InitializeMap()
     {
         _grid = new TileType[MapWidth, MapHeight];
@@ -100,6 +130,56 @@ public partial class MapSystem : Node
     {
         return pos.X >= 0 && pos.X < MapWidth &&
                pos.Y >= 0 && pos.Y < MapHeight;
+    }
+
+    /// <summary>
+    /// Finds a valid spawn position (walkable tile) on the map.
+    /// Searches from the center outward in a spiral pattern.
+    /// </summary>
+    public GridPosition GetValidSpawnPosition()
+    {
+        // Try center first
+        var center = new GridPosition(MapWidth / 2, MapHeight / 2);
+        if (IsWalkable(center))
+        {
+            return center;
+        }
+
+        // Spiral outward from center to find a walkable tile
+        for (int radius = 1; radius < Mathf.Max(MapWidth, MapHeight) / 2; radius++)
+        {
+            for (int x = -radius; x <= radius; x++)
+            {
+                for (int y = -radius; y <= radius; y++)
+                {
+                    // Only check tiles on the edge of the current radius
+                    if (Mathf.Abs(x) != radius && Mathf.Abs(y) != radius)
+                        continue;
+
+                    var pos = new GridPosition(center.X + x, center.Y + y);
+                    if (IsWalkable(pos))
+                    {
+                        return pos;
+                    }
+                }
+            }
+        }
+
+        // Fallback: scan entire map (should never happen with valid dungeons)
+        for (int x = 0; x < MapWidth; x++)
+        {
+            for (int y = 0; y < MapHeight; y++)
+            {
+                var pos = new GridPosition(x, y);
+                if (IsWalkable(pos))
+                {
+                    return pos;
+                }
+            }
+        }
+
+        // Last resort: return center even if not walkable
+        return center;
     }
 
     /// <summary>

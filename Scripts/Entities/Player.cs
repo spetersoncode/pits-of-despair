@@ -29,11 +29,8 @@ public partial class Player : Node2D
     {
         _mapSystem = mapSystem;
 
-        // Start at center of map
-        CurrentPosition = new GridPosition(
-            _mapSystem.MapWidth / 2,
-            _mapSystem.MapHeight / 2
-        );
+        // Spawn at a valid walkable position
+        CurrentPosition = _mapSystem.GetValidSpawnPosition();
     }
 
     /// <summary>
