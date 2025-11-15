@@ -1,17 +1,17 @@
 {
   "name": "Floor 1 Creatures",
   "entries": [
-    {
-      "creatureId": "rat",
-      "weight": 2,
-      "minCount": 2,
-      "maxCount": 4
-    },
-    {
-      "creatureId": "goblin",
-      "weight": 1,
-      "minCount": 1,
-      "maxCount": 3
-    }
+	{
+	  "creatureId": "rat",
+	  "weight": 2,
+	  "minCount": 2,
+	  "maxCount": 4
+	},
+	{
+	  "creatureId": "goblin",
+	  "weight": 1,
+	  "minCount": 1,
+	  "maxCount": 3
+	}
   ]
 }

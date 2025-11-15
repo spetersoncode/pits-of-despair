@@ -7,11 +7,11 @@
   "hasMovement": true,
   "hasAI": true,
   "attacks": [
-    {
-      "name": "Goblin Club",
-      "minDamage": 2,
-      "maxDamage": 4,
-      "range": 1
-    }
+	{
+	  "name": "Club",
+	  "minDamage": 2,
+	  "maxDamage": 4,
+	  "range": 1
+	}
   ]
 }

@@ -7,11 +7,11 @@
   "hasMovement": true,
   "hasAI": true,
   "attacks": [
-    {
-      "name": "Rat Bite",
-      "minDamage": 1,
-      "maxDamage": 3,
-      "range": 1
-    }
+	{
+	  "name": "Bite",
+	  "minDamage": 1,
+	  "maxDamage": 3,
+	  "range": 1
+	}
   ]
 }
