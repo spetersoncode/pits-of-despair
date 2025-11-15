@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Systems;
+using PitsOfDespair.UI;
 
 namespace PitsOfDespair.Systems;
 
@@ -31,6 +32,7 @@ public partial class GameLevel : Node
     private CombatSystem _combatSystem;
     private TurnManager _turnManager;
     private AISystem _aiSystem;
+    private GameHUD _gameHUD;
 
     public override void _Ready()
     {
@@ -48,6 +50,7 @@ public partial class GameLevel : Node
         _combatSystem = GetNode<CombatSystem>("CombatSystem");
         _turnManager = GetNode<TurnManager>("TurnManager");
         _aiSystem = GetNode<AISystem>("AISystem");
+        _gameHUD = GetNode<GameHUD>("HUD/GameHUD");
 
         // Initialize component-based systems
         // This must happen AFTER MapSystem._Ready() generates the map,
@@ -137,6 +140,9 @@ public partial class GameLevel : Node
 
         // Initialize non-player vision system
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
+
+        // Initialize HUD
+        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth);
 
         // Start the first player turn
         _turnManager.StartFirstPlayerTurn();

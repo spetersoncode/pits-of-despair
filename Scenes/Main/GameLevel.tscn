@@ -1,10 +1,11 @@
-[gd_scene load_steps=17 format=3 uid="uid://c23ds3lwe378f"]
+[gd_scene load_steps=18 format=3 uid="uid://c23ds3lwe378f"]
 
 [ext_resource type="Script" uid="uid://cs5h74dswjne3" path="res://Scripts/Systems/GameLevel.cs" id="1"]
 [ext_resource type="Script" uid="uid://b7uo07b7byn87" path="res://Scripts/Systems/MapSystem.cs" id="2"]
 [ext_resource type="Script" uid="uid://c5hc555j4xhih" path="res://Scripts/Systems/TextRenderer.cs" id="3"]
 [ext_resource type="Script" uid="uid://cv4lwpmujpdon" path="res://Scripts/Generation/Generators/BSPConfig.cs" id="3_3llyg"]
 [ext_resource type="PackedScene" uid="uid://dy0k0f46hdsj4" path="res://Scenes/Entities/Player.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/GameHUD.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://ho1xma5n2udq" path="res://Scripts/Systems/InputHandler.cs" id="5"]
 [ext_resource type="Script" uid="uid://dphyic36ojemq" path="res://Scripts/Systems/MovementSystem.cs" id="6"]
 [ext_resource type="Script" uid="uid://c5qm4mqaaosr4" path="res://Scripts/Systems/EntityManager.cs" id="7"]
@@ -31,6 +32,10 @@ BSPConfig = SubResource("Resource_ej2ef")
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("3")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="GameHUD" parent="HUD" instance=ExtResource("4_hud")]
 
 [node name="Player" parent="." instance=ExtResource("4")]
 
