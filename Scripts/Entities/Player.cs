@@ -18,7 +18,8 @@ public partial class Player : BaseEntity
 
     public override void _Ready()
     {
-        // Set player visual properties
+        // Set player properties
+        DisplayName = "Player";
         Glyph = '@';
         GlyphColor = Colors.Yellow;
 

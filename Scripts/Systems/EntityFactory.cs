@@ -51,10 +51,30 @@ public partial class EntityFactory : Node
             entity.AddChild(visionComponent);
         }
 
+        // Add HealthComponent if max HP is specified
+        if (data.MaxHP > 0)
+        {
+            var healthComponent = new HealthComponent
+            {
+                Name = "HealthComponent",
+                MaxHP = data.MaxHP
+            };
+            entity.AddChild(healthComponent);
+        }
+
+        // Add AttackComponent if attacks are specified
+        if (data.Attacks.Count > 0)
+        {
+            var attackComponent = new AttackComponent
+            {
+                Name = "AttackComponent",
+                Attacks = data.Attacks
+            };
+            entity.AddChild(attackComponent);
+        }
+
         // Future component additions based on data:
-        // if (data.Health != null) { entity.AddChild(new HealthComponent()); }
         // if (data.AI != null) { entity.AddChild(new AIComponent()); }
-        // if (data.Combat != null) { entity.AddChild(new CombatComponent()); }
 
         return entity;
     }

@@ -27,6 +27,7 @@ public partial class GameLevel : Node
     private SpawnManager _spawnManager;
     private PlayerVisionSystem _visionSystem;
     private NonPlayerVisionSystem _nonPlayerVisionSystem;
+    private CombatSystem _combatSystem;
 
     public override void _Ready()
     {
@@ -41,6 +42,7 @@ public partial class GameLevel : Node
         _spawnManager = GetNode<SpawnManager>("SpawnManager");
         _visionSystem = GetNode<PlayerVisionSystem>("PlayerVisionSystem");
         _nonPlayerVisionSystem = GetNode<NonPlayerVisionSystem>("NonPlayerVisionSystem");
+        _combatSystem = GetNode<CombatSystem>("CombatSystem");
 
         // Initialize component-based systems
         // This must happen AFTER MapSystem._Ready() generates the map,
@@ -48,6 +50,7 @@ public partial class GameLevel : Node
 
         // Wire up the movement system
         _movementSystem.SetMapSystem(_mapSystem);
+        _movementSystem.SetEntityManager(_entityManager);
 
         // Wire up spawn manager
         _spawnManager.SetEntityFactory(_entityFactory);
@@ -59,6 +62,9 @@ public partial class GameLevel : Node
         var playerSpawn = _mapSystem.GetValidSpawnPosition();
         _player.Initialize(playerSpawn);
 
+        // Wire up player reference to movement system (for bump-to-attack)
+        _movementSystem.SetPlayer(_player);
+
         // Register player's movement component with movement system
         var playerMovement = _player.GetNode<MovementComponent>("MovementComponent");
         if (playerMovement != null)
@@ -68,6 +74,13 @@ public partial class GameLevel : Node
         else
         {
             GD.PushError("GameLevel: Player missing MovementComponent!");
+        }
+
+        // Register player's attack component with combat system
+        var playerAttack = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
+        if (playerAttack != null)
+        {
+            _combatSystem.RegisterAttackComponent(playerAttack);
         }
 
         // Wire up renderer
@@ -85,19 +98,25 @@ public partial class GameLevel : Node
         // Populate dungeon with creatures, items, etc.
         _spawnManager.PopulateDungeon();
 
-        // Register all entity movement components with movement system
+        // Register all entity components with appropriate systems
         foreach (var entity in _entityManager.GetAllEntities())
         {
+            // Register movement components
             var movement = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
             if (movement != null)
             {
                 _movementSystem.RegisterMovementComponent(movement);
             }
+
+            // Register attack components
+            var attack = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+            if (attack != null)
+            {
+                _combatSystem.RegisterAttackComponent(attack);
+            }
         }
 
         // Initialize non-player vision system
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
-
-        GD.Print("GameLevel: All systems initialized and wired");
     }
 }

@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="EntityData" load_steps=2 format=3 uid="uid://oyus0k2yoyvd"]
+[gd_resource type="Resource" script_class="EntityData" load_steps=3 format=3 uid="uid://oyus0k2yoyvd"]
 
 [ext_resource type="Script" uid="uid://cvhusubtaw43m" path="res://Scripts/Data/EntityData.cs" id="1_entity"]
+[ext_resource type="Resource" path="res://Resources/Attacks/rat_bite.tres" id="2_attack"]
 
 [resource]
 script = ExtResource("1_entity")
@@ -9,3 +10,5 @@ Glyph = "r"
 GlyphColor = Color(0.6, 0.6, 0.6, 1)
 HasMovement = true
 VisionRange = 10
+MaxHP = 5
+Attacks = Array[Resource("res://Scripts/Data/AttackData.cs")]([ExtResource("2_attack")])

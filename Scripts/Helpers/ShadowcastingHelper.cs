@@ -77,8 +77,7 @@ public static class ShadowcastingHelper
                 GridPosition current = TransformOctant(origin, dx, dy, octant);
 
                 // Check if tile is in range (using squared distance to avoid sqrt)
-                int distanceSquared = (current.X - origin.X) * (current.X - origin.X) +
-                                     (current.Y - origin.Y) * (current.Y - origin.Y);
+                int distanceSquared = DistanceHelper.EuclideanDistanceSquared(current, origin);
                 if (distanceSquared <= range * range)
                 {
                     visibleTiles.Add(current);

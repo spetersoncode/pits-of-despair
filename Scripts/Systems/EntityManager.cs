@@ -1,5 +1,6 @@
 using Godot;
 using Godot.Collections;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -37,6 +38,15 @@ public partial class EntityManager : Node
     {
         AddChild(entity);
         _entities.Add(entity);
+
+        // Subscribe to death if entity has health
+        var healthComponent = entity.GetNode<HealthComponent>("HealthComponent");
+        if (healthComponent != null)
+        {
+            // Use lambda to capture entity reference
+            healthComponent.Died += () => OnEntityDied(entity);
+        }
+
         EmitSignal(SignalName.EntityAdded, entity);
     }
 
@@ -50,6 +60,23 @@ public partial class EntityManager : Node
     }
 
     /// <summary>
+    /// Get entity at a specific grid position.
+    /// </summary>
+    /// <param name="position">The grid position to check.</param>
+    /// <returns>Entity at position, or null if none found.</returns>
+    public BaseEntity? GetEntityAtPosition(GridPosition position)
+    {
+        foreach (var entity in _entities)
+        {
+            if (entity.GridPosition.Equals(position))
+            {
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Remove an entity from management and the scene.
     /// </summary>
     /// <param name="entity">The entity to remove.</param>
@@ -60,5 +87,13 @@ public partial class EntityManager : Node
             EmitSignal(SignalName.EntityRemoved, entity);
             entity.QueueFree();
         }
+    }
+
+    /// <summary>
+    /// Handle entity death by removing it from the game.
+    /// </summary>
+    private void OnEntityDied(BaseEntity entity)
+    {
+        RemoveEntity(entity);
     }
 }

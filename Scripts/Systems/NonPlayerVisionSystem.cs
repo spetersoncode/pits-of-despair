@@ -66,7 +66,7 @@ public partial class NonPlayerVisionSystem : Node
             // Check if player is visible
             if (visiblePositions.Contains(playerPos))
             {
-                GD.Print($"{entity.DisplayName} at ({entity.GridPosition.X},{entity.GridPosition.Y}) can see player at ({playerPos.X},{playerPos.Y})");
+                // TODO: Trigger AI behavior when player is detected
             }
         }
     }

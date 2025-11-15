@@ -123,8 +123,6 @@ public partial class SpawnManager : Node
                 totalCreatures++;
             }
         }
-
-        GD.Print($"SpawnManager: Populated {roomTiles.Count} rooms with {totalCreatures} creatures on floor {_currentFloor}");
     }
 
     /// <summary>

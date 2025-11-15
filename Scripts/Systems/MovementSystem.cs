@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Systems;
 
@@ -11,6 +12,8 @@ namespace PitsOfDespair.Systems;
 public partial class MovementSystem : Node
 {
     private MapSystem? _mapSystem;
+    private EntityManager? _entityManager;
+    private BaseEntity? _player;
 
     /// <summary>
     /// Set the MapSystem reference for movement validation.
@@ -19,6 +22,24 @@ public partial class MovementSystem : Node
     public void SetMapSystem(MapSystem mapSystem)
     {
         _mapSystem = mapSystem;
+    }
+
+    /// <summary>
+    /// Set the EntityManager reference for entity collision detection.
+    /// </summary>
+    /// <param name="entityManager">The entity manager to use for entity queries.</param>
+    public void SetEntityManager(EntityManager entityManager)
+    {
+        _entityManager = entityManager;
+    }
+
+    /// <summary>
+    /// Set the Player reference for player collision detection.
+    /// </summary>
+    /// <param name="player">The player entity.</param>
+    public void SetPlayer(BaseEntity player)
+    {
+        _player = player;
     }
 
     /// <summary>
@@ -36,6 +57,7 @@ public partial class MovementSystem : Node
     /// <summary>
     /// Handle movement requests from MovementComponents.
     /// Validates the move via MapSystem and updates entity position if valid.
+    /// Implements bump-to-attack: if target position has entity with health, triggers attack instead.
     /// </summary>
     /// <param name="component">The MovementComponent that requested the move.</param>
     /// <param name="direction">The direction vector to move.</param>
@@ -57,11 +79,54 @@ public partial class MovementSystem : Node
         var currentPos = entity.GridPosition;
         var targetPos = currentPos.Add(direction);
 
-        // Validate move with MapSystem
+        // Check if there's an entity at the target position
+        var targetEntity = GetEntityAtPosition(targetPos);
+
+        if (targetEntity != null)
+        {
+            // Check if target has health (can be attacked)
+            var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
+            if (targetHealth != null)
+            {
+                // Check if moving entity can attack
+                var attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+                if (attackComponent != null)
+                {
+                    // Bump-to-attack: request attack instead of moving
+                    attackComponent.RequestAttack(targetEntity, 0);
+                    return; // Attack replaces movement as turn action
+                }
+            }
+            // Target exists but can't be attacked, or attacker can't attack
+            // Treat as blocked tile
+            return;
+        }
+
+        // No entity at target, validate move with MapSystem
         if (_mapSystem.IsWalkable(targetPos))
         {
             // Update entity position
             entity.SetGridPosition(targetPos);
         }
+    }
+
+    /// <summary>
+    /// Get entity at a specific grid position (checks both player and managed entities).
+    /// </summary>
+    private BaseEntity? GetEntityAtPosition(GridPosition position)
+    {
+        // Check player
+        if (_player != null && _player.GridPosition.Equals(position))
+        {
+            return _player;
+        }
+
+        // Check managed entities
+        if (_entityManager != null)
+        {
+            return _entityManager.GetEntityAtPosition(position);
+        }
+
+        return null;
     }
 }

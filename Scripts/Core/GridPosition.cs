@@ -43,14 +43,6 @@ public struct GridPosition
 	}
 
 	/// <summary>
-	/// Returns the Manhattan distance between two grid positions.
-	/// </summary>
-	public int ManhattanDistance(GridPosition other)
-	{
-		return Mathf.Abs(X - other.X) + Mathf.Abs(Y - other.Y);
-	}
-
-	/// <summary>
 	/// Adds a direction vector to this position.
 	/// </summary>
 	public GridPosition Add(Vector2I direction)

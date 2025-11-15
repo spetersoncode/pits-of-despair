@@ -1,4 +1,5 @@
 using Godot;
+using Godot.Collections;
 
 namespace PitsOfDespair.Data;
 
@@ -63,8 +64,18 @@ public partial class EntityData : Resource
     [Export]
     public int VisionRange { get; set; }
 
+    /// <summary>
+    /// Maximum hit points. If greater than 0, a HealthComponent will be added.
+    /// </summary>
+    [Export]
+    public int MaxHP { get; set; }
+
+    /// <summary>
+    /// Available attacks for this entity. If not empty, an AttackComponent will be added.
+    /// </summary>
+    [Export]
+    public Array<AttackData> Attacks { get; set; } = new();
+
     // Future component data properties:
-    // [Export] public HealthData? Health { get; set; }
     // [Export] public AIData? AI { get; set; }
-    // [Export] public CombatData? Combat { get; set; }
 }
