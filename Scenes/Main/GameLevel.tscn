@@ -1,16 +1,22 @@
-[gd_scene load_steps=6 format=3 uid="uid://c23ds3lwe378f"]
+[gd_scene load_steps=8 format=3 uid="uid://c23ds3lwe378f"]
 
 [ext_resource type="Script" uid="uid://cs5h74dswjne3" path="res://Scripts/Systems/GameLevel.cs" id="1"]
 [ext_resource type="Script" uid="uid://b7uo07b7byn87" path="res://Scripts/Systems/MapSystem.cs" id="2"]
 [ext_resource type="Script" uid="uid://bcldy5ltgorvx" path="res://Scripts/Systems/ASCIIRenderer.cs" id="3"]
+[ext_resource type="Script" uid="uid://cv4lwpmujpdon" path="res://Scripts/Generation/Generators/BSPConfig.cs" id="3_3llyg"]
 [ext_resource type="PackedScene" uid="uid://dy0k0f46hdsj4" path="res://Scenes/Entities/Player.tscn" id="4"]
 [ext_resource type="Script" uid="uid://ho1xma5n2udq" path="res://Scripts/Systems/InputHandler.cs" id="5"]
+
+[sub_resource type="Resource" id="Resource_ej2ef"]
+script = ExtResource("3_3llyg")
+metadata/_custom_type_script = "uid://cv4lwpmujpdon"
 
 [node name="GameLevel" type="Node"]
 script = ExtResource("1")
 
 [node name="MapSystem" type="Node" parent="."]
 script = ExtResource("2")
+BSPConfig = SubResource("Resource_ej2ef")
 
 [node name="ASCIIRenderer" type="Control" parent="."]
 layout_mode = 3

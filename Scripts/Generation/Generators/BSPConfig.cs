@@ -20,38 +20,38 @@ public partial class BSPConfig : Resource
     /// Smaller values create more, smaller rooms.
     /// </summary>
     [Export]
-    public int MinPartitionSize { get; set; } = 12;
+    public int MinPartitionSize { get; set; } = 8;
 
     /// <summary>
     /// Maximum size a partition should be before it gets split (in tiles).
     /// Partitions larger than this will continue splitting.
     /// </summary>
     [Export]
-    public int MaxPartitionSize { get; set; } = 22;
+    public int MaxPartitionSize { get; set; } = 14;
 
     /// <summary>
     /// Minimum width of a room within a partition (in tiles).
     /// </summary>
     [Export]
-    public int MinRoomWidth { get; set; } = 5;
+    public int MinRoomWidth { get; set; } = 6;
 
     /// <summary>
     /// Maximum width of a room within a partition (in tiles).
     /// </summary>
     [Export]
-    public int MaxRoomWidth { get; set; } = 10;
+    public int MaxRoomWidth { get; set; } = 12;
 
     /// <summary>
     /// Minimum height of a room within a partition (in tiles).
     /// </summary>
     [Export]
-    public int MinRoomHeight { get; set; } = 5;
+    public int MinRoomHeight { get; set; } = 6;
 
     /// <summary>
     /// Maximum height of a room within a partition (in tiles).
     /// </summary>
     [Export]
-    public int MaxRoomHeight { get; set; } = 10;
+    public int MaxRoomHeight { get; set; } = 12;
 
     /// <summary>
     /// Width of corridors connecting rooms (in tiles).
