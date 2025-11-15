@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PitsOfDespair.Core;
+using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Helpers;
@@ -25,12 +26,15 @@ public static class PathfindingHelper
     /// <summary>
     /// Finds a path from start to goal using A* pathfinding.
     /// Returns null if no path exists.
+    /// Considers both terrain and entity occupancy.
     /// </summary>
     /// <param name="start">Starting grid position</param>
     /// <param name="goal">Goal grid position</param>
     /// <param name="mapSystem">Map system for walkability checks</param>
+    /// <param name="entityManager">Entity manager for checking creature occupancy</param>
+    /// <param name="player">Player reference for checking player occupancy</param>
     /// <returns>Queue of positions to follow (not including start), or null if no path found</returns>
-    public static Queue<GridPosition>? FindPath(GridPosition start, GridPosition goal, MapSystem mapSystem)
+    public static Queue<GridPosition>? FindPath(GridPosition start, GridPosition goal, MapSystem mapSystem, EntityManager entityManager, Player player)
     {
         // Early exit if goal is not walkable
         if (!mapSystem.IsWalkable(goal))
@@ -74,6 +78,12 @@ public static class PathfindingHelper
 
                 // Skip if out of bounds or not walkable
                 if (!mapSystem.IsInBounds(neighbor) || !mapSystem.IsWalkable(neighbor))
+                {
+                    continue;
+                }
+
+                // Skip if occupied by creature or player (unless it's the goal)
+                if (!neighbor.Equals(goal) && IsPositionOccupied(neighbor, entityManager, player))
                 {
                     continue;
                 }
@@ -134,5 +144,21 @@ public static class PathfindingHelper
         }
 
         return queue;
+    }
+
+    /// <summary>
+    /// Checks if a position is occupied by a creature or the player.
+    /// Uses EntityManager's O(1) position cache.
+    /// </summary>
+    private static bool IsPositionOccupied(GridPosition position, EntityManager entityManager, Player player)
+    {
+        // Check if player is at this position
+        if (player.GridPosition.Equals(position))
+        {
+            return true;
+        }
+
+        // Check if any creature is at this position (O(1) lookup)
+        return entityManager.IsPositionOccupied(position);
     }
 }

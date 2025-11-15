@@ -215,11 +215,30 @@ public partial class AISystem : Node
     private void ChasePlayer(AIComponent ai, BaseEntity entity)
     {
         GridPosition target = _player.GridPosition;
+        int distanceToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, target);
+
+        // If adjacent to player, attack directly instead of trying to path
+        if (distanceToPlayer <= 1)
+        {
+            // Calculate direction to player
+            Vector2I direction = new Vector2I(
+                target.X - entity.GridPosition.X,
+                target.Y - entity.GridPosition.Y
+            );
+
+            // Attack the player
+            MovementComponent movement = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
+            if (movement != null)
+            {
+                movement.RequestMove(direction);
+            }
+            return;
+        }
 
         // If we don't have a path or reached the end, calculate new path
         if (ai.CurrentPath.Count == 0)
         {
-            var path = PathfindingHelper.FindPath(entity.GridPosition, target, _mapSystem);
+            var path = PathfindingHelper.FindPath(entity.GridPosition, target, _mapSystem, _entityManager, _player);
             if (path != null)
             {
                 ai.CurrentPath = path;
@@ -227,7 +246,7 @@ public partial class AISystem : Node
         }
 
         // Move along path
-        MoveAlongPath(ai, entity);
+        MoveAlongPath(ai, entity, target);
     }
 
     /// <summary>
@@ -249,13 +268,13 @@ public partial class AISystem : Node
         {
             if (ai.CurrentPath.Count == 0)
             {
-                var path = PathfindingHelper.FindPath(entity.GridPosition, lastKnown, _mapSystem);
+                var path = PathfindingHelper.FindPath(entity.GridPosition, lastKnown, _mapSystem, _entityManager, _player);
                 if (path != null)
                 {
                     ai.CurrentPath = path;
                 }
             }
-            MoveAlongPath(ai, entity);
+            MoveAlongPath(ai, entity, lastKnown);
         }
         else
         {
@@ -272,24 +291,59 @@ public partial class AISystem : Node
     {
         if (ai.CurrentPath.Count == 0)
         {
-            var path = PathfindingHelper.FindPath(entity.GridPosition, ai.SpawnPosition, _mapSystem);
+            var path = PathfindingHelper.FindPath(entity.GridPosition, ai.SpawnPosition, _mapSystem, _entityManager, _player);
             if (path != null)
             {
                 ai.CurrentPath = path;
             }
         }
 
-        MoveAlongPath(ai, entity);
+        MoveAlongPath(ai, entity, ai.SpawnPosition);
     }
 
     /// <summary>
     /// Moves entity along its current path.
+    /// Validates the next position is still available and repaths if blocked.
     /// </summary>
-    private void MoveAlongPath(AIComponent ai, BaseEntity entity)
+    /// <param name="goal">The ultimate destination for repathfinding if blocked</param>
+    private void MoveAlongPath(AIComponent ai, BaseEntity entity, GridPosition goal)
     {
         GridPosition? nextPos = ai.GetNextPosition();
         if (nextPos == null)
         {
+            return;
+        }
+
+        // Validate next position isn't occupied by another creature
+        // (player occupancy will be handled by MovementSystem as a bump-to-attack)
+        if (IsPositionOccupiedByCreature(nextPos.Value))
+        {
+            // Position is blocked - clear path and repath around the obstacle immediately
+            ai.ClearPath();
+
+            // Recalculate path around the blocking creature
+            var newPath = PathfindingHelper.FindPath(entity.GridPosition, goal, _mapSystem, _entityManager, _player);
+            if (newPath != null && newPath.Count > 0)
+            {
+                ai.CurrentPath = newPath;
+
+                // Try to move on the new path (recursive call, but only one level deep)
+                GridPosition? newNextPos = ai.GetNextPosition();
+                if (newNextPos != null && !IsPositionOccupiedByCreature(newNextPos.Value))
+                {
+                    // New path is clear, move along it
+                    Vector2I newDirection = new Vector2I(
+                        newNextPos.Value.X - entity.GridPosition.X,
+                        newNextPos.Value.Y - entity.GridPosition.Y
+                    );
+
+                    MovementComponent movementComponent = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
+                    if (movementComponent != null)
+                    {
+                        movementComponent.RequestMove(newDirection);
+                    }
+                }
+            }
             return;
         }
 
@@ -348,6 +402,14 @@ public partial class AISystem : Node
                 movement.RequestMove(direction);
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if a position is occupied by another creature (not the player).
+    /// </summary>
+    private bool IsPositionOccupiedByCreature(GridPosition position)
+    {
+        return _entityManager.GetEntityAtPosition(position) != null;
     }
 
     public override void _ExitTree()
