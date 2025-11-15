@@ -23,6 +23,7 @@ public partial class MapSystem : Node
     public delegate void MapChangedEventHandler();
 
     private TileType[,] _grid;
+    private System.Collections.Generic.List<RoomBounds> _rooms = new();
 
     public override void _Ready()
     {
@@ -41,10 +42,13 @@ public partial class MapSystem : Node
     public void GenerateMap()
     {
         // Create BSP generator instance
-        var generator = DungeonGeneratorFactory.CreateBSP(BSPConfig);
+        var generator = DungeonGeneratorFactory.CreateBSP(BSPConfig) as BSPDungeonGenerator;
 
         // Generate the map
         _grid = generator.Generate(MapWidth, MapHeight);
+
+        // Extract and store room data for entity spawning
+        _rooms = generator.GetRooms();
 
         EmitSignal(SignalName.MapChanged);
     }
@@ -206,5 +210,40 @@ public partial class MapSystem : Node
             TileType.Wall => new Color(0.6f, 0.6f, 0.6f),  // Light gray
             _ => Colors.White
         };
+    }
+
+    /// <summary>
+    /// Get floor tile positions for each room in the dungeon.
+    /// Used for per-room entity spawning.
+    /// </summary>
+    /// <returns>List of rooms, where each room is a list of floor tile positions.</returns>
+    public System.Collections.Generic.List<System.Collections.Generic.List<GridPosition>> GetRoomFloorTiles()
+    {
+        var roomTiles = new System.Collections.Generic.List<System.Collections.Generic.List<GridPosition>>();
+
+        foreach (var room in _rooms)
+        {
+            var floorTiles = new System.Collections.Generic.List<GridPosition>();
+
+            // Collect all floor tiles within room bounds
+            for (int x = room.X; x < room.X + room.Width; x++)
+            {
+                for (int y = room.Y; y < room.Y + room.Height; y++)
+                {
+                    var pos = new GridPosition(x, y);
+                    if (IsWalkable(pos))
+                    {
+                        floorTiles.Add(pos);
+                    }
+                }
+            }
+
+            if (floorTiles.Count > 0)
+            {
+                roomTiles.Add(floorTiles);
+            }
+        }
+
+        return roomTiles;
     }
 }

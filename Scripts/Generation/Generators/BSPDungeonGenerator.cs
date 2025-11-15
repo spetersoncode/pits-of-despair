@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PitsOfDespair.Core;
 
 namespace PitsOfDespair.Generation.Generators;
@@ -14,6 +15,7 @@ public class BSPDungeonGenerator : IDungeonGenerator
 
     private readonly BSPConfig _config;
     private Random _random;
+    private BSPNode _root;
 
     /// <summary>
     /// Creates a new BSP dungeon generator with the specified configuration.
@@ -38,14 +40,14 @@ public class BSPDungeonGenerator : IDungeonGenerator
         }
 
         // Create root partition and recursively split
-        var root = new BSPNode(1, 1, width - 2, height - 2);
-        SplitNode(root, 0);
+        _root = new BSPNode(1, 1, width - 2, height - 2);
+        SplitNode(_root, 0);
 
         // Create rooms in leaf nodes
-        CreateRooms(root, grid);
+        CreateRooms(_root, grid);
 
         // Connect rooms with corridors
-        ConnectRooms(root, grid);
+        ConnectRooms(_root, grid);
 
         // Add border walls (already walls, but ensures clean edges)
         for (int x = 0; x < width; x++)
@@ -60,6 +62,43 @@ public class BSPDungeonGenerator : IDungeonGenerator
         }
 
         return grid;
+    }
+
+    /// <summary>
+    /// Get all room bounds from the generated BSP tree.
+    /// Must be called after Generate().
+    /// </summary>
+    /// <returns>List of room bounds for all rooms in the dungeon.</returns>
+    public List<RoomBounds> GetRooms()
+    {
+        var rooms = new List<RoomBounds>();
+        if (_root != null)
+        {
+            CollectRooms(_root, rooms);
+        }
+        return rooms;
+    }
+
+    /// <summary>
+    /// Recursively collect room bounds from BSP tree leaf nodes.
+    /// </summary>
+    private void CollectRooms(BSPNode node, List<RoomBounds> rooms)
+    {
+        if (node.IsLeaf())
+        {
+            if (node.Room.HasValue)
+            {
+                var rect = node.Room.Value;
+                rooms.Add(new RoomBounds(rect.X, rect.Y, rect.Width, rect.Height));
+            }
+        }
+        else
+        {
+            if (node.LeftChild != null)
+                CollectRooms(node.LeftChild, rooms);
+            if (node.RightChild != null)
+                CollectRooms(node.RightChild, rooms);
+        }
     }
 
     private void SplitNode(BSPNode node, int depth)

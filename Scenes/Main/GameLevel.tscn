@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://c23ds3lwe378f"]
+[gd_scene load_steps=11 format=3 uid="uid://c23ds3lwe378f"]
 
 [ext_resource type="Script" uid="uid://cs5h74dswjne3" path="res://Scripts/Systems/GameLevel.cs" id="1"]
 [ext_resource type="Script" uid="uid://b7uo07b7byn87" path="res://Scripts/Systems/MapSystem.cs" id="2"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" uid="uid://cv4lwpmujpdon" path="res://Scripts/Generation/Generators/BSPConfig.cs" id="3_3llyg"]
 [ext_resource type="PackedScene" uid="uid://dy0k0f46hdsj4" path="res://Scenes/Entities/Player.tscn" id="4"]
 [ext_resource type="Script" uid="uid://ho1xma5n2udq" path="res://Scripts/Systems/InputHandler.cs" id="5"]
+[ext_resource type="Script" path="res://Scripts/Systems/MovementSystem.cs" id="6"]
+[ext_resource type="Script" path="res://Scripts/Systems/EntityManager.cs" id="7"]
+[ext_resource type="Script" path="res://Scripts/Systems/EntityFactory.cs" id="8"]
 
 [sub_resource type="Resource" id="Resource_ej2ef"]
 script = ExtResource("3_3llyg")
@@ -27,3 +30,12 @@ script = ExtResource("3")
 
 [node name="InputHandler" type="Node" parent="."]
 script = ExtResource("5")
+
+[node name="MovementSystem" type="Node" parent="."]
+script = ExtResource("6")
+
+[node name="EntityManager" type="Node" parent="."]
+script = ExtResource("7")
+
+[node name="EntityFactory" type="Node" parent="."]
+script = ExtResource("8")

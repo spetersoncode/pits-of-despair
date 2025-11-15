@@ -1,65 +1,76 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
-using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Entities;
 
 /// <summary>
 /// The player character.
+/// Now uses component-based architecture with MovementComponent.
 /// </summary>
-public partial class Player : Node2D
+public partial class Player : BaseEntity
 {
-    [Export] public string Glyph { get; set; } = "@";
-    [Export] public Color GlyphColor { get; set; } = Colors.Yellow;
-
-    [Signal]
-    public delegate void MovedEventHandler(int x, int y);
-
     [Signal]
     public delegate void TurnCompletedEventHandler();
 
-    public GridPosition CurrentPosition { get; private set; }
+    private MovementComponent? _movementComponent;
+    private GridPosition _previousPosition;
 
-    private MapSystem _mapSystem;
+    public override void _Ready()
+    {
+        // Set player visual properties
+        Glyph = '@';
+        GlyphColor = Colors.Yellow;
+
+        // Get MovementComponent child
+        _movementComponent = GetNode<MovementComponent>("MovementComponent");
+
+        // Track position changes to emit Moved signal for backwards compatibility
+        PositionChanged += OnPositionChanged;
+    }
 
     /// <summary>
-    /// Sets the map system reference for collision checking.
+    /// Initialize player at spawn position.
+    /// Called by GameLevel after map generation.
     /// </summary>
-    public void SetMapSystem(MapSystem mapSystem)
+    /// <param name="spawnPosition">The grid position to spawn at.</param>
+    public void Initialize(GridPosition spawnPosition)
     {
-        _mapSystem = mapSystem;
-
-        // Spawn at a valid walkable position
-        CurrentPosition = _mapSystem.GetValidSpawnPosition();
+        SetGridPosition(spawnPosition);
+        _previousPosition = spawnPosition;
     }
 
     /// <summary>
     /// Attempts to move the player in the specified direction.
+    /// Delegates to MovementComponent which emits signals for MovementSystem to validate.
     /// </summary>
     /// <param name="direction">Direction to move (use Vector2I for grid directions).</param>
-    /// <returns>True if movement was successful, false if blocked.</returns>
-    public bool TryMove(Vector2I direction)
+    public void TryMove(Vector2I direction)
     {
-        if (_mapSystem == null)
+        if (_movementComponent == null)
         {
-            GD.PrintErr("Player: MapSystem not set!");
-            return false;
+            GD.PushWarning("Player: MovementComponent not found!");
+            return;
         }
 
-        GridPosition targetPosition = CurrentPosition.Add(direction);
+        // Store current position to check if move succeeded
+        _previousPosition = GridPosition;
 
-        // Check if target position is walkable
-        if (!_mapSystem.IsWalkable(targetPosition))
+        // Request move via component - MovementSystem will validate and update position
+        _movementComponent.RequestMove(direction);
+    }
+
+    /// <summary>
+    /// Handle position changes to emit turn completion.
+    /// </summary>
+    private void OnPositionChanged(int x, int y)
+    {
+        // Only emit turn completed if position actually changed
+        if (x != _previousPosition.X || y != _previousPosition.Y)
         {
-            return false;
+            EmitSignal(SignalName.TurnCompleted);
+            _previousPosition = new GridPosition(x, y);
         }
-
-        // Move to new position
-        CurrentPosition = targetPosition;
-        EmitSignal(SignalName.Moved, CurrentPosition.X, CurrentPosition.Y);
-        EmitSignal(SignalName.TurnCompleted);
-
-        return true;
     }
 
     /// <summary>
@@ -67,6 +78,11 @@ public partial class Player : Node2D
     /// </summary>
     public Vector2 GetWorldPosition(int tileSize)
     {
-        return CurrentPosition.ToWorld(tileSize);
+        return GridPosition.ToWorld(tileSize);
     }
+
+    /// <summary>
+    /// Property for backwards compatibility with renderer.
+    /// </summary>
+    public GridPosition CurrentPosition => GridPosition;
 }

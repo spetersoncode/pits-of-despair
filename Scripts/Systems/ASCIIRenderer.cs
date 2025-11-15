@@ -14,7 +14,9 @@ public partial class ASCIIRenderer : Control
 
     private MapSystem _mapSystem;
     private Player _player;
+    private EntityManager? _entityManager;
     private Font _font;
+    private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 
     public override void _Ready()
     {
@@ -52,14 +54,46 @@ public partial class ASCIIRenderer : Control
     {
         if (_player != null)
         {
-            _player.Moved -= OnPlayerMoved;
+            _player.PositionChanged -= OnPlayerMoved;
         }
 
         _player = player;
 
         if (_player != null)
         {
-            _player.Moved += OnPlayerMoved;
+            _player.PositionChanged += OnPlayerMoved;
+            QueueRedraw();
+        }
+    }
+
+    /// <summary>
+    /// Sets the entity manager to track and render entities.
+    /// </summary>
+    public void SetEntityManager(EntityManager entityManager)
+    {
+        if (_entityManager != null)
+        {
+            _entityManager.EntityAdded -= OnEntityAdded;
+            _entityManager.EntityRemoved -= OnEntityRemoved;
+        }
+
+        _entityManager = entityManager;
+
+        if (_entityManager != null)
+        {
+            _entityManager.EntityAdded += OnEntityAdded;
+            _entityManager.EntityRemoved += OnEntityRemoved;
+
+            // Add existing entities
+            _entities.Clear();
+            _entities.AddRange(_entityManager.GetAllEntities());
+
+            // Subscribe to position changes for all entities
+            foreach (var entity in _entities)
+            {
+                entity.PositionChanged += OnEntityMoved;
+            }
+
             QueueRedraw();
         }
     }
@@ -70,6 +104,25 @@ public partial class ASCIIRenderer : Control
     }
 
     private void OnPlayerMoved(int x, int y)
+    {
+        QueueRedraw();
+    }
+
+    private void OnEntityAdded(BaseEntity entity)
+    {
+        _entities.Add(entity);
+        entity.PositionChanged += OnEntityMoved;
+        QueueRedraw();
+    }
+
+    private void OnEntityRemoved(BaseEntity entity)
+    {
+        entity.PositionChanged -= OnEntityMoved;
+        _entities.Remove(entity);
+        QueueRedraw();
+    }
+
+    private void OnEntityMoved(int x, int y)
     {
         QueueRedraw();
     }
@@ -116,7 +169,19 @@ public partial class ASCIIRenderer : Control
             }
         }
 
-        // Draw the player (should be at viewport center)
-        DrawChar(_font, viewportCenter, _player.Glyph, FontSize, _player.GlyphColor);
+        // Draw entities (goblins, monsters, etc.) - between tiles and player
+        foreach (var entity in _entities)
+        {
+            Vector2 entityWorldPos = new Vector2(
+                entity.GridPosition.X * TileSize,
+                entity.GridPosition.Y * TileSize
+            );
+            Vector2 entityDrawPos = offset + entityWorldPos;
+
+            DrawChar(_font, entityDrawPos, entity.Glyph.ToString(), FontSize, entity.GlyphColor);
+        }
+
+        // Draw the player last (should be at viewport center, on top of everything)
+        DrawChar(_font, viewportCenter, _player.Glyph.ToString(), FontSize, _player.GlyphColor);
     }
 }

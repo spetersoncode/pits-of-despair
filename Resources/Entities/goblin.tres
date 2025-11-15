@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EntityData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/EntityData.cs" id="1_entity"]
+[ext_resource type="Script" path="res://Scripts/Data/MovementData.cs" id="2_movement"]
+
+[sub_resource type="Resource" id="MovementData_1"]
+script = ExtResource("2_movement")
+
+[resource]
+script = ExtResource("1_entity")
+Name = "Goblin"
+Glyph = 103
+GlyphColor = Color(0.5, 0.5, 0.5, 1)
+Movement = SubResource("MovementData_1")
