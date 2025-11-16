@@ -12,16 +12,21 @@ public partial class DataLoader : Node
 {
     private const string CreaturesPath = "res://Data/Creatures/";
     private const string SpawnTablesPath = "res://Data/SpawnTables/";
+    private const string ItemsPath = "res://Data/Items/";
 
     private Dictionary<string, JsonCreatureData> _creatures = new();
     private Dictionary<string, JsonSpawnTable> _spawnTables = new();
+    private Dictionary<string, JsonItemData> _items = new();
+    private Dictionary<string, JsonItemSpawnTable> _itemSpawnTables = new();
 
     public override void _Ready()
     {
         LoadAllCreatures();
         LoadAllSpawnTables();
+        LoadAllItems();
+        LoadAllItemSpawnTables();
 
-        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures and {_spawnTables.Count} spawn tables");
+        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures, {_spawnTables.Count} spawn tables, {_items.Count} items, and {_itemSpawnTables.Count} item spawn tables");
     }
 
     /// <summary>
@@ -58,6 +63,34 @@ public partial class DataLoader : Node
     public IEnumerable<string> GetAllCreatureIds()
     {
         return _creatures.Keys;
+    }
+
+    /// <summary>
+    /// Gets item data by ID (filename without extension).
+    /// </summary>
+    public JsonItemData GetItem(string itemId)
+    {
+        if (_items.TryGetValue(itemId, out var item))
+        {
+            return item;
+        }
+
+        GD.PrintErr($"DataLoader: Item '{itemId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets item spawn table data by ID (filename without extension).
+    /// </summary>
+    public JsonItemSpawnTable GetItemSpawnTable(string tableId)
+    {
+        if (_itemSpawnTables.TryGetValue(tableId, out var table))
+        {
+            return table;
+        }
+
+        GD.PrintErr($"DataLoader: Item spawn table '{tableId}' not found!");
+        return null;
     }
 
     private void LoadAllCreatures()
@@ -133,6 +166,89 @@ public partial class DataLoader : Node
                 {
                     _spawnTables[tableId] = table;
                     GD.Print($"DataLoader: Loaded spawn table '{tableId}' - {table.Name}");
+                }
+            }
+
+            fileName = dir.GetNext();
+        }
+
+        dir.ListDirEnd();
+    }
+
+    private void LoadAllItems()
+    {
+        _items.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(ItemsPath))
+        {
+            GD.PrintErr($"DataLoader: Items directory not found at {ItemsPath}");
+            return;
+        }
+
+        var dir = DirAccess.Open(ItemsPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"DataLoader: Failed to open items directory");
+            return;
+        }
+
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+
+        while (fileName != string.Empty)
+        {
+            if (!dir.CurrentIsDir() && fileName.EndsWith(".json"))
+            {
+                string filePath = ItemsPath + fileName;
+                string itemId = fileName.Replace(".json", "");
+
+                var item = LoadJsonFile<JsonItemData>(filePath);
+                if (item != null)
+                {
+                    _items[itemId] = item;
+                    GD.Print($"DataLoader: Loaded item '{itemId}' - {item.Name}");
+                }
+            }
+
+            fileName = dir.GetNext();
+        }
+
+        dir.ListDirEnd();
+    }
+
+    private void LoadAllItemSpawnTables()
+    {
+        _itemSpawnTables.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(SpawnTablesPath))
+        {
+            GD.PrintErr($"DataLoader: SpawnTables directory not found at {SpawnTablesPath}");
+            return;
+        }
+
+        var dir = DirAccess.Open(SpawnTablesPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"DataLoader: Failed to open spawn tables directory");
+            return;
+        }
+
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+
+        while (fileName != string.Empty)
+        {
+            // Only load files ending with "_items.json"
+            if (!dir.CurrentIsDir() && fileName.EndsWith("_items.json"))
+            {
+                string filePath = SpawnTablesPath + fileName;
+                string tableId = fileName.Replace(".json", "");
+
+                var table = LoadJsonFile<JsonItemSpawnTable>(filePath);
+                if (table != null)
+                {
+                    _itemSpawnTables[tableId] = table;
+                    GD.Print($"DataLoader: Loaded item spawn table '{tableId}' - {table.Name}");
                 }
             }
 

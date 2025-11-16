@@ -18,6 +18,7 @@ public partial class TextRenderer : Control
     private PlayerVisionSystem _visionSystem;
     private Font _font;
     private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
+    private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
 
     public override void _Ready()
     {
@@ -210,10 +211,57 @@ public partial class TextRenderer : Control
             }
         }
 
-        // Draw entities (goblins, monsters, etc.) - between tiles and player
-        // Only draw entities on visible tiles
+        // Draw items first (between tiles and creatures)
+        // Items remain visible once discovered (memorable)
         foreach (var entity in _entities)
         {
+            // Only process items
+            if (entity is not Item)
+                continue;
+
+            // Don't draw items at player position (player glyph takes precedence)
+            if (entity.GridPosition.Equals(_player.GridPosition))
+                continue;
+
+            bool isVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
+            bool isExplored = _visionSystem?.IsExplored(entity.GridPosition) ?? true;
+
+            // Track discovered items
+            if (isVisible || isExplored)
+            {
+                _discoveredItemPositions.Add(entity.GridPosition);
+            }
+
+            // Draw items if they're on an explored tile (memorable visibility)
+            if (!isExplored && !isVisible)
+            {
+                continue;
+            }
+
+            Vector2 itemWorldPos = new Vector2(
+                entity.GridPosition.X * TileSize,
+                entity.GridPosition.Y * TileSize
+            );
+            Vector2 itemDrawPos = offset + itemWorldPos;
+
+            // Dim items that are not currently visible
+            Color itemColor = entity.GlyphColor;
+            if (isExplored && !isVisible)
+            {
+                itemColor = new Color(itemColor.R * 0.5f, itemColor.G * 0.5f, itemColor.B * 0.5f);
+            }
+
+            DrawChar(_font, itemDrawPos, entity.Glyph.ToString(), FontSize, itemColor);
+        }
+
+        // Draw creatures (between items and player)
+        // Only draw creatures on currently visible tiles
+        foreach (var entity in _entities)
+        {
+            // Skip items (already drawn)
+            if (entity is Item)
+                continue;
+
             // Check if entity is on a visible tile
             bool entityVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
             if (!entityVisible)

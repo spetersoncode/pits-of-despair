@@ -38,6 +38,37 @@ public partial class EntityFactory : Node
     }
 
     /// <summary>
+    /// Create an item from item ID and position it on the grid.
+    /// </summary>
+    /// <param name="itemId">The item ID (JSON filename without extension).</param>
+    /// <param name="position">The grid position to place the item.</param>
+    /// <returns>The created and configured Item, or null if item not found.</returns>
+    public Item CreateItem(string itemId, GridPosition position)
+    {
+        var data = _dataLoader.GetItem(itemId);
+        if (data == null)
+        {
+            GD.PrintErr($"EntityFactory: Failed to create item '{itemId}' - item data not found");
+            return null;
+        }
+
+        // Create item entity
+        var item = new Item
+        {
+            GridPosition = position,
+            DisplayName = data.Name,
+            Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?',
+            GlyphColor = data.GetColor(),
+            ItemType = data.ItemType,
+            Name = data.Name // Set node name for debugging
+        };
+
+        // Future: Add PickupComponent when implementing inventory system
+
+        return item;
+    }
+
+    /// <summary>
     /// Create an entity from EntityData and position it on the grid.
     /// DEPRECATED: Use CreateEntity(string creatureId, GridPosition position) instead.
     /// </summary>

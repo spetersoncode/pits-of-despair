@@ -25,3 +25,7 @@ text = "HP: 20/20"
 [node name="FloorLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Floor: 1"
+
+[node name="StandingOnLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = ""

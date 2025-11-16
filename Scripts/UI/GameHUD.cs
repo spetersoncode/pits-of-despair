@@ -31,6 +31,7 @@ public partial class GameHUD : Control
         // Wire up stats panel
         _statsPanel.ConnectToPlayer(player);
         _statsPanel.SetFloorDepth(floorDepth);
+        _statsPanel.SetEntityManager(entityManager);
 
         // Wire up message log
         _messageLog.ConnectToCombatSystem(combatSystem);

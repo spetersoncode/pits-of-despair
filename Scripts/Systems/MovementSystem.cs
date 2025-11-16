@@ -84,27 +84,37 @@ public partial class MovementSystem : Node
 
         if (targetEntity != null)
         {
-            // Bump-to-attack is PLAYER-ONLY mechanic
-            // Creatures use explicit attack actions instead
-            if (entity == _player)
+            // If the target entity is passable (like items), allow movement through
+            if (targetEntity.Passable)
             {
-                // Check if target has health (can be attacked)
-                var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
-                if (targetHealth != null)
+                // Continue to normal movement validation
+                // (Items don't block movement)
+            }
+            else
+            {
+                // Target is impassable (like creatures)
+                // Bump-to-attack is PLAYER-ONLY mechanic
+                // Creatures use explicit attack actions instead
+                if (entity == _player)
                 {
-                    // Check if player can attack
-                    var attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
-                    if (attackComponent != null)
+                    // Check if target has health (can be attacked)
+                    var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
+                    if (targetHealth != null)
                     {
-                        // Bump-to-attack: request attack instead of moving
-                        attackComponent.RequestAttack(targetEntity, 0);
-                        return; // Attack replaces movement as turn action
+                        // Check if player can attack
+                        var attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+                        if (attackComponent != null)
+                        {
+                            // Bump-to-attack: request attack instead of moving
+                            attackComponent.RequestAttack(targetEntity, 0);
+                            return; // Attack replaces movement as turn action
+                        }
                     }
                 }
+                // Target exists and is impassable - treat as blocked tile
+                // (Creatures don't bump-to-attack, they're just blocked)
+                return;
             }
-            // Target exists - treat as blocked tile
-            // (Creatures don't bump-to-attack, they're just blocked)
-            return;
         }
 
         // No entity at target, validate move with MapSystem

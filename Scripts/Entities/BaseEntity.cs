@@ -37,6 +37,12 @@ public partial class BaseEntity : Node2D
     public Color GlyphColor { get; set; } = Colors.White;
 
     /// <summary>
+    /// Whether other entities can move through this entity.
+    /// True for items, false for creatures.
+    /// </summary>
+    public bool Passable { get; set; } = false;
+
+    /// <summary>
     /// Updates the entity's grid position and emits PositionChanged signal.
     /// </summary>
     /// <param name="newPosition">The new grid position.</param>
