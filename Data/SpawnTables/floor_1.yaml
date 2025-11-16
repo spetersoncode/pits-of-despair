@@ -1,0 +1,66 @@
+name: Floor 1
+spawnBudget:
+  min: 8
+  max: 15
+emptyRoomChance: 0.3
+outOfDepthChance: 0.05
+
+creaturePools:
+  - id: common
+    weight: 70
+    entries:
+      - type: single
+        creatureId: rat
+        weight: 3
+        count:
+          min: 1
+          max: 2
+        placement: random
+
+      - type: single
+        creatureId: goblin
+        weight: 2
+        count:
+          min: 1
+          max: 2
+        placement: random
+
+      - type: band
+        bandId: rat_swarm
+        weight: 1
+
+  - id: uncommon
+    weight: 25
+    entries:
+      - type: band
+        bandId: goblin_pack
+        weight: 1
+
+  - id: rare
+    weight: 5
+    entries:
+      - type: single
+        creatureId: goblin
+        weight: 1
+        count:
+          min: 2
+          max: 3
+        placement: center
+
+itemPools:
+  - id: common_items
+    weight: 100
+    entries:
+      - itemId: health_potion
+        weight: 2
+        count:
+          min: 1
+          max: 2
+        placement: random
+
+      - itemId: scroll_blink
+        weight: 1
+        count:
+          min: 1
+          max: 1
+        placement: random

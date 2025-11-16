@@ -3,6 +3,7 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Systems;
+using PitsOfDespair.Systems.Spawning;
 using PitsOfDespair.UI;
 
 namespace PitsOfDespair.Systems;
@@ -68,10 +69,7 @@ public partial class GameLevel : Node
         _movementSystem.SetEntityManager(_entityManager);
 
         // Wire up spawn manager
-        _spawnManager.SetEntityFactory(_entityFactory);
-        _spawnManager.SetEntityManager(_entityManager);
-        _spawnManager.SetMapSystem(_mapSystem);
-        _spawnManager.SetFloorDepth(FloorDepth);
+        _spawnManager.SetDependencies(_entityFactory, _entityManager, _mapSystem, FloorDepth);
 
         // Initialize player at valid spawn position
         var playerSpawn = _mapSystem.GetValidSpawnPosition();

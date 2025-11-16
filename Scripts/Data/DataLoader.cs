@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using PitsOfDespair.Systems.Spawning.Data;
 
 namespace PitsOfDespair.Data;
 
@@ -14,20 +15,23 @@ public partial class DataLoader : Node
     private const string CreaturesPath = "res://Data/Creatures/";
     private const string SpawnTablesPath = "res://Data/SpawnTables/";
     private const string ItemsPath = "res://Data/Items/";
+    private const string BandsPath = "res://Data/Bands/";
 
     private Dictionary<string, CreatureData> _creatures = new();
-    private Dictionary<string, CreatureSpawnTable> _spawnTables = new();
     private Dictionary<string, ItemData> _items = new();
-    private Dictionary<string, ItemSpawnTable> _itemSpawnTables = new();
+
+    // Spawning system data
+    private Dictionary<string, SpawnTableData> _spawnTables = new();
+    private Dictionary<string, BandData> _bands = new();
 
     public override void _Ready()
     {
         LoadAllCreatures();
-        LoadAllSpawnTables();
         LoadAllItems();
-        LoadAllItemSpawnTables();
+        LoadAllSpawnTables();
+        LoadAllBands();
 
-        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures, {_spawnTables.Count} spawn tables, {_items.Count} items, and {_itemSpawnTables.Count} item spawn tables");
+        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures, {_items.Count} items, {_spawnTables.Count} spawn tables, {_bands.Count} bands");
     }
 
     /// <summary>
@@ -41,20 +45,6 @@ public partial class DataLoader : Node
         }
 
         GD.PrintErr($"DataLoader: Creature '{creatureId}' not found!");
-        return null;
-    }
-
-    /// <summary>
-    /// Gets spawn table data by ID (filename without extension).
-    /// </summary>
-    public CreatureSpawnTable GetSpawnTable(string tableId)
-    {
-        if (_spawnTables.TryGetValue(tableId, out var table))
-        {
-            return table;
-        }
-
-        GD.PrintErr($"DataLoader: Spawn table '{tableId}' not found!");
         return null;
     }
 
@@ -81,16 +71,30 @@ public partial class DataLoader : Node
     }
 
     /// <summary>
-    /// Gets item spawn table data by ID (filename without extension).
+    /// Gets spawn table data by ID (filename without extension).
     /// </summary>
-    public ItemSpawnTable GetItemSpawnTable(string tableId)
+    public SpawnTableData GetSpawnTable(string tableId)
     {
-        if (_itemSpawnTables.TryGetValue(tableId, out var table))
+        if (_spawnTables.TryGetValue(tableId, out var table))
         {
             return table;
         }
 
-        GD.PrintErr($"DataLoader: Item spawn table '{tableId}' not found!");
+        GD.PrintErr($"DataLoader: Spawn table '{tableId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets band data by ID (filename without extension).
+    /// </summary>
+    public BandData GetBand(string bandId)
+    {
+        if (_bands.TryGetValue(bandId, out var band))
+        {
+            return band;
+        }
+
+        GD.PrintErr($"DataLoader: Band '{bandId}' not found!");
         return null;
     }
 
@@ -126,47 +130,6 @@ public partial class DataLoader : Node
                 {
                     _creatures[creatureId] = creature;
                     GD.Print($"DataLoader: Loaded creature '{creatureId}' - {creature.Name}");
-                }
-            }
-
-            fileName = dir.GetNext();
-        }
-
-        dir.ListDirEnd();
-    }
-
-    private void LoadAllSpawnTables()
-    {
-        _spawnTables.Clear();
-
-        if (!DirAccess.DirExistsAbsolute(SpawnTablesPath))
-        {
-            GD.PrintErr($"DataLoader: SpawnTables directory not found at {SpawnTablesPath}");
-            return;
-        }
-
-        var dir = DirAccess.Open(SpawnTablesPath);
-        if (dir == null)
-        {
-            GD.PrintErr($"DataLoader: Failed to open spawn tables directory");
-            return;
-        }
-
-        dir.ListDirBegin();
-        string fileName = dir.GetNext();
-
-        while (fileName != string.Empty)
-        {
-            if (!dir.CurrentIsDir() && fileName.EndsWith("_creatures.yaml"))
-            {
-                string filePath = SpawnTablesPath + fileName;
-                string tableId = fileName.Replace(".yaml", "");
-
-                var table = LoadYamlFile<CreatureSpawnTable>(filePath);
-                if (table != null)
-                {
-                    _spawnTables[tableId] = table;
-                    GD.Print($"DataLoader: Loaded spawn table '{tableId}' - {table.Name}");
                 }
             }
 
@@ -218,9 +181,9 @@ public partial class DataLoader : Node
         dir.ListDirEnd();
     }
 
-    private void LoadAllItemSpawnTables()
+    private void LoadAllSpawnTables()
     {
-        _itemSpawnTables.Clear();
+        _spawnTables.Clear();
 
         if (!DirAccess.DirExistsAbsolute(SpawnTablesPath))
         {
@@ -240,17 +203,59 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            // Only load files ending with "_items.yaml"
-            if (!dir.CurrentIsDir() && fileName.EndsWith("_items.yaml"))
+            // Load files ending with .yaml but NOT _creatures.yaml or _items.yaml (those are old tables)
+            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml") &&
+                !fileName.EndsWith("_creatures.yaml") && !fileName.EndsWith("_items.yaml"))
             {
                 string filePath = SpawnTablesPath + fileName;
                 string tableId = fileName.Replace(".yaml", "");
 
-                var table = LoadYamlFile<ItemSpawnTable>(filePath);
+                var table = LoadYamlFile<SpawnTableData>(filePath);
                 if (table != null)
                 {
-                    _itemSpawnTables[tableId] = table;
-                    GD.Print($"DataLoader: Loaded item spawn table '{tableId}' - {table.Name}");
+                    _spawnTables[tableId] = table;
+                    GD.Print($"DataLoader: Loaded spawn table '{tableId}' - {table.Name}");
+                }
+            }
+
+            fileName = dir.GetNext();
+        }
+
+        dir.ListDirEnd();
+    }
+
+    private void LoadAllBands()
+    {
+        _bands.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(BandsPath))
+        {
+            GD.Print($"DataLoader: Bands directory not found at {BandsPath}, skipping band loading");
+            return;
+        }
+
+        var dir = DirAccess.Open(BandsPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"DataLoader: Failed to open bands directory");
+            return;
+        }
+
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+
+        while (fileName != string.Empty)
+        {
+            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml"))
+            {
+                string filePath = BandsPath + fileName;
+                string bandId = fileName.Replace(".yaml", "");
+
+                var band = LoadYamlFile<BandData>(filePath);
+                if (band != null)
+                {
+                    _bands[bandId] = band;
+                    GD.Print($"DataLoader: Loaded band '{bandId}' - {band.Name}");
                 }
             }
 
