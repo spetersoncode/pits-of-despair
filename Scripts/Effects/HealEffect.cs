@@ -29,13 +29,14 @@ public class HealEffect : Effect
 
     public override EffectResult Apply(BaseEntity target, ActionContext context)
     {
+        var name = target.DisplayName;
         var healthComponent = target.GetNodeOrNull<HealthComponent>("HealthComponent");
 
         if (healthComponent == null)
         {
             return new EffectResult(
                 false,
-                $"{target.DisplayName} cannot be healed.",
+                $"{name} cannot be healed.",
                 "#888888"
             );
         }
@@ -45,7 +46,7 @@ public class HealEffect : Effect
         {
             return new EffectResult(
                 false,
-                "You are already at full health.",
+                $"{name} already at full health.",
                 "#888888"
             );
         }
@@ -57,7 +58,7 @@ public class HealEffect : Effect
 
         return new EffectResult(
             true,
-            $"You heal {actualHealing} HP.",
+            $"{name} heals {actualHealing} HP.",
             "#66ff66"  // Green for healing
         );
     }
