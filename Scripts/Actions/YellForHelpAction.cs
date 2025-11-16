@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
@@ -6,12 +8,12 @@ namespace PitsOfDespair.Actions;
 
 /// <summary>
 /// Action for yelling for help to alert nearby creatures.
-/// Alerts all creatures within a fixed radius of the player's position,
-/// setting their search parameters to investigate.
+/// Uses FOV to alert only creatures within line of sight (sound doesn't travel through walls).
+/// Sets alerted creatures' search parameters to investigate the player's position.
 /// </summary>
 public class YellForHelpAction : Action
 {
-    private const int AlertRadius = 12;
+    private const int AlertRadius = 16;
     private const int AlertSearchTurns = 12;
 
     public override string Name => "Yell for Help";
@@ -33,7 +35,14 @@ public class YellForHelpAction : Action
         var actorPosition = actor.GridPosition;
         int alertedCount = 0;
 
-        // Alert all creatures within radius
+        // Calculate visible positions from actor using FOV (sound doesn't travel through walls)
+        HashSet<GridPosition> visiblePositions = FOVCalculator.CalculateVisibleTiles(
+            actorPosition,
+            AlertRadius,
+            context.MapSystem
+        );
+
+        // Alert all creatures within visible radius
         var allEntities = context.EntityManager.GetAllEntities();
         foreach (var entity in allEntities)
         {
@@ -50,9 +59,8 @@ public class YellForHelpAction : Action
                 continue;
             }
 
-            // Check distance from actor
-            int distance = DistanceHelper.ChebyshevDistance(actorPosition, entity.GridPosition);
-            if (distance <= AlertRadius)
+            // Check if entity is visible (FOV check - sound doesn't travel through walls)
+            if (visiblePositions.Contains(entity.GridPosition))
             {
                 // Alert this creature to the player's position
                 aiComponent.LastKnownPlayerPosition = playerPosition;

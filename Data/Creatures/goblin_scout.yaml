@@ -1,6 +1,6 @@
 name: Goblin Scout
 glyph: g
-color: "#d4af37"
+color: "#ff69b4"
 maxHP: 6
 visionRange: 12
 hasMovement: true
