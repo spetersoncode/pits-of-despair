@@ -1,12 +1,13 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace PitsOfDespair.Data;
 
 /// <summary>
-/// Singleton autoload that loads and provides access to game data from JSON files.
+/// Singleton autoload that loads and provides access to game data from YAML files.
 /// </summary>
 public partial class DataLoader : Node
 {
@@ -14,10 +15,10 @@ public partial class DataLoader : Node
     private const string SpawnTablesPath = "res://Data/SpawnTables/";
     private const string ItemsPath = "res://Data/Items/";
 
-    private Dictionary<string, JsonCreatureData> _creatures = new();
-    private Dictionary<string, JsonSpawnTable> _spawnTables = new();
-    private Dictionary<string, JsonItemData> _items = new();
-    private Dictionary<string, JsonItemSpawnTable> _itemSpawnTables = new();
+    private Dictionary<string, CreatureData> _creatures = new();
+    private Dictionary<string, CreatureSpawnTable> _spawnTables = new();
+    private Dictionary<string, ItemData> _items = new();
+    private Dictionary<string, ItemSpawnTable> _itemSpawnTables = new();
 
     public override void _Ready()
     {
@@ -32,7 +33,7 @@ public partial class DataLoader : Node
     /// <summary>
     /// Gets creature data by ID (filename without extension).
     /// </summary>
-    public JsonCreatureData GetCreature(string creatureId)
+    public CreatureData GetCreature(string creatureId)
     {
         if (_creatures.TryGetValue(creatureId, out var creature))
         {
@@ -46,7 +47,7 @@ public partial class DataLoader : Node
     /// <summary>
     /// Gets spawn table data by ID (filename without extension).
     /// </summary>
-    public JsonSpawnTable GetSpawnTable(string tableId)
+    public CreatureSpawnTable GetSpawnTable(string tableId)
     {
         if (_spawnTables.TryGetValue(tableId, out var table))
         {
@@ -68,7 +69,7 @@ public partial class DataLoader : Node
     /// <summary>
     /// Gets item data by ID (filename without extension).
     /// </summary>
-    public JsonItemData GetItem(string itemId)
+    public ItemData GetItem(string itemId)
     {
         if (_items.TryGetValue(itemId, out var item))
         {
@@ -82,7 +83,7 @@ public partial class DataLoader : Node
     /// <summary>
     /// Gets item spawn table data by ID (filename without extension).
     /// </summary>
-    public JsonItemSpawnTable GetItemSpawnTable(string tableId)
+    public ItemSpawnTable GetItemSpawnTable(string tableId)
     {
         if (_itemSpawnTables.TryGetValue(tableId, out var table))
         {
@@ -115,12 +116,12 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".json"))
+            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml"))
             {
                 string filePath = CreaturesPath + fileName;
-                string creatureId = fileName.Replace(".json", "");
+                string creatureId = fileName.Replace(".yaml", "");
 
-                var creature = LoadJsonFile<JsonCreatureData>(filePath);
+                var creature = LoadYamlFile<CreatureData>(filePath);
                 if (creature != null)
                 {
                     _creatures[creatureId] = creature;
@@ -156,12 +157,12 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".json"))
+            if (!dir.CurrentIsDir() && fileName.EndsWith("_creatures.yaml"))
             {
                 string filePath = SpawnTablesPath + fileName;
-                string tableId = fileName.Replace(".json", "");
+                string tableId = fileName.Replace(".yaml", "");
 
-                var table = LoadJsonFile<JsonSpawnTable>(filePath);
+                var table = LoadYamlFile<CreatureSpawnTable>(filePath);
                 if (table != null)
                 {
                     _spawnTables[tableId] = table;
@@ -197,12 +198,12 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".json"))
+            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml"))
             {
                 string filePath = ItemsPath + fileName;
-                string itemId = fileName.Replace(".json", "");
+                string itemId = fileName.Replace(".yaml", "");
 
-                var item = LoadJsonFile<JsonItemData>(filePath);
+                var item = LoadYamlFile<ItemData>(filePath);
                 if (item != null)
                 {
                     _items[itemId] = item;
@@ -238,13 +239,13 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            // Only load files ending with "_items.json"
-            if (!dir.CurrentIsDir() && fileName.EndsWith("_items.json"))
+            // Only load files ending with "_items.yaml"
+            if (!dir.CurrentIsDir() && fileName.EndsWith("_items.yaml"))
             {
                 string filePath = SpawnTablesPath + fileName;
-                string tableId = fileName.Replace(".json", "");
+                string tableId = fileName.Replace(".yaml", "");
 
-                var table = LoadJsonFile<JsonItemSpawnTable>(filePath);
+                var table = LoadYamlFile<ItemSpawnTable>(filePath);
                 if (table != null)
                 {
                     _itemSpawnTables[tableId] = table;
@@ -258,7 +259,7 @@ public partial class DataLoader : Node
         dir.ListDirEnd();
     }
 
-    private T LoadJsonFile<T>(string path) where T : class
+    private T LoadYamlFile<T>(string path) where T : class
     {
         try
         {
@@ -269,15 +270,13 @@ public partial class DataLoader : Node
                 return null;
             }
 
-            string jsonText = file.GetAsText();
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true
-            };
+            string yamlText = file.GetAsText();
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
 
-            return JsonSerializer.Deserialize<T>(jsonText, options);
+            return deserializer.Deserialize<T>(yamlText);
         }
         catch (Exception ex)
         {

@@ -3,28 +3,16 @@ using Godot;
 namespace PitsOfDespair.Data;
 
 /// <summary>
-/// Resource defining an attack's properties
+/// Serializable attack data structure.
+/// Embedded within creature definitions.
 /// </summary>
-[GlobalClass]
 public partial class AttackData : Resource
 {
-    /// <summary>
-    /// Display name of the attack (e.g., "Bite", "Claw", "Sword Slash")
-    /// </summary>
-    [Export] public string AttackName { get; set; } = "Attack";
+    public string Name { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Minimum damage this attack can deal
-    /// </summary>
-    [Export] public int MinDamage { get; set; } = 1;
+    public int MinDamage { get; set; } = 1;
 
-    /// <summary>
-    /// Maximum damage this attack can deal
-    /// </summary>
-    [Export] public int MaxDamage { get; set; } = 3;
+    public int MaxDamage { get; set; } = 1;
 
-    /// <summary>
-    /// Range of the attack in tiles (1 = melee/adjacent, 2+ = ranged)
-    /// </summary>
-    [Export] public int Range { get; set; } = 1;
+    public int Range { get; set; } = 1;
 }

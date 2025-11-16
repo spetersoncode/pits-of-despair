@@ -151,7 +151,7 @@ public partial class EntityFactory : Node
     /// <summary>
     /// Create an entity from JSON creature data.
     /// </summary>
-    private BaseEntity CreateEntityFromJsonData(JsonCreatureData data, GridPosition position)
+    private BaseEntity CreateEntityFromJsonData(CreatureData data, GridPosition position)
     {
         // Create base entity
         var entity = new BaseEntity
@@ -198,16 +198,16 @@ public partial class EntityFactory : Node
         // Add AttackComponent if attacks are specified
         if (data.Attacks.Count > 0)
         {
-            // Convert JSON attack data to AttackData array
+            // Convert attack data to AttackData array
             var attacks = new Godot.Collections.Array<AttackData>();
-            foreach (var jsonAttack in data.Attacks)
+            foreach (var attackData in data.Attacks)
             {
                 var attack = new AttackData
                 {
-                    AttackName = jsonAttack.Name,
-                    MinDamage = jsonAttack.MinDamage,
-                    MaxDamage = jsonAttack.MaxDamage,
-                    Range = jsonAttack.Range
+                    Name = attackData.Name,
+                    MinDamage = attackData.MinDamage,
+                    MaxDamage = attackData.MaxDamage,
+                    Range = attackData.Range
                 };
                 attacks.Add(attack);
             }

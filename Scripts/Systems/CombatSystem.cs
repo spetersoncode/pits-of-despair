@@ -82,6 +82,6 @@ public partial class CombatSystem : Node
         targetHealth.TakeDamage(damage);
 
         // Emit combat feedback
-        EmitSignal(SignalName.AttackExecuted, attacker, target, damage, attackData.AttackName);
+        EmitSignal(SignalName.AttackExecuted, attacker, target, damage, attackData.Name);
     }
 }

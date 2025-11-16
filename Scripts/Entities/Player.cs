@@ -36,7 +36,7 @@ public partial class Player : BaseEntity
         {
             var playerPunch = new AttackData
             {
-                AttackName = "Punch",
+                Name = "Punch",
                 MinDamage = 1,
                 MaxDamage = 4,
                 Range = 1

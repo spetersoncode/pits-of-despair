@@ -232,7 +232,7 @@ public partial class SpawnManager : Node
     /// Get the creature spawn table for the current floor.
     /// </summary>
     /// <returns>The spawn table, or null if not available.</returns>
-    private JsonSpawnTable? GetCreatureSpawnTable()
+    private CreatureSpawnTable? GetCreatureSpawnTable()
     {
         if (_dataLoader == null)
             return null;
@@ -255,7 +255,7 @@ public partial class SpawnManager : Node
     /// <summary>
     /// Select a random spawn entry from a spawn table using weighted random selection.
     /// </summary>
-    private JsonSpawnTableEntry? SelectRandomSpawnEntry(JsonSpawnTable table)
+    private CreatureSpawnTableEntry? SelectRandomSpawnEntry(CreatureSpawnTable table)
     {
         if (table.Entries.Count == 0)
             return null;
@@ -360,7 +360,7 @@ public partial class SpawnManager : Node
     /// Get the item spawn table for the current floor.
     /// </summary>
     /// <returns>The item spawn table, or null if not available.</returns>
-    private JsonItemSpawnTable? GetItemSpawnTable()
+    private ItemSpawnTable? GetItemSpawnTable()
     {
         if (_dataLoader == null)
             return null;
@@ -383,7 +383,7 @@ public partial class SpawnManager : Node
     /// <summary>
     /// Select a random item spawn entry from a spawn table using weighted random selection.
     /// </summary>
-    private JsonItemSpawnTableEntry? SelectRandomItemSpawnEntry(JsonItemSpawnTable table)
+    private ItemSpawnTableEntry? SelectRandomItemSpawnEntry(ItemSpawnTable table)
     {
         if (table.Entries.Count == 0)
             return null;

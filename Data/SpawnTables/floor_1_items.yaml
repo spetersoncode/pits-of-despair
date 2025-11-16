@@ -1,0 +1,6 @@
+name: Floor 1 Items
+entries:
+  - itemId: health_potion
+    weight: 1
+    minCount: 0
+    maxCount: 2
