@@ -1,3 +1,4 @@
+using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Actions;
@@ -25,9 +26,9 @@ public class PickupAction : Action
 
         // Check if there's an item at the actor's position
         var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
-        var itemAtPosition = entityAtPosition as Item;
+        var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
 
-        return itemAtPosition != null;
+        return itemComponent != null;
     }
 
     public override ActionResult Execute(BaseEntity actor, ActionContext context)
@@ -39,9 +40,9 @@ public class PickupAction : Action
 
         // Check for item at player's current position
         var entityAtPosition = context.EntityManager.GetEntityAtPosition(player.GridPosition);
-        var itemAtPosition = entityAtPosition as Item;
+        var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
 
-        if (itemAtPosition == null)
+        if (itemComponent == null)
         {
             string message = "Nothing to pick up.";
             player.EmitItemPickupFeedback("", false, message);
@@ -49,18 +50,18 @@ public class PickupAction : Action
         }
 
         // Try to add to inventory
-        if (!player.AddItemToInventory(itemAtPosition, out string resultMessage))
+        if (!player.AddItemToInventory(entityAtPosition, out string resultMessage))
         {
-            player.EmitItemPickupFeedback(itemAtPosition.DisplayName, false, resultMessage);
+            player.EmitItemPickupFeedback(entityAtPosition.DisplayName, false, resultMessage);
             return ActionResult.CreateFailure(resultMessage);
         }
 
         // Remove item from world
-        context.EntityManager.RemoveEntity(itemAtPosition);
-        itemAtPosition.QueueFree();
+        context.EntityManager.RemoveEntity(entityAtPosition);
+        entityAtPosition.QueueFree();
 
         // Emit feedback
-        player.EmitItemPickupFeedback(itemAtPosition.DisplayName, true, resultMessage);
+        player.EmitItemPickupFeedback(entityAtPosition.DisplayName, true, resultMessage);
 
         return ActionResult.CreateSuccess(resultMessage);
     }

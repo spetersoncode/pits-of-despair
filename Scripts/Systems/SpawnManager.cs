@@ -330,8 +330,8 @@ public partial class SpawnManager : Node
     /// </summary>
     /// <param name="itemId">The item ID to spawn.</param>
     /// <param name="position">The grid position to spawn at.</param>
-    /// <returns>The spawned item, or null if spawning failed.</returns>
-    public Item? SpawnItem(string itemId, GridPosition position)
+    /// <returns>The spawned item entity (BaseEntity with ItemComponent), or null if spawning failed.</returns>
+    public BaseEntity? SpawnItem(string itemId, GridPosition position)
     {
         if (_entityFactory == null)
         {

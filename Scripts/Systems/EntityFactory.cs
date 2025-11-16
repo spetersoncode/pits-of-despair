@@ -42,8 +42,8 @@ public partial class EntityFactory : Node
     /// </summary>
     /// <param name="itemId">The item ID (JSON filename without extension).</param>
     /// <param name="position">The grid position to place the item.</param>
-    /// <returns>The created and configured Item, or null if item not found.</returns>
-    public Item CreateItem(string itemId, GridPosition position)
+    /// <returns>The created and configured BaseEntity with ItemComponent, or null if item not found.</returns>
+    public BaseEntity CreateItem(string itemId, GridPosition position)
     {
         var data = _dataLoader.GetItem(itemId);
         if (data == null)
@@ -52,21 +52,25 @@ public partial class EntityFactory : Node
             return null;
         }
 
-        // Create item entity
-        var item = new Item
+        // Create base entity for the item
+        var entity = new BaseEntity
         {
             GridPosition = position,
             DisplayName = data.Name,
             Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?',
             GlyphColor = data.GetColor(),
-            ItemType = data.ItemType,
-            ItemData = data, // Store full item data for inventory system
             Name = data.Name // Set node name for debugging
         };
 
-        // Future: Add PickupComponent when implementing inventory system
+        // Add ItemComponent to mark as collectible item
+        var itemComponent = new ItemComponent
+        {
+            Name = "ItemComponent",
+            ItemData = data // Store full item data for inventory system
+        };
+        entity.AddChild(itemComponent);
 
-        return item;
+        return entity;
     }
 
     /// <summary>

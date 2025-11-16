@@ -188,9 +188,9 @@ public partial class Player : BaseEntity
 
         // Check for item at player's current position
         var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
-        var itemAtPosition = entityAtPosition as Item;
+        var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
 
-        if (itemAtPosition == null)
+        if (itemComponent == null)
         {
             EmitSignal(SignalName.ItemPickedUp, "", false, "Nothing to pick up.");
             return false; // No turn consumed
@@ -201,11 +201,11 @@ public partial class Player : BaseEntity
         {
             // Check if we can stack with existing item
             var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == itemAtPosition.ItemData.DataFileId);
+                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
 
             if (existingSlot == null)
             {
-                EmitSignal(SignalName.ItemPickedUp, itemAtPosition.DisplayName, false,
+                EmitSignal(SignalName.ItemPickedUp, entityAtPosition.DisplayName, false,
                     "Inventory full! (26 unique items)");
                 return false; // No turn consumed
             }
@@ -217,7 +217,7 @@ public partial class Player : BaseEntity
         {
             // Try to find existing slot for stacking
             var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == itemAtPosition.ItemData.DataFileId);
+                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
 
             if (existingSlot != null)
             {
@@ -228,17 +228,17 @@ public partial class Player : BaseEntity
             {
                 // Add new slot with next available key
                 char nextKey = GetNextAvailableKey();
-                var newSlot = new InventorySlot(nextKey, itemAtPosition.ItemData, 1);
+                var newSlot = new InventorySlot(nextKey, itemComponent.ItemData, 1);
                 _inventory.Add(newSlot);
             }
         }
 
         // Remove item from world
-        _entityManager.RemoveEntity(itemAtPosition);
-        itemAtPosition.QueueFree();
+        _entityManager.RemoveEntity(entityAtPosition);
+        entityAtPosition.QueueFree();
 
         // Notify listeners
-        string itemName = itemAtPosition.DisplayName;
+        string itemName = entityAtPosition.DisplayName;
         EmitSignal(SignalName.ItemPickedUp, itemName, true, $"You pick up the {itemName}.");
         EmitSignal(SignalName.InventoryChanged);
 
@@ -266,17 +266,24 @@ public partial class Player : BaseEntity
     /// Adds an item to the player's inventory.
     /// Used by PickupAction to manage inventory.
     /// </summary>
-    /// <param name="item">The item to add.</param>
+    /// <param name="itemEntity">The entity with ItemComponent to add.</param>
     /// <param name="message">Output message describing the result.</param>
     /// <returns>True if the item was added successfully.</returns>
-    public bool AddItemToInventory(Item item, out string message)
+    public bool AddItemToInventory(BaseEntity itemEntity, out string message)
     {
+        var itemComponent = itemEntity.GetNodeOrNull<ItemComponent>("ItemComponent");
+        if (itemComponent == null)
+        {
+            message = "Not an item!";
+            return false;
+        }
+
         // Check if inventory is full (26 unique items)
         if (_inventory.Count >= MaxInventorySlots)
         {
             // Check if we can stack with existing item
             var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == item.ItemData.DataFileId);
+                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
 
             if (existingSlot == null)
             {
@@ -291,7 +298,7 @@ public partial class Player : BaseEntity
         {
             // Try to find existing slot for stacking
             var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == item.ItemData.DataFileId);
+                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
 
             if (existingSlot != null)
             {
@@ -302,12 +309,12 @@ public partial class Player : BaseEntity
             {
                 // Add new slot with next available key
                 char nextKey = GetNextAvailableKey();
-                var newSlot = new InventorySlot(nextKey, item.ItemData, 1);
+                var newSlot = new InventorySlot(nextKey, itemComponent.ItemData, 1);
                 _inventory.Add(newSlot);
             }
         }
 
-        message = $"You pick up the {item.DisplayName}.";
+        message = $"You pick up the {itemEntity.DisplayName}.";
         return true;
     }
 

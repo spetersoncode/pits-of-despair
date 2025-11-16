@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
@@ -216,7 +217,7 @@ public partial class TextRenderer : Control
         foreach (var entity in _entities)
         {
             // Only process items
-            if (entity is not Item)
+            if (entity.GetNodeOrNull<ItemComponent>("ItemComponent") == null)
                 continue;
 
             // Don't draw items at player position (player glyph takes precedence)
@@ -259,7 +260,7 @@ public partial class TextRenderer : Control
         foreach (var entity in _entities)
         {
             // Skip items (already drawn)
-            if (entity is Item)
+            if (entity.GetNodeOrNull<ItemComponent>("ItemComponent") != null)
                 continue;
 
             // Check if entity is on a visible tile
