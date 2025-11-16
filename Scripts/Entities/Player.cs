@@ -131,13 +131,26 @@ public partial class Player : BaseEntity
     {
         var result = base.ExecuteAction(action, context);
 
-        // If action consumed a turn, emit turn completed signal
+        // If action consumed a turn, process recharging and emit turn completed signal
         if (result.ConsumesTurn)
         {
+            ProcessItemRecharging();
             EmitSignal(SignalName.TurnCompleted);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Processes recharging for all items in inventory that have recharge capabilities.
+    /// Called each turn when an action is successfully executed.
+    /// </summary>
+    private void ProcessItemRecharging()
+    {
+        foreach (var slot in _inventory)
+        {
+            slot.Item.ProcessTurn();
+        }
     }
 
     /// <summary>
@@ -202,12 +215,15 @@ public partial class Player : BaseEntity
             return false; // No turn consumed
         }
 
+        // Check if item is stackable (consumables only, charged items never stack)
+        bool canStack = itemComponent.Item.Template.IsConsumable;
+
         // Check if inventory is full (26 unique items)
         if (_inventory.Count >= MaxInventorySlots)
         {
             // Check if we can stack with existing item
-            var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
+            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
+                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
 
             if (existingSlot == null)
             {
@@ -222,8 +238,8 @@ public partial class Player : BaseEntity
         else
         {
             // Try to find existing slot for stacking
-            var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
+            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
+                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
 
             if (existingSlot != null)
             {
@@ -234,7 +250,7 @@ public partial class Player : BaseEntity
             {
                 // Add new slot with next available key
                 char nextKey = GetNextAvailableKey();
-                var newSlot = new InventorySlot(nextKey, itemComponent.ItemData, 1);
+                var newSlot = new InventorySlot(nextKey, itemComponent.Item, 1);
                 _inventory.Add(newSlot);
             }
         }
@@ -284,12 +300,15 @@ public partial class Player : BaseEntity
             return false;
         }
 
+        // Check if item is stackable (consumables only, charged items never stack)
+        bool canStack = itemComponent.Item.Template.IsConsumable;
+
         // Check if inventory is full (26 unique items)
         if (_inventory.Count >= MaxInventorySlots)
         {
             // Check if we can stack with existing item
-            var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
+            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
+                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
 
             if (existingSlot == null)
             {
@@ -303,8 +322,8 @@ public partial class Player : BaseEntity
         else
         {
             // Try to find existing slot for stacking
-            var existingSlot = _inventory.FirstOrDefault(slot =>
-                slot.ItemData.DataFileId == itemComponent.ItemData.DataFileId);
+            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
+                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
 
             if (existingSlot != null)
             {
@@ -315,7 +334,7 @@ public partial class Player : BaseEntity
             {
                 // Add new slot with next available key
                 char nextKey = GetNextAvailableKey();
-                var newSlot = new InventorySlot(nextKey, itemComponent.ItemData, 1);
+                var newSlot = new InventorySlot(nextKey, itemComponent.Item, 1);
                 _inventory.Add(newSlot);
             }
         }

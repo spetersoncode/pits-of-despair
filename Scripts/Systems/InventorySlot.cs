@@ -5,6 +5,7 @@ namespace PitsOfDespair.Systems;
 /// <summary>
 /// Represents a single slot in the player's inventory.
 /// Each slot is assigned a letter key (a-z) and can hold multiple items of the same type.
+/// For consumables, Count can be > 1. For charged items, Count is always 1.
 /// </summary>
 public class InventorySlot
 {
@@ -14,19 +15,20 @@ public class InventorySlot
     public char Key { get; set; }
 
     /// <summary>
-    /// The item data for items in this slot.
+    /// The item instance in this slot, which wraps the template data and per-instance state.
     /// </summary>
-    public ItemData ItemData { get; set; }
+    public ItemInstance Item { get; set; }
 
     /// <summary>
     /// The number of items stacked in this slot.
+    /// Only > 1 for consumable items. Charged items always have Count = 1.
     /// </summary>
     public int Count { get; set; }
 
-    public InventorySlot(char key, ItemData itemData, int count = 1)
+    public InventorySlot(char key, ItemInstance item, int count = 1)
     {
         Key = key;
-        ItemData = itemData;
+        Item = item;
         Count = count;
     }
 

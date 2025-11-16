@@ -63,10 +63,12 @@ public partial class EntityFactory : Node
         };
 
         // Add ItemComponent to mark as collectible item
+        // Create ItemInstance with randomized/specified charges
+        var itemInstance = new ItemInstance(data);
         var itemComponent = new ItemComponent
         {
             Name = "ItemComponent",
-            ItemData = data // Store full item data for inventory system
+            Item = itemInstance // Store item instance with per-instance state
         };
         entity.AddChild(itemComponent);
 

@@ -53,9 +53,9 @@ public class DropItemAction : Action
 			return ActionResult.CreateFailure("No item in that slot.");
 		}
 
-		// Store item data before removing from inventory
-		var itemData = slot.ItemData;
-		string itemName = itemData.Name;
+		// Store item instance before removing from inventory
+		var itemInstance = slot.Item;
+		string itemName = itemInstance.Template.Name;
 
 		// Remove one item from inventory
 		if (!player.RemoveItemFromInventory(_itemKey, 1))
@@ -67,17 +67,17 @@ public class DropItemAction : Action
 		var itemEntity = new BaseEntity
 		{
 			GridPosition = player.GridPosition,
-			DisplayName = itemData.Name,
-			Glyph = !string.IsNullOrEmpty(itemData.Glyph) ? itemData.Glyph : "?",
-			GlyphColor = itemData.GetColor(),
-			Name = itemData.Name
+			DisplayName = itemInstance.Template.Name,
+			Glyph = !string.IsNullOrEmpty(itemInstance.Template.Glyph) ? itemInstance.Template.Glyph : "?",
+			GlyphColor = itemInstance.Template.GetColor(),
+			Name = itemInstance.Template.Name
 		};
 
-		// Add ItemComponent
+		// Add ItemComponent with the item instance (preserves charges)
 		var itemComponent = new ItemComponent
 		{
 			Name = "ItemComponent",
-			ItemData = itemData
+			Item = itemInstance
 		};
 		itemEntity.AddChild(itemComponent);
 

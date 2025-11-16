@@ -11,10 +11,10 @@ namespace PitsOfDespair.Components;
 public partial class ItemComponent : Node
 {
     /// <summary>
-    /// Reference to the item's data definition
-    /// Used for inventory stacking (items with same DataFileId stack)
+    /// The item instance with template data and per-instance state (charges, etc.)
+    /// Used for inventory stacking and preserving item state.
     /// </summary>
-    public ItemData ItemData { get; set; } = null!;
+    public ItemInstance Item { get; set; } = null!;
 
     private BaseEntity? _entity;
 

@@ -17,8 +17,6 @@ public class ItemData
 
     public string Color { get; set; } = "#FFFFFF";
 
-    public string ItemType { get; set; } = "generic";
-
     /// <summary>
     /// Unique identifier for the source data file.
     /// Used for inventory stacking - items with the same DataFileId can stack.
@@ -26,15 +24,43 @@ public class ItemData
     public string DataFileId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Whether this item can be activated (used) from the inventory.
+    /// Whether this item is consumable (one-time use, stackable).
     /// </summary>
-    public bool IsActivatable { get; set; } = false;
+    public bool IsConsumable { get; set; } = false;
+
+    /// <summary>
+    /// Maximum number of charges this item can hold.
+    /// If 0, this item does not use charges. Optional in YAML.
+    /// </summary>
+    public int MaxCharges { get; set; } = 0;
+
+    /// <summary>
+    /// Starting charges when this item is spawned.
+    /// If 0 and MaxCharges > 0, charges will be randomized between 1 and MaxCharges.
+    /// Optional in YAML.
+    /// </summary>
+    public int Charges { get; set; } = 0;
+
+    /// <summary>
+    /// Number of turns required to recharge 1 charge.
+    /// If 0, this item does not recharge. Optional in YAML.
+    /// </summary>
+    public int RechargeTurns { get; set; } = 0;
 
     /// <summary>
     /// Raw effect definitions from YAML.
     /// These are deserialized from the YAML file and then converted to Effect instances.
     /// </summary>
     public List<EffectDefinition> Effects { get; set; } = new();
+
+    /// <summary>
+    /// Determines if this item can be activated from inventory.
+    /// Items are activatable if they are consumable or have charges.
+    /// </summary>
+    public bool IsActivatable()
+    {
+        return IsConsumable || MaxCharges > 0;
+    }
 
     /// <summary>
     /// Converts this data to a Godot Color object.

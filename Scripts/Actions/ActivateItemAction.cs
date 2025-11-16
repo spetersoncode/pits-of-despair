@@ -39,7 +39,18 @@ public class ActivateItemAction : Action
         }
 
         // Check if the item is activatable
-        return slot.ItemData.IsActivatable;
+        if (!slot.Item.Template.IsActivatable())
+        {
+            return false;
+        }
+
+        // If it's a charged item, check if it has charges remaining
+        if (slot.Item.Template.MaxCharges > 0 && slot.Item.CurrentCharges <= 0)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public override ActionResult Execute(BaseEntity actor, ActionContext context)
@@ -56,17 +67,25 @@ public class ActivateItemAction : Action
             return ActionResult.CreateFailure("No item in that slot.");
         }
 
+        var itemTemplate = slot.Item.Template;
+
         // Check if the item is activatable
-        if (!slot.ItemData.IsActivatable)
+        if (!itemTemplate.IsActivatable())
         {
-            return ActionResult.CreateFailure($"You can't activate {slot.ItemData.Name}.");
+            return ActionResult.CreateFailure($"You can't activate {itemTemplate.Name}.");
+        }
+
+        // Check if charged item has charges remaining
+        if (itemTemplate.MaxCharges > 0 && slot.Item.CurrentCharges <= 0)
+        {
+            return ActionResult.CreateFailure($"The {itemTemplate.Name} has no charges remaining.");
         }
 
         // Get the item's effects
-        var effects = slot.ItemData.GetEffects();
+        var effects = itemTemplate.GetEffects();
         if (effects.Count == 0)
         {
-            return ActionResult.CreateFailure($"{slot.ItemData.Name} has no effects.");
+            return ActionResult.CreateFailure($"{itemTemplate.Name} has no effects.");
         }
 
         // Apply all effects
@@ -87,17 +106,26 @@ public class ActivateItemAction : Action
             }
         }
 
-        // If no effects succeeded, don't consume the item
+        // If no effects succeeded, don't consume the item or charge
         if (!anyEffectSucceeded)
         {
             return ActionResult.CreateFailure(messages.ToString().TrimEnd());
         }
 
-        // Remove the consumed item from inventory
-        player.RemoveItemFromInventory(_itemKey, 1);
+        // Handle consumption based on item type
+        if (itemTemplate.IsConsumable)
+        {
+            // Consumable: remove one from stack
+            player.RemoveItemFromInventory(_itemKey, 1);
+        }
+        else if (itemTemplate.MaxCharges > 0)
+        {
+            // Charged item: use one charge
+            slot.Item.UseCharge();
+        }
 
         // Emit feedback signal for logging
-        player.EmitItemUsed(slot.ItemData.Name, true, messages.ToString().TrimEnd());
+        player.EmitItemUsed(itemTemplate.Name, true, messages.ToString().TrimEnd());
 
         return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
     }
