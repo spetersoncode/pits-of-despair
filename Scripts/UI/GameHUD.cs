@@ -13,7 +13,8 @@ public enum MenuState
     None,
     Inventory,
     Activate,
-    Drop
+    Drop,
+    Equip
 }
 
 /// <summary>
@@ -26,6 +27,7 @@ public partial class GameHUD : Control
     private InventoryPanel _inventoryPanel;
     private ActivateItemPanel _activateItemPanel;
     private DropItemPanel _dropItemPanel;
+    private EquipPanel _equipPanel;
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
@@ -37,6 +39,7 @@ public partial class GameHUD : Control
         _inventoryPanel = GetNode<InventoryPanel>("InventoryPanel");
         _activateItemPanel = GetNode<ActivateItemPanel>("ActivateItemPanel");
         _dropItemPanel = GetNode<DropItemPanel>("DropItemPanel");
+        _equipPanel = GetNode<EquipPanel>("EquipPanel");
     }
 
     /// <summary>
@@ -65,20 +68,23 @@ public partial class GameHUD : Control
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Cancelled += OnInventoryCancelled;
 
-        // Wire up activate and drop panels
+        // Wire up activate, drop, and equip panels
         _activateItemPanel.ConnectToPlayer(player);
         _dropItemPanel.ConnectToPlayer(player);
+        _equipPanel.ConnectToPlayer(player);
 
         // Connect panel signals
         _activateItemPanel.ItemSelected += OnActivateItemSelected;
         _activateItemPanel.Cancelled += OnActivateItemCancelled;
         _dropItemPanel.ItemSelected += OnDropItemSelected;
         _dropItemPanel.Cancelled += OnDropItemCancelled;
+        _equipPanel.ItemSelected += OnEquipItemSelected;
+        _equipPanel.Cancelled += OnEquipItemCancelled;
 
-        // Subscribe to all entity deaths (including enemies)
-        entityManager.EntityRemoved += OnEntityRemoved;
+        // Subscribe to entity additions to connect their HealthComponents to message log
+        entityManager.EntityAdded += OnEntityAdded;
 
-        // Subscribe to player death specifically
+        // Also connect the player's HealthComponent (player is not added via EntityManager)
         var playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
         _messageLog.ConnectToHealthComponent(playerHealth, player.DisplayName);
 
@@ -169,6 +175,22 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.Drop;
     }
 
+    /// <summary>
+    /// Shows the equip item menu.
+    /// Called by InputHandler when 'E' is pressed.
+    /// </summary>
+    public void ShowEquipMenu()
+    {
+        // Close any open menus first
+        if (_currentMenuState != MenuState.None && _currentMenuState != MenuState.Equip)
+        {
+            CloseAllMenus();
+        }
+
+        _equipPanel.ShowMenu();
+        _currentMenuState = MenuState.Equip;
+    }
+
     private void OnInventoryCancelled()
     {
         _inventoryPanel.ToggleInventory();
@@ -207,6 +229,22 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.None;
     }
 
+    private void OnEquipItemSelected(char key)
+    {
+        _equipPanel.HideMenu();
+        _currentMenuState = MenuState.None;
+
+        // Execute EquipAction
+        var action = new EquipAction(key);
+        _player.ExecuteAction(action, _actionContext);
+    }
+
+    private void OnEquipItemCancelled()
+    {
+        _equipPanel.HideMenu();
+        _currentMenuState = MenuState.None;
+    }
+
     /// <summary>
     /// Closes all open menus and resets menu state.
     /// </summary>
@@ -215,6 +253,7 @@ public partial class GameHUD : Control
         _inventoryPanel.Hide();
         _activateItemPanel.HideMenu();
         _dropItemPanel.HideMenu();
+        _equipPanel.HideMenu();
         _currentMenuState = MenuState.None;
     }
 
@@ -249,12 +288,13 @@ public partial class GameHUD : Control
         _messageLog.AddMessage($"You drop {itemName}.", "#ffffff"); // White
     }
 
-    private void OnEntityRemoved(BaseEntity entity)
+    private void OnEntityAdded(BaseEntity entity)
     {
-        // Only log death for non-player entities (player death is handled separately)
-        if (entity.DisplayName != "Player")
+        // Connect the entity's HealthComponent to the message log for death messages
+        var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
+        if (healthComponent != null)
         {
-            _messageLog.AddMessage($"{entity.DisplayName} dies!", "#ffff66"); // Yellow
+            _messageLog.ConnectToHealthComponent(healthComponent, entity.DisplayName);
         }
     }
 }

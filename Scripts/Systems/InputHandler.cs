@@ -20,6 +20,9 @@ public partial class InputHandler : Node
     [Signal]
     public delegate void DropItemRequestedEventHandler();
 
+    [Signal]
+    public delegate void EquipMenuRequestedEventHandler();
+
     private Player _player;
     private TurnManager _turnManager;
     private ActionContext _actionContext;
@@ -126,6 +129,14 @@ public partial class InputHandler : Node
             if (keyEvent.Keycode == Key.D)
             {
                 EmitSignal(SignalName.DropItemRequested);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Equip menu (doesn't require player turn)
+            if (keyEvent.Keycode == Key.E)
+            {
+                EmitSignal(SignalName.EquipMenuRequested);
                 GetViewport().SetInputAsHandled();
                 return;
             }

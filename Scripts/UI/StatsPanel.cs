@@ -1,4 +1,7 @@
 using Godot;
+using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Data;
+using System.Text;
 
 namespace PitsOfDespair.UI;
 
@@ -18,6 +21,7 @@ public partial class StatsPanel : PanelContainer
 	private Label _healthLabel;
 	private Label _floorLabel;
 	private Label _standingOnLabel;
+	private RichTextLabel _equipmentLabel;
 
 	private int _currentFloorDepth = 1;
 	private Entities.Player _player;
@@ -28,9 +32,11 @@ public partial class StatsPanel : PanelContainer
 		_healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
 		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
 		_standingOnLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StandingOnLabel");
+		_equipmentLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/EquipmentLabel");
 
 		UpdateFloorDisplay();
 		UpdateStandingOnDisplay();
+		UpdateEquipmentDisplay();
 	}
 
 	/// <summary>
@@ -49,9 +55,17 @@ public partial class StatsPanel : PanelContainer
 		// Subscribe to inventory changes (for when items are picked up)
 		player.InventoryChanged += OnInventoryChanged;
 
+		// Subscribe to equipment changes
+		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		if (equipComponent != null)
+		{
+			equipComponent.EquipmentChanged += OnEquipmentChanged;
+		}
+
 		// Initialize display with current values
 		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
 		UpdateStandingOnDisplay();
+		UpdateEquipmentDisplay();
 	}
 
 	/// <summary>
@@ -115,6 +129,121 @@ public partial class StatsPanel : PanelContainer
 	{
 		// Update display when items are picked up
 		UpdateStandingOnDisplay();
+		UpdateEquipmentDisplay();
+	}
+
+	private void OnEquipmentChanged(EquipmentSlot slot)
+	{
+		UpdateEquipmentDisplay();
+	}
+
+	private void UpdateEquipmentDisplay()
+	{
+		if (_equipmentLabel == null || _player == null)
+			return;
+
+		var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		if (equipComponent == null)
+		{
+			_equipmentLabel.Text = "[b]Equipment:[/b]\n(No equipment system)";
+			return;
+		}
+
+		var sb = new StringBuilder();
+		sb.AppendLine("[b]Equipment:[/b]");
+
+		// Melee weapon
+		sb.Append("Melee: ");
+		var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
+		if (meleeKey.HasValue)
+		{
+			var slot = _player.GetInventorySlot(meleeKey.Value);
+			if (slot != null)
+			{
+				sb.AppendLine($"{slot.Item.Template.Name}");
+			}
+			else
+			{
+				sb.AppendLine("(error)");
+			}
+		}
+		else
+		{
+			sb.AppendLine("(none)");
+		}
+
+		// Ranged weapon
+		sb.Append("Ranged: ");
+		var rangedKey = equipComponent.GetEquippedKey(EquipmentSlot.RangedWeapon);
+		if (rangedKey.HasValue)
+		{
+			var slot = _player.GetInventorySlot(rangedKey.Value);
+			if (slot != null)
+			{
+				sb.AppendLine($"{slot.Item.Template.Name}");
+			}
+			else
+			{
+				sb.AppendLine("(error)");
+			}
+		}
+		else
+		{
+			sb.AppendLine("(none)");
+		}
+
+		// Armor
+		sb.Append("Armor: ");
+		var armorKey = equipComponent.GetEquippedKey(EquipmentSlot.Armor);
+		if (armorKey.HasValue)
+		{
+			var slot = _player.GetInventorySlot(armorKey.Value);
+			if (slot != null)
+			{
+				sb.AppendLine($"{slot.Item.Template.Name}");
+			}
+			else
+			{
+				sb.AppendLine("(error)");
+			}
+		}
+		else
+		{
+			sb.AppendLine("(none)");
+		}
+
+		// Rings
+		sb.Append("Rings: ");
+		var ring1Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring1);
+		var ring2Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring2);
+		if (ring1Key.HasValue || ring2Key.HasValue)
+		{
+			var ringNames = new System.Collections.Generic.List<string>();
+			if (ring1Key.HasValue)
+			{
+				var slot = _player.GetInventorySlot(ring1Key.Value);
+				if (slot != null) ringNames.Add(slot.Item.Template.Name);
+			}
+			if (ring2Key.HasValue)
+			{
+				var slot = _player.GetInventorySlot(ring2Key.Value);
+				if (slot != null) ringNames.Add(slot.Item.Template.Name);
+			}
+			if (ringNames.Count > 0)
+			{
+				sb.AppendLine(string.Join(", ", ringNames));
+			}
+			else
+			{
+				sb.AppendLine("(error)");
+			}
+		}
+		else
+		{
+			sb.AppendLine("(none)");
+		}
+
+		_equipmentLabel.Text = sb.ToString();
 	}
 
 	private void UpdateStandingOnDisplay()

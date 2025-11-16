@@ -240,9 +240,20 @@ public partial class EntityFactory : Node
             var attackComponent = new AttackComponent
             {
                 Name = "AttackComponent",
-                Attacks = attacks
+                NaturalAttacks = attacks, // Store as natural attacks
+                Attacks = attacks // Also set as current attacks (will be weapon attacks if equipped)
             };
             entity.AddChild(attackComponent);
+        }
+
+        // Add EquipComponent if creature can equip items
+        if (data.GetCanEquip())
+        {
+            var equipComponent = new Scripts.Components.EquipComponent
+            {
+                Name = "EquipComponent"
+            };
+            entity.AddChild(equipComponent);
         }
 
         // Add AIComponent if entity has AI behavior enabled

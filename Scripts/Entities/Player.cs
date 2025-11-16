@@ -3,6 +3,8 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Systems;
 using PitsOfDespair.UI;
 using System.Collections.Generic;
@@ -51,7 +53,7 @@ public partial class Player : BaseEntity
         // Get MovementComponent child
         _movementComponent = GetNode<MovementComponent>("MovementComponent");
 
-        // Initialize attack component with player's default attack
+        // Initialize attack component with player's natural attack (unarmed punch)
         var attackComponent = GetNodeOrNull<AttackComponent>("AttackComponent");
         if (attackComponent != null)
         {
@@ -59,11 +61,20 @@ public partial class Player : BaseEntity
             {
                 Name = "Punch",
                 MinDamage = 1,
-                MaxDamage = 4,
+                MaxDamage = 2,
                 Range = 1
             };
-            attackComponent.Attacks = new Godot.Collections.Array<AttackData> { playerPunch };
+            var naturalAttacks = new Godot.Collections.Array<AttackData> { playerPunch };
+            attackComponent.NaturalAttacks = naturalAttacks;
+            attackComponent.Attacks = naturalAttacks; // Start with natural attacks (will be replaced by weapon if equipped)
         }
+
+        // Add EquipComponent to player
+        var equipComponent = new EquipComponent { Name = "EquipComponent" };
+        AddChild(equipComponent);
+
+        // Add starting equipment to inventory
+        AddStartingEquipment();
 
         // Track position changes to emit Moved signal for backwards compatibility
         PositionChanged += OnPositionChanged;
@@ -78,6 +89,44 @@ public partial class Player : BaseEntity
     {
         SetGridPosition(spawnPosition);
         _previousPosition = spawnPosition;
+    }
+
+    /// <summary>
+    /// Adds starting equipment to player's inventory and equips it.
+    /// Called during _Ready() to give player initial equipment.
+    /// </summary>
+    private void AddStartingEquipment()
+    {
+        var dataLoader = GetNode<DataLoader>("/root/DataLoader");
+        if (dataLoader == null)
+        {
+            GD.PushError("Player: DataLoader not found! Cannot add starting equipment.");
+            return;
+        }
+
+        // Add short sword to inventory
+        var shortSwordData = dataLoader.GetItem("weaponsmelee_short_sword");
+        if (shortSwordData != null)
+        {
+            var shortSwordInstance = new ItemInstance(shortSwordData);
+            char key = GetNextAvailableKey();
+            var slot = new InventorySlot(key, shortSwordInstance, 1);
+            _inventory.Add(slot);
+
+            // Auto-equip the short sword
+            var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
+            if (equipComponent != null)
+            {
+                var equipSlot = shortSwordData.GetEquipmentSlot();
+                equipComponent.Equip(key, equipSlot);
+            }
+
+            EmitSignal(SignalName.InventoryChanged);
+        }
+        else
+        {
+            GD.PushWarning("Player: Short sword data not found. Player starting with unarmed.");
+        }
     }
 
     /// <summary>
@@ -303,12 +352,16 @@ public partial class Player : BaseEntity
         // Check if item is stackable (consumables only, charged items never stack)
         bool canStack = itemComponent.Item.Template.GetIsConsumable();
 
+        // Get equipped items to exclude from stacking (equipped items never stack)
+        var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
+
         // Check if inventory is full (26 unique items)
         if (_inventory.Count >= MaxInventorySlots)
         {
-            // Check if we can stack with existing item
+            // Check if we can stack with existing item (exclude equipped items)
             var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
-                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
+                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId &&
+                (equipComponent == null || !equipComponent.IsEquipped(slot.Key))) : null;
 
             if (existingSlot == null)
             {
@@ -321,9 +374,10 @@ public partial class Player : BaseEntity
         }
         else
         {
-            // Try to find existing slot for stacking
+            // Try to find existing slot for stacking (exclude equipped items)
             var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
-                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
+                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId &&
+                (equipComponent == null || !equipComponent.IsEquipped(slot.Key))) : null;
 
             if (existingSlot != null)
             {

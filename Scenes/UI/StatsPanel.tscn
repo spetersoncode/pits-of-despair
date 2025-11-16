@@ -29,3 +29,15 @@ text = "Floor: 1"
 [node name="StandingOnLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = ""
+
+[node name="EquipmentLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+bbcode_enabled = true
+text = "[b]Equipment:[/b]
+Melee: (none)
+Ranged: (none)
+Armor: (none)
+Rings: (none)"
+fit_content = true
+scroll_active = false

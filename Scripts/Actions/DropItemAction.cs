@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Actions;
@@ -56,6 +57,14 @@ public class DropItemAction : Action
 		// Store item instance before removing from inventory
 		var itemInstance = slot.Item;
 		string itemName = itemInstance.Template.Name;
+
+		// If item is equipped, unequip it first
+		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		if (equipComponent != null && equipComponent.IsEquipped(_itemKey))
+		{
+			var equipSlot = equipComponent.GetSlotForItem(_itemKey);
+			equipComponent.Unequip(equipSlot);
+		}
 
 		// Remove one item from inventory
 		if (!player.RemoveItemFromInventory(_itemKey, 1))

@@ -32,6 +32,21 @@ public class CreatureData
     public List<string> Goals { get; set; } = new();
 
     /// <summary>
+    /// List of item IDs that this creature starts equipped with.
+    /// If specified, the creature will have an EquipComponent and items will be added and equipped.
+    /// </summary>
+    public List<string> Equipment { get; set; } = new();
+
+    /// <summary>
+    /// Gets whether this creature can equip items.
+    /// Returns true if Equipment list is defined and not empty.
+    /// </summary>
+    public bool GetCanEquip()
+    {
+        return Equipment != null && Equipment.Count > 0;
+    }
+
+    /// <summary>
     /// Converts this data to a Godot Color object.
     /// </summary>
     public Color GetColor()

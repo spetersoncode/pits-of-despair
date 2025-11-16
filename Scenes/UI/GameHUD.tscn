@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/GameHUD.cs" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/StatsPanel.tscn" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/InventoryPanel.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/ActivateItemPanel.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/DropItemPanel.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/EquipPanel.tscn" id="7"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -34,4 +35,7 @@ layout_mode = 1
 layout_mode = 1
 
 [node name="DropItemPanel" parent="." instance=ExtResource("6")]
+layout_mode = 1
+
+[node name="EquipPanel" parent="." instance=ExtResource("7")]
 layout_mode = 1

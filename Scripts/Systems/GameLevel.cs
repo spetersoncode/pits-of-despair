@@ -121,6 +121,7 @@ public partial class GameLevel : Node
         _inputHandler.InventoryToggleRequested += _gameHUD.ToggleInventory;
         _inputHandler.ActivateItemRequested += _gameHUD.ShowActivateMenu;
         _inputHandler.DropItemRequested += _gameHUD.ShowDropMenu;
+        _inputHandler.EquipMenuRequested += _gameHUD.ShowEquipMenu;
 
         // Wire up AI system
         _aiSystem.SetMapSystem(_mapSystem);

@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using PitsOfDespair.Effects;
+using PitsOfDespair.Scripts.Data;
 using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Data;
@@ -65,6 +66,26 @@ public class ItemData
     public List<EffectDefinition> Effects { get; set; } = new();
 
     /// <summary>
+    /// Whether this item can be equipped.
+    /// If null, will be set by ApplyDefaults based on Type.
+    /// </summary>
+    [YamlMember(Alias = "isEquippable")]
+    public bool? IsEquippable { get; set; } = null;
+
+    /// <summary>
+    /// Equipment slot this item occupies when equipped (e.g., "MeleeWeapon", "Armor").
+    /// Case-insensitive, parsed to EquipmentSlot enum.
+    /// </summary>
+    [YamlMember(Alias = "equipSlot")]
+    public string? EquipSlot { get; set; } = null;
+
+    /// <summary>
+    /// Attack data for weapon items.
+    /// Defines damage range and attack properties.
+    /// </summary>
+    public AttackData? Attack { get; set; } = null;
+
+    /// <summary>
     /// Applies type-based defaults for properties not explicitly set in YAML.
     /// Should be called after deserialization.
     /// </summary>
@@ -86,6 +107,18 @@ public class ItemData
                 Glyph ??= "♪";
                 IsConsumable ??= true;
                 break;
+
+            case "weapon":
+                Glyph ??= "/";
+                IsEquippable ??= true;
+                IsConsumable ??= false;
+
+                // Set attack name to weapon name
+                if (Attack != null)
+                {
+                    Attack.Name = Name;
+                }
+                break;
         }
     }
 
@@ -103,6 +136,34 @@ public class ItemData
     public bool GetIsConsumable()
     {
         return IsConsumable ?? false;
+    }
+
+    /// <summary>
+    /// Gets whether this item is equippable, using type-based default if not explicitly set.
+    /// </summary>
+    public bool GetIsEquippable()
+    {
+        return IsEquippable ?? false;
+    }
+
+    /// <summary>
+    /// Parses and returns the equipment slot for this item.
+    /// Returns EquipmentSlot.None if not set or invalid.
+    /// </summary>
+    public EquipmentSlot GetEquipmentSlot()
+    {
+        if (string.IsNullOrEmpty(EquipSlot))
+        {
+            return Scripts.Data.EquipmentSlot.None;
+        }
+
+        if (System.Enum.TryParse<EquipmentSlot>(EquipSlot, ignoreCase: true, out var slot))
+        {
+            return slot;
+        }
+
+        GD.PrintErr($"ItemData: Invalid equipment slot '{EquipSlot}' for item '{Name}'");
+        return Scripts.Data.EquipmentSlot.None;
     }
 
     /// <summary>

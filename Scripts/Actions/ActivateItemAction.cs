@@ -1,4 +1,5 @@
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Components;
 using System.Text;
 
 namespace PitsOfDespair.Actions;
@@ -38,6 +39,13 @@ public class ActivateItemAction : Action
             return false;
         }
 
+        // Check if item is equipped (can't activate equipped items)
+        var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent != null && equipComponent.IsEquipped(_itemKey))
+        {
+            return false;
+        }
+
         // Check if the item is activatable
         if (!slot.Item.Template.IsActivatable())
         {
@@ -68,6 +76,13 @@ public class ActivateItemAction : Action
         }
 
         var itemTemplate = slot.Item.Template;
+
+        // Check if item is equipped (can't activate equipped items)
+        var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent != null && equipComponent.IsEquipped(_itemKey))
+        {
+            return ActionResult.CreateFailure($"{itemTemplate.Name} is equipped. Unequip it first.");
+        }
 
         // Check if the item is activatable
         if (!itemTemplate.IsActivatable())

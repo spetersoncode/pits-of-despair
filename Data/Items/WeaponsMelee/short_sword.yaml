@@ -1,0 +1,10 @@
+name: Short Sword
+type: weapon
+glyph: /
+color: "#CCCCCC"
+isEquippable: true
+equipSlot: MeleeWeapon
+attack:
+  minDamage: 1
+  maxDamage: 6
+  range: 1
