@@ -26,6 +26,12 @@ public partial class Player : BaseEntity
     public delegate void ItemPickedUpEventHandler(string itemName, bool success, string message);
 
     [Signal]
+    public delegate void ItemUsedEventHandler(string itemName, bool success, string message);
+
+    [Signal]
+    public delegate void ItemDroppedEventHandler(string itemName);
+
+    [Signal]
     public delegate void InventoryChangedEventHandler();
 
     private const int MaxInventorySlots = 26;
@@ -338,5 +344,65 @@ public partial class Player : BaseEntity
     public void EmitWaitFeedback()
     {
         EmitSignal(SignalName.Waited);
+    }
+
+    /// <summary>
+    /// Gets an inventory slot by its key binding.
+    /// </summary>
+    /// <param name="key">The key to look up (a-z).</param>
+    /// <returns>The inventory slot, or null if not found.</returns>
+    public InventorySlot GetInventorySlot(char key)
+    {
+        return _inventory.FirstOrDefault(slot => slot.Key == key);
+    }
+
+    /// <summary>
+    /// Removes items from the player's inventory.
+    /// </summary>
+    /// <param name="key">The inventory slot key (a-z).</param>
+    /// <param name="count">The number of items to remove.</param>
+    /// <returns>True if items were removed successfully.</returns>
+    public bool RemoveItemFromInventory(char key, int count = 1)
+    {
+        var slot = GetInventorySlot(key);
+        if (slot == null)
+        {
+            return false;
+        }
+
+        // Remove the specified count
+        bool removed = slot.Remove(count);
+
+        // If slot is empty, remove it from inventory
+        if (slot.Count <= 0)
+        {
+            _inventory.Remove(slot);
+        }
+
+        // Notify listeners
+        if (removed)
+        {
+            EmitSignal(SignalName.InventoryChanged);
+        }
+
+        return removed;
+    }
+
+    /// <summary>
+    /// Emits item usage feedback signals.
+    /// Used by UseItemAction to maintain consistent event signaling.
+    /// </summary>
+    public void EmitItemUsed(string itemName, bool success, string message)
+    {
+        EmitSignal(SignalName.ItemUsed, itemName, success, message);
+    }
+
+    /// <summary>
+    /// Emits item dropped feedback signal.
+    /// Used by DropItemAction to maintain consistent event signaling.
+    /// </summary>
+    public void EmitItemDropped(string itemName)
+    {
+        EmitSignal(SignalName.ItemDropped, itemName);
     }
 }

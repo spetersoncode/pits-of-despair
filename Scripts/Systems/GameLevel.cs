@@ -117,9 +117,12 @@ public partial class GameLevel : Node
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);
         _inputHandler.SetActionContext(actionContext);
+        _inputHandler.SetGameHUD(_gameHUD);
 
-        // Connect input handler inventory toggle to HUD
+        // Connect input handler signals to HUD
         _inputHandler.InventoryToggleRequested += _gameHUD.ToggleInventory;
+        _inputHandler.ActivateItemRequested += _gameHUD.ShowActivateMenu;
+        _inputHandler.DropItemRequested += _gameHUD.ShowDropMenu;
 
         // Wire up AI system
         _aiSystem.SetMapSystem(_mapSystem);
@@ -160,7 +163,7 @@ public partial class GameLevel : Node
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
         // Initialize HUD
-        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth);
+        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext);
 
         // Start the first player turn
         _turnManager.StartFirstPlayerTurn();

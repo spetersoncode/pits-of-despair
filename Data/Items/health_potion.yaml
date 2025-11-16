@@ -2,3 +2,7 @@ name: Potion of Cure Light Wounds
 glyph: "!"
 color: "#FF5555"
 itemType: consumable
+isActivatable: true
+effects:
+  - type: heal
+    amount: 8
