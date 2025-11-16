@@ -128,10 +128,10 @@ public partial class StatsPanel : PanelContainer
 			return;
 		}
 
-		// Check for passable entities at player position
+		// Check for walkable entities at player position
 		var entityAtPosition = _entityManager.GetEntityAtPosition(_player.GridPosition);
 
-		if (entityAtPosition != null && entityAtPosition.Passable)
+		if (entityAtPosition != null && entityAtPosition.IsWalkable)
 		{
 			// Display the item with its glyph
 			_standingOnLabel.Text = $"{entityAtPosition.Glyph} {entityAtPosition.DisplayName}";
@@ -139,7 +139,7 @@ public partial class StatsPanel : PanelContainer
 		}
 		else
 		{
-			// Nothing passable at this position
+			// Nothing walkable at this position
 			_standingOnLabel.Text = "";
 		}
 	}

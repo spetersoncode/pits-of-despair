@@ -34,13 +34,13 @@ public class MoveAction : Action
 
         if (targetEntity != null)
         {
-            // If target is passable (like items), movement is valid
-            if (targetEntity.Passable)
+            // If target is walkable (like items), movement is valid
+            if (targetEntity.IsWalkable)
             {
                 return context.MapSystem.IsWalkable(targetPos);
             }
 
-            // If target is impassable and actor is player, check for bump-to-attack
+            // If target is not walkable and actor is player, check for bump-to-attack
             if (actor == context.Player)
             {
                 var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
@@ -53,7 +53,7 @@ public class MoveAction : Action
                 }
             }
 
-            // Otherwise blocked by impassable entity
+            // Otherwise blocked by non-walkable entity
             return false;
         }
 
@@ -73,7 +73,7 @@ public class MoveAction : Action
         var targetEntity = GetEntityAtPosition(targetPos, context);
 
         // Check for bump-to-attack (player only)
-        if (targetEntity != null && !targetEntity.Passable && actor == context.Player)
+        if (targetEntity != null && !targetEntity.IsWalkable && actor == context.Player)
         {
             var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
             var actorAttack = actor.GetNodeOrNull<AttackComponent>("AttackComponent");

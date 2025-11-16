@@ -84,15 +84,15 @@ public partial class MovementSystem : Node
 
         if (targetEntity != null)
         {
-            // If the target entity is passable (like items), allow movement through
-            if (targetEntity.Passable)
+            // If the target entity is walkable (like items), allow movement through
+            if (targetEntity.IsWalkable)
             {
                 // Continue to normal movement validation
                 // (Items don't block movement)
             }
             else
             {
-                // Target is impassable (like creatures)
+                // Target is not walkable (like creatures)
                 // Bump-to-attack is PLAYER-ONLY mechanic
                 // Creatures use explicit attack actions instead
                 if (entity == _player)
@@ -111,7 +111,7 @@ public partial class MovementSystem : Node
                         }
                     }
                 }
-                // Target exists and is impassable - treat as blocked tile
+                // Target exists and is not walkable - treat as blocked tile
                 // (Creatures don't bump-to-attack, they're just blocked)
                 return;
             }

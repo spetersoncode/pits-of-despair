@@ -75,7 +75,7 @@ public partial class BaseEntity : Node2D
     /// Whether other entities can move through this entity.
     /// True for items, false for creatures.
     /// </summary>
-    public bool Passable { get; set; } = false;
+    public bool IsWalkable { get; set; } = false;
 
     /// <summary>
     /// Updates the entity's grid position and emits PositionChanged signal.

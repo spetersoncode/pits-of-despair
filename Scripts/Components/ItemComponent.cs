@@ -6,7 +6,7 @@ namespace PitsOfDespair.Components;
 
 /// <summary>
 /// Component marking an entity as a collectible item.
-/// Items are passable and can be picked up by the player.
+/// Items are walkable (entities can walk over them) and can be picked up by the player.
 /// </summary>
 public partial class ItemComponent : Node
 {
@@ -22,10 +22,10 @@ public partial class ItemComponent : Node
     {
         _entity = GetParent<BaseEntity>();
 
-        // Items are passable (entities can walk over them)
+        // Items are walkable (entities can walk over them)
         if (_entity != null)
         {
-            _entity.Passable = true;
+            _entity.IsWalkable = true;
         }
     }
 
