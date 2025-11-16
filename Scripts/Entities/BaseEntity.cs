@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 
 namespace PitsOfDespair.Entities;
@@ -50,5 +51,18 @@ public partial class BaseEntity : Node2D
     {
         GridPosition = newPosition;
         EmitSignal(SignalName.PositionChanged, newPosition.X, newPosition.Y);
+    }
+
+    /// <summary>
+    /// Execute an action using the action system.
+    /// This is the unified entry point for all turn-consuming actions.
+    /// Can be overridden by subclasses to add additional behavior (e.g., Player emits TurnCompleted).
+    /// </summary>
+    /// <param name="action">The action to execute.</param>
+    /// <param name="context">The action context containing game systems and state.</param>
+    /// <returns>The result of the action execution.</returns>
+    public virtual ActionResult ExecuteAction(Action action, ActionContext context)
+    {
+        return action.Execute(this, context);
     }
 }

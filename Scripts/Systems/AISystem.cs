@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
@@ -11,6 +12,7 @@ namespace PitsOfDespair.Systems;
 /// <summary>
 /// Manages AI behavior for non-player entities.
 /// Processes creature turns, updates AI state, and commands movement.
+/// Uses the action system for all creature actions.
 /// </summary>
 public partial class AISystem : Node
 {
@@ -18,6 +20,8 @@ public partial class AISystem : Node
     private Player _player;
     private EntityManager _entityManager;
     private TurnManager _turnManager;
+    private CombatSystem _combatSystem;
+    private ActionContext _actionContext;
     private List<AIComponent> _aiComponents = new List<AIComponent>();
 
     /// <summary>
@@ -42,6 +46,27 @@ public partial class AISystem : Node
     public void SetEntityManager(EntityManager entityManager)
     {
         _entityManager = entityManager;
+    }
+
+    /// <summary>
+    /// Sets the combat system dependency.
+    /// </summary>
+    public void SetCombatSystem(CombatSystem combatSystem)
+    {
+        _combatSystem = combatSystem;
+        UpdateActionContext();
+    }
+
+    /// <summary>
+    /// Updates the cached action context when dependencies change.
+    /// </summary>
+    private void UpdateActionContext()
+    {
+        // Only create context if all dependencies are set
+        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null)
+        {
+            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem);
+        }
     }
 
     /// <summary>
@@ -217,15 +242,11 @@ public partial class AISystem : Node
         GridPosition target = _player.GridPosition;
         int distanceToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, target);
 
-        // If adjacent to player, attack explicitly (not bump-to-attack)
+        // If adjacent to player, attack using action system
         if (distanceToPlayer <= 1)
         {
-            // Explicit attack action
-            AttackComponent attackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
-            if (attackComponent != null)
-            {
-                attackComponent.RequestAttack(_player, 0);
-            }
+            var attackAction = new AttackAction(_player, 0);
+            entity.ExecuteAction(attackAction, _actionContext);
             return;
         }
 
@@ -331,11 +352,8 @@ public partial class AISystem : Node
                         newNextPos.Value.Y - entity.GridPosition.Y
                     );
 
-                    MovementComponent movementComponent = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
-                    if (movementComponent != null)
-                    {
-                        movementComponent.RequestMove(newDirection);
-                    }
+                    var repathMoveAction = new MoveAction(newDirection);
+                    entity.ExecuteAction(repathMoveAction, _actionContext);
                 }
             }
             return;
@@ -347,12 +365,9 @@ public partial class AISystem : Node
             nextPos.Value.Y - entity.GridPosition.Y
         );
 
-        // Request movement via MovementComponent
-        MovementComponent movement = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
-        if (movement != null)
-        {
-            movement.RequestMove(direction);
-        }
+        // Execute movement via action system
+        var moveAction = new MoveAction(direction);
+        entity.ExecuteAction(moveAction, _actionContext);
     }
 
     /// <summary>
@@ -390,11 +405,8 @@ public partial class AISystem : Node
             int randomIndex = GD.RandRange(0, possibleDirections.Count - 1);
             Vector2I direction = possibleDirections[randomIndex];
 
-            MovementComponent movement = entity.GetNodeOrNull<MovementComponent>("MovementComponent");
-            if (movement != null)
-            {
-                movement.RequestMove(direction);
-            }
+            var moveAction = new MoveAction(direction);
+            entity.ExecuteAction(moveAction, _actionContext);
         }
     }
 

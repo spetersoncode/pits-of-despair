@@ -84,4 +84,13 @@ public partial class CombatSystem : Node
         // Emit combat feedback
         EmitSignal(SignalName.AttackExecuted, attacker, target, damage, attackData.Name);
     }
+
+    /// <summary>
+    /// Emit attack feedback for actions that execute combat directly.
+    /// Used by the Action system to maintain consistent combat event signaling.
+    /// </summary>
+    public void EmitAttackFeedback(BaseEntity attacker, BaseEntity target, int damage, string attackName)
+    {
+        EmitSignal(SignalName.AttackExecuted, attacker, target, damage, attackName);
+    }
 }

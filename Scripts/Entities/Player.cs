@@ -1,8 +1,10 @@
 using Godot;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Systems;
+using PitsOfDespair.UI;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -109,6 +111,27 @@ public partial class Player : BaseEntity
 
         // End the turn
         EmitSignal(SignalName.TurnCompleted);
+    }
+
+    /// <summary>
+    /// Execute an action using the action system.
+    /// This is the unified entry point for all turn-consuming actions.
+    /// Overrides base to emit TurnCompleted signal when appropriate.
+    /// </summary>
+    /// <param name="action">The action to execute.</param>
+    /// <param name="context">The action context containing game systems and state.</param>
+    /// <returns>The result of the action execution.</returns>
+    public override ActionResult ExecuteAction(Action action, ActionContext context)
+    {
+        var result = base.ExecuteAction(action, context);
+
+        // If action consumed a turn, emit turn completed signal
+        if (result.ConsumesTurn)
+        {
+            EmitSignal(SignalName.TurnCompleted);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -237,5 +260,76 @@ public partial class Player : BaseEntity
 
         // This shouldn't happen due to MaxInventorySlots check, but just in case
         return 'z';
+    }
+
+    /// <summary>
+    /// Adds an item to the player's inventory.
+    /// Used by PickupAction to manage inventory.
+    /// </summary>
+    /// <param name="item">The item to add.</param>
+    /// <param name="message">Output message describing the result.</param>
+    /// <returns>True if the item was added successfully.</returns>
+    public bool AddItemToInventory(Item item, out string message)
+    {
+        // Check if inventory is full (26 unique items)
+        if (_inventory.Count >= MaxInventorySlots)
+        {
+            // Check if we can stack with existing item
+            var existingSlot = _inventory.FirstOrDefault(slot =>
+                slot.ItemData.DataFileId == item.ItemData.DataFileId);
+
+            if (existingSlot == null)
+            {
+                message = "Inventory full! (26 unique items)";
+                return false;
+            }
+
+            // Stack with existing item
+            existingSlot.Add(1);
+        }
+        else
+        {
+            // Try to find existing slot for stacking
+            var existingSlot = _inventory.FirstOrDefault(slot =>
+                slot.ItemData.DataFileId == item.ItemData.DataFileId);
+
+            if (existingSlot != null)
+            {
+                // Stack with existing item
+                existingSlot.Add(1);
+            }
+            else
+            {
+                // Add new slot with next available key
+                char nextKey = GetNextAvailableKey();
+                var newSlot = new InventorySlot(nextKey, item.ItemData, 1);
+                _inventory.Add(newSlot);
+            }
+        }
+
+        message = $"You pick up the {item.DisplayName}.";
+        return true;
+    }
+
+    /// <summary>
+    /// Emits item pickup feedback signals.
+    /// Used by PickupAction to maintain consistent event signaling.
+    /// </summary>
+    public void EmitItemPickupFeedback(string itemName, bool success, string message)
+    {
+        EmitSignal(SignalName.ItemPickedUp, itemName, success, message);
+        if (success)
+        {
+            EmitSignal(SignalName.InventoryChanged);
+        }
+    }
+
+    /// <summary>
+    /// Emits wait action feedback signal.
+    /// Used by WaitAction to maintain consistent event signaling.
+    /// </summary>
+    public void EmitWaitFeedback()
+    {
+        EmitSignal(SignalName.Waited);
     }
 }

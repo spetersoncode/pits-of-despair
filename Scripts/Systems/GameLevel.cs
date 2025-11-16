@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Systems;
@@ -18,6 +19,12 @@ public partial class GameLevel : Node
     /// </summary>
     [Export]
     public int FloorDepth { get; set; } = 1;
+
+    // Public accessors for systems (used by Action system)
+    public MapSystem MapSystem => _mapSystem;
+    public EntityManager EntityManager => _entityManager;
+    public Player Player => _player;
+    public CombatSystem CombatSystem => _combatSystem;
 
     private MapSystem _mapSystem;
     private TextRenderer _renderer;
@@ -103,9 +110,13 @@ public partial class GameLevel : Node
         _visionSystem.Initialize(_mapSystem, _player);
         _renderer.SetPlayerVisionSystem(_visionSystem);
 
+        // Create action context for the action system
+        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem);
+
         // Wire up input handler
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);
+        _inputHandler.SetActionContext(actionContext);
 
         // Connect input handler inventory toggle to HUD
         _inputHandler.InventoryToggleRequested += _gameHUD.ToggleInventory;
@@ -115,6 +126,7 @@ public partial class GameLevel : Node
         _aiSystem.SetPlayer(_player);
         _aiSystem.SetEntityManager(_entityManager);
         _aiSystem.SetTurnManager(_turnManager);
+        _aiSystem.SetCombatSystem(_combatSystem);
 
         // Populate dungeon with creatures, items, etc.
         _spawnManager.PopulateDungeon();

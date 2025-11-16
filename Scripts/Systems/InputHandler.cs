@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Systems;
 
@@ -6,6 +7,7 @@ namespace PitsOfDespair.Systems;
 
 /// <summary>
 /// Handles turn-based player input for movement and inventory.
+/// Converts input to actions and executes them through the action system.
 /// </summary>
 public partial class InputHandler : Node
 {
@@ -14,6 +16,7 @@ public partial class InputHandler : Node
 
     private Player _player;
     private TurnManager _turnManager;
+    private ActionContext _actionContext;
 
     /// <summary>
     /// Sets the player to control.
@@ -43,6 +46,14 @@ public partial class InputHandler : Node
         _turnManager = turnManager;
     }
 
+    /// <summary>
+    /// Sets the action context for action execution.
+    /// </summary>
+    public void SetActionContext(ActionContext actionContext)
+    {
+        _actionContext = actionContext;
+    }
+
     public override void _ExitTree()
     {
         // Clean up signal connections
@@ -54,7 +65,7 @@ public partial class InputHandler : Node
 
     public override void _Input(InputEvent @event)
     {
-        if (_player == null || _turnManager == null)
+        if (_player == null || _turnManager == null || _actionContext == null)
         {
             return;
         }
@@ -79,19 +90,17 @@ public partial class InputHandler : Node
             // Check for pickup action
             if (keyEvent.Keycode == Key.G)
             {
-                bool turnConsumed = _player.TryPickupItem();
-                if (turnConsumed)
-                {
-                    // Turn is consumed, signal will be emitted by player
-                    GetViewport().SetInputAsHandled();
-                }
+                var pickupAction = new PickupAction();
+                _player.ExecuteAction(pickupAction, _actionContext);
+                GetViewport().SetInputAsHandled();
                 return;
             }
 
             // Check for wait action
             if (IsWaitKey(keyEvent.Keycode))
             {
-                _player.Wait();
+                var waitAction = new WaitAction();
+                _player.ExecuteAction(waitAction, _actionContext);
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -101,8 +110,8 @@ public partial class InputHandler : Node
 
             if (direction != Vector2I.Zero)
             {
-                _player.TryMove(direction);
-                // Accept the event to prevent it from propagating
+                var moveAction = new MoveAction(direction);
+                _player.ExecuteAction(moveAction, _actionContext);
                 GetViewport().SetInputAsHandled();
             }
         }
