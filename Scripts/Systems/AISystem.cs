@@ -202,11 +202,15 @@ public partial class AISystem : Node
             ai.TurnsSincePlayerSeen = 0;
             // Reset search turns to full when player spotted
             ai.SearchTurnsRemaining = ai.SearchTurns;
+            // Reset flee turns to full when player spotted
+            ai.FleeturnsRemaining = ai.FleeTurns;
         }
         else
         {
             // Increment counter when player not visible
             ai.TurnsSincePlayerSeen++;
+            // Reset yell counter when player is lost
+            ai.TurnsSinceLastYell = 0;
         }
     }
 

@@ -14,6 +14,7 @@ public partial class AIComponent : Node
 {
     [Export] public int SearchTurns { get; set; } = 5;
     [Export] public int SearchRadius { get; set; } = 3;
+    [Export] public int FleeTurns { get; set; } = 8;
 
     // Goal-based AI
     public List<Goal> AvailableGoals { get; set; } = new List<Goal>();
@@ -27,6 +28,8 @@ public partial class AIComponent : Node
     // State tracking
     public int TurnsSincePlayerSeen { get; set; }
     public int SearchTurnsRemaining { get; set; }
+    public int FleeturnsRemaining { get; set; }
+    public int TurnsSinceLastYell { get; set; }
 
     /// <summary>
     /// Initializes the AI component with spawn position.
@@ -38,6 +41,8 @@ public partial class AIComponent : Node
         CurrentPath.Clear();
         TurnsSincePlayerSeen = 0;
         SearchTurnsRemaining = 0;
+        FleeturnsRemaining = 0;
+        TurnsSinceLastYell = 0;
         CurrentGoal = null;
     }
 

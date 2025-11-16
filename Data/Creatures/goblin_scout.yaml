@@ -1,0 +1,14 @@
+name: Goblin Scout
+glyph: g
+color: "#d4af37"
+maxHP: 6
+visionRange: 12
+hasMovement: true
+hasAI: true
+goals:
+  - FleeForHelp
+attacks:
+  - name: Desperate Bite
+    minDamage: 1
+    maxDamage: 2
+    range: 1

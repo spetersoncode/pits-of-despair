@@ -24,11 +24,12 @@ public partial class MessageLog : PanelContainer
 	}
 
 	/// <summary>
-	/// Connects to the CombatSystem to receive attack events.
+	/// Connects to the CombatSystem to receive attack events and action messages.
 	/// </summary>
 	public void ConnectToCombatSystem(Systems.CombatSystem combatSystem)
 	{
 		combatSystem.AttackExecuted += OnAttackExecuted;
+		combatSystem.ActionMessage += OnActionMessage;
 	}
 
 	/// <summary>
@@ -64,6 +65,11 @@ public partial class MessageLog : PanelContainer
 		string color = isPlayerDamaged ? ColorDamageTaken : ColorDefault;
 
 		string message = $"{attacker.DisplayName} hits {target.DisplayName} with {attackName} for {damage} damage!";
+		AddMessage(message, color);
+	}
+
+	private void OnActionMessage(Entities.BaseEntity actor, string message, string color)
+	{
 		AddMessage(message, color);
 	}
 

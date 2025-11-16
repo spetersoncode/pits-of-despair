@@ -17,6 +17,7 @@ public static class GoalFactory
         { "SearchLastKnown", () => new SearchLastKnownPositionGoal() },
         { "ReturnToSpawn", () => new ReturnToSpawnGoal() },
         { "Wander", () => new WanderGoal() },
+        { "FleeForHelp", () => new FleeForHelpGoal() },
         { "Idle", () => new IdleGoal() }
     };
 

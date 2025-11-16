@@ -19,6 +19,12 @@ public partial class CombatSystem : Node
     public delegate void AttackExecutedEventHandler(BaseEntity attacker, BaseEntity target, int damage, string attackName);
 
     /// <summary>
+    /// Emitted when an entity performs an action with a message (actor, message, color)
+    /// </summary>
+    [Signal]
+    public delegate void ActionMessageEventHandler(BaseEntity actor, string message, string color);
+
+    /// <summary>
     /// Register an AttackComponent to listen for attack requests.
     /// Called by GameLevel or EntityManager when entities with AttackComponents are created.
     /// </summary>
@@ -92,5 +98,14 @@ public partial class CombatSystem : Node
     public void EmitAttackFeedback(BaseEntity attacker, BaseEntity target, int damage, string attackName)
     {
         EmitSignal(SignalName.AttackExecuted, attacker, target, damage, attackName);
+    }
+
+    /// <summary>
+    /// Emit a general action message for display in the message log.
+    /// Used by actions to provide feedback about non-combat activities.
+    /// </summary>
+    public void EmitActionMessage(BaseEntity actor, string message, string color = "#ffffff")
+    {
+        EmitSignal(SignalName.ActionMessage, actor, message, color);
     }
 }

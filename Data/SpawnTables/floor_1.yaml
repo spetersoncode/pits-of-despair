@@ -26,6 +26,14 @@ creaturePools:
           max: 2
         placement: random
 
+      - type: single
+        creatureId: goblin_scout
+        weight: 1
+        count:
+          min: 1
+          max: 1
+        placement: random
+
       - type: band
         bandId: rat_swarm
         weight: 1
