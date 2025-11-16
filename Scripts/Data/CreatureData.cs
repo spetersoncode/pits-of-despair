@@ -26,6 +26,12 @@ public class CreatureData
     public List<AttackData> Attacks { get; set; } = new();
 
     /// <summary>
+    /// List of goal IDs for goal-based AI (e.g., "MeleeAttack", "Wander").
+    /// Only used if HasAI is true.
+    /// </summary>
+    public List<string> Goals { get; set; } = new();
+
+    /// <summary>
     /// Converts this data to a Godot Color object.
     /// </summary>
     public Color GetColor()

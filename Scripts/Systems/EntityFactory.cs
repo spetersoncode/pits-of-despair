@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Godot;
+using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
@@ -150,6 +152,22 @@ public partial class EntityFactory : Node
             // Initialize AI with spawn position
             // Note: Must be called after AddChild so component is in tree
             aiComponent.Initialize(position);
+
+            // Instantiate goals from creature data
+            var goalsList = new List<string>();
+            if (data.Goals != null && data.Goals.Count > 0)
+            {
+                goalsList.AddRange(data.Goals);
+            }
+
+            // Always add IdleGoal as the default fallback (unless explicitly included)
+            if (!goalsList.Contains("Idle"))
+            {
+                goalsList.Add("Idle");
+            }
+
+            var goals = GoalFactory.CreateGoals(goalsList);
+            aiComponent.SetGoals(goals);
         }
 
         return entity;
@@ -239,6 +257,22 @@ public partial class EntityFactory : Node
             // Initialize AI with spawn position
             // Note: Must be called after AddChild so component is in tree
             aiComponent.Initialize(position);
+
+            // Instantiate goals from creature data
+            var goalsList = new List<string>();
+            if (data.Goals != null && data.Goals.Count > 0)
+            {
+                goalsList.AddRange(data.Goals);
+            }
+
+            // Always add IdleGoal as the default fallback (unless explicitly included)
+            if (!goalsList.Contains("Idle"))
+            {
+                goalsList.Add("Idle");
+            }
+
+            var goals = GoalFactory.CreateGoals(goalsList);
+            aiComponent.SetGoals(goals);
         }
 
         return entity;

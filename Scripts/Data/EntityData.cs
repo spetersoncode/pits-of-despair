@@ -83,6 +83,13 @@ public partial class EntityData : Resource
     [Export]
     public Array<AttackData> Attacks { get; set; } = new();
 
+    /// <summary>
+    /// List of goal IDs for goal-based AI (e.g., "MeleeAttack", "Wander").
+    /// Only used if HasAI is true.
+    /// </summary>
+    [Export]
+    public Array<string> Goals { get; set; } = new();
+
     // Future component data properties:
     // [Export] public AIData? AI { get; set; }
 }

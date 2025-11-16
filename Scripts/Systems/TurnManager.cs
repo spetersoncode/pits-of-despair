@@ -1,6 +1,6 @@
 using Godot;
 
-namespace PitsOfDespair.Scripts.Systems;
+namespace PitsOfDespair.Systems;
 
 /// <summary>
 /// Manages the turn-based game flow.

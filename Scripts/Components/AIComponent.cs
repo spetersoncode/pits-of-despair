@@ -1,32 +1,32 @@
 using Godot;
 using System.Collections.Generic;
+using PitsOfDespair.AI;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Components;
 
 /// <summary>
-/// AI state for non-player entities.
-/// Manages state machine, pathfinding data, and behavior parameters.
+/// AI component for non-player entities.
+/// Manages goal-based AI, pathfinding data, and behavior parameters.
 /// </summary>
 public partial class AIComponent : Node
 {
-    public enum AIState
-    {
-        Idle,          // Waiting at spawn position
-        Chasing,       // Pursuing visible player
-        Investigating, // Searching last known player position
-        Returning      // Returning to spawn position
-    }
-
     [Export] public int SearchTurns { get; set; } = 5;
     [Export] public int SearchRadius { get; set; } = 3;
 
-    public AIState CurrentState { get; set; } = AIState.Idle;
+    // Goal-based AI
+    public List<Goal> AvailableGoals { get; set; } = new List<Goal>();
+    public Goal CurrentGoal { get; set; }
+
+    // Positional data
     public GridPosition SpawnPosition { get; set; }
     public GridPosition? LastKnownPlayerPosition { get; set; }
     public Queue<GridPosition> CurrentPath { get; set; } = new Queue<GridPosition>();
-    public int InvestigationTurnsRemaining { get; set; }
+
+    // State tracking
+    public int TurnsSincePlayerSeen { get; set; }
+    public int SearchTurnsRemaining { get; set; }
 
     /// <summary>
     /// Initializes the AI component with spawn position.
@@ -34,10 +34,20 @@ public partial class AIComponent : Node
     public void Initialize(GridPosition spawnPosition)
     {
         SpawnPosition = spawnPosition;
-        CurrentState = AIState.Idle;
         LastKnownPlayerPosition = null;
         CurrentPath.Clear();
-        InvestigationTurnsRemaining = 0;
+        TurnsSincePlayerSeen = 0;
+        SearchTurnsRemaining = 0;
+        CurrentGoal = null;
+    }
+
+    /// <summary>
+    /// Sets the available goals for this AI.
+    /// Called by EntityFactory after instantiating goals from creature data.
+    /// </summary>
+    public void SetGoals(List<Goal> goals)
+    {
+        AvailableGoals = goals;
     }
 
     /// <summary>

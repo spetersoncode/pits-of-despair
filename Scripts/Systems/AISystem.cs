@@ -1,11 +1,11 @@
 using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.Actions;
+using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Systems;
 
 namespace PitsOfDespair.Systems;
 
@@ -123,7 +123,7 @@ public partial class AISystem : Node
     }
 
     /// <summary>
-    /// Processes a single creature's turn.
+    /// Processes a single creature's turn using goal-based AI.
     /// </summary>
     private void ProcessCreatureTurn(AIComponent ai)
     {
@@ -133,14 +133,81 @@ public partial class AISystem : Node
             return;
         }
 
-        // Check if player is visible
+        // Check if no goals available
+        if (ai.AvailableGoals == null || ai.AvailableGoals.Count == 0)
+        {
+            GD.PrintErr($"Entity {entity.DisplayName} has no goals available!");
+            return;
+        }
+
+        // Build AI context
+        var context = BuildAIContext(ai, entity);
+
+        // Update state tracking
+        UpdateStateTracking(ai, context);
+
+        // Evaluate all goals and select the best one
+        Goal bestGoal = GoalEvaluator.EvaluateBestGoal(ai.AvailableGoals, context);
+
+        if (bestGoal == null)
+        {
+            GD.PrintErr($"No valid goals for entity {entity.DisplayName}");
+            return;
+        }
+
+        // Handle goal transitions
+        if (ai.CurrentGoal != bestGoal)
+        {
+            ai.CurrentGoal?.OnDeactivated(context);
+            bestGoal.OnActivated(context);
+            ai.CurrentGoal = bestGoal;
+        }
+
+        // Execute the selected goal
+        bestGoal.Execute(context);
+    }
+
+    /// <summary>
+    /// Builds the AI context for goal evaluation and execution.
+    /// </summary>
+    private AIContext BuildAIContext(AIComponent ai, BaseEntity entity)
+    {
         bool playerVisible = IsPlayerVisible(entity);
+        int distanceToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, _player.GridPosition);
 
-        // Update AI state based on visibility
-        UpdateAIState(ai, entity, playerVisible);
+        return new AIContext
+        {
+            Entity = entity,
+            AIComponent = ai,
+            ActionContext = _actionContext,
+            Player = _player,
+            MapSystem = _mapSystem,
+            EntityManager = _entityManager,
+            IsPlayerVisible = playerVisible,
+            DistanceToPlayer = distanceToPlayer,
+            VisionComponent = entity.GetNodeOrNull<VisionComponent>("VisionComponent"),
+            HealthComponent = entity.GetNodeOrNull<HealthComponent>("HealthComponent"),
+            AttackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent")
+        };
+    }
 
-        // Execute behavior based on current state
-        ExecuteAIBehavior(ai, entity, playerVisible);
+    /// <summary>
+    /// Updates state tracking variables based on current context.
+    /// </summary>
+    private void UpdateStateTracking(AIComponent ai, AIContext context)
+    {
+        if (context.IsPlayerVisible)
+        {
+            // Reset counter when player is seen
+            ai.TurnsSincePlayerSeen = 0;
+            // Reset search turns to full when player spotted
+            ai.SearchTurnsRemaining = ai.SearchTurns;
+        }
+        else
+        {
+            // Increment counter when player not visible
+            ai.TurnsSincePlayerSeen++;
+        }
     }
 
     /// <summary>
@@ -165,257 +232,6 @@ public partial class AISystem : Node
         );
 
         return visiblePositions.Contains(playerPos);
-    }
-
-    /// <summary>
-    /// Updates AI state based on player visibility.
-    /// </summary>
-    private void UpdateAIState(AIComponent ai, BaseEntity entity, bool playerVisible)
-    {
-        if (playerVisible)
-        {
-            // Player visible - switch to chasing
-            if (ai.CurrentState != AIComponent.AIState.Chasing)
-            {
-                ai.CurrentState = AIComponent.AIState.Chasing;
-                ai.ClearPath();
-            }
-            ai.LastKnownPlayerPosition = _player.GridPosition;
-        }
-        else if (ai.CurrentState == AIComponent.AIState.Chasing)
-        {
-            // Lost sight of player - start investigating
-            ai.CurrentState = AIComponent.AIState.Investigating;
-            ai.InvestigationTurnsRemaining = ai.SearchTurns;
-            ai.ClearPath();
-        }
-        else if (ai.CurrentState == AIComponent.AIState.Investigating)
-        {
-            // Check if investigation time is up
-            if (ai.InvestigationTurnsRemaining <= 0)
-            {
-                ai.CurrentState = AIComponent.AIState.Returning;
-                ai.ClearPath();
-            }
-        }
-        else if (ai.CurrentState == AIComponent.AIState.Returning)
-        {
-            // Check if reached spawn position
-            if (entity.GridPosition.Equals(ai.SpawnPosition))
-            {
-                ai.CurrentState = AIComponent.AIState.Idle;
-                ai.ClearPath();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Executes AI behavior based on current state.
-    /// </summary>
-    private void ExecuteAIBehavior(AIComponent ai, BaseEntity entity, bool playerVisible)
-    {
-        switch (ai.CurrentState)
-        {
-            case AIComponent.AIState.Idle:
-                // Do nothing
-                break;
-
-            case AIComponent.AIState.Chasing:
-                ChasePlayer(ai, entity);
-                break;
-
-            case AIComponent.AIState.Investigating:
-                Investigate(ai, entity);
-                break;
-
-            case AIComponent.AIState.Returning:
-                ReturnToSpawn(ai, entity);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Chases the player by pathfinding and moving toward them.
-    /// </summary>
-    private void ChasePlayer(AIComponent ai, BaseEntity entity)
-    {
-        GridPosition target = _player.GridPosition;
-        int distanceToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, target);
-
-        // If adjacent to player, attack using action system
-        if (distanceToPlayer <= 1)
-        {
-            var attackAction = new AttackAction(_player, 0);
-            entity.ExecuteAction(attackAction, _actionContext);
-            return;
-        }
-
-        // If we don't have a path or reached the end, calculate new path
-        if (ai.CurrentPath.Count == 0)
-        {
-            var path = AStarPathfinder.FindPath(entity.GridPosition, target, _mapSystem, _entityManager, _player);
-            if (path != null)
-            {
-                ai.CurrentPath = path;
-            }
-        }
-
-        // Move along path
-        MoveAlongPath(ai, entity, target);
-    }
-
-    /// <summary>
-    /// Investigates the last known player position.
-    /// </summary>
-    private void Investigate(AIComponent ai, BaseEntity entity)
-    {
-        if (ai.LastKnownPlayerPosition == null)
-        {
-            // No last known position - return to spawn
-            ai.CurrentState = AIComponent.AIState.Returning;
-            return;
-        }
-
-        GridPosition lastKnown = ai.LastKnownPlayerPosition.Value;
-
-        // If not at last known position, path there
-        if (!entity.GridPosition.Equals(lastKnown))
-        {
-            if (ai.CurrentPath.Count == 0)
-            {
-                var path = AStarPathfinder.FindPath(entity.GridPosition, lastKnown, _mapSystem, _entityManager, _player);
-                if (path != null)
-                {
-                    ai.CurrentPath = path;
-                }
-            }
-            MoveAlongPath(ai, entity, lastKnown);
-        }
-        else
-        {
-            // At last known position - wander randomly
-            WanderNearPosition(ai, entity, lastKnown);
-            ai.InvestigationTurnsRemaining--;
-        }
-    }
-
-    /// <summary>
-    /// Returns to spawn position.
-    /// </summary>
-    private void ReturnToSpawn(AIComponent ai, BaseEntity entity)
-    {
-        if (ai.CurrentPath.Count == 0)
-        {
-            var path = AStarPathfinder.FindPath(entity.GridPosition, ai.SpawnPosition, _mapSystem, _entityManager, _player);
-            if (path != null)
-            {
-                ai.CurrentPath = path;
-            }
-        }
-
-        MoveAlongPath(ai, entity, ai.SpawnPosition);
-    }
-
-    /// <summary>
-    /// Moves entity along its current path.
-    /// Validates the next position is still available and repaths if blocked.
-    /// </summary>
-    /// <param name="goal">The ultimate destination for repathfinding if blocked</param>
-    private void MoveAlongPath(AIComponent ai, BaseEntity entity, GridPosition goal)
-    {
-        GridPosition? nextPos = ai.GetNextPosition();
-        if (nextPos == null)
-        {
-            return;
-        }
-
-        // Validate next position isn't occupied by another creature
-        // (player occupancy will be handled by MovementSystem as a bump-to-attack)
-        if (IsPositionOccupiedByCreature(nextPos.Value))
-        {
-            // Position is blocked - clear path and repath around the obstacle immediately
-            ai.ClearPath();
-
-            // Recalculate path around the blocking creature
-            var newPath = AStarPathfinder.FindPath(entity.GridPosition, goal, _mapSystem, _entityManager, _player);
-            if (newPath != null && newPath.Count > 0)
-            {
-                ai.CurrentPath = newPath;
-
-                // Try to move on the new path (recursive call, but only one level deep)
-                GridPosition? newNextPos = ai.GetNextPosition();
-                if (newNextPos != null && !IsPositionOccupiedByCreature(newNextPos.Value))
-                {
-                    // New path is clear, move along it
-                    Vector2I newDirection = new Vector2I(
-                        newNextPos.Value.X - entity.GridPosition.X,
-                        newNextPos.Value.Y - entity.GridPosition.Y
-                    );
-
-                    var repathMoveAction = new MoveAction(newDirection);
-                    entity.ExecuteAction(repathMoveAction, _actionContext);
-                }
-            }
-            return;
-        }
-
-        // Calculate direction to next position
-        Vector2I direction = new Vector2I(
-            nextPos.Value.X - entity.GridPosition.X,
-            nextPos.Value.Y - entity.GridPosition.Y
-        );
-
-        // Execute movement via action system
-        var moveAction = new MoveAction(direction);
-        entity.ExecuteAction(moveAction, _actionContext);
-    }
-
-    /// <summary>
-    /// Wanders randomly within search radius of a position.
-    /// </summary>
-    private void WanderNearPosition(AIComponent ai, BaseEntity entity, GridPosition center)
-    {
-        // Try random directions within search radius
-        List<Vector2I> possibleDirections = new List<Vector2I>();
-
-        Vector2I[] allDirections = {
-            Vector2I.Up, Vector2I.Down, Vector2I.Left, Vector2I.Right,
-            new Vector2I(-1, -1), new Vector2I(1, -1),
-            new Vector2I(-1, 1), new Vector2I(1, 1)
-        };
-
-        foreach (Vector2I dir in allDirections)
-        {
-            GridPosition newPos = new GridPosition(
-                entity.GridPosition.X + dir.X,
-                entity.GridPosition.Y + dir.Y
-            );
-
-            // Check if within search radius and walkable
-            int distance = DistanceHelper.ChebyshevDistance(newPos, center);
-            if (distance <= ai.SearchRadius && _mapSystem.IsWalkable(newPos))
-            {
-                possibleDirections.Add(dir);
-            }
-        }
-
-        // Pick random direction
-        if (possibleDirections.Count > 0)
-        {
-            int randomIndex = GD.RandRange(0, possibleDirections.Count - 1);
-            Vector2I direction = possibleDirections[randomIndex];
-
-            var moveAction = new MoveAction(direction);
-            entity.ExecuteAction(moveAction, _actionContext);
-        }
-    }
-
-    /// <summary>
-    /// Checks if a position is occupied by another creature (not the player).
-    /// </summary>
-    private bool IsPositionOccupiedByCreature(GridPosition position)
-    {
-        return _entityManager.GetEntityAtPosition(position) != null;
     }
 
     public override void _ExitTree()

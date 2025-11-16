@@ -5,6 +5,10 @@ maxHP: 8
 visionRange: 10
 hasMovement: true
 hasAI: true
+goals:
+  - MeleeAttack
+  - SearchLastKnown
+  - ReturnToSpawn
 attacks:
   - name: Club
     minDamage: 2
