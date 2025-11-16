@@ -53,21 +53,7 @@ public partial class Player : BaseEntity
         // Get MovementComponent child
         _movementComponent = GetNode<MovementComponent>("MovementComponent");
 
-        // Initialize attack component with player's natural attack (unarmed punch)
-        var attackComponent = GetNodeOrNull<AttackComponent>("AttackComponent");
-        if (attackComponent != null)
-        {
-            var playerPunch = new AttackData
-            {
-                Name = "Punch",
-                MinDamage = 1,
-                MaxDamage = 2,
-                Range = 1
-            };
-            var naturalAttacks = new Godot.Collections.Array<AttackData> { playerPunch };
-            attackComponent.NaturalAttacks = naturalAttacks;
-            attackComponent.Attacks = naturalAttacks; // Start with natural attacks (will be replaced by weapon if equipped)
-        }
+        // Note: Attack component with default punch is now created by EntityFactory
 
         // Add EquipComponent to player
         var equipComponent = new EquipComponent { Name = "EquipComponent" };

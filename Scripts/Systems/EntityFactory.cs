@@ -5,6 +5,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Data;
 
 namespace PitsOfDespair.Systems;
 
@@ -220,28 +221,37 @@ public partial class EntityFactory : Node
             entity.AddChild(healthComponent);
         }
 
-        // Add AttackComponent if attacks are specified
-        if (data.Attacks.Count > 0)
+        // Add AttackComponent if entity has attacks OR can equip weapons
+        if (data.Attacks.Count > 0 || data.GetCanEquip())
         {
-            // Convert attack data to AttackData array
-            var attacks = new Godot.Collections.Array<AttackData>();
-            foreach (var attackData in data.Attacks)
+            var naturalAttacks = new Godot.Collections.Array<AttackData>();
+
+            if (data.Attacks.Count > 0)
             {
-                var attack = new AttackData
+                // Use defined natural attacks from creature data
+                foreach (var attackData in data.Attacks)
                 {
-                    Name = attackData.Name,
-                    MinDamage = attackData.MinDamage,
-                    MaxDamage = attackData.MaxDamage,
-                    Range = attackData.Range
-                };
-                attacks.Add(attack);
+                    var attack = new AttackData
+                    {
+                        Name = attackData.Name,
+                        MinDamage = attackData.MinDamage,
+                        MaxDamage = attackData.MaxDamage,
+                        Range = attackData.Range
+                    };
+                    naturalAttacks.Add(attack);
+                }
+            }
+            else
+            {
+                // No natural attacks defined - use default punch
+                naturalAttacks.Add(GetDefaultNaturalAttack());
             }
 
             var attackComponent = new AttackComponent
             {
                 Name = "AttackComponent",
-                NaturalAttacks = attacks, // Store as natural attacks
-                Attacks = attacks // Also set as current attacks (will be weapon attacks if equipped)
+                NaturalAttacks = naturalAttacks, // Store as natural attacks
+                Attacks = naturalAttacks // Current attacks (will be updated if weapons equipped)
             };
             entity.AddChild(attackComponent);
         }
@@ -254,6 +264,34 @@ public partial class EntityFactory : Node
                 Name = "EquipComponent"
             };
             entity.AddChild(equipComponent);
+
+            // Load and equip creature equipment
+            if (data.Equipment != null && data.Equipment.Count > 0)
+            {
+                foreach (var itemId in data.Equipment)
+                {
+                    var itemData = _dataLoader.GetItem(itemId);
+                    if (itemData == null)
+                    {
+                        GD.PushWarning($"EntityFactory: Equipment item '{itemId}' not found for creature '{data.Name}'");
+                        continue;
+                    }
+
+                    // Create item instance
+                    var itemInstance = new ItemInstance(itemData);
+
+                    // Get equipment slot from item
+                    var equipSlot = itemData.GetEquipmentSlot();
+                    if (equipSlot == EquipmentSlot.None)
+                    {
+                        GD.PushWarning($"EntityFactory: Item '{itemId}' has no equipment slot for creature '{data.Name}'");
+                        continue;
+                    }
+
+                    // Equip the item
+                    equipComponent.EquipCreatureItem(itemInstance, equipSlot);
+                }
+            }
         }
 
         // Add AIComponent if entity has AI behavior enabled
@@ -287,5 +325,19 @@ public partial class EntityFactory : Node
         }
 
         return entity;
+    }
+
+    /// <summary>
+    /// Creates the default natural attack (punch) for entities with no defined natural attacks.
+    /// </summary>
+    private AttackData GetDefaultNaturalAttack()
+    {
+        return new AttackData
+        {
+            Name = "Punch",
+            MinDamage = 1,
+            MaxDamage = 2,
+            Range = 1
+        };
     }
 }

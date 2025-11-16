@@ -9,8 +9,5 @@ goals:
   - MeleeAttack
   - SearchLastKnown
   - ReturnToSpawn
-attacks:
-  - name: Club
-    minDamage: 2
-    maxDamage: 4
-    range: 1
+equipment:
+  - weaponsmelee_club

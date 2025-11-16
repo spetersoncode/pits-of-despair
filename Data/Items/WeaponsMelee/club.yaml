@@ -1,0 +1,10 @@
+name: Club
+type: weapon
+glyph: )
+color: "#8B4513"
+isEquippable: true
+equipSlot: MeleeWeapon
+attack:
+  minDamage: 2
+  maxDamage: 4
+  range: 1

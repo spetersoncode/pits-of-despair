@@ -7,7 +7,6 @@ hasMovement: true
 hasAI: true
 goals:
   - MeleeAttack
-  - SearchLastKnown
   - Wander
 attacks:
   - name: Bite
