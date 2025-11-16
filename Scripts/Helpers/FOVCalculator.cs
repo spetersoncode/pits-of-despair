@@ -6,10 +6,10 @@ using PitsOfDespair.Systems;
 namespace PitsOfDespair.Helpers;
 
 /// <summary>
-/// Static utility class providing recursive shadowcasting field-of-view calculations.
+/// Calculates field-of-view for grid-based vision systems.
 /// Uses the recursive shadowcasting algorithm for symmetric, efficient line-of-sight.
 /// </summary>
-public static class ShadowcastingHelper
+public static class FOVCalculator
 {
     /// <summary>
     /// Calculates all tiles visible from the origin point within the specified range.

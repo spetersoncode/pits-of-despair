@@ -9,7 +9,7 @@ namespace PitsOfDespair.Helpers;
 /// Provides A* pathfinding for grid-based movement.
 /// Uses Chebyshev distance (8-directional movement with equal cost).
 /// </summary>
-public static class PathfindingHelper
+public static class AStarPathfinder
 {
     private static readonly GridPosition[] Directions =
     {

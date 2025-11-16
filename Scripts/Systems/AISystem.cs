@@ -158,7 +158,7 @@ public partial class AISystem : Node
         GridPosition entityPos = entity.GridPosition;
 
         // Calculate visible tiles using shadowcasting
-        HashSet<GridPosition> visiblePositions = ShadowcastingHelper.CalculateVisibleTiles(
+        HashSet<GridPosition> visiblePositions = FOVCalculator.CalculateVisibleTiles(
             entityPos,
             vision.VisionRange,
             _mapSystem
@@ -253,7 +253,7 @@ public partial class AISystem : Node
         // If we don't have a path or reached the end, calculate new path
         if (ai.CurrentPath.Count == 0)
         {
-            var path = PathfindingHelper.FindPath(entity.GridPosition, target, _mapSystem, _entityManager, _player);
+            var path = AStarPathfinder.FindPath(entity.GridPosition, target, _mapSystem, _entityManager, _player);
             if (path != null)
             {
                 ai.CurrentPath = path;
@@ -283,7 +283,7 @@ public partial class AISystem : Node
         {
             if (ai.CurrentPath.Count == 0)
             {
-                var path = PathfindingHelper.FindPath(entity.GridPosition, lastKnown, _mapSystem, _entityManager, _player);
+                var path = AStarPathfinder.FindPath(entity.GridPosition, lastKnown, _mapSystem, _entityManager, _player);
                 if (path != null)
                 {
                     ai.CurrentPath = path;
@@ -306,7 +306,7 @@ public partial class AISystem : Node
     {
         if (ai.CurrentPath.Count == 0)
         {
-            var path = PathfindingHelper.FindPath(entity.GridPosition, ai.SpawnPosition, _mapSystem, _entityManager, _player);
+            var path = AStarPathfinder.FindPath(entity.GridPosition, ai.SpawnPosition, _mapSystem, _entityManager, _player);
             if (path != null)
             {
                 ai.CurrentPath = path;
@@ -337,7 +337,7 @@ public partial class AISystem : Node
             ai.ClearPath();
 
             // Recalculate path around the blocking creature
-            var newPath = PathfindingHelper.FindPath(entity.GridPosition, goal, _mapSystem, _entityManager, _player);
+            var newPath = AStarPathfinder.FindPath(entity.GridPosition, goal, _mapSystem, _entityManager, _player);
             if (newPath != null && newPath.Count > 0)
             {
                 ai.CurrentPath = newPath;

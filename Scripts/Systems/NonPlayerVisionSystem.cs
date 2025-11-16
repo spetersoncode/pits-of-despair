@@ -57,7 +57,7 @@ public partial class NonPlayerVisionSystem : Node
                 continue;
 
             // Calculate visible tiles for this creature
-            HashSet<GridPosition> visiblePositions = ShadowcastingHelper.CalculateVisibleTiles(
+            HashSet<GridPosition> visiblePositions = FOVCalculator.CalculateVisibleTiles(
                 entity.GridPosition,
                 visionComponent.VisionRange,
                 _mapSystem

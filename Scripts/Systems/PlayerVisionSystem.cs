@@ -85,7 +85,7 @@ public partial class PlayerVisionSystem : Node
         GridPosition playerPos = _player.GridPosition;
         int visionRange = _playerVision.VisionRange;
 
-        HashSet<GridPosition> visiblePositions = ShadowcastingHelper.CalculateVisibleTiles(
+        HashSet<GridPosition> visiblePositions = FOVCalculator.CalculateVisibleTiles(
             playerPos,
             visionRange,
             _mapSystem
