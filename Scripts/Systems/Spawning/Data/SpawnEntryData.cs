@@ -44,14 +44,27 @@ public class SpawnEntryData
     public string TypeString { get; set; } = "single";
 
     [YamlIgnore]
-    public SpawnEntryType Type => TypeString.ToLower() switch
+    public SpawnEntryType Type
     {
-        "single" => SpawnEntryType.Single,
-        "multiple" => SpawnEntryType.Multiple,
-        "band" => SpawnEntryType.Band,
-        "unique" => SpawnEntryType.Unique,
-        _ => SpawnEntryType.Single
-    };
+        get
+        {
+            // Items are intrinsically single spawn - ignore type field
+            if (!string.IsNullOrEmpty(ItemId))
+            {
+                return SpawnEntryType.Single;
+            }
+
+            // For creatures/bands, use specified type
+            return TypeString.ToLower() switch
+            {
+                "single" => SpawnEntryType.Single,
+                "multiple" => SpawnEntryType.Multiple,
+                "band" => SpawnEntryType.Band,
+                "unique" => SpawnEntryType.Unique,
+                _ => SpawnEntryType.Single
+            };
+        }
+    }
 
     /// <summary>
     /// ID of the creature to spawn (for single/unique types).
@@ -112,10 +125,17 @@ public class SpawnEntryData
     /// </summary>
     public bool IsValid()
     {
+        // Items are always valid if they have an itemId (they're intrinsically single)
+        if (!string.IsNullOrEmpty(ItemId))
+        {
+            return true;
+        }
+
+        // Creatures follow type-based validation
         return Type switch
         {
-            SpawnEntryType.Single => !string.IsNullOrEmpty(CreatureId) || !string.IsNullOrEmpty(ItemId),
-            SpawnEntryType.Multiple => !string.IsNullOrEmpty(CreatureId) || !string.IsNullOrEmpty(ItemId),
+            SpawnEntryType.Single => !string.IsNullOrEmpty(CreatureId),
+            SpawnEntryType.Multiple => !string.IsNullOrEmpty(CreatureId),
             SpawnEntryType.Band => !string.IsNullOrEmpty(BandId) || (Band != null && Band.IsValid()),
             SpawnEntryType.Unique => !string.IsNullOrEmpty(CreatureId),
             _ => false

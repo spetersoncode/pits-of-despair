@@ -26,10 +26,8 @@ creaturePools:
 
       - type: single
         creatureId: goblin_scout
-        weight: 1
 
       - type: band
-        weight: 1
         band:
           name: Rat Swarm
           leader:
@@ -50,29 +48,18 @@ creaturePools:
     entries:
       - type: band
         bandId: goblin_pack
-        weight: 1
 
   - id: rare
     weight: 5
     entries:
       - type: multiple
-        creatureId: goblin
-        weight: 1
-        count:
-          min: 2
-          max: 3
+        creatureId: goblin_ruffian
 
 itemPools:
   - id: common_items
     weight: 100
     entries:
-      - type: multiple
-        itemId: potions_cure_light_wounds
+      - itemId: potions_cure_light_wounds
         weight: 2
-        count:
-          min: 1
-          max: 2
 
-      - type: single
-        itemId: scrolls_blink
-        weight: 1
+      - itemId: scrolls_blink
