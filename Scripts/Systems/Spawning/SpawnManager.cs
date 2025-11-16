@@ -245,11 +245,25 @@ public partial class SpawnManager : Node
         // Otherwise estimate based on spawn type
         return entry.Type switch
         {
-            SpawnEntryType.Single => 1,  // Single creatures need 1x1
+            SpawnEntryType.Single => 1,  // Single creature needs 1x1
+            SpawnEntryType.Multiple => CalculateSpaceForCount(entry.Count.Max),  // Calculate based on max spawn count
             SpawnEntryType.Band => 3,    // Bands need at least 3x3 for formation
             SpawnEntryType.Unique => 3,  // Uniques get some breathing room
             _ => 1
         };
+    }
+
+    /// <summary>
+    /// Calculates the minimum NxN grid size needed to accommodate a given number of entities.
+    /// Uses the ceiling of the square root to determine the grid dimension.
+    /// </summary>
+    /// <param name="maxCount">Maximum number of entities to spawn</param>
+    /// <returns>Grid dimension (e.g., 2 for a 2x2 grid)</returns>
+    private int CalculateSpaceForCount(int maxCount)
+    {
+        // Calculate minimum grid dimension needed for maxCount entities
+        // Examples: 1 entity → 1x1, 2-4 entities → 2x2, 5-9 entities → 3x3
+        return (int)System.Math.Ceiling(System.Math.Sqrt(maxCount));
     }
 
     /// <summary>
@@ -387,6 +401,7 @@ public partial class SpawnManager : Node
         return entryType switch
         {
             SpawnEntryType.Single => _spawnStrategies["single"],
+            SpawnEntryType.Multiple => _spawnStrategies["single"],  // Multiple uses same strategy as single
             SpawnEntryType.Band => _spawnStrategies["band"],
             SpawnEntryType.Unique => _spawnStrategies["unique"],
             _ => null

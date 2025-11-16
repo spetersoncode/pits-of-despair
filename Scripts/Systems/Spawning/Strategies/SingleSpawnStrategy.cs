@@ -43,8 +43,8 @@ public class SingleSpawnStrategy : ISpawnStrategy
         // Determine spawn count
         int count = entry.Count.GetRandom();
 
-        // Get placement strategy
-        var placementStrategy = GetPlacementStrategy(entry.Placement);
+        // Get placement strategy (always random for single/multiple spawns)
+        var placementStrategy = GetPlacementStrategy("random");
 
         // Select positions
         var positions = placementStrategy.SelectPositions(

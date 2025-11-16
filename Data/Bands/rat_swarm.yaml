@@ -1,6 +1,6 @@
 name: Rat Swarm
 leader:
-  creatureId: rat
+  creatureId: elder_rat
   placement: center
 followers:
   - creatureId: rat

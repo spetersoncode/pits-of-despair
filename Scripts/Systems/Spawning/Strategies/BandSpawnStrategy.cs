@@ -39,23 +39,33 @@ public class BandSpawnStrategy : ISpawnStrategy
     {
         var result = new SpawnResult();
 
-        if (string.IsNullOrEmpty(entry.BandId))
-        {
-            GD.PushWarning($"BandSpawnStrategy: No bandId specified in entry");
-            return result;
-        }
+        // Get band data from inline definition or external reference
+        BandData bandData = null;
 
-        // Get band data
-        var bandData = _dataLoader.GetBand(entry.BandId);
-        if (bandData == null)
+        if (entry.Band != null)
         {
-            GD.PushWarning($"BandSpawnStrategy: Band '{entry.BandId}' not found");
+            // Use inline band definition
+            bandData = entry.Band;
+        }
+        else if (!string.IsNullOrEmpty(entry.BandId))
+        {
+            // Load from external file
+            bandData = _dataLoader.GetBand(entry.BandId);
+            if (bandData == null)
+            {
+                GD.PushWarning($"BandSpawnStrategy: Band '{entry.BandId}' not found");
+                return result;
+            }
+        }
+        else
+        {
+            GD.PushWarning($"BandSpawnStrategy: No band definition or bandId specified");
             return result;
         }
 
         if (!bandData.IsValid())
         {
-            GD.PushWarning($"BandSpawnStrategy: Band '{entry.BandId}' is invalid");
+            GD.PushWarning($"BandSpawnStrategy: Band is invalid");
             return result;
         }
 

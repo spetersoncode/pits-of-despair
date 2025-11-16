@@ -1,0 +1,16 @@
+name: Goblin Ruffian
+glyph: g
+color: "#8B4513"
+maxHP: 11
+visionRange: 10
+hasMovement: true
+hasAI: true
+goals:
+  - MeleeAttack
+  - SearchLastKnown
+  - ReturnToSpawn
+attacks:
+  - name: Club
+    minDamage: 3
+    maxDamage: 5
+    range: 1

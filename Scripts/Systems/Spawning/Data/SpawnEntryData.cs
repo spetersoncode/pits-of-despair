@@ -26,9 +26,10 @@ public class CountRange
 /// </summary>
 public enum SpawnEntryType
 {
-    Single,  // Single creature type
-    Band,    // Monster band/pack
-    Unique   // Unique/boss creature
+    Single,    // One creature only
+    Multiple,  // Multiple of same creature type
+    Band,      // Monster band/pack with leader
+    Unique     // Unique/boss creature
 }
 
 /// <summary>
@@ -46,6 +47,7 @@ public class SpawnEntryData
     public SpawnEntryType Type => TypeString.ToLower() switch
     {
         "single" => SpawnEntryType.Single,
+        "multiple" => SpawnEntryType.Multiple,
         "band" => SpawnEntryType.Band,
         "unique" => SpawnEntryType.Unique,
         _ => SpawnEntryType.Single
@@ -64,10 +66,16 @@ public class SpawnEntryData
     public string ItemId { get; set; } = string.Empty;
 
     /// <summary>
-    /// ID of the band to spawn (for band type).
+    /// ID of the band to spawn (for band type, external file reference).
     /// </summary>
     [YamlMember(Alias = "bandId")]
     public string BandId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Inline band definition (for band type, alternative to bandId).
+    /// </summary>
+    [YamlMember(Alias = "band")]
+    public BandData Band { get; set; } = null;
 
     /// <summary>
     /// Weight for weighted random selection within the pool.
@@ -107,7 +115,8 @@ public class SpawnEntryData
         return Type switch
         {
             SpawnEntryType.Single => !string.IsNullOrEmpty(CreatureId) || !string.IsNullOrEmpty(ItemId),
-            SpawnEntryType.Band => !string.IsNullOrEmpty(BandId),
+            SpawnEntryType.Multiple => !string.IsNullOrEmpty(CreatureId) || !string.IsNullOrEmpty(ItemId),
+            SpawnEntryType.Band => !string.IsNullOrEmpty(BandId) || (Band != null && Band.IsValid()),
             SpawnEntryType.Unique => !string.IsNullOrEmpty(CreatureId),
             _ => false
         };
@@ -117,9 +126,12 @@ public class SpawnEntryData
     {
         return Type switch
         {
-            SpawnEntryType.Single when !string.IsNullOrEmpty(CreatureId) => $"Single: {CreatureId} x{Count.Min}-{Count.Max}",
-            SpawnEntryType.Single when !string.IsNullOrEmpty(ItemId) => $"Item: {ItemId} x{Count.Min}-{Count.Max}",
-            SpawnEntryType.Band => $"Band: {BandId}",
+            SpawnEntryType.Single when !string.IsNullOrEmpty(CreatureId) => $"Single: {CreatureId}",
+            SpawnEntryType.Single when !string.IsNullOrEmpty(ItemId) => $"Item: {ItemId}",
+            SpawnEntryType.Multiple when !string.IsNullOrEmpty(CreatureId) => $"Multiple: {CreatureId} x{Count.Min}-{Count.Max}",
+            SpawnEntryType.Multiple when !string.IsNullOrEmpty(ItemId) => $"Items: {ItemId} x{Count.Min}-{Count.Max}",
+            SpawnEntryType.Band when !string.IsNullOrEmpty(BandId) => $"Band: {BandId}",
+            SpawnEntryType.Band when Band != null => $"Band: {Band.Name ?? "Inline"}",
             SpawnEntryType.Unique => $"Unique: {CreatureId}",
             _ => "Invalid Entry"
         };
