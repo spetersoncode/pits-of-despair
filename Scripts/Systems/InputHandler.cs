@@ -24,6 +24,7 @@ public partial class InputHandler : Node
     private TurnManager _turnManager;
     private ActionContext _actionContext;
     private GameHUD _gameHUD;
+    private PlayerVisionSystem _visionSystem;
 
     /// <summary>
     /// Sets the player to control.
@@ -67,6 +68,14 @@ public partial class InputHandler : Node
     public void SetGameHUD(GameHUD gameHUD)
     {
         _gameHUD = gameHUD;
+    }
+
+    /// <summary>
+    /// Sets the PlayerVisionSystem reference for god mode toggling.
+    /// </summary>
+    public void SetPlayerVisionSystem(PlayerVisionSystem visionSystem)
+    {
+        _visionSystem = visionSystem;
     }
 
     public override void _ExitTree()
@@ -117,6 +126,14 @@ public partial class InputHandler : Node
             if (keyEvent.Keycode == Key.D)
             {
                 EmitSignal(SignalName.DropItemRequested);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // God mode toggle (Ctrl+G) - debug feature
+            if (keyEvent.Keycode == Key.G && keyEvent.CtrlPressed)
+            {
+                _visionSystem?.ToggleGodMode();
                 GetViewport().SetInputAsHandled();
                 return;
             }

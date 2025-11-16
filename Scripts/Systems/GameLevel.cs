@@ -115,6 +115,7 @@ public partial class GameLevel : Node
         _inputHandler.SetTurnManager(_turnManager);
         _inputHandler.SetActionContext(actionContext);
         _inputHandler.SetGameHUD(_gameHUD);
+        _inputHandler.SetPlayerVisionSystem(_visionSystem);
 
         // Connect input handler signals to HUD
         _inputHandler.InventoryToggleRequested += _gameHUD.ToggleInventory;

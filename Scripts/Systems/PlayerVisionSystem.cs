@@ -28,6 +28,9 @@ public partial class PlayerVisionSystem : Node
     private int _mapWidth;
     private int _mapHeight;
 
+    // Debug state
+    private bool _godModeEnabled = false;
+
     /// <summary>
     /// Initializes the vision system with required references.
     /// Called by GameLevel after scene setup.
@@ -107,6 +110,7 @@ public partial class PlayerVisionSystem : Node
 
     /// <summary>
     /// Checks if a tile is currently visible to the player.
+    /// In god mode, all tiles are visible.
     /// </summary>
     public bool IsVisible(GridPosition position)
     {
@@ -115,12 +119,19 @@ public partial class PlayerVisionSystem : Node
             return false;
         }
 
+        // God mode: see everything
+        if (_godModeEnabled)
+        {
+            return true;
+        }
+
         return _visibleTiles[position.X, position.Y];
     }
 
     /// <summary>
     /// Checks if a tile has been explored (seen at least once).
     /// Explored tiles are shown dimly even when not currently visible.
+    /// In god mode, all tiles are explored.
     /// </summary>
     public bool IsExplored(GridPosition position)
     {
@@ -129,7 +140,54 @@ public partial class PlayerVisionSystem : Node
             return false;
         }
 
+        // God mode: everything is explored
+        if (_godModeEnabled)
+        {
+            return true;
+        }
+
         return _exploredTiles[position.X, position.Y];
+    }
+
+    /// <summary>
+    /// Toggles god mode debug feature.
+    /// When enabled, reveals the entire map.
+    /// </summary>
+    public void ToggleGodMode()
+    {
+        _godModeEnabled = !_godModeEnabled;
+
+        if (_godModeEnabled)
+        {
+            // Reveal entire map
+            RevealEntireMap();
+            GD.Print("God Mode: ON");
+        }
+        else
+        {
+            // Return to normal FOV
+            CalculateVision();
+            GD.Print("God Mode: OFF");
+        }
+    }
+
+    /// <summary>
+    /// Reveals the entire map by marking all tiles as visible and explored.
+    /// Used by god mode debug feature.
+    /// </summary>
+    private void RevealEntireMap()
+    {
+        for (int x = 0; x < _mapWidth; x++)
+        {
+            for (int y = 0; y < _mapHeight; y++)
+            {
+                _visibleTiles[x, y] = true;
+                _exploredTiles[x, y] = true;
+            }
+        }
+
+        // Notify renderer to redraw
+        EmitSignal(SignalName.VisionChanged);
     }
 
     public override void _ExitTree()
