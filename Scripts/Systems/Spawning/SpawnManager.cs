@@ -87,7 +87,8 @@ public partial class SpawnManager : Node
     }
 
     /// <summary>
-    /// Main entry point: Populates the dungeon with creatures and items.
+    /// Main entry point: Populates the dungeon with creatures and items using budget-based spawning.
+    /// Works with any map topology (rooms, caves, open areas).
     /// </summary>
     public void PopulateDungeon()
     {
@@ -103,89 +104,69 @@ public partial class SpawnManager : Node
 
         GD.Print($"SpawnOrchestrator: Using spawn table '{spawnTable.Name}'");
 
-        // Get room data from MapSystem
-        var roomTiles = _mapSystem.GetRoomFloorTiles();
-        if (roomTiles == null || roomTiles.Count == 0)
+        // Get all walkable tiles from the map
+        var allWalkableTiles = _mapSystem.GetAllWalkableTiles();
+        if (allWalkableTiles == null || allWalkableTiles.Count == 0)
         {
-            GD.PushWarning("SpawnOrchestrator: No rooms found in dungeon");
+            GD.PushWarning("SpawnOrchestrator: No walkable tiles found in dungeon");
             return;
         }
 
-        GD.Print($"SpawnOrchestrator: Found {roomTiles.Count} rooms");
+        GD.Print($"SpawnOrchestrator: Found {allWalkableTiles.Count} walkable tiles");
 
         // Create density controller
         var densityController = new SpawnDensityController(spawnTable);
         GD.Print(densityController.GetDebugInfo());
 
-        // Allocate spawn budget across rooms
-        var allocations = densityController.AllocateSpawnBudget(roomTiles.Count);
+        // Get spawn budgets
+        int creatureBudget = densityController.GetCreatureBudget();
+        int itemBudget = densityController.GetItemBudget();
+        GD.Print($"SpawnOrchestrator: Creature budget = {creatureBudget}, Item budget = {itemBudget}");
 
-        // Populate each room
-        int totalCreatures = 0;
-        int totalItems = 0;
+        // Populate creatures using budget-based approach
+        int totalCreatures = PopulateCreatures(
+            allWalkableTiles,
+            spawnTable,
+            creatureBudget
+        );
 
-        for (int i = 0; i < roomTiles.Count && i < allocations.Count; i++)
-        {
-            var allocation = allocations[i];
-            var roomFloorTiles = roomTiles[i];
-
-            if (allocation.IsEmpty)
-            {
-                GD.Print($"  Room {i}: Empty (by design)");
-                continue;
-            }
-
-            GD.Print($"  Room {i}: Budget={allocation.SpawnBudget}, OOD={allocation.IsOutOfDepth}");
-
-            // Populate creatures
-            var creatureCount = PopulateRoomCreatures(
-                roomFloorTiles,
-                spawnTable,
-                allocation.SpawnBudget,
-                allocation.IsOutOfDepth
-            );
-
-            totalCreatures += creatureCount;
-
-            // Populate items (separate from creature budget)
-            var itemCount = PopulateRoomItems(roomFloorTiles, spawnTable);
-            totalItems += itemCount;
-        }
+        // Populate items using budget-based approach
+        int totalItems = PopulateItems(
+            allWalkableTiles,
+            spawnTable,
+            itemBudget
+        );
 
         GD.Print($"SpawnOrchestrator: Spawned {totalCreatures} creatures and {totalItems} items");
     }
 
     /// <summary>
-    /// Populates a single room with creatures based on spawn budget.
+    /// Populates the dungeon with creatures using budget-based spawning.
+    /// Finds suitable locations for each spawn based on space requirements.
     /// </summary>
-    private int PopulateRoomCreatures(
-        List<GridPosition> roomFloorTiles,
+    private int PopulateCreatures(
+        List<GridPosition> allWalkableTiles,
         SpawnTableData spawnTable,
-        int spawnBudget,
-        bool outOfDepth)
+        int totalBudget)
     {
         int totalSpawned = 0;
-        var occupiedPositions = new HashSet<Vector2I>();
-
-        // Convert GridPosition to Vector2I for placement strategies
-        var availableTiles = roomFloorTiles
-            .Select(gp => new Vector2I(gp.X, gp.Y))
-            .ToList();
-
-        // Spawn multiple entries until budget exhausted
-        int remainingBudget = spawnBudget;
+        int remainingBudget = totalBudget;
         int attempts = 0;
-        int maxAttempts = 50; // Prevent infinite loops
+        int maxAttempts = totalBudget * 10; // Allow multiple attempts to find suitable locations
+
+        // Track all spawned positions for spacing
+        var spawnedPositions = new List<GridPosition>();
+        var occupiedPositions = new HashSet<Vector2I>();
 
         while (remainingBudget > 0 && attempts < maxAttempts)
         {
             attempts++;
 
-            // Select pool (common, uncommon, rare, or out-of-depth)
-            var pool = spawnTable.SelectRandomCreaturePool(outOfDepth);
+            // Select pool (common, uncommon, rare)
+            var pool = spawnTable.SelectRandomCreaturePool();
             if (pool == null)
             {
-                break;
+                continue;
             }
 
             // Select entry from pool
@@ -194,6 +175,29 @@ public partial class SpawnManager : Node
             {
                 continue;
             }
+
+            // Calculate required space for this spawn
+            int requiredSpace = CalculateRequiredSpace(entry);
+
+            // Find a suitable spawn location
+            var spawnLocation = FindSpawnLocation(
+                allWalkableTiles,
+                spawnedPositions,
+                requiredSpace,
+                minSpacing: 3
+            );
+
+            if (spawnLocation == null)
+            {
+                // Couldn't find a suitable location, try next entry
+                continue;
+            }
+
+            // Get tiles around spawn location for placement
+            var spawnArea = _mapSystem.FindContiguousArea(spawnLocation.Value, requiredSpace * requiredSpace);
+            var availableTiles = spawnArea
+                .Select(gp => new Vector2I(gp.X, gp.Y))
+                .ToList();
 
             // Get spawn strategy for this entry type
             var strategy = GetSpawnStrategy(entry.Type);
@@ -210,36 +214,106 @@ public partial class SpawnManager : Node
             {
                 totalSpawned += result.EntityCount;
                 remainingBudget -= result.EntityCount;
+                spawnedPositions.Add(spawnLocation.Value);
 
-                GD.Print($"    Spawned {result.EntityCount}x {entry} (Budget: {remainingBudget}/{spawnBudget})");
+                GD.Print($"  Spawned {result.EntityCount}x {entry} at {spawnLocation.Value} (Budget: {remainingBudget}/{totalBudget})");
+
+                // Reset attempt counter on successful spawn
+                attempts = 0;
             }
+        }
+
+        if (remainingBudget > 0)
+        {
+            GD.Print($"SpawnOrchestrator: Could not spend {remainingBudget} budget (max attempts reached)");
         }
 
         return totalSpawned;
     }
 
     /// <summary>
-    /// Populates a single room with items.
+    /// Calculates the required space (NxN area) for a spawn entry.
     /// </summary>
-    private int PopulateRoomItems(List<GridPosition> roomFloorTiles, SpawnTableData spawnTable)
+    private int CalculateRequiredSpace(SpawnEntryData entry)
     {
-        // Items don't use spawn budget - they have their own spawn chance per room
-        var pool = spawnTable.SelectRandomItemPool();
-        if (pool == null)
+        // Use explicit minimum space if specified
+        if (entry.MinimumSpace > 0)
         {
-            return 0;
+            return entry.MinimumSpace;
         }
 
-        var entry = pool.SelectRandomEntry();
-        if (entry == null || !entry.IsValid())
+        // Otherwise estimate based on spawn type
+        return entry.Type switch
         {
-            return 0;
+            SpawnEntryType.Single => 1,  // Single creatures need 1x1
+            SpawnEntryType.Band => 3,    // Bands need at least 3x3 for formation
+            SpawnEntryType.Unique => 3,  // Uniques get some breathing room
+            _ => 1
+        };
+    }
+
+    /// <summary>
+    /// Finds a suitable spawn location with required space and spacing from other spawns.
+    /// </summary>
+    private GridPosition? FindSpawnLocation(
+        List<GridPosition> allWalkableTiles,
+        List<GridPosition> existingSpawns,
+        int requiredSpace,
+        int minSpacing)
+    {
+        // Shuffle walkable tiles for random distribution
+        var shuffledTiles = allWalkableTiles.OrderBy(_ => GD.Randi()).ToList();
+
+        foreach (var candidate in shuffledTiles)
+        {
+            // Check if area is clear
+            if (!_mapSystem.IsAreaClear(candidate, requiredSpace))
+            {
+                continue;
+            }
+
+            // Check spacing from existing spawns
+            bool tooClose = false;
+            foreach (var existing in existingSpawns)
+            {
+                int distance = Mathf.Abs(existing.X - candidate.X) + Mathf.Abs(existing.Y - candidate.Y);
+                if (distance < minSpacing)
+                {
+                    tooClose = true;
+                    break;
+                }
+            }
+
+            if (tooClose)
+            {
+                continue;
+            }
+
+            // Found a suitable location
+            return candidate;
         }
+
+        // No suitable location found
+        return null;
+    }
+
+    /// <summary>
+    /// Populates the dungeon with items using budget-based spawning.
+    /// </summary>
+    private int PopulateItems(
+        List<GridPosition> allWalkableTiles,
+        SpawnTableData spawnTable,
+        int totalBudget)
+    {
+        int totalSpawned = 0;
+        int remainingBudget = totalBudget;
+        int attempts = 0;
+        int maxAttempts = totalBudget * 10; // Allow multiple attempts to find suitable locations
 
         var occupiedPositions = new HashSet<Vector2I>();
 
         // Mark positions occupied by creatures
-        foreach (var gridPos in roomFloorTiles)
+        foreach (var gridPos in allWalkableTiles)
         {
             if (_entityManager.IsPositionOccupied(gridPos))
             {
@@ -247,14 +321,50 @@ public partial class SpawnManager : Node
             }
         }
 
-        var availableTiles = roomFloorTiles
+        var availableTiles = allWalkableTiles
             .Select(gp => new Vector2I(gp.X, gp.Y))
             .ToList();
 
-        var strategy = _spawnStrategies["single"];
-        var result = strategy.Execute(entry, availableTiles, occupiedPositions);
+        while (remainingBudget > 0 && attempts < maxAttempts)
+        {
+            attempts++;
 
-        return result.EntityCount;
+            // Select pool (weighted random)
+            var pool = spawnTable.SelectRandomItemPool();
+            if (pool == null)
+            {
+                continue;
+            }
+
+            // Select entry from pool
+            var entry = pool.SelectRandomEntry();
+            if (entry == null || !entry.IsValid())
+            {
+                continue;
+            }
+
+            // Execute spawn using single strategy
+            var strategy = _spawnStrategies["single"];
+            var result = strategy.Execute(entry, availableTiles, occupiedPositions);
+
+            if (result.Success)
+            {
+                totalSpawned += result.EntityCount;
+                remainingBudget -= result.EntityCount;
+
+                GD.Print($"  Spawned {result.EntityCount}x item {entry} (Budget: {remainingBudget}/{totalBudget})");
+
+                // Reset attempt counter on successful spawn
+                attempts = 0;
+            }
+        }
+
+        if (remainingBudget > 0)
+        {
+            GD.Print($"SpawnOrchestrator: Could not spend {remainingBudget} item budget (max attempts reached)");
+        }
+
+        return totalSpawned;
     }
 
     /// <summary>

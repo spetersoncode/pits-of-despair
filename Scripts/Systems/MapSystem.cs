@@ -213,6 +213,160 @@ public partial class MapSystem : Node
     }
 
     /// <summary>
+    /// Gets all walkable tiles on the map without room segmentation.
+    /// </summary>
+    /// <returns>List of all walkable tile positions.</returns>
+    public System.Collections.Generic.List<GridPosition> GetAllWalkableTiles()
+    {
+        var walkableTiles = new System.Collections.Generic.List<GridPosition>();
+
+        for (int x = 0; x < MapWidth; x++)
+        {
+            for (int y = 0; y < MapHeight; y++)
+            {
+                var pos = new GridPosition(x, y);
+                if (IsWalkable(pos))
+                {
+                    walkableTiles.Add(pos);
+                }
+            }
+        }
+
+        return walkableTiles;
+    }
+
+    /// <summary>
+    /// Checks if an NxN area centered at position is completely walkable.
+    /// </summary>
+    /// <param name="center">Center position of the area</param>
+    /// <param name="size">Size of the square area (e.g., 3 for 3x3)</param>
+    /// <returns>True if all tiles in the area are walkable</returns>
+    public bool IsAreaClear(GridPosition center, int size)
+    {
+        int halfSize = size / 2;
+
+        for (int x = center.X - halfSize; x <= center.X + halfSize; x++)
+        {
+            for (int y = center.Y - halfSize; y <= center.Y + halfSize; y++)
+            {
+                var pos = new GridPosition(x, y);
+                if (!IsWalkable(pos))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Finds contiguous walkable tiles around an anchor position using flood fill.
+    /// </summary>
+    /// <param name="anchor">Starting position</param>
+    /// <param name="maxTiles">Maximum number of tiles to find</param>
+    /// <returns>List of connected walkable positions</returns>
+    public System.Collections.Generic.List<GridPosition> FindContiguousArea(GridPosition anchor, int maxTiles)
+    {
+        if (!IsWalkable(anchor))
+        {
+            return new System.Collections.Generic.List<GridPosition>();
+        }
+
+        var result = new System.Collections.Generic.List<GridPosition>();
+        var visited = new System.Collections.Generic.HashSet<GridPosition>();
+        var queue = new System.Collections.Generic.Queue<GridPosition>();
+
+        queue.Enqueue(anchor);
+        visited.Add(anchor);
+
+        while (queue.Count > 0 && result.Count < maxTiles)
+        {
+            var current = queue.Dequeue();
+            result.Add(current);
+
+            // Check 4-directional neighbors
+            var neighbors = new[]
+            {
+                new GridPosition(current.X + 1, current.Y),
+                new GridPosition(current.X - 1, current.Y),
+                new GridPosition(current.X, current.Y + 1),
+                new GridPosition(current.X, current.Y - 1)
+            };
+
+            foreach (var neighbor in neighbors)
+            {
+                if (!visited.Contains(neighbor) && IsWalkable(neighbor))
+                {
+                    visited.Add(neighbor);
+                    queue.Enqueue(neighbor);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Finds suitable spawn locations with minimum required space.
+    /// </summary>
+    /// <param name="requiredSize">Minimum NxN area size needed</param>
+    /// <param name="count">Maximum number of locations to find</param>
+    /// <param name="minSpacing">Minimum distance between returned locations (0 for no spacing)</param>
+    /// <returns>List of suitable spawn positions</returns>
+    public System.Collections.Generic.List<GridPosition> FindSuitableSpawnLocations(int requiredSize, int count, int minSpacing = 0)
+    {
+        var locations = new System.Collections.Generic.List<GridPosition>();
+        var walkableTiles = GetAllWalkableTiles();
+
+        // Shuffle to get random distribution
+        var random = new System.Random();
+        for (int i = walkableTiles.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(i + 1);
+            (walkableTiles[i], walkableTiles[j]) = (walkableTiles[j], walkableTiles[i]);
+        }
+
+        foreach (var pos in walkableTiles)
+        {
+            if (locations.Count >= count)
+            {
+                break;
+            }
+
+            // Check if area is clear
+            if (!IsAreaClear(pos, requiredSize))
+            {
+                continue;
+            }
+
+            // Check spacing from other locations
+            if (minSpacing > 0)
+            {
+                bool tooClose = false;
+                foreach (var existing in locations)
+                {
+                    int distance = Mathf.Abs(existing.X - pos.X) + Mathf.Abs(existing.Y - pos.Y);
+                    if (distance < minSpacing)
+                    {
+                        tooClose = true;
+                        break;
+                    }
+                }
+
+                if (tooClose)
+                {
+                    continue;
+                }
+            }
+
+            locations.Add(pos);
+        }
+
+        return locations;
+    }
+
+    /// <summary>
     /// Get floor tile positions for each room in the dungeon.
     /// Used for per-room entity spawning.
     /// </summary>

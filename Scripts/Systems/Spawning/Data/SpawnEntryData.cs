@@ -88,6 +88,18 @@ public class SpawnEntryData
     public string Placement { get; set; } = "random";
 
     /// <summary>
+    /// Minimum NxN area size required for spawning (0 = auto-calculate based on type).
+    /// </summary>
+    [YamlMember(Alias = "minSpace")]
+    public int MinimumSpace { get; set; } = 0;
+
+    /// <summary>
+    /// Minimum distance (Manhattan) from other spawns (0 = no spacing requirement).
+    /// </summary>
+    [YamlMember(Alias = "minIsolation")]
+    public int MinimumIsolation { get; set; } = 0;
+
+    /// <summary>
     /// Validates that the entry has required fields based on type.
     /// </summary>
     public bool IsValid()

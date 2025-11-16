@@ -1,9 +1,10 @@
 name: Floor 1
-spawnBudget:
-  min: 8
-  max: 15
-emptyRoomChance: 0.3
-outOfDepthChance: 0.05
+creatureBudget:
+  min: 120
+  max: 180
+itemBudget:
+  min: 40
+  max: 60
 
 creaturePools:
   - id: common

@@ -18,25 +18,20 @@ public class SpawnTableData
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Total spawn budget (min-max) for the entire floor.
+    /// Total creature spawn budget (min-max) for the entire floor.
     /// </summary>
-    [YamlMember(Alias = "spawnBudget")]
-    public CountRange SpawnBudget { get; set; } = new CountRange { Min = 10, Max = 20 };
+    [YamlMember(Alias = "creatureBudget")]
+    public CountRange CreatureBudget { get; set; } = new CountRange { Min = 10, Max = 20 };
 
     /// <summary>
-    /// Chance (0.0 to 1.0) for a room to remain empty.
+    /// Total item spawn budget (min-max) for the entire floor.
     /// </summary>
-    [YamlMember(Alias = "emptyRoomChance")]
-    public float EmptyRoomChance { get; set; } = 0.2f;
-
-    /// <summary>
-    /// Chance (0.0 to 1.0) for out-of-depth spawns (harder creatures).
-    /// </summary>
-    [YamlMember(Alias = "outOfDepthChance")]
-    public float OutOfDepthChance { get; set; } = 0.05f;
+    [YamlMember(Alias = "itemBudget")]
+    public CountRange ItemBudget { get; set; } = new CountRange { Min = 5, Max = 10 };
 
     /// <summary>
     /// Creature spawn pools (common, uncommon, rare, etc.).
+    /// Powerful creatures should be placed in rare pools with low weights.
     /// </summary>
     [YamlMember(Alias = "creaturePools")]
     public List<SpawnPoolData> CreaturePools { get; set; } = new();
@@ -48,18 +43,11 @@ public class SpawnTableData
     public List<SpawnPoolData> ItemPools { get; set; } = new();
 
     /// <summary>
-    /// Out-of-depth creature pools (harder creatures from deeper floors).
-    /// </summary>
-    [YamlMember(Alias = "outOfDepthPools")]
-    public List<SpawnPoolData> OutOfDepthPools { get; set; } = new();
-
-    /// <summary>
     /// Selects a random creature pool using weighted selection.
     /// </summary>
-    public SpawnPoolData SelectRandomCreaturePool(bool outOfDepth = false)
+    public SpawnPoolData SelectRandomCreaturePool()
     {
-        var pools = outOfDepth && OutOfDepthPools.Count > 0 ? OutOfDepthPools : CreaturePools;
-        return SelectRandomPool(pools);
+        return SelectRandomPool(CreaturePools);
     }
 
     /// <summary>
@@ -102,16 +90,25 @@ public class SpawnTableData
     }
 
     /// <summary>
-    /// Gets a random spawn budget value within the configured range.
+    /// Gets a random creature spawn budget value within the configured range.
     /// </summary>
-    public int GetRandomSpawnBudget()
+    public int GetRandomCreatureBudget()
     {
-        return SpawnBudget.GetRandom();
+        return CreatureBudget.GetRandom();
+    }
+
+    /// <summary>
+    /// Gets a random item spawn budget value within the configured range.
+    /// </summary>
+    public int GetRandomItemBudget()
+    {
+        return ItemBudget.GetRandom();
     }
 
     public override string ToString()
     {
-        return $"SpawnTable '{Name}' (Budget: {SpawnBudget.Min}-{SpawnBudget.Max}, " +
+        return $"SpawnTable '{Name}' (Creatures: {CreatureBudget.Min}-{CreatureBudget.Max}, " +
+               $"Items: {ItemBudget.Min}-{ItemBudget.Max}, " +
                $"Creature Pools: {CreaturePools.Count}, Item Pools: {ItemPools.Count})";
     }
 }
