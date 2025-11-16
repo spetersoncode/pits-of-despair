@@ -63,6 +63,7 @@ public partial class GameHUD : Control
 
         // Wire up inventory panel
         _inventoryPanel.ConnectToPlayer(player);
+        _inventoryPanel.Cancelled += OnInventoryCancelled;
 
         // Wire up activate and drop panels
         _activateItemPanel.ConnectToPlayer(player);
@@ -166,6 +167,12 @@ public partial class GameHUD : Control
 
         _dropItemPanel.ShowMenu();
         _currentMenuState = MenuState.Drop;
+    }
+
+    private void OnInventoryCancelled()
+    {
+        _inventoryPanel.ToggleInventory();
+        _currentMenuState = MenuState.None;
     }
 
     private void OnActivateItemSelected(char key)

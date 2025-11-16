@@ -11,6 +11,9 @@ namespace PitsOfDespair.UI;
 /// </summary>
 public partial class InventoryPanel : PanelContainer
 {
+    [Signal]
+    public delegate void CancelledEventHandler();
+
     private RichTextLabel _inventoryLabel;
     private Player _player;
     private bool _isVisible = false;
@@ -76,7 +79,7 @@ public partial class InventoryPanel : PanelContainer
         {
             if (keyEvent.Keycode == Key.I || keyEvent.Keycode == Key.Escape)
             {
-                ToggleInventory();
+                EmitSignal(SignalName.Cancelled);
                 GetViewport().SetInputAsHandled();
             }
         }

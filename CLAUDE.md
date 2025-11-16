@@ -162,9 +162,10 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) specificatio
 1. Understand requirements and clarify ambiguities
 2. Plan architecture and system interactions
 3. Implement incrementally in logical steps
-4. Test and verify functionality
-5. Refactor for quality and maintainability
-6. Document complex logic
+4. Use `dotnet build` to ensure no build errors
+5. Test and verify functionality
+6. Refactor for quality and maintainability
+7. Document complex logic
 
 ### Communication
 - Ask clarifying questions when requirements are ambiguous
