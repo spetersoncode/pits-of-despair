@@ -101,143 +101,62 @@ public partial class DataLoader : Node
     private void LoadAllCreatures()
     {
         _creatures.Clear();
-
-        if (!DirAccess.DirExistsAbsolute(CreaturesPath))
-        {
-            GD.PrintErr($"DataLoader: Creatures directory not found at {CreaturesPath}");
-            return;
-        }
-
-        var dir = DirAccess.Open(CreaturesPath);
-        if (dir == null)
-        {
-            GD.PrintErr($"DataLoader: Failed to open creatures directory");
-            return;
-        }
-
-        dir.ListDirBegin();
-        string fileName = dir.GetNext();
-
-        while (fileName != string.Empty)
-        {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml"))
-            {
-                string filePath = CreaturesPath + fileName;
-                string creatureId = fileName.Replace(".yaml", "");
-
-                var creature = LoadYamlFile<CreatureData>(filePath);
-                if (creature != null)
-                {
-                    _creatures[creatureId] = creature;
-                    GD.Print($"DataLoader: Loaded creature '{creatureId}' - {creature.Name}");
-                }
-            }
-
-            fileName = dir.GetNext();
-        }
-
-        dir.ListDirEnd();
+        LoadYamlFilesRecursive(CreaturesPath, "", _creatures, "creature");
     }
 
     private void LoadAllItems()
     {
         _items.Clear();
-
-        if (!DirAccess.DirExistsAbsolute(ItemsPath))
+        LoadYamlFilesRecursive(ItemsPath, "", _items, "item", (item, id) =>
         {
-            GD.PrintErr($"DataLoader: Items directory not found at {ItemsPath}");
-            return;
-        }
-
-        var dir = DirAccess.Open(ItemsPath);
-        if (dir == null)
-        {
-            GD.PrintErr($"DataLoader: Failed to open items directory");
-            return;
-        }
-
-        dir.ListDirBegin();
-        string fileName = dir.GetNext();
-
-        while (fileName != string.Empty)
-        {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml"))
-            {
-                string filePath = ItemsPath + fileName;
-                string itemId = fileName.Replace(".yaml", "");
-
-                var item = LoadYamlFile<ItemData>(filePath);
-                if (item != null)
-                {
-                    item.DataFileId = itemId; // Set unique ID for inventory stacking
-                    _items[itemId] = item;
-                    GD.Print($"DataLoader: Loaded item '{itemId}' - {item.Name}");
-                }
-            }
-
-            fileName = dir.GetNext();
-        }
-
-        dir.ListDirEnd();
+            item.DataFileId = id; // Set unique ID for inventory stacking
+            item.ApplyDefaults(); // Apply type-based defaults
+        });
     }
 
     private void LoadAllSpawnTables()
     {
         _spawnTables.Clear();
-
-        if (!DirAccess.DirExistsAbsolute(SpawnTablesPath))
-        {
-            GD.PrintErr($"DataLoader: SpawnTables directory not found at {SpawnTablesPath}");
-            return;
-        }
-
-        var dir = DirAccess.Open(SpawnTablesPath);
-        if (dir == null)
-        {
-            GD.PrintErr($"DataLoader: Failed to open spawn tables directory");
-            return;
-        }
-
-        dir.ListDirBegin();
-        string fileName = dir.GetNext();
-
-        while (fileName != string.Empty)
-        {
-            // Load files ending with .yaml but NOT _creatures.yaml or _items.yaml (those are old tables)
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml") &&
-                !fileName.EndsWith("_creatures.yaml") && !fileName.EndsWith("_items.yaml"))
-            {
-                string filePath = SpawnTablesPath + fileName;
-                string tableId = fileName.Replace(".yaml", "");
-
-                var table = LoadYamlFile<SpawnTableData>(filePath);
-                if (table != null)
-                {
-                    _spawnTables[tableId] = table;
-                    GD.Print($"DataLoader: Loaded spawn table '{tableId}' - {table.Name}");
-                }
-            }
-
-            fileName = dir.GetNext();
-        }
-
-        dir.ListDirEnd();
+        LoadYamlFilesRecursive(SpawnTablesPath, "", _spawnTables, "spawn table");
     }
 
     private void LoadAllBands()
     {
         _bands.Clear();
 
+        // Bands folder is optional (not all projects may use bands)
         if (!DirAccess.DirExistsAbsolute(BandsPath))
         {
             GD.Print($"DataLoader: Bands directory not found at {BandsPath}, skipping band loading");
             return;
         }
 
-        var dir = DirAccess.Open(BandsPath);
+        LoadYamlFilesRecursive(BandsPath, "", _bands, "band");
+    }
+
+    /// <summary>
+    /// Recursively loads YAML files from a directory and its subdirectories.
+    /// Converts folder paths to IDs (e.g., "Goblins/warrior.yaml" -> "goblins_warrior").
+    /// </summary>
+    private void LoadYamlFilesRecursive<T>(
+        string basePath,
+        string currentRelativePath,
+        Dictionary<string, T> targetDictionary,
+        string fileTypeName,
+        Action<T, string> postLoadAction = null) where T : class
+    {
+        string fullPath = string.IsNullOrEmpty(currentRelativePath)
+            ? basePath
+            : basePath + currentRelativePath + "/";
+
+        if (!DirAccess.DirExistsAbsolute(fullPath))
+        {
+            return;
+        }
+
+        var dir = DirAccess.Open(fullPath);
         if (dir == null)
         {
-            GD.PrintErr($"DataLoader: Failed to open bands directory");
             return;
         }
 
@@ -246,16 +165,47 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".yaml"))
+            // Skip hidden files/folders
+            if (fileName.StartsWith("."))
             {
-                string filePath = BandsPath + fileName;
-                string bandId = fileName.Replace(".yaml", "");
+                fileName = dir.GetNext();
+                continue;
+            }
 
-                var band = LoadYamlFile<BandData>(filePath);
-                if (band != null)
+            if (dir.CurrentIsDir())
+            {
+                // Recursively scan subdirectory
+                string newRelativePath = string.IsNullOrEmpty(currentRelativePath)
+                    ? fileName
+                    : currentRelativePath + "/" + fileName;
+
+                LoadYamlFilesRecursive(basePath, newRelativePath, targetDictionary, fileTypeName, postLoadAction);
+            }
+            else if (fileName.EndsWith(".yaml"))
+            {
+                // Convert path to ID: "Goblins/warrior.yaml" -> "goblins_warrior"
+                string relativePath = string.IsNullOrEmpty(currentRelativePath)
+                    ? fileName
+                    : currentRelativePath + "/" + fileName;
+
+                string id = ConvertPathToId(relativePath);
+                string filePath = fullPath + fileName;
+
+                var data = LoadYamlFile<T>(filePath);
+                if (data != null)
                 {
-                    _bands[bandId] = band;
-                    GD.Print($"DataLoader: Loaded band '{bandId}' - {band.Name}");
+                    if (targetDictionary.ContainsKey(id))
+                    {
+                        GD.PushWarning($"DataLoader: Duplicate {fileTypeName} ID '{id}' from {relativePath}, skipping");
+                    }
+                    else
+                    {
+                        // Call post-load action if provided (e.g., to set DataFileId for items)
+                        postLoadAction?.Invoke(data, id);
+
+                        targetDictionary[id] = data;
+                        GD.Print($"DataLoader: Loaded {fileTypeName} '{id}' from {relativePath}");
+                    }
                 }
             }
 
@@ -263,6 +213,23 @@ public partial class DataLoader : Node
         }
 
         dir.ListDirEnd();
+    }
+
+    /// <summary>
+    /// Converts a file path to a valid ID.
+    /// Examples: "Goblins/warrior.yaml" -> "goblins_warrior"
+    ///           "Items/Potions/health.yaml" -> "items_potions_health"
+    /// </summary>
+    private string ConvertPathToId(string path)
+    {
+        // Remove .yaml extension
+        string withoutExtension = path.Replace(".yaml", "");
+
+        // Replace path separators with underscores
+        string normalized = withoutExtension.Replace("/", "_").Replace("\\", "_");
+
+        // Convert to lowercase
+        return normalized.ToLower();
     }
 
     private T LoadYamlFile<T>(string path) where T : class

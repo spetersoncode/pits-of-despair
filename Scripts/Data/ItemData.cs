@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using PitsOfDespair.Effects;
+using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Data;
 
@@ -13,7 +14,15 @@ public class ItemData
 {
     public string Name { get; set; } = string.Empty;
 
-    public string Glyph { get; set; } = "?";
+    /// <summary>
+    /// Item type for category-based defaults (e.g., "potion", "scroll").
+    /// Optional - blank type means no inherited defaults.
+    /// </summary>
+    [YamlMember(Alias = "type")]
+    public string Type { get; set; } = string.Empty;
+
+    [YamlMember(Alias = "glyph")]
+    public string? Glyph { get; set; } = null;
 
     public string Color { get; set; } = "#FFFFFF";
 
@@ -25,8 +34,10 @@ public class ItemData
 
     /// <summary>
     /// Whether this item is consumable (one-time use, stackable).
+    /// If null, will be set by ApplyDefaults based on Type.
     /// </summary>
-    public bool IsConsumable { get; set; } = false;
+    [YamlMember(Alias = "isConsumable")]
+    public bool? IsConsumable { get; set; } = null;
 
     /// <summary>
     /// Maximum number of charges this item can hold.
@@ -54,12 +65,53 @@ public class ItemData
     public List<EffectDefinition> Effects { get; set; } = new();
 
     /// <summary>
+    /// Applies type-based defaults for properties not explicitly set in YAML.
+    /// Should be called after deserialization.
+    /// </summary>
+    public void ApplyDefaults()
+    {
+        if (string.IsNullOrEmpty(Type))
+        {
+            return; // No type means no inherited defaults
+        }
+
+        switch (Type.ToLower())
+        {
+            case "potion":
+                Glyph ??= "!";
+                IsConsumable ??= true;
+                break;
+
+            case "scroll":
+                Glyph ??= "♪";
+                IsConsumable ??= true;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Gets the glyph for this item, using type-based default if not explicitly set.
+    /// </summary>
+    public string GetGlyph()
+    {
+        return Glyph ?? "?";
+    }
+
+    /// <summary>
+    /// Gets whether this item is consumable, using type-based default if not explicitly set.
+    /// </summary>
+    public bool GetIsConsumable()
+    {
+        return IsConsumable ?? false;
+    }
+
+    /// <summary>
     /// Determines if this item can be activated from inventory.
     /// Items are activatable if they are consumable or have charges.
     /// </summary>
     public bool IsActivatable()
     {
-        return IsConsumable || MaxCharges > 0;
+        return GetIsConsumable() || MaxCharges > 0;
     }
 
     /// <summary>

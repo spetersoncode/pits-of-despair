@@ -1,7 +1,6 @@
 name: Potion of Cure Light Wounds
-glyph: "!"
+type: potion
 color: "#FF5555"
-isConsumable: true
 effects:
   - type: heal
     amount: 8

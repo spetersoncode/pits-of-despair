@@ -106,7 +106,7 @@ public partial class ActivateItemPanel : PanelContainer
         {
             // Check if item is activatable (consumable or has charges > 0)
             bool isActivatable = slot.Item.Template.IsActivatable() &&
-                                 (slot.Item.Template.IsConsumable || slot.Item.CurrentCharges > 0);
+                                 (slot.Item.Template.GetIsConsumable() || slot.Item.CurrentCharges > 0);
 
             // Format: key) glyph name (count/charges)
             string colorHex = isActivatable ? slot.Item.Template.Color : "#888888";
@@ -114,7 +114,7 @@ public partial class ActivateItemPanel : PanelContainer
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
             string chargesText = slot.Item.Template.MaxCharges > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.MaxCharges}]" : "";
 
-            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.Glyph}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]");
+            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]");
         }
 
         _itemsLabel.Text = sb.ToString();

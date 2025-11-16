@@ -113,7 +113,7 @@ public class ActivateItemAction : Action
         }
 
         // Handle consumption based on item type
-        if (itemTemplate.IsConsumable)
+        if (itemTemplate.GetIsConsumable())
         {
             // Consumable: remove one from stack
             player.RemoveItemFromInventory(_itemKey, 1);

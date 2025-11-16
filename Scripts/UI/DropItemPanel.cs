@@ -109,7 +109,7 @@ public partial class DropItemPanel : PanelContainer
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
             string chargesText = slot.Item.Template.MaxCharges > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.MaxCharges}]" : "";
 
-            sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.Glyph}[/color] {slot.Item.Template.Name}{countText}{chargesText}");
+            sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}");
         }
 
         _itemsLabel.Text = sb.ToString();

@@ -51,14 +51,14 @@ itemPools:
   - id: common_items
     weight: 100
     entries:
-      - itemId: health_potion
+      - itemId: potions_cure_light_wounds
         weight: 2
         count:
           min: 1
           max: 2
         placement: random
 
-      - itemId: scroll_blink
+      - itemId: scrolls_blink
         weight: 1
         count:
           min: 1

@@ -68,7 +68,7 @@ public class DropItemAction : Action
 		{
 			GridPosition = player.GridPosition,
 			DisplayName = itemInstance.Template.Name,
-			Glyph = !string.IsNullOrEmpty(itemInstance.Template.Glyph) ? itemInstance.Template.Glyph : "?",
+			Glyph = itemInstance.Template.GetGlyph(),
 			GlyphColor = itemInstance.Template.GetColor(),
 			Name = itemInstance.Template.Name
 		};

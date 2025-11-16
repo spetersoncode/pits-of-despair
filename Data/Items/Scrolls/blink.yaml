@@ -1,7 +1,6 @@
 name: Scroll of Blink
-glyph: "♪"
+type: scroll
 color: "#00DDFF"
-isConsumable: true
 effects:
   - type: blink
     range: 5

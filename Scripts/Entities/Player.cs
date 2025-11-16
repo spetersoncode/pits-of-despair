@@ -216,7 +216,7 @@ public partial class Player : BaseEntity
         }
 
         // Check if item is stackable (consumables only, charged items never stack)
-        bool canStack = itemComponent.Item.Template.IsConsumable;
+        bool canStack = itemComponent.Item.Template.GetIsConsumable();
 
         // Check if inventory is full (26 unique items)
         if (_inventory.Count >= MaxInventorySlots)
@@ -301,7 +301,7 @@ public partial class Player : BaseEntity
         }
 
         // Check if item is stackable (consumables only, charged items never stack)
-        bool canStack = itemComponent.Item.Template.IsConsumable;
+        bool canStack = itemComponent.Item.Template.GetIsConsumable();
 
         // Check if inventory is full (26 unique items)
         if (_inventory.Count >= MaxInventorySlots)
