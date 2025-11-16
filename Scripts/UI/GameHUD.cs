@@ -173,8 +173,8 @@ public partial class GameHUD : Control
         _activateItemPanel.HideMenu();
         _currentMenuState = MenuState.None;
 
-        // Execute UseItemAction
-        var action = new UseItemAction(key);
+        // Execute ActivateItemAction
+        var action = new ActivateItemAction(key);
         _player.ExecuteAction(action, _actionContext);
     }
 

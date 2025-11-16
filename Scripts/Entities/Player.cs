@@ -390,7 +390,7 @@ public partial class Player : BaseEntity
 
     /// <summary>
     /// Emits item usage feedback signals.
-    /// Used by UseItemAction to maintain consistent event signaling.
+    /// Used by ActivateItemAction to maintain consistent event signaling.
     /// </summary>
     public void EmitItemUsed(string itemName, bool success, string message)
     {

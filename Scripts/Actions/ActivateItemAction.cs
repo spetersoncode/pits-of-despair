@@ -7,13 +7,13 @@ namespace PitsOfDespair.Actions;
 /// Action for using (activating) an item from the player's inventory.
 /// Applies the item's effects and removes it if it's a consumable.
 /// </summary>
-public class UseItemAction : Action
+public class ActivateItemAction : Action
 {
     private readonly char _itemKey;
 
-    public override string Name => "UseItem";
+    public override string Name => "ActivateItem";
 
-    public UseItemAction(char itemKey)
+    public ActivateItemAction(char itemKey)
     {
         _itemKey = itemKey;
     }
