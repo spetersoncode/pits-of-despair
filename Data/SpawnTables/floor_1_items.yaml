@@ -1,6 +1,10 @@
 name: Floor 1 Items
 entries:
+  - itemId: scroll_blink
+    weight: 1
+    minCount: 1
+    maxCount: 2
   - itemId: health_potion
     weight: 1
-    minCount: 0
+    minCount: 1
     maxCount: 2

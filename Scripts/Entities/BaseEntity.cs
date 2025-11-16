@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
+using System.Globalization;
 
 namespace PitsOfDespair.Entities;
 
@@ -27,10 +28,43 @@ public partial class BaseEntity : Node2D
     /// </summary>
     public string DisplayName { get; set; } = "Unknown";
 
+    private string _glyph = "?";
+
     /// <summary>
-    /// ASCII character representing this entity.
+    /// Character or symbol representing this entity (supports Unicode).
+    /// Must be a single character (grapheme cluster).
     /// </summary>
-    public char Glyph { get; set; } = '?';
+    public string Glyph
+    {
+        get => _glyph;
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                GD.PushWarning($"BaseEntity: Attempted to set empty glyph for '{DisplayName}', using '?'");
+                _glyph = "?";
+                return;
+            }
+
+            // Use StringInfo to count grapheme clusters (user-perceived characters)
+            var textElementEnumerator = System.Globalization.StringInfo.GetTextElementEnumerator(value);
+            int count = 0;
+            while (textElementEnumerator.MoveNext())
+                count++;
+
+            if (count != 1)
+            {
+                GD.PushWarning($"BaseEntity: Glyph for '{DisplayName}' must be a single character, got '{value}' ({count} characters), using first character");
+                textElementEnumerator.Reset();
+                textElementEnumerator.MoveNext();
+                _glyph = textElementEnumerator.GetTextElement();
+            }
+            else
+            {
+                _glyph = value;
+            }
+        }
+    }
 
     /// <summary>
     /// Color to render the glyph.

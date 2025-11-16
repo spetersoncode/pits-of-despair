@@ -1,0 +1,8 @@
+name: Scroll of Blink
+glyph: "♪"
+color: "#00DDFF"
+itemType: consumable
+isActivatable: true
+effects:
+  - type: blink
+    range: 5

@@ -252,7 +252,7 @@ public partial class TextRenderer : Control
                 itemColor = new Color(itemColor.R * 0.5f, itemColor.G * 0.5f, itemColor.B * 0.5f);
             }
 
-            DrawChar(_font, itemDrawPos, entity.Glyph.ToString(), FontSize, itemColor);
+            DrawString(_font, itemDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, itemColor);
         }
 
         // Draw creatures (between items and player)
@@ -276,10 +276,10 @@ public partial class TextRenderer : Control
             );
             Vector2 entityDrawPos = offset + entityWorldPos;
 
-            DrawChar(_font, entityDrawPos, entity.Glyph.ToString(), FontSize, entity.GlyphColor);
+            DrawString(_font, entityDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, entity.GlyphColor);
         }
 
         // Draw the player last (should be at viewport center, on top of everything)
-        DrawChar(_font, viewportCenter, _player.Glyph.ToString(), FontSize, _player.GlyphColor);
+        DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
     }
 }

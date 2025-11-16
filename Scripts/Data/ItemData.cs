@@ -70,6 +70,9 @@ public class ItemData
             case "heal":
                 return new HealEffect(definition.Amount);
 
+            case "blink":
+                return new BlinkEffect(definition.Range);
+
             default:
                 GD.PrintErr($"ItemData: Unknown effect type '{definition.Type}' in item '{Name}'");
                 return null;
@@ -91,4 +94,9 @@ public class EffectDefinition
     /// Numeric parameter for the effect (e.g., heal amount, damage amount).
     /// </summary>
     public int Amount { get; set; } = 0;
+
+    /// <summary>
+    /// Range parameter for area/distance effects (e.g., teleport range).
+    /// </summary>
+    public int Range { get; set; } = 0;
 }

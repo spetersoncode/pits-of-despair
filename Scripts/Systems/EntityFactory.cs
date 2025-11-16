@@ -57,7 +57,7 @@ public partial class EntityFactory : Node
         {
             GridPosition = position,
             DisplayName = data.Name,
-            Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?',
+            Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
             Name = data.Name // Set node name for debugging
         };
@@ -88,7 +88,7 @@ public partial class EntityFactory : Node
         {
             GridPosition = position,
             DisplayName = data.Name,
-            Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?', // Convert string to char
+            Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GlyphColor,
             Name = data.Name // Set node name for debugging
         };
@@ -163,7 +163,7 @@ public partial class EntityFactory : Node
         {
             GridPosition = position,
             DisplayName = data.Name,
-            Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?', // Convert string to char
+            Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
             Name = data.Name // Set node name for debugging
         };
