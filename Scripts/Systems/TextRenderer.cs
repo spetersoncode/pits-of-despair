@@ -10,8 +10,8 @@ namespace PitsOfDespair.Systems;
 /// </summary>
 public partial class TextRenderer : Control
 {
-    [Export] public int TileSize { get; set; } = 16;
-    [Export] public int FontSize { get; set; } = 14;
+    [Export] public int TileSize { get; set; } = 20;
+    [Export] public int FontSize { get; set; } = 20;
 
     private MapSystem _mapSystem;
     private Player _player;
