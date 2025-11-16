@@ -12,9 +12,9 @@ namespace PitsOfDespair.Components;
 /// </summary>
 public partial class AIComponent : Node
 {
-    [Export] public int SearchTurns { get; set; } = 5;
+    [Export] public int SearchTurns { get; set; } = 12;
     [Export] public int SearchRadius { get; set; } = 3;
-    [Export] public int FleeTurns { get; set; } = 8;
+    [Export] public int FleeTurns { get; set; } = 20;
 
     // Goal-based AI
     public List<Goal> AvailableGoals { get; set; } = new List<Goal>();

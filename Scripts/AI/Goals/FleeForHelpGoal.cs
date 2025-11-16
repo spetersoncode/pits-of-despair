@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.Actions;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Helpers;
 
@@ -62,6 +63,13 @@ public class FleeForHelpGoal : Goal
 
             // Otherwise, flee from the player
             ai.TurnsSinceLastYell++;
+
+            // Try to flee toward allies first, fallback to greedy flee
+            var allyFleeResult = FleeTowardAllies(context);
+            if (allyFleeResult != null)
+            {
+                return allyFleeResult;
+            }
             return FleeFromPlayer(context);
         }
         else
@@ -69,15 +77,104 @@ public class FleeForHelpGoal : Goal
             // Player not visible - continue fleeing and decrement flee turns
             ai.FleeturnsRemaining--;
 
-            // Flee away from last known position if we have one
+            // Check if it's time to yell (keep yelling while fleeing)
+            if (ai.TurnsSinceLastYell >= YellInterval)
+            {
+                // Yell for help and reset counter
+                ai.TurnsSinceLastYell = 0;
+                var yellAction = new YellForHelpAction();
+                return entity.ExecuteAction(yellAction, context.ActionContext);
+            }
+
+            // Increment yell counter
+            ai.TurnsSinceLastYell++;
+
+            // Try to flee toward allies first
+            var allyFleeResult = FleeTowardAllies(context);
+            if (allyFleeResult != null)
+            {
+                return allyFleeResult;
+            }
+
+            // Fallback: Flee away from last known position if we have one
             if (ai.LastKnownPlayerPosition != null)
             {
                 return FleeFromPosition(context, ai.LastKnownPlayerPosition.Value);
             }
 
-            // No last known position - just move randomly
+            // Final fallback: greedy flee
             return FleeFromPlayer(context);
         }
+    }
+
+    /// <summary>
+    /// Attempts to flee toward nearby allies using Dijkstra pathfinding.
+    /// Only moves toward allies if it maintains safe distance from player.
+    /// </summary>
+    private ActionResult? FleeTowardAllies(AIContext context)
+    {
+        const int MinSafeDistance = 3;
+        var entity = context.Entity;
+        var player = context.Player;
+        var mapSystem = context.MapSystem;
+        var entityManager = context.EntityManager;
+
+        // Find nearby allies
+        var allies = FindNearbyAllies(context);
+        if (allies.Count == 0)
+        {
+            return null; // No allies nearby, use fallback
+        }
+
+        // Build Dijkstra map with allies as goals
+        float[,] allyDistanceMap = DijkstraMapBuilder.BuildDistanceMap(
+            allies,
+            mapSystem,
+            entityManager,  // Treat occupied cells as obstacles
+            player          // Treat player position as obstacle
+        );
+
+        // Get next position toward nearest ally
+        GridPosition? nextPos = DijkstraMapBuilder.GetNearestGoalDirection(
+            entity.GridPosition,
+            allyDistanceMap
+        );
+
+        if (nextPos == null)
+        {
+            return null; // No valid path to allies, use fallback
+        }
+
+        // Check distance constraints
+        int currentDistToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, player.GridPosition);
+        int newDistToPlayer = DistanceHelper.ChebyshevDistance(nextPos.Value, player.GridPosition);
+
+        // If already at safe distance, allow moving slightly closer to reach allies
+        // Otherwise, must maintain or increase distance
+        bool moveIsValid;
+        if (currentDistToPlayer >= MinSafeDistance)
+        {
+            // Allow moving up to 1 tile closer if we're already safe
+            moveIsValid = newDistToPlayer >= currentDistToPlayer - 1;
+        }
+        else
+        {
+            // Too close to player - must maintain or increase distance
+            moveIsValid = newDistToPlayer >= currentDistToPlayer;
+        }
+
+        if (!moveIsValid)
+        {
+            return null; // Move would bring us too close to player, use fallback
+        }
+
+        // Execute move toward ally
+        Vector2I dir = new Vector2I(
+            nextPos.Value.X - entity.GridPosition.X,
+            nextPos.Value.Y - entity.GridPosition.Y
+        );
+        var moveAction = new MoveAction(dir);
+        return entity.ExecuteAction(moveAction, context.ActionContext);
     }
 
     /// <summary>
@@ -325,6 +422,67 @@ public class FleeForHelpGoal : Goal
             Message = "Cannot flee, cornered!",
             ConsumesTurn = true
         };
+    }
+
+    /// <summary>
+    /// Finds nearby allies that can help (creatures with SearchLastKnown goal).
+    /// </summary>
+    private List<GridPosition> FindNearbyAllies(AIContext context)
+    {
+        const int AllyDetectionRadius = 20;
+        var entity = context.Entity;
+        var allies = new List<GridPosition>();
+
+        var allEntities = context.EntityManager.GetAllEntities();
+        foreach (var potentialAlly in allEntities)
+        {
+            // Skip self
+            if (potentialAlly == entity)
+            {
+                continue;
+            }
+
+            // Check if within detection range
+            int distance = DistanceHelper.ChebyshevDistance(
+                entity.GridPosition,
+                potentialAlly.GridPosition
+            );
+
+            if (distance > AllyDetectionRadius)
+            {
+                continue;
+            }
+
+            // Check if has AI and SearchLastKnown goal
+            var aiComponent = potentialAlly.GetNodeOrNull<AIComponent>("AIComponent");
+            if (aiComponent != null && HasSearchGoal(aiComponent))
+            {
+                allies.Add(potentialAlly.GridPosition);
+            }
+        }
+
+        return allies;
+    }
+
+    /// <summary>
+    /// Checks if an AI component has the SearchLastKnown goal.
+    /// </summary>
+    private bool HasSearchGoal(AIComponent aiComponent)
+    {
+        if (aiComponent.AvailableGoals == null)
+        {
+            return false;
+        }
+
+        foreach (var goal in aiComponent.AvailableGoals)
+        {
+            if (goal is SearchLastKnownPositionGoal)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public override void OnDeactivated(AIContext context)
