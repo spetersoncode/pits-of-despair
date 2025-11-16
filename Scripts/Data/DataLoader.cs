@@ -206,6 +206,7 @@ public partial class DataLoader : Node
                 var item = LoadYamlFile<ItemData>(filePath);
                 if (item != null)
                 {
+                    item.DataFileId = itemId; // Set unique ID for inventory stacking
                     _items[itemId] = item;
                     GD.Print($"DataLoader: Loaded item '{itemId}' - {item.Name}");
                 }

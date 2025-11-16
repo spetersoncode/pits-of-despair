@@ -46,6 +46,9 @@ public partial class StatsPanel : PanelContainer
 		// Subscribe to player position changes
 		player.PositionChanged += OnPlayerPositionChanged;
 
+		// Subscribe to inventory changes (for when items are picked up)
+		player.InventoryChanged += OnInventoryChanged;
+
 		// Initialize display with current values
 		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
 		UpdateStandingOnDisplay();
@@ -105,6 +108,12 @@ public partial class StatsPanel : PanelContainer
 
 	private void OnPlayerPositionChanged(int x, int y)
 	{
+		UpdateStandingOnDisplay();
+	}
+
+	private void OnInventoryChanged()
+	{
+		// Update display when items are picked up
 		UpdateStandingOnDisplay();
 	}
 

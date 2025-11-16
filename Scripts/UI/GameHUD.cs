@@ -11,11 +11,13 @@ public partial class GameHUD : Control
 {
     private StatsPanel _statsPanel;
     private MessageLog _messageLog;
+    private InventoryPanel _inventoryPanel;
 
     public override void _Ready()
     {
         _statsPanel = GetNode<StatsPanel>("StatsPanel");
         _messageLog = GetNode<MessageLog>("MessageLog");
+        _inventoryPanel = GetNode<InventoryPanel>("InventoryPanel");
     }
 
     /// <summary>
@@ -36,6 +38,9 @@ public partial class GameHUD : Control
         // Wire up message log
         _messageLog.ConnectToCombatSystem(combatSystem);
 
+        // Wire up inventory panel
+        _inventoryPanel.ConnectToPlayer(player);
+
         // Subscribe to all entity deaths (including enemies)
         entityManager.EntityRemoved += OnEntityRemoved;
 
@@ -46,8 +51,32 @@ public partial class GameHUD : Control
         // Subscribe to wait action
         player.Waited += () => _messageLog.AddMessage("You wait.", "#66ff66");
 
+        // Subscribe to item pickup events
+        player.ItemPickedUp += OnItemPickedUp;
+
         // Add welcome message
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape.");
+    }
+
+    /// <summary>
+    /// Toggles the inventory panel visibility.
+    /// Called by InputHandler when 'I' is pressed.
+    /// </summary>
+    public void ToggleInventory()
+    {
+        _inventoryPanel.ToggleInventory();
+    }
+
+    private void OnItemPickedUp(string itemName, bool success, string message)
+    {
+        if (success)
+        {
+            _messageLog.AddMessage(message, "#66ff66"); // Green for success
+        }
+        else
+        {
+            _messageLog.AddMessage(message, "#888888"); // Gray for failure
+        }
     }
 
     private void OnEntityRemoved(BaseEntity entity)

@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 
 namespace PitsOfDespair.Entities;
 
@@ -14,6 +15,12 @@ public partial class Item : BaseEntity
     /// The type of item (e.g., "consumable", "equipment", "quest").
     /// </summary>
     public string ItemType { get; set; } = "generic";
+
+    /// <summary>
+    /// The item data definition.
+    /// Used for inventory stacking and item properties.
+    /// </summary>
+    public ItemData ItemData { get; set; }
 
     public Item()
     {

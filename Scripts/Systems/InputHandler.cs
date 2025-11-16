@@ -5,10 +5,13 @@ using PitsOfDespair.Scripts.Systems;
 namespace PitsOfDespair.Systems;
 
 /// <summary>
-/// Handles turn-based player input for movement.
+/// Handles turn-based player input for movement and inventory.
 /// </summary>
 public partial class InputHandler : Node
 {
+    [Signal]
+    public delegate void InventoryToggleRequestedEventHandler();
+
     private Player _player;
     private TurnManager _turnManager;
 
@@ -56,16 +59,36 @@ public partial class InputHandler : Node
             return;
         }
 
-        // Only process input during player turn
-        if (!_turnManager.IsPlayerTurn)
-        {
-            return;
-        }
-
         // Only process key presses, not key releases or repeats
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            // Check for wait action first
+            // Inventory toggle works anytime (doesn't require player turn)
+            if (keyEvent.Keycode == Key.I)
+            {
+                EmitSignal(SignalName.InventoryToggleRequested);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Only process turn-based actions during player turn
+            if (!_turnManager.IsPlayerTurn)
+            {
+                return;
+            }
+
+            // Check for pickup action
+            if (keyEvent.Keycode == Key.G)
+            {
+                bool turnConsumed = _player.TryPickupItem();
+                if (turnConsumed)
+                {
+                    // Turn is consumed, signal will be emitted by player
+                    GetViewport().SetInputAsHandled();
+                }
+                return;
+            }
+
+            // Check for wait action
             if (IsWaitKey(keyEvent.Keycode))
             {
                 _player.Wait();
@@ -73,6 +96,7 @@ public partial class InputHandler : Node
                 return;
             }
 
+            // Check for movement
             Vector2I direction = GetDirectionFromKey(keyEvent.Keycode);
 
             if (direction != Vector2I.Zero)

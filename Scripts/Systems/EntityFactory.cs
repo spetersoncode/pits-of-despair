@@ -60,6 +60,7 @@ public partial class EntityFactory : Node
             Glyph = data.Glyph.Length > 0 ? data.Glyph[0] : '?',
             GlyphColor = data.GetColor(),
             ItemType = data.ItemType,
+            ItemData = data, // Store full item data for inventory system
             Name = data.Name // Set node name for debugging
         };
 

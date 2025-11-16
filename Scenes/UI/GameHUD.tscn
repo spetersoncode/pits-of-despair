@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/GameHUD.cs" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/StatsPanel.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/MessageLog.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/InventoryPanel.tscn" id="4"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -22,4 +23,7 @@ offset_right = 166.0
 offset_bottom = 96.0
 
 [node name="MessageLog" parent="." instance=ExtResource("3")]
+layout_mode = 1
+
+[node name="InventoryPanel" parent="." instance=ExtResource("4")]
 layout_mode = 1

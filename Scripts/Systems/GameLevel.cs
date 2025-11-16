@@ -70,6 +70,9 @@ public partial class GameLevel : Node
         var playerSpawn = _mapSystem.GetValidSpawnPosition();
         _player.Initialize(playerSpawn);
 
+        // Wire up player's entity manager reference (for item pickup)
+        _player.SetEntityManager(_entityManager);
+
         // Wire up player reference to movement system (for bump-to-attack)
         _movementSystem.SetPlayer(_player);
 
@@ -103,6 +106,9 @@ public partial class GameLevel : Node
         // Wire up input handler
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);
+
+        // Connect input handler inventory toggle to HUD
+        _inputHandler.InventoryToggleRequested += _gameHUD.ToggleInventory;
 
         // Wire up AI system
         _aiSystem.SetMapSystem(_mapSystem);
