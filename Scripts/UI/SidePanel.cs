@@ -388,8 +388,32 @@ public partial class SidePanel : PanelContainer
 		int evasion = statsComponent.TotalAgility + statsComponent.TotalEvasionPenalty;
 		int armor = statsComponent.TotalArmor;
 
+		// Get attack component for damage dice
+		var attackComponent = _player.GetNodeOrNull<Components.AttackComponent>("AttackComponent");
+		string meleeDamage = "?";
+		string rangedDamage = "?";
+
+		if (attackComponent != null)
+		{
+			// Find melee and ranged attacks
+			foreach (var attack in attackComponent.Attacks)
+			{
+				if (attack.Type == Data.AttackType.Melee)
+				{
+					int damageBonus = statsComponent.TotalStrength;
+					meleeDamage = damageBonus > 0 ? $"{attack.DiceNotation}+{damageBonus}" : attack.DiceNotation;
+				}
+				else if (attack.Type == Data.AttackType.Ranged)
+				{
+					rangedDamage = attack.DiceNotation;
+				}
+			}
+		}
+
 		sb.AppendLine($"Melee Attack: {meleeAttack}");
+		sb.AppendLine($"Melee Damage: {meleeDamage}");
 		sb.AppendLine($"Ranged Attack: {rangedAttack}");
+		sb.AppendLine($"Ranged Damage: {rangedDamage}");
 		sb.AppendLine($"Armor: {armor}");
 		sb.AppendLine($"Evasion: {evasion}");
 
