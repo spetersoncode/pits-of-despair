@@ -357,7 +357,8 @@ public partial class TextRenderer : Control
 					Vector2 tileDrawPos = offset + tileWorldPos;
 
 					// Draw subtle background highlight for tiles in range
-					Color highlightColor = new Color(0.2f, 0.2f, 0.4f, 0.3f);
+					Color baseColor = Palette.TargetingRangeOverlay;
+					Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.3f);
 					DrawRect(new Rect2(tileDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
 				}
 			}
@@ -383,14 +384,16 @@ public partial class TextRenderer : Control
 			{
 				// Draw pulsing green highlight for valid target (creature)
 				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.15 + 0.25);
-				Color highlightColor = new Color(0.3f, 1.0f, 0.3f, pulse); // Green
+				Color baseColor = Palette.TargetingValid;
+				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
 				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
 			}
 			else
 			{
 				// Draw pulsing red tint for empty tile (no target)
 				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.1 + 0.15);
-				Color highlightColor = new Color(1.0f, 0.3f, 0.3f, pulse); // Red
+				Color baseColor = Palette.TargetingInvalid;
+				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
 				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
 			}
 		}
@@ -419,7 +422,8 @@ public partial class TextRenderer : Control
 		Vector2 targetDrawPos = offset + targetWorldPos;
 
 		// Draw line from origin to target
-		Color lineColor = new Color(0.8f, 0.8f, 0.3f, 0.5f);
+		Color baseColor = Palette.TargetingLine;
+		Color lineColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.5f);
 		DrawLine(originDrawPos, targetDrawPos, lineColor, 2.0f);
 	}
 }

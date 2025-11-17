@@ -39,7 +39,7 @@ public class ItemData
         {
             Prefix = "potion of ",
             DefaultGlyph = "!",
-            DefaultColor = Palette.ToHex(Palette.Arcane),
+            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
             IsConsumable = true
         },
@@ -47,7 +47,7 @@ public class ItemData
         {
             Prefix = "scroll of ",
             DefaultGlyph = "♪",
-            DefaultColor = Palette.ToHex(Palette.Thunder),
+            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
             IsConsumable = true
         },

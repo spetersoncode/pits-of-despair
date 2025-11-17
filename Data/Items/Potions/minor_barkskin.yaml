@@ -1,6 +1,6 @@
 name: minor barkskin
 type: potion
-color: Bark
+color: Barkskin
 effects:
   - type: armor_buff
     amount: 2

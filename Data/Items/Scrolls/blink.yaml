@@ -1,6 +1,6 @@
 name: blink
 type: scroll
-color: Teal
+color: Cyan
 effects:
   - type: blink
     range: 5

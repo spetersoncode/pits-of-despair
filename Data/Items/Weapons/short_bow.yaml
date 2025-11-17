@@ -1,7 +1,7 @@
 name: short bow
 type: weapon
 glyph: "}"
-color: Bark
+color: Mahogany
 equipSlot: RangedWeapon
 attack:
   type: Ranged
