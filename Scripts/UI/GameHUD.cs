@@ -36,8 +36,8 @@ public partial class GameHUD : Control
 
     public override void _Ready()
     {
-        _sidePanel = GetNode<SidePanel>("VBoxContainer/HBoxContainer/SidePanel");
-        _messageLog = GetNode<MessageLog>("VBoxContainer/MessageLog");
+        _sidePanel = GetNode<SidePanel>("HBoxContainer/SidePanel");
+        _messageLog = GetNode<MessageLog>("HBoxContainer/VBoxContainer/MessageLog");
         _inventoryPanel = GetNode<InventoryPanel>("InventoryPanel");
         _activateItemPanel = GetNode<ActivateItemPanel>("ActivateItemPanel");
         _dropItemPanel = GetNode<DropItemPanel>("DropItemPanel");

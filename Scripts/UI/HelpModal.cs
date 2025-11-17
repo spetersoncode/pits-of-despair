@@ -74,8 +74,8 @@ public partial class HelpModal : PanelContainer
         content.AppendLine("  i - View inventory");
         content.AppendLine("  g - Pick up item");
         content.AppendLine("  d - Drop item");
-        content.AppendLine("  a - Activate/use item (potions, scrolls)");
-        content.AppendLine("  e - Equip/unequip item (weapons, armor)");
+        content.AppendLine("  a - Activate/use item");
+        content.AppendLine("  e - Equip/unequip item");
         content.AppendLine();
 
         // Other
