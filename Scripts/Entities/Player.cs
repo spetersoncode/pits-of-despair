@@ -132,25 +132,25 @@ public partial class Player : BaseEntity
             GD.PushWarning("Player: Short sword data not found. Player starting with unarmed.");
         }
 
-        // Add leather armor to inventory
-        var leatherArmorData = dataLoader.GetItem("armor_leather_armor");
-        if (leatherArmorData != null)
+        // Add padded armor to inventory
+        var paddedArmorData = dataLoader.GetItem("armor_padded");
+        if (paddedArmorData != null)
         {
-            var leatherArmorInstance = new ItemInstance(leatherArmorData);
+            var paddedArmorInstance = new ItemInstance(paddedArmorData);
             char key = GetNextAvailableKey();
-            var slot = new InventorySlot(key, leatherArmorInstance, 1);
+            var slot = new InventorySlot(key, paddedArmorInstance, 1);
             _inventory.Add(slot);
 
-            // Auto-equip the leather armor
+            // Auto-equip the padded armor
             if (equipComponent != null)
             {
-                var equipSlot = leatherArmorData.GetEquipmentSlot();
+                var equipSlot = paddedArmorData.GetEquipmentSlot();
                 equipComponent.Equip(key, equipSlot);
             }
         }
         else
         {
-            GD.PushWarning("Player: Leather armor data not found. Player starting without armor.");
+            GD.PushWarning("Player: Padded armor data not found. Player starting without armor.");
         }
 
         EmitSignal(SignalName.InventoryChanged);

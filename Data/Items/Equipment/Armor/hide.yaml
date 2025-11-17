@@ -1,0 +1,5 @@
+name: hide armor
+type: armor
+color: "#8B7355"
+armorValue: 3
+evasionPenalty: -3

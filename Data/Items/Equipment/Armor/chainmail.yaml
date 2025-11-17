@@ -1,0 +1,5 @@
+name: chainmail
+type: armor
+color: "#C0C0C0"
+armorValue: 5
+evasionPenalty: -5

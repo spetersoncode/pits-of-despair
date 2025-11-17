@@ -57,9 +57,19 @@ creaturePools:
 
 itemPools:
   - id: common_items
-    weight: 100
+    weight: 70
     entries:
       - itemId: potion_cure_light_wounds
         weight: 2
 
       - itemId: scroll_blink
+
+  - id: uncommon_items
+    weight: 25
+    entries:
+      - itemId: armor_leather
+
+  - id: rare_items
+    weight: 5
+    entries:
+      - itemId: armor_studded_leather
