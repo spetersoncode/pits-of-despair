@@ -10,8 +10,8 @@ namespace PitsOfDespair.Systems;
 /// </summary>
 public partial class TextRenderer : Control
 {
-	[Export] public int TileSize { get; set; } = 20;
-	[Export] public int FontSize { get; set; } = 20;
+	[Export] public int TileSize { get; set; } = 18;
+	[Export] public int FontSize { get; set; } = 18;
 
 	private MapSystem _mapSystem;
 	private Player _player;
@@ -23,8 +23,8 @@ public partial class TextRenderer : Control
 
 	public override void _Ready()
 	{
-		// Load Inconsolata variable font
-		_font = GD.Load<Font>("res://Resources/Fonts/Inconsolata-Variable.ttf");
+		// Load Fira Mono Medium font
+		_font = GD.Load<Font>("res://Resources/Fonts/FiraMono-Medium.ttf");
 
 		// Set size to match viewport
 		Size = GetViewportRect().Size;

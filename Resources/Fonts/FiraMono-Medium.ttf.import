@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://cncop74a1tek6"
-path="res://.godot/imported/Inconsolata-Variable.ttf-c29e7a0afbe801668978972dc08efeef.fontdata"
+uid="uid://lsavxlpe3ajf"
+path="res://.godot/imported/FiraMono-Medium.ttf-dae50fb42caaa99f45e78783d08dd4cd.fontdata"
 
 [deps]
 
-source_file="res://Resources/Fonts/Inconsolata-Variable.ttf"
-dest_files=["res://.godot/imported/Inconsolata-Variable.ttf-c29e7a0afbe801668978972dc08efeef.fontdata"]
+source_file="res://Resources/Fonts/FiraMono-Medium.ttf"
+dest_files=["res://.godot/imported/FiraMono-Medium.ttf-dae50fb42caaa99f45e78783d08dd4cd.fontdata"]
 
 [params]
 
