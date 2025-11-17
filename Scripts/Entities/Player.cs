@@ -40,7 +40,7 @@ public partial class Player : BaseEntity
     public delegate void GoldCollectedEventHandler(int amount, int totalGold);
 
     [Signal]
-    public delegate void StandingOnEntityEventHandler(string entityName, Color entityColor);
+    public delegate void StandingOnEntityEventHandler(string entityName, string entityGlyph, Color entityColor);
 
     private const int MaxInventorySlots = 26;
 
@@ -270,7 +270,7 @@ public partial class Player : BaseEntity
         var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
         if (entityAtPosition != null && entityAtPosition.IsWalkable)
         {
-            EmitSignal(SignalName.StandingOnEntity, entityAtPosition.DisplayName, entityAtPosition.GlyphColor);
+            EmitSignal(SignalName.StandingOnEntity, entityAtPosition.DisplayName, entityAtPosition.Glyph, entityAtPosition.GlyphColor);
         }
     }
 

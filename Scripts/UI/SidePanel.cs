@@ -1,14 +1,15 @@
 using Godot;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
+using System.Linq;
 using System.Text;
 
 namespace PitsOfDespair.UI;
 
 /// <summary>
-/// Displays player statistics including health and floor depth.
+/// Side panel displaying player information including health, stats, equipment, and nearby entities.
 /// </summary>
-public partial class StatsPanel : PanelContainer
+public partial class SidePanel : PanelContainer
 {
 	private const float HealthGreenThreshold = 0.6f;
 	private const float HealthYellowThreshold = 0.3f;
@@ -18,31 +19,37 @@ public partial class StatsPanel : PanelContainer
 	private static readonly Color HealthColorRed = new("#ff6666");
 	private static readonly Color DefaultTextColor = new("#ffffff");
 
+	private ProgressBar _healthBar;
 	private Label _healthLabel;
 	private Label _floorLabel;
 	private Label _goldLabel;
 	private Label _standingOnLabel;
 	private RichTextLabel _equipmentLabel;
 	private RichTextLabel _statsLabel;
+	private RichTextLabel _visibleEntitiesLabel;
 
 	private int _currentFloorDepth = 1;
 	private Entities.Player _player;
 	private Systems.EntityManager _entityManager;
+	private Systems.PlayerVisionSystem _visionSystem;
 
 	public override void _Ready()
 	{
+		_healthBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/HealthBar");
 		_healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
 		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
 		_goldLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/GoldLabel");
 		_standingOnLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StandingOnLabel");
 		_equipmentLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/EquipmentLabel");
 		_statsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/StatsLabel");
+		_visibleEntitiesLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/ScrollContainer/VisibleEntitiesLabel");
 
 		UpdateFloorDisplay();
 		UpdateGoldDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
+		UpdateVisibleEntitiesDisplay();
 	}
 
 	/// <summary>
@@ -93,6 +100,16 @@ public partial class StatsPanel : PanelContainer
 	{
 		_entityManager = entityManager;
 		UpdateStandingOnDisplay();
+		UpdateVisibleEntitiesDisplay();
+	}
+
+	/// <summary>
+	/// Sets the vision system reference for querying visible tiles.
+	/// </summary>
+	public void SetVisionSystem(Systems.PlayerVisionSystem visionSystem)
+	{
+		_visionSystem = visionSystem;
+		UpdateVisibleEntitiesDisplay();
 	}
 
 	/// <summary>
@@ -109,6 +126,16 @@ public partial class StatsPanel : PanelContainer
 		float healthPercent = (float)current / max;
 		Color healthColor = GetHealthColor(healthPercent);
 
+		// Update progress bar
+		_healthBar.MaxValue = max;
+		_healthBar.Value = current;
+
+		// Create StyleBoxFlat for the progress bar fill with color gradient
+		var styleBox = new StyleBoxFlat();
+		styleBox.BgColor = healthColor;
+		_healthBar.AddThemeStyleboxOverride("fill", styleBox);
+
+		// Update text label
 		_healthLabel.Text = $"HP: {current}/{max}";
 		_healthLabel.AddThemeColorOverride("font_color", healthColor);
 	}
@@ -155,6 +182,7 @@ public partial class StatsPanel : PanelContainer
 	private void OnPlayerPositionChanged(int x, int y)
 	{
 		UpdateStandingOnDisplay();
+		UpdateVisibleEntitiesDisplay();
 	}
 
 	private void OnInventoryChanged()
@@ -183,12 +211,11 @@ public partial class StatsPanel : PanelContainer
 		var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 		if (equipComponent == null)
 		{
-			_equipmentLabel.Text = "[b]Equipment:[/b]\n(No equipment system)";
+			_equipmentLabel.Text = "(No equipment system)";
 			return;
 		}
 
 		var sb = new StringBuilder();
-		sb.AppendLine("[b]Equipment:[/b]");
 
 		// Melee weapon
 		sb.Append("Melee: ");
@@ -198,7 +225,9 @@ public partial class StatsPanel : PanelContainer
 			var slot = _player.GetInventorySlot(meleeKey.Value);
 			if (slot != null)
 			{
-				sb.AppendLine($"{slot.Item.Template.Name}");
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
 			}
 			else
 			{
@@ -218,7 +247,9 @@ public partial class StatsPanel : PanelContainer
 			var slot = _player.GetInventorySlot(rangedKey.Value);
 			if (slot != null)
 			{
-				sb.AppendLine($"{slot.Item.Template.Name}");
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
 			}
 			else
 			{
@@ -238,7 +269,9 @@ public partial class StatsPanel : PanelContainer
 			var slot = _player.GetInventorySlot(armorKey.Value);
 			if (slot != null)
 			{
-				sb.AppendLine($"{slot.Item.Template.Name}");
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
 			}
 			else
 			{
@@ -250,26 +283,39 @@ public partial class StatsPanel : PanelContainer
 			sb.AppendLine("(none)");
 		}
 
-		// Rings
-		sb.Append("Rings: ");
+		// Ring 1
+		sb.Append("Ring: ");
 		var ring1Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring1);
-		var ring2Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring2);
-		if (ring1Key.HasValue || ring2Key.HasValue)
+		if (ring1Key.HasValue)
 		{
-			var ringNames = new System.Collections.Generic.List<string>();
-			if (ring1Key.HasValue)
+			var slot = _player.GetInventorySlot(ring1Key.Value);
+			if (slot != null)
 			{
-				var slot = _player.GetInventorySlot(ring1Key.Value);
-				if (slot != null) ringNames.Add(slot.Item.Template.Name);
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
 			}
-			if (ring2Key.HasValue)
+			else
 			{
-				var slot = _player.GetInventorySlot(ring2Key.Value);
-				if (slot != null) ringNames.Add(slot.Item.Template.Name);
+				sb.AppendLine("(error)");
 			}
-			if (ringNames.Count > 0)
+		}
+		else
+		{
+			sb.AppendLine("(none)");
+		}
+
+		// Ring 2
+		sb.Append("Ring: ");
+		var ring2Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring2);
+		if (ring2Key.HasValue)
+		{
+			var slot = _player.GetInventorySlot(ring2Key.Value);
+			if (slot != null)
 			{
-				sb.AppendLine(string.Join(", ", ringNames));
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
 			}
 			else
 			{
@@ -319,19 +365,19 @@ public partial class StatsPanel : PanelContainer
 		var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
 		if (statsComponent == null)
 		{
-			_statsLabel.Text = "[b]Stats:[/b]\n(No stats system)";
+			_statsLabel.Text = "(No stats system)";
 			return;
 		}
 
 		var sb = new StringBuilder();
-		sb.AppendLine("[b]Stats:[/b]");
 
-		// Base stats
-		sb.AppendLine($"STR: {statsComponent.TotalStrength:+0;-#} | AGI: {statsComponent.TotalAgility:+0;-#}");
-		sb.AppendLine($"END: {statsComponent.TotalEndurance:+0;-#} | WIL: {statsComponent.TotalWill:+0;-#}");
+		// Base stats - full names, one per line
+		sb.AppendLine($"Strength: {statsComponent.TotalStrength}");
+		sb.AppendLine($"Agility: {statsComponent.TotalAgility}");
+		sb.AppendLine($"Endurance: {statsComponent.TotalEndurance}");
+		sb.AppendLine($"Will: {statsComponent.TotalWill}");
 
 		sb.AppendLine(); // Blank line for spacing
-		sb.AppendLine("[b]Combat:[/b]");
 
 		// Derived combat values
 		int meleeAttack = statsComponent.TotalStrength;
@@ -339,11 +385,67 @@ public partial class StatsPanel : PanelContainer
 		int evasion = statsComponent.TotalAgility + statsComponent.TotalEvasionPenalty;
 		int armor = statsComponent.TotalArmor;
 
-		sb.AppendLine($"Melee Atk: {meleeAttack:+0;-#}");
-		sb.AppendLine($"Ranged Atk: {rangedAttack:+0;-#}");
-		sb.AppendLine($"Evasion: {evasion:+0;-#}");
+		sb.AppendLine($"Melee Attack: {meleeAttack}");
+		sb.AppendLine($"Ranged Attack: {rangedAttack}");
+		sb.AppendLine($"Evasion: {evasion}");
 		sb.AppendLine($"Armor: {armor}");
 
 		_statsLabel.Text = sb.ToString();
+	}
+
+	private void UpdateVisibleEntitiesDisplay()
+	{
+		if (_visibleEntitiesLabel == null)
+			return;
+
+		// Need all systems to be available
+		if (_player == null || _entityManager == null || _visionSystem == null)
+		{
+			_visibleEntitiesLabel.Text = "(not initialized)";
+			return;
+		}
+
+		var visibleEntities = new System.Collections.Generic.List<(Entities.BaseEntity entity, int distance)>();
+		var playerPos = _player.GridPosition;
+
+		// Get all entities and filter by visibility
+		foreach (var entity in _entityManager.GetAllEntities())
+		{
+			// Skip if not visible
+			if (!_visionSystem.IsVisible(entity.GridPosition))
+				continue;
+
+			// Calculate Chebyshev distance (grid-based)
+			int distance = Helpers.DistanceHelper.ChebyshevDistance(playerPos, entity.GridPosition);
+
+			// Skip if at player position (already shown in "Standing on")
+			if (distance == 0)
+				continue;
+
+			visibleEntities.Add((entity, distance));
+		}
+
+		// Sort by distance and take top 5
+		visibleEntities.Sort((a, b) => a.distance.CompareTo(b.distance));
+		var nearbyEntities = visibleEntities.Take(5);
+
+		// Build display text with colors and glyphs
+		var sb = new StringBuilder();
+
+		if (!nearbyEntities.Any())
+		{
+			sb.Append("(nothing visible)");
+		}
+		else
+		{
+			foreach (var (entity, distance) in nearbyEntities)
+			{
+				// Convert entity color to hex for BBCode
+				string colorHex = $"#{(int)(entity.GlyphColor.R * 255):X2}{(int)(entity.GlyphColor.G * 255):X2}{(int)(entity.GlyphColor.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{entity.Glyph} {entity.DisplayName}[/color]");
+			}
+		}
+
+		_visibleEntitiesLabel.Text = sb.ToString().TrimEnd();
 	}
 }

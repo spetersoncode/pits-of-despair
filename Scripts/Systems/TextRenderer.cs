@@ -10,276 +10,276 @@ namespace PitsOfDespair.Systems;
 /// </summary>
 public partial class TextRenderer : Control
 {
-    [Export] public int TileSize { get; set; } = 16;
-    [Export] public int FontSize { get; set; } = 16;
+	[Export] public int TileSize { get; set; } = 20;
+	[Export] public int FontSize { get; set; } = 20;
 
-    private MapSystem _mapSystem;
-    private Player _player;
-    private EntityManager? _entityManager;
-    private PlayerVisionSystem _visionSystem;
-    private Font _font;
-    private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
-    private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
+	private MapSystem _mapSystem;
+	private Player _player;
+	private EntityManager? _entityManager;
+	private PlayerVisionSystem _visionSystem;
+	private Font _font;
+	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
+	private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
 
-    public override void _Ready()
-    {
-        // Use the default monospace font
-        _font = ThemeDB.FallbackFont;
+	public override void _Ready()
+	{
+		// Load Inconsolata variable font
+		_font = GD.Load<Font>("res://Resources/Fonts/Inconsolata-Variable.ttf");
 
-        // Set size to match viewport
-        Size = GetViewportRect().Size;
-        Position = Vector2.Zero;
-    }
+		// Set size to match viewport
+		Size = GetViewportRect().Size;
+		Position = Vector2.Zero;
+	}
 
-    /// <summary>
-    /// Sets the map system to render.
-    /// </summary>
-    public void SetMapSystem(MapSystem mapSystem)
-    {
-        if (_mapSystem != null)
-        {
-            _mapSystem.MapChanged -= OnMapChanged;
-        }
+	/// <summary>
+	/// Sets the map system to render.
+	/// </summary>
+	public void SetMapSystem(MapSystem mapSystem)
+	{
+		if (_mapSystem != null)
+		{
+			_mapSystem.MapChanged -= OnMapChanged;
+		}
 
-        _mapSystem = mapSystem;
+		_mapSystem = mapSystem;
 
-        if (_mapSystem != null)
-        {
-            _mapSystem.MapChanged += OnMapChanged;
-            QueueRedraw();
-        }
-    }
+		if (_mapSystem != null)
+		{
+			_mapSystem.MapChanged += OnMapChanged;
+			QueueRedraw();
+		}
+	}
 
-    /// <summary>
-    /// Sets the player to render.
-    /// </summary>
-    public void SetPlayer(Player player)
-    {
-        if (_player != null)
-        {
-            _player.PositionChanged -= OnPlayerMoved;
-        }
+	/// <summary>
+	/// Sets the player to render.
+	/// </summary>
+	public void SetPlayer(Player player)
+	{
+		if (_player != null)
+		{
+			_player.PositionChanged -= OnPlayerMoved;
+		}
 
-        _player = player;
+		_player = player;
 
-        if (_player != null)
-        {
-            _player.PositionChanged += OnPlayerMoved;
-            QueueRedraw();
-        }
-    }
+		if (_player != null)
+		{
+			_player.PositionChanged += OnPlayerMoved;
+			QueueRedraw();
+		}
+	}
 
-    /// <summary>
-    /// Sets the entity manager to track and render entities.
-    /// </summary>
-    public void SetEntityManager(EntityManager entityManager)
-    {
-        if (_entityManager != null)
-        {
-            _entityManager.EntityAdded -= OnEntityAdded;
-            _entityManager.EntityRemoved -= OnEntityRemoved;
-        }
+	/// <summary>
+	/// Sets the entity manager to track and render entities.
+	/// </summary>
+	public void SetEntityManager(EntityManager entityManager)
+	{
+		if (_entityManager != null)
+		{
+			_entityManager.EntityAdded -= OnEntityAdded;
+			_entityManager.EntityRemoved -= OnEntityRemoved;
+		}
 
-        _entityManager = entityManager;
+		_entityManager = entityManager;
 
-        if (_entityManager != null)
-        {
-            _entityManager.EntityAdded += OnEntityAdded;
-            _entityManager.EntityRemoved += OnEntityRemoved;
+		if (_entityManager != null)
+		{
+			_entityManager.EntityAdded += OnEntityAdded;
+			_entityManager.EntityRemoved += OnEntityRemoved;
 
-            // Add existing entities
-            _entities.Clear();
-            _entities.AddRange(_entityManager.GetAllEntities());
+			// Add existing entities
+			_entities.Clear();
+			_entities.AddRange(_entityManager.GetAllEntities());
 
-            // Subscribe to position changes for all entities
-            foreach (var entity in _entities)
-            {
-                entity.PositionChanged += OnEntityMoved;
-            }
+			// Subscribe to position changes for all entities
+			foreach (var entity in _entities)
+			{
+				entity.PositionChanged += OnEntityMoved;
+			}
 
-            QueueRedraw();
-        }
-    }
+			QueueRedraw();
+		}
+	}
 
-    /// <summary>
-    /// Sets the player vision system for fog-of-war rendering.
-    /// </summary>
-    public void SetPlayerVisionSystem(PlayerVisionSystem visionSystem)
-    {
-        if (_visionSystem != null)
-        {
-            _visionSystem.VisionChanged -= OnVisionChanged;
-        }
+	/// <summary>
+	/// Sets the player vision system for fog-of-war rendering.
+	/// </summary>
+	public void SetPlayerVisionSystem(PlayerVisionSystem visionSystem)
+	{
+		if (_visionSystem != null)
+		{
+			_visionSystem.VisionChanged -= OnVisionChanged;
+		}
 
-        _visionSystem = visionSystem;
+		_visionSystem = visionSystem;
 
-        if (_visionSystem != null)
-        {
-            _visionSystem.VisionChanged += OnVisionChanged;
-            QueueRedraw();
-        }
-    }
+		if (_visionSystem != null)
+		{
+			_visionSystem.VisionChanged += OnVisionChanged;
+			QueueRedraw();
+		}
+	}
 
-    private void OnMapChanged()
-    {
-        QueueRedraw();
-    }
+	private void OnMapChanged()
+	{
+		QueueRedraw();
+	}
 
-    private void OnPlayerMoved(int x, int y)
-    {
-        QueueRedraw();
-    }
+	private void OnPlayerMoved(int x, int y)
+	{
+		QueueRedraw();
+	}
 
-    private void OnEntityAdded(BaseEntity entity)
-    {
-        _entities.Add(entity);
-        entity.PositionChanged += OnEntityMoved;
-        QueueRedraw();
-    }
+	private void OnEntityAdded(BaseEntity entity)
+	{
+		_entities.Add(entity);
+		entity.PositionChanged += OnEntityMoved;
+		QueueRedraw();
+	}
 
-    private void OnEntityRemoved(BaseEntity entity)
-    {
-        entity.PositionChanged -= OnEntityMoved;
-        _entities.Remove(entity);
-        QueueRedraw();
-    }
+	private void OnEntityRemoved(BaseEntity entity)
+	{
+		entity.PositionChanged -= OnEntityMoved;
+		_entities.Remove(entity);
+		QueueRedraw();
+	}
 
-    private void OnEntityMoved(int x, int y)
-    {
-        QueueRedraw();
-    }
+	private void OnEntityMoved(int x, int y)
+	{
+		QueueRedraw();
+	}
 
-    private void OnVisionChanged()
-    {
-        QueueRedraw();
-    }
+	private void OnVisionChanged()
+	{
+		QueueRedraw();
+	}
 
-    public override void _Draw()
-    {
-        if (_mapSystem == null || _player == null)
-        {
-            return;
-        }
+	public override void _Draw()
+	{
+		if (_mapSystem == null || _player == null)
+		{
+			return;
+		}
 
-        // Draw black background
-        Vector2 viewportSize = GetViewportRect().Size;
-        DrawRect(new Rect2(Vector2.Zero, viewportSize), Colors.Black, true);
+		// Draw black background
+		Vector2 viewportSize = GetViewportRect().Size;
+		DrawRect(new Rect2(Vector2.Zero, viewportSize), Colors.Black, true);
 
-        // Calculate offset to keep player centered on screen
-        Vector2 viewportCenter = viewportSize / 2;
+		// Calculate offset to keep player centered on screen
+		Vector2 viewportCenter = viewportSize / 2;
 
-        // Player's world position in pixels
-        Vector2 playerWorldPos = new Vector2(
-            _player.CurrentPosition.X * TileSize,
-            _player.CurrentPosition.Y * TileSize
-        );
+		// Player's world position in pixels
+		Vector2 playerWorldPos = new Vector2(
+			_player.CurrentPosition.X * TileSize,
+			_player.CurrentPosition.Y * TileSize
+		);
 
-        // Offset needed to center player on screen
-        Vector2 offset = viewportCenter - playerWorldPos;
+		// Offset needed to center player on screen
+		Vector2 offset = viewportCenter - playerWorldPos;
 
-        // Draw the map
-        for (int x = 0; x < _mapSystem.MapWidth; x++)
-        {
-            for (int y = 0; y < _mapSystem.MapHeight; y++)
-            {
-                GridPosition pos = new GridPosition(x, y);
+		// Draw the map
+		for (int x = 0; x < _mapSystem.MapWidth; x++)
+		{
+			for (int y = 0; y < _mapSystem.MapHeight; y++)
+			{
+				GridPosition pos = new GridPosition(x, y);
 
-                // Check visibility for fog-of-war
-                bool isVisible = _visionSystem?.IsVisible(pos) ?? true;
-                bool isExplored = _visionSystem?.IsExplored(pos) ?? true;
+				// Check visibility for fog-of-war
+				bool isVisible = _visionSystem?.IsVisible(pos) ?? true;
+				bool isExplored = _visionSystem?.IsExplored(pos) ?? true;
 
-                // Hidden tiles (not explored) are not drawn
-                if (!isExplored && !isVisible)
-                {
-                    continue;
-                }
+				// Hidden tiles (not explored) are not drawn
+				if (!isExplored && !isVisible)
+				{
+					continue;
+				}
 
-                TileType tile = _mapSystem.GetTileAt(pos);
-                char glyph = _mapSystem.GetGlyphForTile(tile);
-                Color color = _mapSystem.GetColorForTile(tile);
+				TileType tile = _mapSystem.GetTileAt(pos);
+				char glyph = _mapSystem.GetGlyphForTile(tile);
+				Color color = _mapSystem.GetColorForTile(tile);
 
-                // Dim explored-but-not-visible tiles (fog-of-war)
-                if (isExplored && !isVisible)
-                {
-                    color = new Color(0.25f, 0.25f, 0.25f);  // Dark grey
-                }
+				// Dim explored-but-not-visible tiles (fog-of-war)
+				if (isExplored && !isVisible)
+				{
+					color = new Color(0.25f, 0.25f, 0.25f);  // Dark grey
+				}
 
-                // World position of this tile
-                Vector2 tileWorldPos = new Vector2(x * TileSize, y * TileSize);
-                Vector2 drawPos = offset + tileWorldPos;
+				// World position of this tile
+				Vector2 tileWorldPos = new Vector2(x * TileSize, y * TileSize);
+				Vector2 drawPos = offset + tileWorldPos;
 
-                DrawChar(_font, drawPos, glyph.ToString(), FontSize, color);
-            }
-        }
+				DrawChar(_font, drawPos, glyph.ToString(), FontSize, color);
+			}
+		}
 
-        // Draw items first (between tiles and creatures)
-        // Items remain visible once discovered (memorable)
-        foreach (var entity in _entities)
-        {
-            // Only process items
-            if (entity.GetNodeOrNull<ItemComponent>("ItemComponent") == null)
-                continue;
+		// Draw items first (between tiles and creatures)
+		// Items remain visible once discovered (memorable)
+		foreach (var entity in _entities)
+		{
+			// Only process items
+			if (entity.GetNodeOrNull<ItemComponent>("ItemComponent") == null)
+				continue;
 
-            // Don't draw items at player position (player glyph takes precedence)
-            if (entity.GridPosition.Equals(_player.GridPosition))
-                continue;
+			// Don't draw items at player position (player glyph takes precedence)
+			if (entity.GridPosition.Equals(_player.GridPosition))
+				continue;
 
-            bool isVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
-            bool isExplored = _visionSystem?.IsExplored(entity.GridPosition) ?? true;
+			bool isVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
+			bool isExplored = _visionSystem?.IsExplored(entity.GridPosition) ?? true;
 
-            // Track discovered items
-            if (isVisible || isExplored)
-            {
-                _discoveredItemPositions.Add(entity.GridPosition);
-            }
+			// Track discovered items
+			if (isVisible || isExplored)
+			{
+				_discoveredItemPositions.Add(entity.GridPosition);
+			}
 
-            // Draw items if they're on an explored tile (memorable visibility)
-            if (!isExplored && !isVisible)
-            {
-                continue;
-            }
+			// Draw items if they're on an explored tile (memorable visibility)
+			if (!isExplored && !isVisible)
+			{
+				continue;
+			}
 
-            Vector2 itemWorldPos = new Vector2(
-                entity.GridPosition.X * TileSize,
-                entity.GridPosition.Y * TileSize
-            );
-            Vector2 itemDrawPos = offset + itemWorldPos;
+			Vector2 itemWorldPos = new Vector2(
+				entity.GridPosition.X * TileSize,
+				entity.GridPosition.Y * TileSize
+			);
+			Vector2 itemDrawPos = offset + itemWorldPos;
 
-            // Dim items that are not currently visible
-            Color itemColor = entity.GlyphColor;
-            if (isExplored && !isVisible)
-            {
-                itemColor = new Color(itemColor.R * 0.5f, itemColor.G * 0.5f, itemColor.B * 0.5f);
-            }
+			// Dim items that are not currently visible
+			Color itemColor = entity.GlyphColor;
+			if (isExplored && !isVisible)
+			{
+				itemColor = new Color(itemColor.R * 0.5f, itemColor.G * 0.5f, itemColor.B * 0.5f);
+			}
 
-            DrawString(_font, itemDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, itemColor);
-        }
+			DrawString(_font, itemDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, itemColor);
+		}
 
-        // Draw creatures (between items and player)
-        // Only draw creatures on currently visible tiles
-        foreach (var entity in _entities)
-        {
-            // Skip items (already drawn)
-            if (entity.GetNodeOrNull<ItemComponent>("ItemComponent") != null)
-                continue;
+		// Draw creatures (between items and player)
+		// Only draw creatures on currently visible tiles
+		foreach (var entity in _entities)
+		{
+			// Skip items (already drawn)
+			if (entity.GetNodeOrNull<ItemComponent>("ItemComponent") != null)
+				continue;
 
-            // Check if entity is on a visible tile
-            bool entityVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
-            if (!entityVisible)
-            {
-                continue;
-            }
+			// Check if entity is on a visible tile
+			bool entityVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
+			if (!entityVisible)
+			{
+				continue;
+			}
 
-            Vector2 entityWorldPos = new Vector2(
-                entity.GridPosition.X * TileSize,
-                entity.GridPosition.Y * TileSize
-            );
-            Vector2 entityDrawPos = offset + entityWorldPos;
+			Vector2 entityWorldPos = new Vector2(
+				entity.GridPosition.X * TileSize,
+				entity.GridPosition.Y * TileSize
+			);
+			Vector2 entityDrawPos = offset + entityWorldPos;
 
-            DrawString(_font, entityDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, entity.GlyphColor);
-        }
+			DrawString(_font, entityDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, entity.GlyphColor);
+		}
 
-        // Draw the player last (should be at viewport center, on top of everything)
-        DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
-    }
+		// Draw the player last (should be at viewport center, on top of everything)
+		DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
+	}
 }

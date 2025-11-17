@@ -1,6 +1,6 @@
 name: cure light wounds
 type: potion
-color: "#FF5555"
+color: "#66FF66"
 effects:
   - type: heal
     amount: 8

@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Components;
 using System.Linq;
 using System.Text;
 
@@ -92,6 +93,7 @@ public partial class ActivateItemPanel : PanelContainer
         }
 
         var inventory = _player.Inventory;
+        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 
         if (inventory.Count == 0)
         {
@@ -105,17 +107,23 @@ public partial class ActivateItemPanel : PanelContainer
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
+            // Check if item is equipped
+            bool isEquipped = equipComponent != null && equipComponent.IsEquipped(slot.Key);
+
             // Check if item is activatable (consumable or has charges > 0)
-            bool isActivatable = slot.Item.Template.IsActivatable() &&
+            // Equipped items cannot be activated
+            bool isActivatable = !isEquipped &&
+                                 slot.Item.Template.IsActivatable() &&
                                  (slot.Item.Template.GetIsConsumable() || slot.Item.CurrentCharges > 0);
 
-            // Format: key) glyph name (count/charges)
+            // Format: key) glyph name (count/charges) (equipped)
             string colorHex = isActivatable ? slot.Item.Template.Color : "#888888";
             string keyColor = isActivatable ? "#888888" : "#444444";
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
             string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
+            string equippedText = isEquipped ? " [color=#666666](equipped)[/color]" : "";
 
-            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]");
+            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]{equippedText}");
         }
 
         _itemsLabel.Text = sb.ToString();

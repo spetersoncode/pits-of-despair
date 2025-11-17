@@ -1,4 +1,6 @@
 using Godot;
+using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Data;
 using System.Collections.Generic;
 
 namespace PitsOfDespair.UI;
@@ -15,6 +17,7 @@ public partial class MessageLog : PanelContainer
 
 	private RichTextLabel _logLabel;
 	private readonly Queue<string> _messageHistory = new();
+	private Entities.Player _player;
 
 	public override void _Ready()
 	{
@@ -34,6 +37,14 @@ public partial class MessageLog : PanelContainer
 		combatSystem.AttackMissed += OnAttackMissed;
 
 		combatSystem.ActionMessage += OnActionMessage;
+	}
+
+	/// <summary>
+	/// Sets the player reference for looking up weapon information.
+	/// </summary>
+	public void SetPlayer(Entities.Player player)
+	{
+		_player = player;
 	}
 
 	/// <summary>
@@ -73,18 +84,21 @@ public partial class MessageLog : PanelContainer
 		bool isPlayerTarget = target.DisplayName == "Player";
 		string color = isPlayerTarget ? ColorDamageTaken : ColorDefault;
 
+		// Get colored weapon name for player attacks
+		string weaponDisplay = GetWeaponDisplay(attacker, attackName);
+
 		if (isPlayerAttacker)
 		{
-			AddMessage($"You hit the {target.DisplayName} for {damage} damage.", color);
+			AddMessage($"You hit the {target.DisplayName} with your {weaponDisplay} for {damage} damage.", color);
 		}
 		else if (isPlayerTarget)
 		{
-			AddMessage($"The {attacker.DisplayName} hits you for {damage} damage.", color);
+			AddMessage($"The {attacker.DisplayName} hits you with its {weaponDisplay} for {damage} damage.", color);
 		}
 		else
 		{
 			// NPC vs NPC combat
-			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} for {damage} damage.", color);
+			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} with its {weaponDisplay} for {damage} damage.", color);
 		}
 	}
 
@@ -98,17 +112,20 @@ public partial class MessageLog : PanelContainer
 		bool isPlayerTarget = target.DisplayName == "Player";
 		string color = isPlayerTarget ? ColorDamageTaken : ColorDefault;
 
+		// Get colored weapon name for player attacks
+		string weaponDisplay = GetWeaponDisplay(attacker, attackName);
+
 		if (isPlayerAttacker)
 		{
-			AddMessage($"You hit the {target.DisplayName} but your attack glances off their armor!", color);
+			AddMessage($"You hit the {target.DisplayName} with your {weaponDisplay} but it glances off their armor!", color);
 		}
 		else if (isPlayerTarget)
 		{
-			AddMessage($"The {attacker.DisplayName} hits you but the attack bounces off your armor!", color);
+			AddMessage($"The {attacker.DisplayName} hits you with its {weaponDisplay} but it bounces off your armor!", color);
 		}
 		else
 		{
-			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} but the attack glances off armor!", color);
+			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} with its {weaponDisplay} but it glances off armor!", color);
 		}
 	}
 
@@ -143,6 +160,55 @@ public partial class MessageLog : PanelContainer
 	private void OnEntityDied(string entityName)
 	{
 		AddMessage($"{entityName} dies!", ColorDeath);
+	}
+
+	/// <summary>
+	/// Gets a colored weapon display string with glyph for player attacks.
+	/// For NPCs, returns the plain attack name.
+	/// </summary>
+	private string GetWeaponDisplay(Entities.BaseEntity attacker, string attackName)
+	{
+		// Only colorize player weapons
+		if (attacker.DisplayName != "Player" || _player == null)
+		{
+			return attackName;
+		}
+
+		var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		if (equipComponent == null)
+		{
+			return attackName;
+		}
+
+		// Try to find the equipped weapon that matches this attack
+		// Check melee weapon first
+		var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
+		if (meleeKey.HasValue)
+		{
+			var slot = _player.GetInventorySlot(meleeKey.Value);
+			if (slot != null && slot.Item.Template.Name == attackName)
+			{
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				return $"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]";
+			}
+		}
+
+		// Check ranged weapon
+		var rangedKey = equipComponent.GetEquippedKey(EquipmentSlot.RangedWeapon);
+		if (rangedKey.HasValue)
+		{
+			var slot = _player.GetInventorySlot(rangedKey.Value);
+			if (slot != null && slot.Item.Template.Name == attackName)
+			{
+				var color = slot.Item.Template.GetColor();
+				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+				return $"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]";
+			}
+		}
+
+		// Not a weapon attack (natural attack like "punch"), return plain name
+		return attackName;
 	}
 
 	private void UpdateDisplay()

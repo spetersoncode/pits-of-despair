@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Components;
 using System.Linq;
 using System.Text;
 
@@ -92,6 +93,7 @@ public partial class DropItemPanel : PanelContainer
         }
 
         var inventory = _player.Inventory;
+        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 
         if (inventory.Count == 0)
         {
@@ -105,12 +107,16 @@ public partial class DropItemPanel : PanelContainer
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
-            // Format: key) glyph name (count/charges)
+            // Check if item is equipped
+            bool isEquipped = equipComponent != null && equipComponent.IsEquipped(slot.Key);
+
+            // Format: key) glyph name (count/charges) (equipped)
             string colorHex = slot.Item.Template.Color;
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
             string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
+            string equippedText = isEquipped ? " [color=#888888](equipped)[/color]" : "";
 
-            sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}");
+            sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}{equippedText}");
         }
 
         _itemsLabel.Text = sb.ToString();

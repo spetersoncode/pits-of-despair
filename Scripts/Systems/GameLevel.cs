@@ -162,7 +162,7 @@ public partial class GameLevel : Node
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
         // Initialize HUD
-        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext);
+        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _visionSystem);
 
         // Start the first player turn
         _turnManager.StartFirstPlayerTurn();

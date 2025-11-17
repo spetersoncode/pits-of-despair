@@ -22,7 +22,7 @@ public enum MenuState
 /// </summary>
 public partial class GameHUD : Control
 {
-    private StatsPanel _statsPanel;
+    private SidePanel _sidePanel;
     private MessageLog _messageLog;
     private InventoryPanel _inventoryPanel;
     private ActivateItemPanel _activateItemPanel;
@@ -34,8 +34,8 @@ public partial class GameHUD : Control
 
     public override void _Ready()
     {
-        _statsPanel = GetNode<StatsPanel>("StatsPanel");
-        _messageLog = GetNode<MessageLog>("MessageLog");
+        _sidePanel = GetNode<SidePanel>("VBoxContainer/HBoxContainer/SidePanel");
+        _messageLog = GetNode<MessageLog>("VBoxContainer/MessageLog");
         _inventoryPanel = GetNode<InventoryPanel>("InventoryPanel");
         _activateItemPanel = GetNode<ActivateItemPanel>("ActivateItemPanel");
         _dropItemPanel = GetNode<DropItemPanel>("DropItemPanel");
@@ -51,18 +51,24 @@ public partial class GameHUD : Control
     /// <param name="entityManager">The entity manager for death notifications.</param>
     /// <param name="floorDepth">The current floor depth.</param>
     /// <param name="actionContext">The action context for executing actions.</param>
-    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext)
+    /// <param name="visionSystem">The player vision system for checking visible entities.</param>
+    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, PlayerVisionSystem visionSystem = null)
     {
         _player = player;
         _actionContext = actionContext;
 
-        // Wire up stats panel
-        _statsPanel.ConnectToPlayer(player);
-        _statsPanel.SetFloorDepth(floorDepth);
-        _statsPanel.SetEntityManager(entityManager);
+        // Wire up side panel
+        _sidePanel.ConnectToPlayer(player);
+        _sidePanel.SetFloorDepth(floorDepth);
+        _sidePanel.SetEntityManager(entityManager);
+        if (visionSystem != null)
+        {
+            _sidePanel.SetVisionSystem(visionSystem);
+        }
 
         // Wire up message log
         _messageLog.ConnectToCombatSystem(combatSystem);
+        _messageLog.SetPlayer(player);
 
         // Wire up inventory panel
         _inventoryPanel.ConnectToPlayer(player);
@@ -302,11 +308,12 @@ public partial class GameHUD : Control
         _messageLog.AddMessage(message, "#FFD700"); // Gold color
     }
 
-    private void OnStandingOnEntity(string entityName, Color entityColor)
+    private void OnStandingOnEntity(string entityName, string entityGlyph, Color entityColor)
     {
-        // Convert Color to hex string for message log
+        // Convert Color to hex string for BBCode
         string colorHex = $"#{(int)(entityColor.R * 255):X2}{(int)(entityColor.G * 255):X2}{(int)(entityColor.B * 255):X2}";
-        _messageLog.AddMessage($"You stand over the {entityName}.", colorHex);
+        // Show both glyph and item name in color
+        _messageLog.AddMessage($"You stand over the [color={colorHex}]{entityGlyph} {entityName}[/color].", "#ffffff");
     }
 
     private void OnEntityAdded(BaseEntity entity)
