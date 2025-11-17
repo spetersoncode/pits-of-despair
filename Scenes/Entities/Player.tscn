@@ -18,6 +18,7 @@ script = ExtResource("3")
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("4")
+BaseMaxHP = 20
 
 [node name="AttackComponent" type="Node" parent="."]
 script = ExtResource("5")
