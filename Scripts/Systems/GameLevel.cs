@@ -123,6 +123,7 @@ public partial class GameLevel : Node
         // Initialize projectile system
         _projectileSystem.Initialize(_combatSystem);
         _projectileSystem.ConnectToPlayer(_player);
+        _projectileSystem.SetTextRenderer(_renderer);
         _renderer.SetProjectileSystem(_projectileSystem);
 
         // Create action context for the action system

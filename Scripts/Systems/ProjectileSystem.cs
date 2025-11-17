@@ -17,6 +17,7 @@ public partial class ProjectileSystem : Node
     private List<Projectile> _activeProjectiles = new();
     private CombatSystem _combatSystem;
     private Player _player;
+    private TextRenderer _renderer;
 
     /// <summary>
     /// Gets all currently active projectiles for rendering.
@@ -40,6 +41,15 @@ public partial class ProjectileSystem : Node
     {
         _player = player;
         player.RangedAttackRequested += OnRangedAttackRequested;
+    }
+
+    /// <summary>
+    /// Sets the text renderer reference for forcing visual updates.
+    /// </summary>
+    /// <param name="renderer">The text renderer</param>
+    public void SetTextRenderer(TextRenderer renderer)
+    {
+        _renderer = renderer;
     }
 
     /// <summary>
@@ -125,11 +135,15 @@ public partial class ProjectileSystem : Node
 
     /// <summary>
     /// Removes a projectile from the active list and scene tree.
+    /// Forces a visual refresh to immediately clear the projectile from display.
     /// </summary>
     private void RemoveProjectile(Projectile projectile)
     {
         _activeProjectiles.Remove(projectile);
         projectile.QueueFree();
+
+        // Force immediate visual update to prevent projectile from appearing stuck
+        _renderer?.QueueRedraw();
     }
 
     /// <summary>
