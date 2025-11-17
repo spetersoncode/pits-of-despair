@@ -390,8 +390,8 @@ public partial class SidePanel : PanelContainer
 
 		sb.AppendLine($"Melee Attack: {meleeAttack}");
 		sb.AppendLine($"Ranged Attack: {rangedAttack}");
-		sb.AppendLine($"Evasion: {evasion}");
 		sb.AppendLine($"Armor: {armor}");
+		sb.AppendLine($"Evasion: {evasion}");
 
 		_statsLabel.Text = sb.ToString();
 	}
