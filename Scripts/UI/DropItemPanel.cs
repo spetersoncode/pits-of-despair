@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Entities;
+using System.Linq;
 using System.Text;
 
 namespace PitsOfDespair.UI;
@@ -102,7 +103,7 @@ public partial class DropItemPanel : PanelContainer
         sb.AppendLine("[center][b]Drop which item?[/b][/center]");
         sb.AppendLine("[center](ESC to cancel)[/center]\n");
 
-        foreach (var slot in inventory)
+        foreach (var slot in inventory.OrderBy(s => s.Key))
         {
             // Format: key) glyph name (count/charges)
             string colorHex = slot.Item.Template.Color;

@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems;
+using System.Linq;
 using System.Text;
 
 namespace PitsOfDespair.UI;
@@ -111,7 +112,7 @@ public partial class InventoryPanel : PanelContainer
 
         var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 
-        foreach (var slot in inventory)
+        foreach (var slot in inventory.OrderBy(s => s.Key))
         {
             // Format: key) glyph name (count/charges) {EQUIPPED}
             string colorHex = slot.Item.Template.Color;

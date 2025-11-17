@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Entities;
+using System.Linq;
 using System.Text;
 
 namespace PitsOfDespair.UI;
@@ -102,7 +103,7 @@ public partial class ActivateItemPanel : PanelContainer
         sb.AppendLine("[center][b]Activate which item?[/b][/center]");
         sb.AppendLine("[center](ESC to cancel)[/center]\n");
 
-        foreach (var slot in inventory)
+        foreach (var slot in inventory.OrderBy(s => s.Key))
         {
             // Check if item is activatable (consumable or has charges > 0)
             bool isActivatable = slot.Item.Template.IsActivatable() &&
