@@ -1,4 +1,175 @@
 root = true
 
+# All files
 [*]
 charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C# files
+[*.cs]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+
+#### Naming Conventions ####
+
+# Naming rules
+dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_with_underscore.style = underscore_prefix
+dotnet_naming_rule.private_fields_with_underscore.severity = warning
+
+dotnet_naming_rule.public_members_pascal_case.symbols = public_symbols
+dotnet_naming_rule.public_members_pascal_case.style = pascal_case
+dotnet_naming_rule.public_members_pascal_case.severity = warning
+
+# Symbol specifications
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_symbols.public_symbols.applicable_kinds = property,method,field,event,delegate,class,struct,interface,enum
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
+
+# Naming styles
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+dotnet_naming_style.underscore_prefix.required_prefix = _
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+#### Code Style ####
+
+# Use 'var' preferences
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Expression preferences
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_prefer_conditional_expression_over_return = false:silent
+dotnet_style_prefer_inferred_tuple_names = true:suggestion
+dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
+
+# Pattern matching preferences
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+
+# Null checking preferences
+csharp_style_conditional_delegate_call = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+
+# Code block preferences
+csharp_prefer_braces = true:warning
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods = false:silent
+csharp_style_expression_bodied_constructors = false:silent
+csharp_style_expression_bodied_operators = false:silent
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_indexers = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+
+#### Formatting Rules ####
+
+# Organize usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Newline preferences
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+
+# Indentation preferences
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_indent_labels = no_change
+
+# Space preferences
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_colon_in_inheritance_clause = true
+
+# Wrapping preferences
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = true
+
+#### Analyzer Severity Configuration ####
+
+# Set all analyzers to warning severity (not error)
+dotnet_analyzer_diagnostic.severity = warning
+
+# StyleCop Analyzers - Documentation
+dotnet_diagnostic.SA1600.severity = suggestion  # Elements should be documented
+dotnet_diagnostic.SA1601.severity = none  # Partial elements should be documented
+dotnet_diagnostic.SA1602.severity = none  # Enumeration items should be documented
+dotnet_diagnostic.SA1633.severity = none  # File should have header
+
+# StyleCop Analyzers - Godot-specific exceptions
+dotnet_diagnostic.SA1101.severity = none  # Prefix local calls with this
+dotnet_diagnostic.SA1028.severity = none  # Code should not contain trailing whitespace (conflicts with Godot)
+dotnet_diagnostic.SA1200.severity = none  # Using directives should be placed correctly (Godot uses file-scoped namespaces)
+dotnet_diagnostic.SA1309.severity = none  # Field names should not begin with underscore (we use _camelCase)
+dotnet_diagnostic.SA1401.severity = none  # Fields should be private (Godot uses [Export])
+dotnet_diagnostic.SA1516.severity = suggestion  # Elements should be separated by blank line
+dotnet_diagnostic.SA1649.severity = none  # File name should match first type name (Godot scenes)
+
+# SonarAnalyzer - Godot-specific exceptions
+dotnet_diagnostic.S1075.severity = none  # URIs should not be hardcoded (common in Godot for resource paths)
+dotnet_diagnostic.S3881.severity = none  # IDisposable should be implemented correctly (Godot uses QueueFree)
+dotnet_diagnostic.S1121.severity = none  # Assignments should not be made from within sub-expressions (common in Godot)
+
+# Roslynator - Godot-specific exceptions
+dotnet_diagnostic.RCS1018.severity = suggestion  # Add accessibility modifiers
+dotnet_diagnostic.RCS1090.severity = none  # Call ConfigureAwait(false) (not needed in game development)
+dotnet_diagnostic.RCS1138.severity = suggestion  # Add summary to documentation comment
+
+# Code quality rules
+dotnet_diagnostic.CA1031.severity = warning  # Do not catch general exception types
+dotnet_diagnostic.CA1062.severity = suggestion  # Validate arguments of public methods
+dotnet_diagnostic.CA1303.severity = none  # Do not pass literals as localized parameters
+dotnet_diagnostic.CA2007.severity = none  # Consider calling ConfigureAwait (not needed in game dev)
+
+#### IDE Code Quality Rules ####
+
+# Remove unnecessary code
+dotnet_diagnostic.IDE0005.severity = warning  # Remove unnecessary using directives
+dotnet_diagnostic.IDE0051.severity = warning  # Remove unused private members
+dotnet_diagnostic.IDE0052.severity = warning  # Remove unread private members
+dotnet_diagnostic.IDE0055.severity = warning  # Fix formatting issues
+dotnet_diagnostic.IDE0058.severity = none  # Expression value is never used (too noisy for game dev)
+dotnet_diagnostic.IDE0059.severity = warning  # Unnecessary assignment of a value
+dotnet_diagnostic.IDE0060.severity = warning  # Remove unused parameter
+dotnet_diagnostic.IDE0080.severity = warning  # Remove unnecessary suppression operator
+dotnet_diagnostic.IDE0100.severity = warning  # Remove unnecessary equality operator
+dotnet_diagnostic.IDE0110.severity = warning  # Remove unnecessary discard
+
+# Simplification rules
+dotnet_diagnostic.IDE0001.severity = warning  # Simplify name
+dotnet_diagnostic.IDE0002.severity = warning  # Simplify member access
+dotnet_diagnostic.IDE0004.severity = warning  # Remove unnecessary cast
+dotnet_diagnostic.IDE0010.severity = suggestion  # Add missing cases to switch statement
+dotnet_diagnostic.IDE0035.severity = warning  # Remove unreachable code
+dotnet_diagnostic.IDE0050.severity = suggestion  # Convert anonymous type to tuple
+dotnet_diagnostic.IDE0070.severity = suggestion  # Use 'System.HashCode.Combine'
+dotnet_diagnostic.IDE0071.severity = suggestion  # Simplify interpolation
+dotnet_diagnostic.IDE0082.severity = warning  # Convert typeof to nameof
+
+# Unnecessary code patterns
+dotnet_diagnostic.IDE0090.severity = none  # Simplify 'new' expression (conflicts with explicit typing preference)
+dotnet_diagnostic.IDE0130.severity = warning  # Namespace does not match folder structure
+dotnet_diagnostic.IDE0160.severity = suggestion  # Use block-scoped namespace
+dotnet_diagnostic.IDE0161.severity = suggestion  # Use file-scoped namespace
+
+# Code style enforcement in build
+dotnet_diagnostic.IDE1005.severity = warning  # Use conditional delegate call
+dotnet_diagnostic.IDE1006.severity = warning  # Naming rule violations
+
+#### Nullable Reference Types ####
+csharp_style_nullable_reference_types = enable:suggestion

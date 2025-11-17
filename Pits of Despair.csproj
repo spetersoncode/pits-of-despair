@@ -7,5 +7,20 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.15.0.120848">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.14.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
 </Project>
