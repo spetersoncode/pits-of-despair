@@ -85,7 +85,7 @@ public class UniqueSpawnStrategy : ISpawnStrategy
             // Track this unique as spawned
             _spawnedUniques.Add(entry.CreatureId);
 
-            GD.Print($"UniqueSpawnStrategy: Spawned unique '{entry.CreatureId}' at {position}");
+            // GD.Print($"UniqueSpawnStrategy: Spawned unique '{entry.CreatureId}' at {position}");
         }
 
         return result;

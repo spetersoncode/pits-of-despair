@@ -193,7 +193,7 @@ public partial class DataLoader : Node
                         item.DataFileId = id; // Set unique ID for inventory stacking
                         item.ApplyDefaults(); // Apply type-based defaults
                         _items[id] = item;
-                        GD.Print($"DataLoader: Loaded item '{id}' from {fileName}");
+                        // GD.Print($"DataLoader: Loaded item '{id}' from {fileName}");
                     }
                 }
             }

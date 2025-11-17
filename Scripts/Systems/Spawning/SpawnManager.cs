@@ -92,7 +92,6 @@ public partial class SpawnManager : Node
     /// </summary>
     public void PopulateDungeon()
     {
-        GD.Print($"SpawnOrchestrator: Populating floor {_floorDepth}...");
 
         // Get spawn table for this floor
         var spawnTable = GetSpawnTableForFloor(_floorDepth);
@@ -102,7 +101,6 @@ public partial class SpawnManager : Node
             return;
         }
 
-        GD.Print($"SpawnOrchestrator: Using spawn table '{spawnTable.Name}'");
 
         // Get all walkable tiles from the map
         var allWalkableTiles = _mapSystem.GetAllWalkableTiles();
@@ -112,7 +110,6 @@ public partial class SpawnManager : Node
             return;
         }
 
-        GD.Print($"SpawnOrchestrator: Found {allWalkableTiles.Count} walkable tiles");
 
         // Create density controller
         var densityController = new SpawnDensityController(spawnTable);
@@ -122,7 +119,6 @@ public partial class SpawnManager : Node
         int creatureBudget = densityController.GetCreatureBudget();
         int itemBudget = densityController.GetItemBudget();
         int goldBudget = spawnTable.GetRandomGoldBudget();
-        GD.Print($"SpawnOrchestrator: Creature budget = {creatureBudget}, Item budget = {itemBudget}, Gold budget = {goldBudget}");
 
         // Populate creatures using budget-based approach
         int totalCreatures = PopulateCreatures(
@@ -144,7 +140,6 @@ public partial class SpawnManager : Node
             goldBudget
         );
 
-        GD.Print($"SpawnOrchestrator: Spawned {totalCreatures} creatures, {totalItems} items, and {totalGold} gold in piles");
     }
 
     /// <summary>
@@ -223,7 +218,6 @@ public partial class SpawnManager : Node
                 remainingBudget -= result.EntityCount;
                 spawnedPositions.Add(spawnLocation.Value);
 
-                GD.Print($"  Spawned {result.EntityCount}x {entry} at {spawnLocation.Value} (Budget: {remainingBudget}/{totalBudget})");
 
                 // Reset attempt counter on successful spawn
                 attempts = 0;
@@ -232,7 +226,6 @@ public partial class SpawnManager : Node
 
         if (remainingBudget > 0)
         {
-            GD.Print($"SpawnOrchestrator: Could not spend {remainingBudget} budget (max attempts reached)");
         }
 
         return totalSpawned;
@@ -373,7 +366,6 @@ public partial class SpawnManager : Node
                 totalSpawned += result.EntityCount;
                 remainingBudget -= result.EntityCount;
 
-                GD.Print($"  Spawned {result.EntityCount}x item {entry} (Budget: {remainingBudget}/{totalBudget})");
 
                 // Reset attempt counter on successful spawn
                 attempts = 0;
@@ -382,7 +374,6 @@ public partial class SpawnManager : Node
 
         if (remainingBudget > 0)
         {
-            GD.Print($"SpawnOrchestrator: Could not spend {remainingBudget} item budget (max attempts reached)");
         }
 
         return totalSpawned;
@@ -423,7 +414,6 @@ public partial class SpawnManager : Node
             remainingGold -= pileSize;
         }
 
-        GD.Print($"SpawnOrchestrator: Dividing {totalGoldBudget} gold into {piles.Count} piles");
 
         // Shuffle walkable tiles for random distribution
         var shuffledTiles = allWalkableTiles.OrderBy(_ => GD.Randi()).ToList();
@@ -447,7 +437,6 @@ public partial class SpawnManager : Node
 
             if (!spawnPos.HasValue)
             {
-                GD.Print($"SpawnOrchestrator: Could not find location for gold pile {pileIndex + 1}/{piles.Count}");
                 continue;
             }
 
@@ -463,7 +452,6 @@ public partial class SpawnManager : Node
             pileIndex++;
         }
 
-        GD.Print($"SpawnOrchestrator: Successfully spawned {pileIndex} gold piles totaling {totalGoldSpawned} gold");
         return totalGoldSpawned;
     }
 

@@ -213,8 +213,6 @@ public partial class StatusComponent : Node
     /// </summary>
     private void OnTurnStarted()
     {
-        GD.Print($"StatusComponent.OnTurnStarted called! Active statuses: {_activeStatuses.Count}");
-
         var target = GetParent() as Entities.BaseEntity;
         if (target == null)
         {

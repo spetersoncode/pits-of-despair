@@ -207,7 +207,9 @@ public partial class SidePanel : PanelContainer
 	private void UpdateEquipmentDisplay()
 	{
 		if (_equipmentLabel == null || _player == null)
+		{
 			return;
+		}
 
 		var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 		if (equipComponent == null)
