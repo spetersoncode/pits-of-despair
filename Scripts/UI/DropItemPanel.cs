@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using System.Linq;
@@ -97,7 +98,7 @@ public partial class DropItemPanel : PanelContainer
 
         if (inventory.Count == 0)
         {
-            _itemsLabel.Text = "[center][b]Drop which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color=#888888]No items[/color][/center]";
+            _itemsLabel.Text = $"[center][b]Drop which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
             return;
         }
 
@@ -114,9 +115,9 @@ public partial class DropItemPanel : PanelContainer
             string colorHex = slot.Item.Template.Color;
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
             string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
-            string equippedText = isEquipped ? " [color=#888888](equipped)[/color]" : "";
+            string equippedText = isEquipped ? $" [color={Palette.ToHex(Palette.Disabled)}](equipped)[/color]" : "";
 
-            sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}{equippedText}");
+            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}{equippedText}");
         }
 
         _itemsLabel.Text = sb.ToString();

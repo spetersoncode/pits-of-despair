@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using System.Linq;
@@ -97,7 +98,7 @@ public partial class ActivateItemPanel : PanelContainer
 
         if (inventory.Count == 0)
         {
-            _itemsLabel.Text = "[center][b]Activate which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color=#888888]No items[/color][/center]";
+            _itemsLabel.Text = $"[center][b]Activate which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
             return;
         }
 
@@ -117,11 +118,11 @@ public partial class ActivateItemPanel : PanelContainer
                                  (slot.Item.Template.GetIsConsumable() || slot.Item.CurrentCharges > 0);
 
             // Format: key) glyph name (count/charges) (equipped)
-            string colorHex = isActivatable ? slot.Item.Template.Color : "#888888";
-            string keyColor = isActivatable ? "#888888" : "#444444";
+            string colorHex = isActivatable ? slot.Item.Template.Color : Palette.ToHex(Palette.Disabled);
+            string keyColor = isActivatable ? Palette.ToHex(Palette.Disabled) : Palette.ToHex(Palette.Basalt);
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
             string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
-            string equippedText = isEquipped ? " [color=#666666](equipped)[/color]" : "";
+            string equippedText = isEquipped ? $" [color={Palette.ToHex(Palette.Diorite)}](equipped)[/color]" : "";
 
             sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]{equippedText}");
         }

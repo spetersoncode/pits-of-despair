@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
@@ -97,7 +98,7 @@ public partial class EquipPanel : PanelContainer
 
         if (inventory.Count == 0)
         {
-            _itemsLabel.Text = "[center][b]Equip which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color=#888888]No items[/color][/center]";
+            _itemsLabel.Text = $"[center][b]Equip which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
             return;
         }
 
@@ -117,13 +118,13 @@ public partial class EquipPanel : PanelContainer
             if (isEquipped)
             {
                 var currentSlot = equipComponent.GetSlotForItem(slot.Key);
-                equippedText = $" [color=#00FF00]{{EQUIPPED: {FormatSlotName(currentSlot)}}}[/color]";
+                equippedText = $" [color={Palette.ToHex(Palette.Success)}]{{EQUIPPED: {FormatSlotName(currentSlot)}}}[/color]";
             }
 
             // Format: key) glyph name [slot] {EQUIPPED: SlotName}
-            string colorHex = isEquippable ? itemTemplate.Color : "#444444";
-            string keyColor = isEquippable ? "#888888" : "#444444";
-            string slotText = isEquippable ? $" [color=#AAAAAA][{FormatSlotName(equipSlot)}][/color]" : "";
+            string colorHex = isEquippable ? itemTemplate.Color : Palette.ToHex(Palette.Basalt);
+            string keyColor = isEquippable ? Palette.ToHex(Palette.Disabled) : Palette.ToHex(Palette.Basalt);
+            string slotText = isEquippable ? $" [color={Palette.ToHex(Palette.AshGray)}][{FormatSlotName(equipSlot)}][/color]" : "";
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
 
             sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{itemTemplate.GetGlyph()}[/color] [color={colorHex}]{itemTemplate.Name}{countText}[/color]{slotText}{equippedText}");

@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems;
@@ -103,7 +104,7 @@ public partial class InventoryPanel : PanelContainer
 
         if (inventory.Count == 0)
         {
-            _inventoryLabel.Text = "[center][b]Inventory (a-z)[/b][/center]\n\n[center][color=#888888]Empty[/color][/center]";
+            _inventoryLabel.Text = $"[center][b]Inventory (a-z)[/b][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]Empty[/color][/center]";
             return;
         }
 
@@ -125,10 +126,10 @@ public partial class InventoryPanel : PanelContainer
             {
                 var equipSlot = equipComponent.GetSlotForItem(slot.Key);
                 string slotName = FormatSlotName(equipSlot);
-                equippedText = $" [color=#00FF00]{{EQUIPPED: {slotName}}}[/color]";
+                equippedText = $" [color={Palette.ToHex(Palette.Success)}]{{EQUIPPED: {slotName}}}[/color]";
             }
 
-            sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}{equippedText}");
+            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}{equippedText}");
         }
 
         _inventoryLabel.Text = sb.ToString();

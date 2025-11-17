@@ -18,7 +18,7 @@ public partial class Gold : BaseEntity
     {
         // Set gold visual properties
         Glyph = "*";
-        GlyphColor = new Color("#FFD700"); // Gold color
+        GlyphColor = Palette.Gold;
         IsWalkable = true; // Player can walk onto gold tiles to collect it
 
         // Update display name to show amount

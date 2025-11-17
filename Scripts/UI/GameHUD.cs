@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Actions;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 
@@ -95,7 +96,7 @@ public partial class GameHUD : Control
         _messageLog.ConnectToHealthComponent(playerHealth, player.DisplayName);
 
         // Subscribe to wait action
-        player.Waited += () => _messageLog.AddMessage("You wait.", "#66ff66");
+        player.Waited += () => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success));
 
         // Subscribe to item events
         player.ItemPickedUp += OnItemPickedUp;
@@ -273,11 +274,11 @@ public partial class GameHUD : Control
     {
         if (success)
         {
-            _messageLog.AddMessage(message, "#66ff66"); // Green for success
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Success));
         }
         else
         {
-            _messageLog.AddMessage(message, "#888888"); // Gray for failure
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Disabled));
         }
     }
 
@@ -287,17 +288,17 @@ public partial class GameHUD : Control
         {
             // Include item name in the message
             string fullMessage = $"You use {itemName}. {message}";
-            _messageLog.AddMessage(fullMessage, "#66ff66"); // Green for success
+            _messageLog.AddMessage(fullMessage, Palette.ToHex(Palette.Success));
         }
         else
         {
-            _messageLog.AddMessage(message, "#888888"); // Gray for failure
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Disabled));
         }
     }
 
     private void OnItemDropped(string itemName)
     {
-        _messageLog.AddMessage($"You drop {itemName}.", "#ffffff"); // White
+        _messageLog.AddMessage($"You drop {itemName}.", Palette.ToHex(Palette.Default));
     }
 
     private void OnGoldCollected(int amount, int totalGold)
@@ -305,7 +306,7 @@ public partial class GameHUD : Control
         string message = amount == 1
             ? $"You collect 1 gold. (Total: {totalGold})"
             : $"You collect {amount} gold. (Total: {totalGold})";
-        _messageLog.AddMessage(message, "#FFD700"); // Gold color
+        _messageLog.AddMessage(message, Palette.ToHex(Palette.Gold));
     }
 
     private void OnStandingOnEntity(string entityName, string entityGlyph, Color entityColor)
@@ -313,7 +314,7 @@ public partial class GameHUD : Control
         // Convert Color to hex string for BBCode
         string colorHex = $"#{(int)(entityColor.R * 255):X2}{(int)(entityColor.G * 255):X2}{(int)(entityColor.B * 255):X2}";
         // Show both glyph and item name in color
-        _messageLog.AddMessage($"You stand over the [color={colorHex}]{entityGlyph} {entityName}[/color].", "#ffffff");
+        _messageLog.AddMessage($"You stand over the [color={colorHex}]{entityGlyph} {entityName}[/color].", Palette.ToHex(Palette.Default));
     }
 
     private void OnEntityAdded(BaseEntity entity)

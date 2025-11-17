@@ -3,11 +3,11 @@ using Godot;
 namespace PitsOfDespair.Core;
 
 /// <summary>
-/// Centralized 128-color color palette for consistent game visuals.
+/// Centralized 128-color palette for consistent game visuals.
 /// Provides a carefully curated collection of colors optimized for roguelike ASCII/glyph rendering
 /// with proper contrast on black backgrounds and thematic cohesion for the dark dungeon atmosphere.
 /// </summary>
-public static class ColorPalette
+public static class Palette
 {
     #region Terrain - Stone & Soil
 
@@ -375,17 +375,14 @@ public static class ColorPalette
 
     #region UI - Status & Feedback
 
-    /// <summary>Floor tiles that have been seen but are currently out of view (fog of war)</summary>
-    public static readonly Color RememberedFloor = new("#0F0F0F");
+    /// <summary>Tiles that have been seen but are currently out of view (fog of war)</summary>
+    public static readonly Color FogOfWar = new("#404040");
 
-    /// <summary>Wall tiles that have been seen but are currently out of view (fog of war)</summary>
-    public static readonly Color RememberedWall = new("#2A2A2A");
+    /// <summary>Default white color for general use</summary>
+    public static readonly Color Default = new("#FFFFFF");
 
     /// <summary>Health bar at full capacity</summary>
     public static readonly Color HealthFull = new("#66DD66");
-
-    /// <summary>Health bar at high level</summary>
-    public static readonly Color HealthHigh = new("#88DD66");
 
     /// <summary>Health bar at medium level</summary>
     public static readonly Color HealthMedium = new("#DDDD66");
@@ -401,6 +398,9 @@ public static class ColorPalette
 
     /// <summary>Mana bar at low level</summary>
     public static readonly Color ManaLow = new("#7788DD");
+
+    /// <summary>Disabled or inactive UI elements</summary>
+    public static readonly Color Disabled = new("#888888");
 
     /// <summary>Positive status effect/buff indicator</summary>
     public static readonly Color Buff = new("#DD66DD");
@@ -418,10 +418,22 @@ public static class ColorPalette
     public static readonly Color Success = new("#66DDAA");
 
     /// <summary>Player character color</summary>
-    public static readonly Color Player = new("#EEEEEE");
+    public static readonly Color Player = new("#FFFF00");
 
     /// <summary>Empty/unexplored space, pure black</summary>
     public static readonly Color Empty = new("#000000");
+
+    #endregion
+
+    #region Utilities
+
+    /// <summary>
+    /// Converts a Godot Color to a hex string for use in BBCode.
+    /// </summary>
+    /// <param name="color">The color to convert</param>
+    /// <returns>Hex color string in format #RRGGBB</returns>
+    public static string ToHex(Color color) =>
+        $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
 
     #endregion
 }

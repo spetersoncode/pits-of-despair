@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Actions;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Effects;
@@ -40,14 +41,14 @@ public class EffectResult
     public string Message { get; set; }
 
     /// <summary>
-    /// Optional color for the message (hex format, e.g., "#66ff66").
+    /// Optional color for the message (hex format for BBCode).
     /// </summary>
     public string MessageColor { get; set; }
 
-    public EffectResult(bool success, string message, string messageColor = "#ffffff")
+    public EffectResult(bool success, string message, string? messageColor = null)
     {
         Success = success;
         Message = message;
-        MessageColor = messageColor;
+        MessageColor = messageColor ?? Palette.ToHex(Palette.Default);
     }
 }

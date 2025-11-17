@@ -69,7 +69,7 @@ public partial class BaseEntity : Node2D
     /// <summary>
     /// Color to render the glyph.
     /// </summary>
-    public Color GlyphColor { get; set; } = Colors.White;
+    public Color GlyphColor { get; set; } = Palette.Default;
 
     /// <summary>
     /// Whether other entities can move through this entity.

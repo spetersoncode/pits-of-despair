@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Effects;
@@ -37,7 +38,7 @@ public class HealEffect : Effect
             return new EffectResult(
                 false,
                 $"{name} cannot be healed.",
-                "#888888"
+                Palette.ToHex(Palette.Disabled)
             );
         }
 
@@ -47,7 +48,7 @@ public class HealEffect : Effect
             return new EffectResult(
                 false,
                 $"{name} already at full health.",
-                "#888888"
+                Palette.ToHex(Palette.Disabled)
             );
         }
 
@@ -59,7 +60,7 @@ public class HealEffect : Effect
         return new EffectResult(
             true,
             $"{name} heals {actualHealing} HP.",
-            "#66ff66"  // Green for healing
+            Palette.ToHex(Palette.Success)
         );
     }
 }

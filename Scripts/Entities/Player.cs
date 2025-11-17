@@ -55,7 +55,7 @@ public partial class Player : BaseEntity
         // Set player properties
         DisplayName = "Player";
         Glyph = "@";
-        GlyphColor = Colors.Yellow;
+        GlyphColor = Palette.Player;
 
         // Get MovementComponent child
         _movementComponent = GetNode<MovementComponent>("MovementComponent");

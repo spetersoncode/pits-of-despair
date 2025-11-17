@@ -163,7 +163,7 @@ public partial class TextRenderer : Control
 
 		// Draw black background
 		Vector2 viewportSize = GetViewportRect().Size;
-		DrawRect(new Rect2(Vector2.Zero, viewportSize), Colors.Black, true);
+		DrawRect(new Rect2(Vector2.Zero, viewportSize), Palette.Empty, true);
 
 		// Calculate offset to keep player centered on screen
 		Vector2 viewportCenter = viewportSize / 2;
@@ -201,7 +201,7 @@ public partial class TextRenderer : Control
 				// Dim explored-but-not-visible tiles (fog-of-war)
 				if (isExplored && !isVisible)
 				{
-					color = new Color(0.25f, 0.25f, 0.25f);  // Dark grey
+					color = Palette.FogOfWar;
 				}
 
 				// World position of this tile

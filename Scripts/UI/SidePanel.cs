@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
 using System.Linq;
@@ -14,10 +15,10 @@ public partial class SidePanel : PanelContainer
 	private const float HealthGreenThreshold = 0.6f;
 	private const float HealthYellowThreshold = 0.3f;
 
-	private static readonly Color HealthColorGreen = new("#66ff66");
-	private static readonly Color HealthColorYellow = new("#ffff66");
-	private static readonly Color HealthColorRed = new("#ff6666");
-	private static readonly Color DefaultTextColor = new("#ffffff");
+	private static readonly Color HealthColorGreen = Palette.HealthFull;
+	private static readonly Color HealthColorYellow = Palette.HealthMedium;
+	private static readonly Color HealthColorRed = Palette.HealthCritical;
+	private static readonly Color DefaultTextColor = Palette.Default;
 
 	private ProgressBar _healthBar;
 	private Label _healthLabel;
@@ -175,7 +176,7 @@ public partial class SidePanel : PanelContainer
 		if (_goldLabel != null && _player != null)
 		{
 			_goldLabel.Text = $"Gold: {_player.Score}";
-			_goldLabel.AddThemeColorOverride("font_color", new Color("#FFD700")); // Gold color
+			_goldLabel.AddThemeColorOverride("font_color", Palette.Gold);
 		}
 	}
 

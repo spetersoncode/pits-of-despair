@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
 using System.Collections.Generic;
@@ -11,9 +12,9 @@ namespace PitsOfDespair.UI;
 public partial class MessageLog : PanelContainer
 {
 	private const int MaxMessages = 100;
-	private const string ColorDamageTaken = "#ff6666"; // Red
-	private const string ColorDeath = "#ffff66"; // Yellow
-	private const string ColorDefault = "#ffffff"; // White
+	private static readonly string ColorDamageTaken = Palette.ToHex(Palette.HealthCritical);
+	private static readonly string ColorDeath = Palette.ToHex(Palette.HealthMedium);
+	private static readonly string ColorDefault = Palette.ToHex(Palette.Default);
 
 	private RichTextLabel _logLabel;
 	private readonly Queue<string> _messageHistory = new();
@@ -58,9 +59,9 @@ public partial class MessageLog : PanelContainer
 	/// <summary>
 	/// Adds a message to the log with optional color.
 	/// </summary>
-	public void AddMessage(string message, string color = ColorDefault)
+	public void AddMessage(string message, string? color = null)
 	{
-		var coloredMessage = $"[color={color}]{message}[/color]";
+		var coloredMessage = $"[color={color ?? ColorDefault}]{message}[/color]";
 
 		_messageHistory.Enqueue(coloredMessage);
 
