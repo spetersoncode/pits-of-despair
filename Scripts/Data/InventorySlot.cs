@@ -1,9 +1,9 @@
 using PitsOfDespair.Data;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Data;
 
 /// <summary>
-/// Represents a single slot in the player's inventory.
+/// Represents a single slot in an entity's inventory.
 /// Each slot is assigned a letter key (a-z) and can hold multiple items of the same type.
 /// For consumables, Count can be > 1. For charged items, Count is always 1.
 /// </summary>

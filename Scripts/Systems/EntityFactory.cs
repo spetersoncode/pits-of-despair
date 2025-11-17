@@ -267,9 +267,18 @@ public partial class EntityFactory : Node
             entity.AddChild(attackComponent);
         }
 
-        // Add EquipComponent if creature can equip items
+        // Add InventoryComponent and EquipComponent if creature can equip items
         if (data.GetCanEquip())
         {
+            // Add InventoryComponent first (equipment items will be stored here)
+            var inventoryComponent = new InventoryComponent
+            {
+                Name = "InventoryComponent",
+                MaxInventorySlots = 10 // Creatures have smaller inventories than player
+            };
+            entity.AddChild(inventoryComponent);
+
+            // Add EquipComponent
             var equipComponent = new Scripts.Components.EquipComponent
             {
                 Name = "EquipComponent"
@@ -291,6 +300,14 @@ public partial class EntityFactory : Node
                     // Create item instance
                     var itemInstance = new ItemInstance(itemData);
 
+                    // Add item to inventory
+                    var key = inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
+                    if (key == null)
+                    {
+                        GD.PushWarning($"EntityFactory: Failed to add item '{itemId}' to creature '{data.Name}' inventory: {message}");
+                        continue;
+                    }
+
                     // Get equipment slot from item
                     var equipSlot = itemData.GetEquipmentSlot();
                     if (equipSlot == EquipmentSlot.None)
@@ -300,7 +317,7 @@ public partial class EntityFactory : Node
                     }
 
                     // Equip the item
-                    equipComponent.EquipCreatureItem(itemInstance, equipSlot);
+                    equipComponent.Equip(key.Value, equipSlot);
                 }
             }
         }
@@ -349,5 +366,110 @@ public partial class EntityFactory : Node
             Type = AttackType.Melee,
             DiceNotation = DataDefaults.DefaultAttackDice
         };
+    }
+
+    /// <summary>
+    /// Initializes the player's inventory with starting equipment.
+    /// Adds items to inventory and auto-equips them.
+    /// Called by GameLevel after player is initialized.
+    /// </summary>
+    /// <param name="player">The player entity to equip.</param>
+    public void InitializePlayerInventory(Player player)
+    {
+        var inventoryComponent = player.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        var equipComponent = player.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
+
+        if (inventoryComponent == null || equipComponent == null)
+        {
+            GD.PushError("EntityFactory: Player missing InventoryComponent or EquipComponent!");
+            return;
+        }
+
+        // Define starting equipment
+        string[] startingItems = new string[]
+        {
+            "weapon_short_sword",
+            "armor_padded",
+            "weapon_short_bow"
+        };
+
+        // Add and equip each item
+        foreach (var itemId in startingItems)
+        {
+            var itemData = _dataLoader.GetItem(itemId);
+            if (itemData == null)
+            {
+                GD.PushWarning($"EntityFactory: Starting item '{itemId}' not found. Player starting without it.");
+                continue;
+            }
+
+            // Create item instance
+            var itemInstance = new ItemInstance(itemData);
+
+            // Add to inventory
+            var key = inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
+            if (key == null)
+            {
+                GD.PushWarning($"EntityFactory: Failed to add starting item '{itemId}': {message}");
+                continue;
+            }
+
+            // Auto-equip the item
+            var equipSlot = itemData.GetEquipmentSlot();
+            if (equipSlot != EquipmentSlot.None)
+            {
+                equipComponent.Equip(key.Value, equipSlot);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gives items to an entity and optionally equips them.
+    /// Requires the entity to have an InventoryComponent.
+    /// </summary>
+    /// <param name="entity">The entity to give items to.</param>
+    /// <param name="itemDataIds">Array of item data IDs to give.</param>
+    /// <param name="autoEquip">If true, automatically equips items to appropriate slots.</param>
+    public void GiveItems(BaseEntity entity, string[] itemDataIds, bool autoEquip = false)
+    {
+        var inventoryComponent = entity.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventoryComponent == null)
+        {
+            GD.PushWarning($"EntityFactory: Entity '{entity.DisplayName}' has no InventoryComponent!");
+            return;
+        }
+
+        var equipComponent = autoEquip ? entity.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent") : null;
+
+        foreach (var itemId in itemDataIds)
+        {
+            var itemData = _dataLoader.GetItem(itemId);
+            if (itemData == null)
+            {
+                GD.PushWarning($"EntityFactory: Item '{itemId}' not found.");
+                continue;
+            }
+
+            // Create item instance
+            var itemInstance = new ItemInstance(itemData);
+
+            // Add to inventory
+            var key = inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
+            if (key == null)
+            {
+                GD.PushWarning($"EntityFactory: Failed to add item '{itemId}' to '{entity.DisplayName}': {message}");
+                continue;
+            }
+
+            // Auto-equip if requested
+            if (autoEquip && equipComponent != null)
+            {
+                var equipSlot = itemData.GetEquipmentSlot();
+                if (equipSlot != EquipmentSlot.None)
+                {
+                    equipComponent.Equip(key.Value, equipSlot);
+                }
+            }
+        }
     }
 }

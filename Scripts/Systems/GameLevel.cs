@@ -83,6 +83,9 @@ public partial class GameLevel : Node
         var playerSpawn = _mapSystem.GetValidSpawnPosition();
         _player.Initialize(playerSpawn);
 
+        // Initialize player inventory with starting equipment
+        _entityFactory.InitializePlayerInventory(_player);
+
         // Wire up player's entity manager reference (for item pickup)
         _player.SetEntityManager(_entityManager);
 

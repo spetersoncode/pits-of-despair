@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Data;
-using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Scripts.Components;
 
 /// <summary>
 /// Component that manages equipped items for an entity.
-/// Equipped items remain in inventory but are tracked separately by slot.
-/// For creatures without inventories, items are stored internally.
+/// Equipped items remain in InventoryComponent but are tracked separately by slot.
+/// Requires parent entity to have an InventoryComponent.
 /// </summary>
 public partial class EquipComponent : Node
 {
@@ -19,12 +18,6 @@ public partial class EquipComponent : Node
     /// If a slot is not in the dictionary, it's empty.
     /// </summary>
     private readonly Dictionary<EquipmentSlot, char> _equippedSlots = new();
-
-    /// <summary>
-    /// Internal storage for creature equipment (entities without full inventory).
-    /// Maps inventory keys to item instances.
-    /// </summary>
-    private readonly Dictionary<char, ItemInstance> _creatureEquipment = new();
 
     [Signal]
     public delegate void EquipmentChangedEventHandler(EquipmentSlot slot);
@@ -135,24 +128,6 @@ public partial class EquipComponent : Node
         return EquipmentSlot.None;
     }
 
-    /// <summary>
-    /// Equips an item for a creature (entity without full inventory system).
-    /// Creates internal storage for the item and equips it to the specified slot.
-    /// </summary>
-    /// <param name="item">The item instance to equip</param>
-    /// <param name="slot">The equipment slot to equip into</param>
-    /// <returns>True if successfully equipped, false otherwise</returns>
-    public bool EquipCreatureItem(ItemInstance item, EquipmentSlot slot)
-    {
-        // Generate a unique key for internal tracking (use slot enum value as base)
-        char key = (char)('0' + (int)slot);
-
-        // Store item in creature equipment
-        _creatureEquipment[key] = item;
-
-        // Use existing Equip method to handle slot tracking and attack updates
-        return Equip(key, slot);
-    }
 
     /// <summary>
     /// Updates the parent entity's AttackComponent based on equipped weapons.
@@ -201,29 +176,19 @@ public partial class EquipComponent : Node
 
     /// <summary>
     /// Gets the attack data for a weapon item.
-    /// First checks creature equipment storage, then falls back to Player inventory.
+    /// Retrieves weapon from parent entity's InventoryComponent.
     /// The attack name is already set to the weapon name during item loading.
     /// </summary>
     private AttackData? GetWeaponAttack(char inventoryKey)
     {
-        // Check creature equipment storage first
-        if (_creatureEquipment.TryGetValue(inventoryKey, out var creatureItem))
-        {
-            if (creatureItem?.Template?.Attack != null)
-            {
-                return creatureItem.Template.Attack;
-            }
-        }
+        var inventory = GetParent()?.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
+            return null;
 
-        // Fall back to Player inventory
-        var parent = GetParent();
-        if (parent is Player player)
+        var slot = inventory.GetSlot(inventoryKey);
+        if (slot?.Item?.Template?.Attack != null)
         {
-            var slot = player.GetInventorySlot(inventoryKey);
-            if (slot?.Item?.Template?.Attack != null)
-            {
-                return slot.Item.Template.Attack;
-            }
+            return slot.Item.Template.Attack;
         }
 
         return null;
@@ -308,24 +273,15 @@ public partial class EquipComponent : Node
 
     /// <summary>
     /// Gets the ItemData for an equipped item by inventory key.
-    /// First checks creature equipment, then falls back to Player inventory.
+    /// Retrieves item from parent entity's InventoryComponent.
     /// </summary>
     private ItemData? GetItemData(char inventoryKey)
     {
-        // Check creature equipment storage first
-        if (_creatureEquipment.TryGetValue(inventoryKey, out var creatureItem))
-        {
-            return creatureItem?.Template;
-        }
+        var inventory = GetParent()?.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
+            return null;
 
-        // Fall back to Player inventory
-        var parent = GetParent();
-        if (parent is Player player)
-        {
-            var slot = player.GetInventorySlot(inventoryKey);
-            return slot?.Item?.Template;
-        }
-
-        return null;
+        var slot = inventory.GetSlot(inventoryKey);
+        return slot?.Item?.Template;
     }
 }

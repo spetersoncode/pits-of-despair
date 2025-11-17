@@ -4,11 +4,9 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Systems;
 using PitsOfDespair.UI;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PitsOfDespair.Entities;
 
@@ -45,11 +43,9 @@ public partial class Player : BaseEntity
     [Signal]
     public delegate void RangedAttackRequestedEventHandler(Vector2I origin, Vector2I target, BaseEntity targetEntity, int attackIndex);
 
-    private const int MaxInventorySlots = 26;
-
     private MovementComponent? _movementComponent;
+    private InventoryComponent? _inventoryComponent;
     private GridPosition _previousPosition;
-    private List<InventorySlot> _inventory = new();
     private EntityManager? _entityManager;
     private int _score = 0;
 
@@ -84,12 +80,18 @@ public partial class Player : BaseEntity
 
         // Note: Attack component with default punch is now created by EntityFactory
 
+        // Add InventoryComponent to player
+        _inventoryComponent = new InventoryComponent { Name = "InventoryComponent" };
+        AddChild(_inventoryComponent);
+
+        // Relay inventory changed signal for UI compatibility
+        _inventoryComponent.InventoryChanged += () => EmitSignal(SignalName.InventoryChanged);
+
         // Add EquipComponent to player
         var equipComponent = new EquipComponent { Name = "EquipComponent" };
         AddChild(equipComponent);
 
-        // Add starting equipment to inventory
-        AddStartingEquipment();
+        // Note: Starting equipment will be added by EntityFactory in GameLevel initialization
 
         // Track position changes to emit Moved signal for backwards compatibility
         PositionChanged += OnPositionChanged;
@@ -106,86 +108,6 @@ public partial class Player : BaseEntity
         _previousPosition = spawnPosition;
     }
 
-    /// <summary>
-    /// Adds starting equipment to player's inventory and equips it.
-    /// Called during _Ready() to give player initial equipment.
-    /// </summary>
-    private void AddStartingEquipment()
-    {
-        var dataLoader = GetNode<DataLoader>("/root/DataLoader");
-        if (dataLoader == null)
-        {
-            GD.PushError("Player: DataLoader not found! Cannot add starting equipment.");
-            return;
-        }
-
-        var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
-
-        // Add short sword to inventory
-        var shortSwordData = dataLoader.GetItem("weapon_short_sword");
-        if (shortSwordData != null)
-        {
-            var shortSwordInstance = new ItemInstance(shortSwordData);
-            char key = GetNextAvailableKey();
-            var slot = new InventorySlot(key, shortSwordInstance, 1);
-            _inventory.Add(slot);
-
-            // Auto-equip the short sword
-            if (equipComponent != null)
-            {
-                var equipSlot = shortSwordData.GetEquipmentSlot();
-                equipComponent.Equip(key, equipSlot);
-            }
-        }
-        else
-        {
-            GD.PushWarning("Player: Short sword data not found. Player starting with unarmed.");
-        }
-
-        // Add padded armor to inventory
-        var paddedArmorData = dataLoader.GetItem("armor_padded");
-        if (paddedArmorData != null)
-        {
-            var paddedArmorInstance = new ItemInstance(paddedArmorData);
-            char key = GetNextAvailableKey();
-            var slot = new InventorySlot(key, paddedArmorInstance, 1);
-            _inventory.Add(slot);
-
-            // Auto-equip the padded armor
-            if (equipComponent != null)
-            {
-                var equipSlot = paddedArmorData.GetEquipmentSlot();
-                equipComponent.Equip(key, equipSlot);
-            }
-        }
-        else
-        {
-            GD.PushWarning("Player: Padded armor data not found. Player starting without armor.");
-        }
-
-        // Add short bow to inventory
-        var shortBowData = dataLoader.GetItem("weapon_short_bow");
-        if (shortBowData != null)
-        {
-            var shortBowInstance = new ItemInstance(shortBowData);
-            char key = GetNextAvailableKey();
-            var slot = new InventorySlot(key, shortBowInstance, 1);
-            _inventory.Add(slot);
-
-            // Auto-equip the short bow
-            if (equipComponent != null)
-            {
-                var equipSlot = shortBowData.GetEquipmentSlot();
-                equipComponent.Equip(key, equipSlot);
-            }
-        }
-        else
-        {
-            GD.PushWarning("Player: Short bow data not found. Player starting without ranged weapon.");
-        }
-
-        EmitSignal(SignalName.InventoryChanged);
-    }
 
     /// <summary>
     /// Attempts to move the player in the specified direction.
@@ -254,7 +176,10 @@ public partial class Player : BaseEntity
     /// </summary>
     private void ProcessItemRecharging()
     {
-        foreach (var slot in _inventory)
+        if (_inventoryComponent == null)
+            return;
+
+        foreach (var slot in _inventoryComponent.Inventory)
         {
             slot.Item.ProcessTurn();
         }
@@ -352,7 +277,7 @@ public partial class Player : BaseEntity
     /// <summary>
     /// Gets the player's inventory (read-only).
     /// </summary>
-    public IReadOnlyList<InventorySlot> Inventory => _inventory.AsReadOnly();
+    public IReadOnlyList<InventorySlot> Inventory => _inventoryComponent?.Inventory ?? System.Array.Empty<InventorySlot>();
 
     /// <summary>
     /// Gets the player's current score (gold collected).
@@ -374,9 +299,9 @@ public partial class Player : BaseEntity
     /// </summary>
     public bool TryPickupItem()
     {
-        if (_entityManager == null)
+        if (_entityManager == null || _inventoryComponent == null)
         {
-            GD.PushWarning("Player: EntityManager not set, cannot pick up items!");
+            GD.PushWarning("Player: EntityManager or InventoryComponent not set!");
             return false;
         }
 
@@ -390,44 +315,14 @@ public partial class Player : BaseEntity
             return false; // No turn consumed
         }
 
-        // Check if item is stackable (consumables only, charged items never stack)
-        bool canStack = itemComponent.Item.Template.GetIsConsumable();
+        // Try to add item to inventory (excludes equipped items from stacking)
+        var key = _inventoryComponent.AddItem(itemComponent.Item, out string message, excludeEquipped: false);
 
-        // Check if inventory is full (26 unique items)
-        if (_inventory.Count >= MaxInventorySlots)
+        if (key == null)
         {
-            // Check if we can stack with existing item
-            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
-                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
-
-            if (existingSlot == null)
-            {
-                EmitSignal(SignalName.ItemPickedUp, entityAtPosition.DisplayName, false,
-                    "Inventory full! (26 unique items)");
-                return false; // No turn consumed
-            }
-
-            // Stack with existing item
-            existingSlot.Add(1);
-        }
-        else
-        {
-            // Try to find existing slot for stacking
-            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
-                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId) : null;
-
-            if (existingSlot != null)
-            {
-                // Stack with existing item
-                existingSlot.Add(1);
-            }
-            else
-            {
-                // Add new slot with next available key
-                char nextKey = GetNextAvailableKey();
-                var newSlot = new InventorySlot(nextKey, itemComponent.Item, 1);
-                _inventory.Add(newSlot);
-            }
+            // Inventory full and couldn't stack
+            EmitSignal(SignalName.ItemPickedUp, entityAtPosition.DisplayName, false, message);
+            return false; // No turn consumed
         }
 
         // Remove item from world
@@ -437,26 +332,9 @@ public partial class Player : BaseEntity
         // Notify listeners
         string itemName = entityAtPosition.DisplayName;
         EmitSignal(SignalName.ItemPickedUp, itemName, true, $"You pick up the {itemName}.");
-        EmitSignal(SignalName.InventoryChanged);
+        // Note: InventoryChanged signal is already emitted by InventoryComponent
 
         return true; // Turn consumed
-    }
-
-    /// <summary>
-    /// Gets the next available inventory key (a-z).
-    /// </summary>
-    private char GetNextAvailableKey()
-    {
-        for (char c = 'a'; c <= 'z'; c++)
-        {
-            if (!_inventory.Any(slot => slot.Key == c))
-            {
-                return c;
-            }
-        }
-
-        // This shouldn't happen due to MaxInventorySlots check, but just in case
-        return 'z';
     }
 
     /// <summary>
@@ -468,6 +346,12 @@ public partial class Player : BaseEntity
     /// <returns>True if the item was added successfully.</returns>
     public bool AddItemToInventory(BaseEntity itemEntity, out string message)
     {
+        if (_inventoryComponent == null)
+        {
+            message = "InventoryComponent not found!";
+            return false;
+        }
+
         var itemComponent = itemEntity.GetNodeOrNull<ItemComponent>("ItemComponent");
         if (itemComponent == null)
         {
@@ -475,52 +359,16 @@ public partial class Player : BaseEntity
             return false;
         }
 
-        // Check if item is stackable (consumables only, charged items never stack)
-        bool canStack = itemComponent.Item.Template.GetIsConsumable();
+        // Add item to inventory (exclude equipped items from stacking)
+        var key = _inventoryComponent.AddItem(itemComponent.Item, out message, excludeEquipped: true);
 
-        // Get equipped items to exclude from stacking (equipped items never stack)
-        var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
-
-        // Check if inventory is full (26 unique items)
-        if (_inventory.Count >= MaxInventorySlots)
+        if (key != null)
         {
-            // Check if we can stack with existing item (exclude equipped items)
-            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
-                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId &&
-                (equipComponent == null || !equipComponent.IsEquipped(slot.Key))) : null;
-
-            if (existingSlot == null)
-            {
-                message = "Inventory full! (26 unique items)";
-                return false;
-            }
-
-            // Stack with existing item
-            existingSlot.Add(1);
-        }
-        else
-        {
-            // Try to find existing slot for stacking (exclude equipped items)
-            var existingSlot = canStack ? _inventory.FirstOrDefault(slot =>
-                slot.Item.Template.DataFileId == itemComponent.Item.Template.DataFileId &&
-                (equipComponent == null || !equipComponent.IsEquipped(slot.Key))) : null;
-
-            if (existingSlot != null)
-            {
-                // Stack with existing item
-                existingSlot.Add(1);
-            }
-            else
-            {
-                // Add new slot with next available key
-                char nextKey = GetNextAvailableKey();
-                var newSlot = new InventorySlot(nextKey, itemComponent.Item, 1);
-                _inventory.Add(newSlot);
-            }
+            message = $"You pick up the {itemEntity.DisplayName}.";
+            return true;
         }
 
-        message = $"You pick up the {itemEntity.DisplayName}.";
-        return true;
+        return false;
     }
 
     /// <summary>
@@ -550,9 +398,9 @@ public partial class Player : BaseEntity
     /// </summary>
     /// <param name="key">The key to look up (a-z).</param>
     /// <returns>The inventory slot, or null if not found.</returns>
-    public InventorySlot GetInventorySlot(char key)
+    public InventorySlot? GetInventorySlot(char key)
     {
-        return _inventory.FirstOrDefault(slot => slot.Key == key);
+        return _inventoryComponent?.GetSlot(key);
     }
 
     /// <summary>
@@ -563,28 +411,10 @@ public partial class Player : BaseEntity
     /// <returns>True if items were removed successfully.</returns>
     public bool RemoveItemFromInventory(char key, int count = 1)
     {
-        var slot = GetInventorySlot(key);
-        if (slot == null)
-        {
+        if (_inventoryComponent == null)
             return false;
-        }
 
-        // Remove the specified count
-        bool removed = slot.Remove(count);
-
-        // If slot is empty, remove it from inventory
-        if (slot.Count <= 0)
-        {
-            _inventory.Remove(slot);
-        }
-
-        // Notify listeners
-        if (removed)
-        {
-            EmitSignal(SignalName.InventoryChanged);
-        }
-
-        return removed;
+        return _inventoryComponent.RemoveItem(key, count);
     }
 
     /// <summary>
