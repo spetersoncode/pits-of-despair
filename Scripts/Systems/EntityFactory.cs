@@ -345,9 +345,9 @@ public partial class EntityFactory : Node
     {
         return new AttackData
         {
-            Name = "punch",
+            Name = DataDefaults.DefaultAttackName,
             Type = AttackType.Melee,
-            DiceNotation = "1d2"
+            DiceNotation = DataDefaults.DefaultAttackDice
         };
     }
 }

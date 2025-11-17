@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
+using PitsOfDespair.Core;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Data;
@@ -15,8 +16,8 @@ namespace PitsOfDespair.Data;
 public class ItemTypeInfo
 {
     public string Prefix { get; set; } = string.Empty;
-    public string DefaultGlyph { get; set; } = "?";
-    public string DefaultColor { get; set; } = "#FFFFFF";
+    public string DefaultGlyph { get; set; } = DataDefaults.UnknownGlyph;
+    public string DefaultColor { get; set; } = DataDefaults.DefaultColor;
     public bool IsEquippable { get; set; } = false;
     public bool IsConsumable { get; set; } = false;
     public string? EquipSlot { get; set; } = null;
@@ -38,7 +39,7 @@ public class ItemData
         {
             Prefix = "potion of ",
             DefaultGlyph = "!",
-            DefaultColor = "#FF00FF",
+            DefaultColor = Palette.ToHex(Palette.Arcane),
             IsEquippable = false,
             IsConsumable = true
         },
@@ -46,7 +47,7 @@ public class ItemData
         {
             Prefix = "scroll of ",
             DefaultGlyph = "♪",
-            DefaultColor = "#FFFFAA",
+            DefaultColor = Palette.ToHex(Palette.Thunder),
             IsEquippable = false,
             IsConsumable = true
         },
@@ -54,7 +55,7 @@ public class ItemData
         {
             Prefix = "",
             DefaultGlyph = "/",
-            DefaultColor = "#C0C0C0",
+            DefaultColor = Palette.ToHex(Palette.Silver),
             IsEquippable = true,
             IsConsumable = false,
             EquipSlot = "MeleeWeapon"
@@ -63,7 +64,7 @@ public class ItemData
         {
             Prefix = "",
             DefaultGlyph = "[",
-            DefaultColor = "#808080",
+            DefaultColor = Palette.ToHex(Palette.Iron),
             IsEquippable = true,
             IsConsumable = false,
             EquipSlot = "Armor"
@@ -82,7 +83,7 @@ public class ItemData
     [YamlMember(Alias = "glyph")]
     public string? Glyph { get; set; } = null;
 
-    public string Color { get; set; } = "#FFFFFF";
+    public string Color { get; set; } = DataDefaults.DefaultColor;
 
     /// <summary>
     /// Unique identifier for the source data file.
@@ -192,7 +193,7 @@ public class ItemData
             Glyph ??= info.DefaultGlyph;
 
             // Only set color if it's still the default white
-            if (Color == "#FFFFFF")
+            if (Color == DataDefaults.DefaultColor)
             {
                 Color = info.DefaultColor;
             }
@@ -214,7 +215,7 @@ public class ItemData
     /// </summary>
     public string GetGlyph()
     {
-        return Glyph ?? "?";
+        return Glyph ?? DataDefaults.UnknownGlyph;
     }
 
     /// <summary>

@@ -1,8 +1,12 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using PitsOfDespair.Core;
 using PitsOfDespair.Systems.Spawning.Data;
 
 namespace PitsOfDespair.Data;
@@ -333,6 +337,7 @@ public partial class DataLoader : Node
             string yamlText = file.GetAsText();
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .WithTypeConverter(new PaletteColorConverter())
                 .IgnoreUnmatchedProperties()
                 .Build();
 
@@ -343,5 +348,64 @@ public partial class DataLoader : Node
             GD.PrintErr($"DataLoader: Error loading {path}: {ex.Message}");
             return null;
         }
+    }
+}
+
+/// <summary>
+/// YamlDotNet type converter that allows YAML files to reference Palette colors by name.
+/// Supports both formats: "color: Iron" and "color: "#665544"".
+/// </summary>
+public class PaletteColorConverter : IYamlTypeConverter
+{
+    private static readonly Dictionary<string, string> _colorCache = new();
+
+    static PaletteColorConverter()
+    {
+        // Build cache of Palette color names to hex values using reflection
+        var paletteType = typeof(Palette);
+        var colorFields = paletteType.GetFields(BindingFlags.Public | BindingFlags.Static);
+
+        foreach (var field in colorFields)
+        {
+            if (field.FieldType == typeof(Color))
+            {
+                var color = (Color)field.GetValue(null);
+                var hexValue = Palette.ToHex(color);
+                _colorCache[field.Name.ToLower()] = hexValue;
+            }
+        }
+    }
+
+    public bool Accepts(Type type)
+    {
+        return type == typeof(string);
+    }
+
+    public object ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
+    {
+        var scalar = parser.Consume<Scalar>();
+        var value = scalar.Value;
+
+        // If it's already a hex color (starts with #), return as-is
+        if (value.StartsWith("#"))
+        {
+            return value;
+        }
+
+        // Try to map it to a Palette color name
+        var colorNameLower = value.ToLower();
+        if (_colorCache.TryGetValue(colorNameLower, out var hexValue))
+        {
+            return hexValue;
+        }
+
+        // If not found, return the value as-is and let validation handle it
+        GD.PushWarning($"PaletteColorConverter: Unknown palette color '{value}', using as-is");
+        return value;
+    }
+
+    public void WriteYaml(IEmitter emitter, object value, Type type, ObjectSerializer serializer)
+    {
+        emitter.Emit(new Scalar((string)value));
     }
 }

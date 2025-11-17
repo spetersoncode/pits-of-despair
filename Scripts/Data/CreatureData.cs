@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using PitsOfDespair.Core;
 
 namespace PitsOfDespair.Data;
 
@@ -9,8 +10,8 @@ namespace PitsOfDespair.Data;
 /// </summary>
 public class CreatureTypeInfo
 {
-    public string DefaultGlyph { get; set; } = "?";
-    public string DefaultColor { get; set; } = "#FFFFFF";
+    public string DefaultGlyph { get; set; } = DataDefaults.UnknownGlyph;
+    public string DefaultColor { get; set; } = DataDefaults.DefaultColor;
 }
 
 /// <summary>
@@ -28,12 +29,12 @@ public class CreatureData
         ["goblinoid"] = new CreatureTypeInfo
         {
             DefaultGlyph = "g",
-            DefaultColor = "#808080"
+            DefaultColor = Palette.ToHex(Palette.Common)
         },
         ["vermin"] = new CreatureTypeInfo
         {
             DefaultGlyph = "r",
-            DefaultColor = "#808080"
+            DefaultColor = Palette.ToHex(Palette.Common)
         }
     };
 
@@ -45,9 +46,9 @@ public class CreatureData
     /// </summary>
     public string Type { get; set; } = string.Empty;
 
-    public string Glyph { get; set; } = "?";
+    public string Glyph { get; set; } = DataDefaults.UnknownGlyph;
 
-    public string Color { get; set; } = "#FFFFFF";
+    public string Color { get; set; } = DataDefaults.DefaultColor;
 
     // Stats
     public int Strength { get; set; } = 0;
@@ -113,12 +114,12 @@ public class CreatureData
         if (TypeInfo.TryGetValue(typeKey, out var info))
         {
             // Apply defaults only if not explicitly set
-            if (Glyph == "?")
+            if (Glyph == DataDefaults.UnknownGlyph)
             {
                 Glyph = info.DefaultGlyph;
             }
 
-            if (Color == "#FFFFFF")
+            if (Color == DataDefaults.DefaultColor)
             {
                 Color = info.DefaultColor;
             }
