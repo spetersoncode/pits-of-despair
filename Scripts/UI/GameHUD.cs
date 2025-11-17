@@ -109,6 +109,13 @@ public partial class GameHUD : Control
         // Subscribe to standing on entities (for "You see here" messages)
         player.StandingOnEntity += OnStandingOnEntity;
 
+        // Subscribe to status effect messages
+        var statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
+        if (statusComponent != null)
+        {
+            statusComponent.StatusMessage += (message) => _messageLog.AddMessage(message, Palette.ToHex(Palette.HealthFull));
+        }
+
         // Add welcome message
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape.");
     }

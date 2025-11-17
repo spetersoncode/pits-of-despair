@@ -320,6 +320,9 @@ public class ItemData
             case "blink":
                 return new BlinkEffect(definition.Range);
 
+            case "armor_buff":
+                return new ApplyStatusEffect("armor_buff", definition.Amount, definition.Duration);
+
             default:
                 GD.PrintErr($"ItemData: Unknown effect type '{definition.Type}' in item '{Name}'");
                 return null;
@@ -346,4 +349,9 @@ public class EffectDefinition
     /// Range parameter for area/distance effects (e.g., teleport range).
     /// </summary>
     public int Range { get; set; } = 0;
+
+    /// <summary>
+    /// Duration parameter for status effects (in turns).
+    /// </summary>
+    public int Duration { get; set; } = 0;
 }

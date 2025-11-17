@@ -1,0 +1,7 @@
+name: minor barkskin
+type: potion
+color: Bark
+effects:
+  - type: armor_buff
+    amount: 2
+    duration: 50

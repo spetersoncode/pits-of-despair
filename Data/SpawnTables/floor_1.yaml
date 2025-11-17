@@ -59,6 +59,9 @@ itemPools:
       - itemId: potion_minor_healing
         weight: 2
 
+      - itemId: potion_minor_barkskin
+        weight: 2
+
       - itemId: scroll_blink
 
   - id: uncommon
