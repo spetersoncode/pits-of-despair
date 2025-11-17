@@ -17,9 +17,12 @@ public partial class TextRenderer : Control
 	private Player _player;
 	private EntityManager? _entityManager;
 	private PlayerVisionSystem _visionSystem;
+	private TargetingSystem _targetingSystem;
+	private ProjectileSystem _projectileSystem;
 	private Font _font;
 	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 	private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
+	private bool _wasTargetingActive = false;
 
 	public override void _Ready()
 	{
@@ -120,6 +123,22 @@ public partial class TextRenderer : Control
 		}
 	}
 
+	/// <summary>
+	/// Sets the targeting system for rendering targeting overlay.
+	/// </summary>
+	public void SetTargetingSystem(TargetingSystem targetingSystem)
+	{
+		_targetingSystem = targetingSystem;
+	}
+
+	/// <summary>
+	/// Sets the projectile system for rendering active projectiles.
+	/// </summary>
+	public void SetProjectileSystem(ProjectileSystem projectileSystem)
+	{
+		_projectileSystem = projectileSystem;
+	}
+
 	private void OnMapChanged()
 	{
 		QueueRedraw();
@@ -152,6 +171,35 @@ public partial class TextRenderer : Control
 	private void OnVisionChanged()
 	{
 		QueueRedraw();
+	}
+
+	public override void _Process(double delta)
+	{
+		// Continuously redraw during targeting mode or when projectiles are active
+		bool needsRedraw = false;
+
+		bool isTargetingActive = _targetingSystem != null && _targetingSystem.IsActive;
+		if (isTargetingActive)
+		{
+			needsRedraw = true;
+		}
+
+		// If targeting just stopped, queue one final redraw to clear the overlay
+		if (_wasTargetingActive && !isTargetingActive)
+		{
+			needsRedraw = true;
+		}
+		_wasTargetingActive = isTargetingActive;
+
+		if (_projectileSystem != null && _projectileSystem.ActiveProjectiles.Count > 0)
+		{
+			needsRedraw = true;
+		}
+
+		if (needsRedraw)
+		{
+			QueueRedraw();
+		}
 	}
 
 	public override void _Draw()
@@ -281,5 +329,97 @@ public partial class TextRenderer : Control
 
 		// Draw the player last (should be at viewport center, on top of everything)
 		DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
+
+		// Draw projectiles (on top of player)
+		if (_projectileSystem != null)
+		{
+			foreach (var projectile in _projectileSystem.ActiveProjectiles)
+			{
+				Vector2 projectileWorldPos = new Vector2(
+					projectile.GridPosition.X * TileSize,
+					projectile.GridPosition.Y * TileSize
+				);
+				Vector2 projectileDrawPos = offset + projectileWorldPos;
+
+				DrawString(_font, projectileDrawPos, projectile.Glyph, HorizontalAlignment.Left, -1, FontSize, projectile.GlyphColor);
+			}
+		}
+
+		// Draw targeting overlay (on top of everything else)
+		if (_targetingSystem != null && _targetingSystem.IsActive)
+		{
+			// Draw valid tiles in range with subtle highlight
+			if (_targetingSystem.ValidTiles != null)
+			{
+				foreach (var tile in _targetingSystem.ValidTiles)
+				{
+					Vector2 tileWorldPos = new Vector2(tile.X * TileSize, tile.Y * TileSize);
+					Vector2 tileDrawPos = offset + tileWorldPos;
+
+					// Draw subtle background highlight for tiles in range
+					Color highlightColor = new Color(0.2f, 0.2f, 0.4f, 0.3f);
+					DrawRect(new Rect2(tileDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+				}
+			}
+
+			// Draw trace line from player to cursor
+			GridPosition cursorPos = _targetingSystem.CursorPosition;
+			DrawTraceLine(_player.GridPosition, cursorPos, offset);
+
+			// Draw cursor at target position
+			// Adjust upward to align with glyph visual center (baseline positioning)
+			Vector2 cursorWorldPos = new Vector2(
+				cursorPos.X * TileSize - 2.0f,
+				cursorPos.Y * TileSize - TileSize + 4.0f
+			);
+			Vector2 cursorDrawPos = offset + cursorWorldPos;
+
+			// Check if there's a creature at cursor position
+			var targetEntity = _entityManager?.GetEntityAtPosition(cursorPos);
+			bool hasCreature = targetEntity != null &&
+				targetEntity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null;
+
+			if (hasCreature)
+			{
+				// Draw pulsing green highlight for valid target (creature)
+				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.15 + 0.25);
+				Color highlightColor = new Color(0.3f, 1.0f, 0.3f, pulse); // Green
+				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+			}
+			else
+			{
+				// Draw pulsing red tint for empty tile (no target)
+				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.1 + 0.15);
+				Color highlightColor = new Color(1.0f, 0.3f, 0.3f, pulse); // Red
+				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Draws a trace line from origin to target using simple line segments.
+	/// </summary>
+	private void DrawTraceLine(GridPosition origin, GridPosition target, Vector2 offset)
+	{
+		// For the player (origin), use viewport center since player is always drawn there
+		// DrawString uses baseline positioning, so we need to adjust upward from viewportCenter
+		Vector2 viewportSize = GetViewportRect().Size;
+		Vector2 viewportCenter = viewportSize / 2;
+
+		// Origin: center of player glyph
+		// Adjust upward from baseline positioning
+		Vector2 originDrawPos = viewportCenter + new Vector2(TileSize / 2.0f - 2.0f, -TileSize / 4.0f + 2.0f);
+
+		// Target: center of target glyph/entity
+		// All entities use DrawString with baseline positioning, fine-tuned adjustment
+		Vector2 targetWorldPos = new Vector2(
+			target.X * TileSize + TileSize / 2.0f - 2.0f,
+			target.Y * TileSize - TileSize / 2.0f + 2.0f
+		);
+		Vector2 targetDrawPos = offset + targetWorldPos;
+
+		// Draw line from origin to target
+		Color lineColor = new Color(0.8f, 0.8f, 0.3f, 0.5f);
+		DrawLine(originDrawPos, targetDrawPos, lineColor, 2.0f);
 	}
 }

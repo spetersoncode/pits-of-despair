@@ -211,6 +211,30 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.Equip;
     }
 
+    /// <summary>
+    /// Enters targeting mode.
+    /// Called by InputHandler when 'F' is pressed with ranged weapon equipped.
+    /// </summary>
+    public void EnterTargetingMode()
+    {
+        // Close any open menus first
+        if (_currentMenuState != MenuState.None)
+        {
+            CloseAllMenus();
+        }
+        // Targeting mode is handled by TargetingSystem, not as a menu state
+    }
+
+    /// <summary>
+    /// Exits targeting mode.
+    /// Called when targeting is confirmed or canceled.
+    /// </summary>
+    public void ExitTargetingMode()
+    {
+        // Targeting mode is handled by TargetingSystem
+        // No menu state to reset
+    }
+
     private void OnInventoryCancelled()
     {
         _inventoryPanel.ToggleInventory();

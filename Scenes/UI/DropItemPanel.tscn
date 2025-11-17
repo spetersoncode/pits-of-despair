@@ -1,7 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://dqvmr6dowvuy2"]
 
-[ext_resource type="Script" path="res://Scripts/UI/DropItemPanel.cs" id="1"]
-[ext_resource type="FontFile" path="res://Resources/Fonts/Inconsolata-Variable.ttf" id="2"]
+[ext_resource type="Script" uid="uid://bgdcqcvlifmes" path="res://Scripts/UI/DropItemPanel.cs" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
 bg_color = Color(0, 0, 0, 0.85)

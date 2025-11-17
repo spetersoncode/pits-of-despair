@@ -1,6 +1,11 @@
 using Godot;
 using PitsOfDespair.Actions;
+using PitsOfDespair.Components;
+using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.UI;
 
 namespace PitsOfDespair.Systems;
@@ -28,6 +33,7 @@ public partial class InputHandler : Node
     private ActionContext _actionContext;
     private GameHUD _gameHUD;
     private PlayerVisionSystem _visionSystem;
+    private TargetingSystem _targetingSystem;
 
     /// <summary>
     /// Sets the player to control.
@@ -81,6 +87,21 @@ public partial class InputHandler : Node
         _visionSystem = visionSystem;
     }
 
+    /// <summary>
+    /// Sets the TargetingSystem reference for ranged attacks.
+    /// </summary>
+    public void SetTargetingSystem(TargetingSystem targetingSystem)
+    {
+        _targetingSystem = targetingSystem;
+
+        // Connect to targeting signals
+        if (_targetingSystem != null)
+        {
+            _targetingSystem.TargetConfirmed += OnTargetConfirmed;
+            _targetingSystem.TargetCanceled += OnTargetCanceled;
+        }
+    }
+
     public override void _ExitTree()
     {
         // Clean up signal connections
@@ -100,6 +121,14 @@ public partial class InputHandler : Node
         // Only process key presses, not key releases or repeats
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            // Handle targeting mode input separately
+            if (_targetingSystem != null && _targetingSystem.IsActive)
+            {
+                HandleTargetingInput(keyEvent);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
             // If a menu is open, don't process menu toggle keys (A/D/I)
             // Let the panels handle the input for item selection instead
             if (_gameHUD != null && _gameHUD.IsAnyMenuOpen())
@@ -152,6 +181,22 @@ public partial class InputHandler : Node
             // Only process turn-based actions during player turn
             if (!_turnManager.IsPlayerTurn)
             {
+                return;
+            }
+
+            // Check for fire/targeting mode (F key)
+            if (keyEvent.Keycode == Key.F)
+            {
+                if (HasRangedWeaponEquipped() && _targetingSystem != null && _gameHUD != null)
+                {
+                    int range = GetRangedWeaponRange();
+                    if (range > 0)
+                    {
+                        _targetingSystem.StartTargeting(_player.GridPosition, range);
+                        _gameHUD.EnterTargetingMode();
+                    }
+                }
+                GetViewport().SetInputAsHandled();
                 return;
             }
 
@@ -231,5 +276,162 @@ public partial class InputHandler : Node
             Key.Kp5 => true,     // Numpad 5
             _ => false
         };
+    }
+
+    /// <summary>
+    /// Handles input while in targeting mode.
+    /// </summary>
+    private void HandleTargetingInput(InputEventKey keyEvent)
+    {
+        if (_targetingSystem == null)
+            return;
+
+        // ESC cancels targeting
+        if (keyEvent.Keycode == Key.Escape)
+        {
+            _targetingSystem.CancelTarget();
+            return;
+        }
+
+        // Enter, Space, or F confirms targeting
+        if (keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.KpEnter || keyEvent.Keycode == Key.Space || keyEvent.Keycode == Key.F)
+        {
+            _targetingSystem.ConfirmTarget();
+            return;
+        }
+
+        // Tab cycles to next target
+        if (keyEvent.Keycode == Key.Tab && !keyEvent.ShiftPressed)
+        {
+            _targetingSystem.CycleNextTarget();
+            return;
+        }
+
+        // Shift+Tab cycles to previous target
+        if (keyEvent.Keycode == Key.Tab && keyEvent.ShiftPressed)
+        {
+            _targetingSystem.CyclePreviousTarget();
+            return;
+        }
+
+        // Numpad +/- for target cycling
+        if (keyEvent.Keycode == Key.KpAdd)
+        {
+            _targetingSystem.CycleNextTarget();
+            return;
+        }
+
+        if (keyEvent.Keycode == Key.KpSubtract)
+        {
+            _targetingSystem.CyclePreviousTarget();
+            return;
+        }
+
+        // Numpad directions move cursor
+        Vector2I direction = GetDirectionFromKey(keyEvent.Keycode);
+        if (direction != Vector2I.Zero)
+        {
+            _targetingSystem.MoveCursor(direction);
+        }
+    }
+
+    /// <summary>
+    /// Called when targeting is confirmed. Executes ranged attack action.
+    /// </summary>
+    private void OnTargetConfirmed(Vector2I targetPosition)
+    {
+        if (_player == null || _actionContext == null)
+        {
+            return;
+        }
+
+        // Exit targeting mode in UI
+        if (_gameHUD != null)
+        {
+            _gameHUD.ExitTargetingMode();
+        }
+
+        // Find the ranged attack index
+        var attackComponent = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
+        if (attackComponent == null)
+        {
+            return;
+        }
+
+        int rangedAttackIndex = -1;
+        for (int i = 0; i < attackComponent.Attacks.Count; i++)
+        {
+            var attack = attackComponent.Attacks[i];
+            if (attack != null && attack.Type == AttackType.Ranged)
+            {
+                rangedAttackIndex = i;
+                break;
+            }
+        }
+
+        if (rangedAttackIndex == -1)
+        {
+            return;
+        }
+
+        // Execute ranged attack action
+        var rangedAttackAction = new RangedAttackAction(GridPosition.FromVector2I(targetPosition), rangedAttackIndex);
+        _player.ExecuteAction(rangedAttackAction, _actionContext);
+    }
+
+    /// <summary>
+    /// Called when targeting is canceled. Returns to normal gameplay.
+    /// </summary>
+    private void OnTargetCanceled()
+    {
+        // Exit targeting mode in UI
+        if (_gameHUD != null)
+        {
+            _gameHUD.ExitTargetingMode();
+        }
+
+        // No turn consumed
+    }
+
+    /// <summary>
+    /// Checks if the player has a ranged weapon equipped.
+    /// </summary>
+    private bool HasRangedWeaponEquipped()
+    {
+        if (_player == null)
+            return false;
+
+        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent == null)
+            return false;
+
+        // Check if ranged weapon slot is equipped
+        var rangedWeaponKey = equipComponent.GetEquippedKey(EquipmentSlot.RangedWeapon);
+        return rangedWeaponKey != null;
+    }
+
+    /// <summary>
+    /// Gets the range of the equipped ranged weapon.
+    /// </summary>
+    private int GetRangedWeaponRange()
+    {
+        if (_player == null)
+            return 0;
+
+        var attackComponent = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
+        if (attackComponent == null)
+            return 0;
+
+        // Find first ranged attack
+        for (int i = 0; i < attackComponent.Attacks.Count; i++)
+        {
+            var attack = attackComponent.Attacks[i];
+            if (attack != null && attack.Type == AttackType.Ranged)
+            {
+                return attack.Range;
+            }
+        }
+
+        return 0;
     }
 }

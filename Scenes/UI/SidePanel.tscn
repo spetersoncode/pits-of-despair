@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://cr4kky5x07a1s"]
 
-[ext_resource type="Script" path="res://Scripts/UI/SidePanel.cs" id="1"]
-[ext_resource type="FontFile" path="res://Resources/Fonts/Inconsolata-Variable.ttf" id="2"]
+[ext_resource type="Script" uid="uid://dqt31fyyvic6g" path="res://Scripts/UI/SidePanel.cs" id="1"]
 
 [node name="SidePanel" type="PanelContainer"]
 custom_minimum_size = Vector2(300, 0)
@@ -25,7 +24,6 @@ theme_override_constants/separation = 12
 [node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
-max_value = 100.0
 value = 100.0
 show_percentage = false
 
@@ -93,7 +91,6 @@ layout_mode = 2
 
 [node name="StandingOnLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = ""
 
 [node name="NearbyHeader" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2

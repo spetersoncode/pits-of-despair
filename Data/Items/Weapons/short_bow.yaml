@@ -1,0 +1,9 @@
+name: short bow
+type: weapon
+glyph: "}"
+color: Bark
+equipSlot: RangedWeapon
+attack:
+  type: Ranged
+  dice: "1d6"
+  range: 8

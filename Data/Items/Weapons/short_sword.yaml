@@ -1,6 +1,8 @@
 name: short sword
 type: weapon
+glyph: "/"
 color: Steel
+equipSlot: MeleeWeapon
 attack:
   type: Melee
   dice: "1d6"

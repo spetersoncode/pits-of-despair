@@ -1,5 +1,7 @@
 name: padded armor
 type: armor
+glyph: "["
 color: Wool
+equipSlot: Armor
 armorValue: 1
 evasionPenalty: 0

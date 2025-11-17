@@ -1,7 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://drdqlwrxhbv7g"]
+[gd_scene load_steps=3 format=3 uid="uid://drdqlwrxhbv7g"]
 
 [ext_resource type="Script" uid="uid://cdl7gp31cfrap" path="res://Scripts/UI/InventoryPanel.cs" id="1"]
-[ext_resource type="FontFile" path="res://Resources/Fonts/Inconsolata-Variable.ttf" id="2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
 bg_color = Color(0, 0, 0, 0.85)

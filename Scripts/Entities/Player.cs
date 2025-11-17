@@ -42,6 +42,9 @@ public partial class Player : BaseEntity
     [Signal]
     public delegate void StandingOnEntityEventHandler(string entityName, string entityGlyph, Color entityColor);
 
+    [Signal]
+    public delegate void RangedAttackRequestedEventHandler(Vector2I origin, Vector2I target, BaseEntity targetEntity, int attackIndex);
+
     private const int MaxInventorySlots = 26;
 
     private MovementComponent? _movementComponent;
@@ -158,6 +161,27 @@ public partial class Player : BaseEntity
         else
         {
             GD.PushWarning("Player: Padded armor data not found. Player starting without armor.");
+        }
+
+        // Add short bow to inventory
+        var shortBowData = dataLoader.GetItem("weapon_short_bow");
+        if (shortBowData != null)
+        {
+            var shortBowInstance = new ItemInstance(shortBowData);
+            char key = GetNextAvailableKey();
+            var slot = new InventorySlot(key, shortBowInstance, 1);
+            _inventory.Add(slot);
+
+            // Auto-equip the short bow
+            if (equipComponent != null)
+            {
+                var equipSlot = shortBowData.GetEquipmentSlot();
+                equipComponent.Equip(key, equipSlot);
+            }
+        }
+        else
+        {
+            GD.PushWarning("Player: Short bow data not found. Player starting without ranged weapon.");
         }
 
         EmitSignal(SignalName.InventoryChanged);
