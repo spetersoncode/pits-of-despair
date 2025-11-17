@@ -57,7 +57,7 @@ theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 text = "NEARBY:"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 
 [node name="VisibleEntitiesLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/ScrollContainer"]

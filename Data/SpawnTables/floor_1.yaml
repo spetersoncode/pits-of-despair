@@ -56,7 +56,7 @@ itemPools:
   - id: common
     weight: 70
     entries:
-      - itemId: potion_cure_light_wounds
+      - itemId: potion_minor_healing
         weight: 2
 
       - itemId: scroll_blink
