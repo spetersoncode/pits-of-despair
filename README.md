@@ -8,6 +8,13 @@ Pits of Despair is a classic-style tile-based dungeon crawler roguelike built wi
 
 The only way to survive is to descend into the deepest depths of the Pits and take the Crown of Command from its current owner, whoever that may be. Battle creatures, discover treasures, and grow powerful enough to claim your destiny - or perish like countless others before you.
 
+## Getting Started
+
+1. Clone this repository
+2. Open the project in Godot 4.5.1 or later
+3. Ensure .NET support is enabled in your Godot installation
+4. Run the project from the Godot editor
+
 ## Gameplay & Mechanics
 
 - **Turn-Based Combat**: Opposed roll system, melee and ranged combat, armor reduces damage while evasion avoids hits
@@ -49,10 +56,3 @@ The only way to survive is to descend into the deepest depths of the Pits and ta
 **System Architecture**: Independent systems operate on entities through their components. Systems read component data, emit events, and update state without direct coupling to other systems.
 
 See [CLAUDE.md](CLAUDE.md) for detailed development guidelines and architectural principles.
-
-## Getting Started
-
-1. Clone this repository
-2. Open the project in Godot 4.5.1 or later
-3. Ensure .NET support is enabled in your Godot installation
-4. Run the project from the Godot editor

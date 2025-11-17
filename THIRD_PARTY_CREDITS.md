@@ -12,8 +12,11 @@ This project uses the following third-party libraries and assets:
 ## Fira Mono Font
 
 **License:** SIL Open Font License 1.1
+
 **Copyright:** Copyright (c) 2012-2013, The Mozilla Corporation and Telefonica S.A.
+
 **Designed by:** Carrois Apostrophe
+
 **Project:** https://github.com/mozilla/Fira
 
 Fira Mono is a monospaced font used for rendering game text and UI.
@@ -106,7 +109,9 @@ FROM OTHER DEALINGS IN THE FONT SOFTWARE.
 ## YamlDotNet
 
 **License:** MIT License
+
 **Copyright:** Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014 Antoine Aubry and contributors
+
 **Project:** https://github.com/aaubry/YamlDotNet
 
 YamlDotNet is a YAML library for .NET used for parsing and serializing YAML data files.
