@@ -1,8 +1,0 @@
-name: Leather Armor
-type: armor
-glyph: "["
-color: "#8B4513"
-isEquippable: true
-equipSlot: Armor
-armorValue: 1
-evasionPenalty: 0

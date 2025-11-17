@@ -8,11 +8,67 @@ using YamlDotNet.Serialization;
 namespace PitsOfDespair.Data;
 
 /// <summary>
+/// Type information for item categories.
+/// Defines default properties and display name prefixes.
+/// </summary>
+public class ItemTypeInfo
+{
+    public string Prefix { get; set; } = string.Empty;
+    public string DefaultGlyph { get; set; } = "?";
+    public string DefaultColor { get; set; } = "#FFFFFF";
+    public bool IsEquippable { get; set; } = false;
+    public bool IsConsumable { get; set; } = false;
+    public string? EquipSlot { get; set; } = null;
+}
+
+/// <summary>
 /// Serializable item data structure.
 /// Loaded from Data/Items/*.yaml files.
 /// </summary>
 public class ItemData
 {
+    /// <summary>
+    /// Type metadata for item categories.
+    /// Maps type string (e.g., "potion") to default properties.
+    /// </summary>
+    private static readonly Dictionary<string, ItemTypeInfo> TypeInfo = new()
+    {
+        ["potion"] = new ItemTypeInfo
+        {
+            Prefix = "potion of ",
+            DefaultGlyph = "!",
+            DefaultColor = "#FF00FF",
+            IsEquippable = false,
+            IsConsumable = true
+        },
+        ["scroll"] = new ItemTypeInfo
+        {
+            Prefix = "scroll of ",
+            DefaultGlyph = "♪",
+            DefaultColor = "#FFFFAA",
+            IsEquippable = false,
+            IsConsumable = true
+        },
+        ["weapon"] = new ItemTypeInfo
+        {
+            Prefix = "",
+            DefaultGlyph = "/",
+            DefaultColor = "#C0C0C0",
+            IsEquippable = true,
+            IsConsumable = false,
+            EquipSlot = "MeleeWeapon"
+        },
+        ["armor"] = new ItemTypeInfo
+        {
+            Prefix = "",
+            DefaultGlyph = "[",
+            DefaultColor = "#808080",
+            IsEquippable = true,
+            IsConsumable = false,
+            EquipSlot = "Armor"
+        }
+    };
+
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
@@ -118,6 +174,7 @@ public class ItemData
 
     /// <summary>
     /// Applies type-based defaults for properties not explicitly set in YAML.
+    /// Generates display name with prefix (e.g., "potion of cure light wounds").
     /// Should be called after deserialization.
     /// </summary>
     public void ApplyDefaults()
@@ -127,35 +184,33 @@ public class ItemData
             return; // No type means no inherited defaults
         }
 
-        switch (Type.ToLower())
+        var typeKey = Type.ToLower();
+        if (TypeInfo.TryGetValue(typeKey, out var info))
         {
-            case "potion":
-                Glyph ??= "!";
-                IsConsumable ??= true;
-                break;
+            // Apply prefix to name if one exists and hasn't been applied yet
+            if (!string.IsNullOrEmpty(info.Prefix) && !Name.StartsWith(info.Prefix))
+            {
+                Name = info.Prefix + Name;
+            }
 
-            case "scroll":
-                Glyph ??= "♪";
-                IsConsumable ??= true;
-                break;
+            // Apply defaults for properties not explicitly set
+            Glyph ??= info.DefaultGlyph;
 
-            case "weapon":
-                Glyph ??= "/";
-                IsEquippable ??= true;
-                IsConsumable ??= false;
+            // Only set color if it's still the default white
+            if (Color == "#FFFFFF")
+            {
+                Color = info.DefaultColor;
+            }
 
-                // Set attack name to weapon name
-                if (Attack != null)
-                {
-                    Attack.Name = Name;
-                }
-                break;
+            IsConsumable ??= info.IsConsumable;
+            IsEquippable ??= info.IsEquippable;
+            EquipSlot ??= info.EquipSlot;
+        }
 
-            case "armor":
-                Glyph ??= "[";
-                IsEquippable ??= true;
-                IsConsumable ??= false;
-                break;
+        // Set weapon attack name to the full display name (including prefix)
+        if (typeKey == "weapon" && Attack != null)
+        {
+            Attack.Name = Name;
         }
     }
 

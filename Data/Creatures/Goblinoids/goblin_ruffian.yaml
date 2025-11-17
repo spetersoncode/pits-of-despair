@@ -1,11 +1,11 @@
-name: Goblin
-glyph: g
-color: "#808080"
-strength: 0
+name: goblin ruffian
+type: goblinoid
+color: "#8B4513"
+strength: 1
 agility: 0
-endurance: 0
+endurance: 1
 will: 0
-maxHP: 8
+maxHP: 11
 visionRange: 10
 hasMovement: true
 hasAI: true
@@ -14,5 +14,5 @@ goals:
   - SearchLastKnown
   - ReturnToSpawn
 equipment:
-  - weaponsmelee_club
+  - weapon_knobbed_club
   - armor_leather_armor

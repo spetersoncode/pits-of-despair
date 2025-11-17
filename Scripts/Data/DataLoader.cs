@@ -101,17 +101,103 @@ public partial class DataLoader : Node
     private void LoadAllCreatures()
     {
         _creatures.Clear();
-        LoadYamlFilesRecursive(CreaturesPath, "", _creatures, "creature");
+        LoadYamlFilesRecursive(CreaturesPath, "", _creatures, "creature", (creature, id) =>
+        {
+            creature.ApplyDefaults(); // Apply type-based defaults
+        });
     }
 
     private void LoadAllItems()
     {
         _items.Clear();
-        LoadYamlFilesRecursive(ItemsPath, "", _items, "item", (item, id) =>
+        LoadItemsRecursive(ItemsPath, "");
+    }
+
+    /// <summary>
+    /// Specialized loader for items that uses type-based IDs.
+    /// ID format: {type}_{filename} (e.g., "weapon_club", "potion_cure_light_wounds")
+    /// </summary>
+    private void LoadItemsRecursive(string basePath, string currentRelativePath)
+    {
+        string fullPath = string.IsNullOrEmpty(currentRelativePath)
+            ? basePath
+            : basePath + currentRelativePath + "/";
+
+        if (!DirAccess.DirExistsAbsolute(fullPath))
         {
-            item.DataFileId = id; // Set unique ID for inventory stacking
-            item.ApplyDefaults(); // Apply type-based defaults
-        });
+            return;
+        }
+
+        var dir = DirAccess.Open(fullPath);
+        if (dir == null)
+        {
+            return;
+        }
+
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+
+        while (fileName != string.Empty)
+        {
+            // Skip hidden files/folders
+            if (fileName.StartsWith("."))
+            {
+                fileName = dir.GetNext();
+                continue;
+            }
+
+            if (dir.CurrentIsDir())
+            {
+                // Recursively scan subdirectory
+                string newRelativePath = string.IsNullOrEmpty(currentRelativePath)
+                    ? fileName
+                    : currentRelativePath + "/" + fileName;
+
+                LoadItemsRecursive(basePath, newRelativePath);
+            }
+            else if (fileName.EndsWith(".yaml"))
+            {
+                string filePath = fullPath + fileName;
+                string fileNameWithoutExt = fileName.Replace(".yaml", "");
+
+                // Load the YAML to get the type field
+                var item = LoadYamlFile<ItemData>(filePath);
+                if (item != null)
+                {
+                    // Generate ID as {type}_{filename}
+                    string id;
+                    if (!string.IsNullOrEmpty(item.Type))
+                    {
+                        id = $"{item.Type.ToLower()}_{fileNameWithoutExt}";
+                    }
+                    else
+                    {
+                        // Fallback: use filename only if no type specified
+                        id = fileNameWithoutExt;
+                        GD.PushWarning($"DataLoader: Item '{fileNameWithoutExt}' has no type, using filename as ID");
+                    }
+
+                    if (_items.ContainsKey(id))
+                    {
+                        string relativePath = string.IsNullOrEmpty(currentRelativePath)
+                            ? fileName
+                            : currentRelativePath + "/" + fileName;
+                        GD.PushWarning($"DataLoader: Duplicate item ID '{id}' from {relativePath}, skipping");
+                    }
+                    else
+                    {
+                        item.DataFileId = id; // Set unique ID for inventory stacking
+                        item.ApplyDefaults(); // Apply type-based defaults
+                        _items[id] = item;
+                        GD.Print($"DataLoader: Loaded item '{id}' from {fileName}");
+                    }
+                }
+            }
+
+            fileName = dir.GetNext();
+        }
+
+        dir.ListDirEnd();
     }
 
     private void LoadAllSpawnTables()
@@ -216,20 +302,21 @@ public partial class DataLoader : Node
     }
 
     /// <summary>
-    /// Converts a file path to a valid ID.
-    /// Examples: "Goblins/warrior.yaml" -> "goblins_warrior"
-    ///           "Items/Potions/health.yaml" -> "items_potions_health"
+    /// Converts a file path to a valid ID by extracting just the filename.
+    /// Examples: "Goblins/warrior.yaml" -> "warrior"
+    ///           "Vermin/rat.yaml" -> "rat"
     /// </summary>
     private string ConvertPathToId(string path)
     {
         // Remove .yaml extension
         string withoutExtension = path.Replace(".yaml", "");
 
-        // Replace path separators with underscores
-        string normalized = withoutExtension.Replace("/", "_").Replace("\\", "_");
+        // Extract just the filename (last part after /)
+        string[] parts = withoutExtension.Split('/');
+        string filename = parts[parts.Length - 1];
 
         // Convert to lowercase
-        return normalized.ToLower();
+        return filename.ToLower();
     }
 
     private T LoadYamlFile<T>(string path) where T : class

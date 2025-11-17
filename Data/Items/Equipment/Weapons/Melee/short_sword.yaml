@@ -1,9 +1,6 @@
-name: Short Sword
+name: short sword
 type: weapon
-glyph: /
 color: "#CCCCCC"
-isEquippable: true
-equipSlot: MeleeWeapon
 attack:
   type: Melee
   minDamage: 1

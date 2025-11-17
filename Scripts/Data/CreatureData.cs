@@ -4,12 +4,46 @@ using System.Collections.Generic;
 namespace PitsOfDespair.Data;
 
 /// <summary>
+/// Type information for creature categories.
+/// Defines default glyph and color for creature types.
+/// </summary>
+public class CreatureTypeInfo
+{
+    public string DefaultGlyph { get; set; } = "?";
+    public string DefaultColor { get; set; } = "#FFFFFF";
+}
+
+/// <summary>
 /// Serializable creature data structure.
 /// Loaded from Data/Creatures/*.yaml files.
 /// </summary>
 public class CreatureData
 {
+    /// <summary>
+    /// Type metadata for creature categories.
+    /// Maps type string (e.g., "goblinoid") to default properties.
+    /// </summary>
+    private static readonly Dictionary<string, CreatureTypeInfo> TypeInfo = new()
+    {
+        ["goblinoid"] = new CreatureTypeInfo
+        {
+            DefaultGlyph = "g",
+            DefaultColor = "#808080"
+        },
+        ["vermin"] = new CreatureTypeInfo
+        {
+            DefaultGlyph = "r",
+            DefaultColor = "#808080"
+        }
+    };
+
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Creature type for category-based defaults (e.g., "goblinoid", "vermin").
+    /// Optional - blank type means no inherited defaults.
+    /// </summary>
+    public string Type { get; set; } = string.Empty;
 
     public string Glyph { get; set; } = "?";
 
@@ -62,5 +96,32 @@ public class CreatureData
     public Color GetColor()
     {
         return new Color(Color);
+    }
+
+    /// <summary>
+    /// Applies type-based defaults for properties not explicitly set in YAML.
+    /// Should be called after deserialization.
+    /// </summary>
+    public void ApplyDefaults()
+    {
+        if (string.IsNullOrEmpty(Type))
+        {
+            return; // No type means no inherited defaults
+        }
+
+        var typeKey = Type.ToLower();
+        if (TypeInfo.TryGetValue(typeKey, out var info))
+        {
+            // Apply defaults only if not explicitly set
+            if (Glyph == "?")
+            {
+                Glyph = info.DefaultGlyph;
+            }
+
+            if (Color == "#FFFFFF")
+            {
+                Color = info.DefaultColor;
+            }
+        }
     }
 }

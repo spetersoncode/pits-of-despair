@@ -1,11 +1,10 @@
-name: Elder Rat
-glyph: r
-color: "#A0522D"
-strength: -1
+name: rat
+type: vermin
+strength: -2
 agility: 0
-endurance: 0
+endurance: -2
 will: 0
-maxHP: 7
+maxHP: 5
 visionRange: 10
 hasMovement: true
 hasAI: true
@@ -13,8 +12,8 @@ goals:
   - MeleeAttack
   - Wander
 attacks:
-  - name: Bite
+  - name: bite
     type: Melee
-    minDamage: 2
-    maxDamage: 4
+    minDamage: 1
+    maxDamage: 3
     range: 1

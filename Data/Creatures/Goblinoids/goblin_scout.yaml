@@ -1,5 +1,5 @@
-name: Goblin Scout
-glyph: g
+name: goblin scout
+type: goblinoid
 color: "#ff69b4"
 strength: -1
 agility: 1
@@ -12,7 +12,7 @@ hasAI: true
 goals:
   - FleeForHelp
 attacks:
-  - name: Desperate Bite
+  - name: desperate bite
     type: Melee
     minDamage: 1
     maxDamage: 2

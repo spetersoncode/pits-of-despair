@@ -1,4 +1,4 @@
-name: Rat Swarm
+name: rat swarm
 leader:
   creatureId: elder_rat
   placement: center

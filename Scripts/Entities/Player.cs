@@ -112,7 +112,7 @@ public partial class Player : BaseEntity
         var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
 
         // Add short sword to inventory
-        var shortSwordData = dataLoader.GetItem("weaponsmelee_short_sword");
+        var shortSwordData = dataLoader.GetItem("weapon_short_sword");
         if (shortSwordData != null)
         {
             var shortSwordInstance = new ItemInstance(shortSwordData);

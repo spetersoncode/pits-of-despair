@@ -1,0 +1,5 @@
+name: plate armor
+type: armor
+color: "#A8A8A8"
+armorValue: 5
+evasionPenalty: -4

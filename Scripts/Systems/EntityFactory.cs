@@ -346,7 +346,7 @@ public partial class EntityFactory : Node
     {
         return new AttackData
         {
-            Name = "Punch",
+            Name = "punch",
             Type = AttackType.Melee,
             MinDamage = 1,
             MaxDamage = 2,

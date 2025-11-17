@@ -1,9 +1,6 @@
-name: Knobbed Club
+name: knobbed club
 type: weapon
-glyph: )
 color: "#654321"
-isEquippable: true
-equipSlot: MeleeWeapon
 attack:
   type: Melee
   minDamage: 3

@@ -1,9 +1,6 @@
-name: Club
+name: club
 type: weapon
-glyph: )
 color: "#8B4513"
-isEquippable: true
-equipSlot: MeleeWeapon
 attack:
   type: Melee
   minDamage: 2
