@@ -1,6 +1,6 @@
 name: blink
 type: scroll
-color: "#00DDFF"
+color: Teal
 effects:
   - type: blink
     range: 5

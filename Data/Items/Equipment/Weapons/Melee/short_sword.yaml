@@ -1,6 +1,6 @@
 name: short sword
 type: weapon
-color: "#CCCCCC"
+color: Steel
 attack:
   type: Melee
   dice: "1d6"

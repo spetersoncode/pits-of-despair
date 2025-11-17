@@ -1,6 +1,6 @@
 name: knobbed club
 type: weapon
-color: "#654321"
+color: Bark
 attack:
   type: Melee
   dice: "1d3+2"

@@ -1,6 +1,6 @@
 name: club
 type: weapon
-color: "#8B4513"
+color: Bark
 attack:
   type: Melee
   dice: "1d3+1"
