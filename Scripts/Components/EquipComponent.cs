@@ -29,6 +29,13 @@ public partial class EquipComponent : Node
     [Signal]
     public delegate void EquipmentChangedEventHandler(EquipmentSlot slot);
 
+    private StatsComponent? _stats;
+
+    public override void _Ready()
+    {
+        _stats = GetParent().GetNodeOrNull<StatsComponent>("StatsComponent");
+    }
+
     /// <summary>
     /// Equips an item from inventory into the specified slot.
     /// If the slot is already occupied, the old item is automatically unequipped.
@@ -54,6 +61,9 @@ public partial class EquipComponent : Node
         // Mark item as equipped in this slot
         _equippedSlots[slot] = inventoryKey;
 
+        // Apply item bonuses (armor, stats, etc.)
+        ApplyItemBonuses(inventoryKey, slot);
+
         // Update attacks if this is a weapon
         UpdateAttacks();
 
@@ -73,6 +83,9 @@ public partial class EquipComponent : Node
         {
             return false; // Slot already empty
         }
+
+        // Remove item bonuses before unequipping
+        RemoveItemBonuses(slot);
 
         _equippedSlots.Remove(slot);
 
@@ -211,6 +224,106 @@ public partial class EquipComponent : Node
             {
                 return slot.Item.Template.Attack;
             }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Applies item bonuses to StatsComponent when equipping.
+    /// Includes armor value, evasion penalty, and stat bonuses.
+    /// </summary>
+    private void ApplyItemBonuses(char inventoryKey, EquipmentSlot slot)
+    {
+        if (_stats == null)
+        {
+            return; // Entity doesn't have stats
+        }
+
+        var itemData = GetItemData(inventoryKey);
+        if (itemData == null)
+        {
+            return;
+        }
+
+        // Generate source name for tracking (e.g., "equipped_armor", "equipped_ring1")
+        string source = $"equipped_{slot.ToString().ToLower()}";
+
+        // Apply armor value if any
+        if (itemData.ArmorValue != 0)
+        {
+            _stats.AddArmorSource(source, itemData.ArmorValue);
+        }
+
+        // Apply evasion penalty if any
+        if (itemData.EvasionPenalty != 0)
+        {
+            _stats.AddEvasionPenaltySource(source, itemData.EvasionPenalty);
+        }
+
+        // Apply stat bonuses if any
+        if (itemData.StrengthBonus != 0)
+        {
+            _stats.AddStrengthModifier(source, itemData.StrengthBonus);
+        }
+
+        if (itemData.AgilityBonus != 0)
+        {
+            _stats.AddAgilityModifier(source, itemData.AgilityBonus);
+        }
+
+        if (itemData.EnduranceBonus != 0)
+        {
+            _stats.AddEnduranceModifier(source, itemData.EnduranceBonus);
+        }
+
+        if (itemData.WillBonus != 0)
+        {
+            _stats.AddWillModifier(source, itemData.WillBonus);
+        }
+    }
+
+    /// <summary>
+    /// Removes item bonuses from StatsComponent when unequipping.
+    /// </summary>
+    private void RemoveItemBonuses(EquipmentSlot slot)
+    {
+        if (_stats == null)
+        {
+            return; // Entity doesn't have stats
+        }
+
+        // Generate source name (must match what was used in ApplyItemBonuses)
+        string source = $"equipped_{slot.ToString().ToLower()}";
+
+        // Remove all possible modifier sources
+        // (It's safe to call remove even if the source doesn't exist)
+        _stats.RemoveArmorSource(source);
+        _stats.RemoveEvasionPenaltySource(source);
+        _stats.RemoveStrengthModifier(source);
+        _stats.RemoveAgilityModifier(source);
+        _stats.RemoveEnduranceModifier(source);
+        _stats.RemoveWillModifier(source);
+    }
+
+    /// <summary>
+    /// Gets the ItemData for an equipped item by inventory key.
+    /// First checks creature equipment, then falls back to Player inventory.
+    /// </summary>
+    private ItemData? GetItemData(char inventoryKey)
+    {
+        // Check creature equipment storage first
+        if (_creatureEquipment.TryGetValue(inventoryKey, out var creatureItem))
+        {
+            return creatureItem?.Template;
+        }
+
+        // Fall back to Player inventory
+        var parent = GetParent();
+        if (parent is Player player)
+        {
+            var slot = player.GetInventorySlot(inventoryKey);
+            return slot?.Item?.Template;
         }
 
         return null;

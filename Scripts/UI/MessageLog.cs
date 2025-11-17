@@ -28,7 +28,11 @@ public partial class MessageLog : PanelContainer
 	/// </summary>
 	public void ConnectToCombatSystem(Systems.CombatSystem combatSystem)
 	{
-		combatSystem.AttackExecuted += OnAttackExecuted;
+		// Connect to detailed combat signals
+		combatSystem.AttackHit += OnAttackHit;
+		combatSystem.AttackBlocked += OnAttackBlocked;
+		combatSystem.AttackMissed += OnAttackMissed;
+
 		combatSystem.ActionMessage += OnActionMessage;
 	}
 
@@ -58,14 +62,77 @@ public partial class MessageLog : PanelContainer
 		UpdateDisplay();
 	}
 
-	private void OnAttackExecuted(Entities.BaseEntity attacker, Entities.BaseEntity target, int damage, string attackName)
+	/// <summary>
+	/// Handles successful attacks that deal damage.
+	/// Displays single-line format with damage.
+	/// </summary>
+	private void OnAttackHit(Entities.BaseEntity attacker, Entities.BaseEntity target, int damage, string attackName)
 	{
-		// Determine if this is damage taken by the player
-		bool isPlayerDamaged = target.DisplayName == "Player";
-		string color = isPlayerDamaged ? ColorDamageTaken : ColorDefault;
+		// Determine if this is the player taking or dealing damage
+		bool isPlayerAttacker = attacker.DisplayName == "Player";
+		bool isPlayerTarget = target.DisplayName == "Player";
+		string color = isPlayerTarget ? ColorDamageTaken : ColorDefault;
 
-		string message = $"{attacker.DisplayName} hits {target.DisplayName} with {attackName} for {damage} damage!";
-		AddMessage(message, color);
+		if (isPlayerAttacker)
+		{
+			AddMessage($"You hit the {target.DisplayName} for {damage} damage.", color);
+		}
+		else if (isPlayerTarget)
+		{
+			AddMessage($"The {attacker.DisplayName} hits you for {damage} damage.", color);
+		}
+		else
+		{
+			// NPC vs NPC combat
+			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} for {damage} damage.", color);
+		}
+	}
+
+	/// <summary>
+	/// Handles attacks that hit but deal no damage due to armor.
+	/// Displays single-line format indicating armor absorption.
+	/// </summary>
+	private void OnAttackBlocked(Entities.BaseEntity attacker, Entities.BaseEntity target, string attackName)
+	{
+		bool isPlayerAttacker = attacker.DisplayName == "Player";
+		bool isPlayerTarget = target.DisplayName == "Player";
+		string color = isPlayerTarget ? ColorDamageTaken : ColorDefault;
+
+		if (isPlayerAttacker)
+		{
+			AddMessage($"You hit the {target.DisplayName} but your attack glances off their armor!", color);
+		}
+		else if (isPlayerTarget)
+		{
+			AddMessage($"The {attacker.DisplayName} hits you but the attack bounces off your armor!", color);
+		}
+		else
+		{
+			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} but the attack glances off armor!", color);
+		}
+	}
+
+	/// <summary>
+	/// Handles missed attacks.
+	/// Displays single-line format based on perspective.
+	/// </summary>
+	private void OnAttackMissed(Entities.BaseEntity attacker, Entities.BaseEntity target, string attackName)
+	{
+		bool isPlayerAttacker = attacker.DisplayName == "Player";
+		bool isPlayerTarget = target.DisplayName == "Player";
+
+		if (isPlayerAttacker)
+		{
+			AddMessage($"You miss the {target.DisplayName}.", ColorDefault);
+		}
+		else if (isPlayerTarget)
+		{
+			AddMessage($"The {attacker.DisplayName} misses you.", ColorDefault);
+		}
+		else
+		{
+			AddMessage($"The {attacker.DisplayName} misses the {target.DisplayName}.", ColorDefault);
+		}
 	}
 
 	private void OnActionMessage(Entities.BaseEntity actor, string message, string color)

@@ -5,6 +5,7 @@ color: "#CCCCCC"
 isEquippable: true
 equipSlot: MeleeWeapon
 attack:
+  type: Melee
   minDamage: 1
   maxDamage: 6
   range: 1

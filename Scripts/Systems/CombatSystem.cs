@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
@@ -13,7 +14,26 @@ namespace PitsOfDespair.Systems;
 public partial class CombatSystem : Node
 {
     /// <summary>
+    /// Emitted when an attack hits and deals damage (attacker, target, damage, attackName)
+    /// </summary>
+    [Signal]
+    public delegate void AttackHitEventHandler(BaseEntity attacker, BaseEntity target, int damage, string attackName);
+
+    /// <summary>
+    /// Emitted when an attack hits but deals no damage due to armor (attacker, target, attackName)
+    /// </summary>
+    [Signal]
+    public delegate void AttackBlockedEventHandler(BaseEntity attacker, BaseEntity target, string attackName);
+
+    /// <summary>
+    /// Emitted when an attack misses (attacker, target, attackName)
+    /// </summary>
+    [Signal]
+    public delegate void AttackMissedEventHandler(BaseEntity attacker, BaseEntity target, string attackName);
+
+    /// <summary>
     /// Emitted when an attack occurs (attacker, target, damage, attackName)
+    /// DEPRECATED: Use AttackHit, AttackBlocked, or AttackMissed instead
     /// </summary>
     [Signal]
     public delegate void AttackExecutedEventHandler(BaseEntity attacker, BaseEntity target, int damage, string attackName);
@@ -37,7 +57,7 @@ public partial class CombatSystem : Node
 
     /// <summary>
     /// Handle attack requests from AttackComponents.
-    /// Validates the attack and applies damage to target's HealthComponent.
+    /// Validates the attack and applies damage to target's HealthComponent using opposed 2d6 rolls.
     /// </summary>
     /// <param name="component">The AttackComponent that requested the attack.</param>
     /// <param name="target">The target entity.</param>
@@ -81,14 +101,63 @@ public partial class CombatSystem : Node
             return;
         }
 
-        // Roll damage
-        int damage = GD.RandRange(attackData.MinDamage, attackData.MaxDamage);
+        // Get stats components
+        var attackerStats = attacker.GetNodeOrNull<StatsComponent>("StatsComponent");
+        var targetStats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
 
-        // Apply damage
-        targetHealth.TakeDamage(damage);
+        if (attackerStats == null)
+        {
+            GD.PushWarning($"CombatSystem: Attacker {attacker.DisplayName} has no StatsComponent");
+            return;
+        }
 
-        // Emit combat feedback
-        EmitSignal(SignalName.AttackExecuted, attacker, target, damage, attackData.Name);
+        if (targetStats == null)
+        {
+            GD.PushWarning($"CombatSystem: Target {target.DisplayName} has no StatsComponent");
+            return;
+        }
+
+        // Determine if this is a melee or ranged attack
+        bool isMelee = attackData.Type == AttackType.Melee;
+
+        // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
+        int attackModifier = attackerStats.GetAttackModifier(isMelee);
+        int defenseModifier = targetStats.GetDefenseModifier();
+
+        int attackRoll = DiceRoller.Roll2d6(attackModifier);
+        int defenseRoll = DiceRoller.Roll2d6(defenseModifier);
+
+        // Check if attack hits (attacker roll >= defender roll, ties go to attacker)
+        bool hit = attackRoll >= defenseRoll;
+
+        if (!hit)
+        {
+            // Attack missed
+            EmitSignal(SignalName.AttackMissed, attacker, target, attackData.Name);
+            EmitSignal(SignalName.AttackExecuted, attacker, target, 0, attackData.Name); // Legacy support
+            return;
+        }
+
+        // PHASE 2: Damage Calculation (weapon damage + STR [if melee] - armor)
+        int baseDamage = DiceRoller.RollDamage(attackData.MinDamage, attackData.MaxDamage);
+        int damageBonus = attackerStats.GetDamageBonus(isMelee);
+        int armor = targetStats.TotalArmor;
+
+        int finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
+
+        // PHASE 3: Apply Damage and Emit Feedback
+        if (finalDamage > 0)
+        {
+            targetHealth.TakeDamage(finalDamage);
+            EmitSignal(SignalName.AttackHit, attacker, target, finalDamage, attackData.Name);
+            EmitSignal(SignalName.AttackExecuted, attacker, target, finalDamage, attackData.Name); // Legacy support
+        }
+        else
+        {
+            // Hit but armor absorbed all damage
+            EmitSignal(SignalName.AttackBlocked, attacker, target, attackData.Name);
+            EmitSignal(SignalName.AttackExecuted, attacker, target, 0, attackData.Name); // Legacy support
+        }
     }
 
     /// <summary>

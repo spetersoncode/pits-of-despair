@@ -1,6 +1,10 @@
 name: Goblin
 glyph: g
 color: "#808080"
+strength: 0
+agility: 0
+endurance: 0
+will: 0
 maxHP: 8
 visionRange: 10
 hasMovement: true
@@ -11,3 +15,4 @@ goals:
   - ReturnToSpawn
 equipment:
   - weaponsmelee_club
+  - armor_leather_armor

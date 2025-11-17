@@ -74,17 +74,10 @@ public class AttackAction : Action
         }
 
         var attackComponent = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
-        var targetHealth = _target.GetNodeOrNull<HealthComponent>("HealthComponent");
-        var attackData = attackComponent!.GetAttack(_attackIndex);
 
-        // Roll damage
-        int damage = GD.RandRange(attackData!.MinDamage, attackData.MaxDamage);
-
-        // Apply damage
-        targetHealth!.TakeDamage(damage);
-
-        // Emit combat feedback through CombatSystem
-        context.CombatSystem.EmitAttackFeedback(actor, _target, damage, attackData.Name);
+        // Use the proper combat system with opposed rolls
+        // This will emit signals that CombatSystem.OnAttackRequested handles
+        attackComponent!.RequestAttack(_target, _attackIndex);
 
         return ActionResult.CreateSuccess();
     }

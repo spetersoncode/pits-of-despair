@@ -85,6 +85,37 @@ public class ItemData
     /// </summary>
     public AttackData? Attack { get; set; } = null;
 
+    // Equipment Stat Bonuses
+    /// <summary>
+    /// Armor value provided by this item (reduces incoming damage).
+    /// </summary>
+    public int ArmorValue { get; set; } = 0;
+
+    /// <summary>
+    /// Evasion penalty from this item (typically negative for heavy armor).
+    /// </summary>
+    public int EvasionPenalty { get; set; } = 0;
+
+    /// <summary>
+    /// Strength bonus from this item (e.g., Ring of Strength).
+    /// </summary>
+    public int StrengthBonus { get; set; } = 0;
+
+    /// <summary>
+    /// Agility bonus from this item (e.g., Ring of Agility).
+    /// </summary>
+    public int AgilityBonus { get; set; } = 0;
+
+    /// <summary>
+    /// Endurance bonus from this item (e.g., Amulet of Health).
+    /// </summary>
+    public int EnduranceBonus { get; set; } = 0;
+
+    /// <summary>
+    /// Will bonus from this item (e.g., Ring of Will).
+    /// </summary>
+    public int WillBonus { get; set; } = 0;
+
     /// <summary>
     /// Applies type-based defaults for properties not explicitly set in YAML.
     /// Should be called after deserialization.
@@ -118,6 +149,12 @@ public class ItemData
                 {
                     Attack.Name = Name;
                 }
+                break;
+
+            case "armor":
+                Glyph ??= "[";
+                IsEquippable ??= true;
+                IsConsumable ??= false;
                 break;
         }
     }

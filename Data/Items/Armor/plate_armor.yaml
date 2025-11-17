@@ -1,0 +1,8 @@
+name: Plate Armor
+type: armor
+glyph: "["
+color: "#A8A8A8"
+isEquippable: true
+equipSlot: Armor
+armorValue: 5
+evasionPenalty: -4

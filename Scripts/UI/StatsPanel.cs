@@ -22,6 +22,7 @@ public partial class StatsPanel : PanelContainer
 	private Label _floorLabel;
 	private Label _standingOnLabel;
 	private RichTextLabel _equipmentLabel;
+	private RichTextLabel _statsLabel;
 
 	private int _currentFloorDepth = 1;
 	private Entities.Player _player;
@@ -33,10 +34,12 @@ public partial class StatsPanel : PanelContainer
 		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
 		_standingOnLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StandingOnLabel");
 		_equipmentLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/EquipmentLabel");
+		_statsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/StatsLabel");
 
 		UpdateFloorDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
+		UpdateStatsDisplay();
 	}
 
 	/// <summary>
@@ -48,6 +51,13 @@ public partial class StatsPanel : PanelContainer
 
 		var healthComponent = player.GetNode<Components.HealthComponent>("HealthComponent");
 		healthComponent.HealthChanged += OnHealthChanged;
+
+		// Subscribe to stats changes
+		var statsComponent = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+		if (statsComponent != null)
+		{
+			statsComponent.StatsChanged += OnStatsChanged;
+		}
 
 		// Subscribe to player position changes
 		player.PositionChanged += OnPlayerPositionChanged;
@@ -66,6 +76,7 @@ public partial class StatsPanel : PanelContainer
 		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
+		UpdateStatsDisplay();
 	}
 
 	/// <summary>
@@ -135,6 +146,12 @@ public partial class StatsPanel : PanelContainer
 	private void OnEquipmentChanged(EquipmentSlot slot)
 	{
 		UpdateEquipmentDisplay();
+		UpdateStatsDisplay(); // Stats may change when equipment changes
+	}
+
+	private void OnStatsChanged()
+	{
+		UpdateStatsDisplay();
 	}
 
 	private void UpdateEquipmentDisplay()
@@ -271,5 +288,41 @@ public partial class StatsPanel : PanelContainer
 			// Nothing walkable at this position
 			_standingOnLabel.Text = "";
 		}
+	}
+
+	private void UpdateStatsDisplay()
+	{
+		if (_statsLabel == null || _player == null)
+			return;
+
+		var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+		if (statsComponent == null)
+		{
+			_statsLabel.Text = "[b]Stats:[/b]\n(No stats system)";
+			return;
+		}
+
+		var sb = new StringBuilder();
+		sb.AppendLine("[b]Stats:[/b]");
+
+		// Base stats
+		sb.AppendLine($"STR: {statsComponent.TotalStrength:+0;-#} | AGI: {statsComponent.TotalAgility:+0;-#}");
+		sb.AppendLine($"END: {statsComponent.TotalEndurance:+0;-#} | WIL: {statsComponent.TotalWill:+0;-#}");
+
+		sb.AppendLine(); // Blank line for spacing
+		sb.AppendLine("[b]Combat:[/b]");
+
+		// Derived combat values
+		int meleeAttack = statsComponent.TotalStrength;
+		int rangedAttack = statsComponent.TotalAgility;
+		int evasion = statsComponent.TotalAgility + statsComponent.TotalEvasionPenalty;
+		int armor = statsComponent.TotalArmor;
+
+		sb.AppendLine($"Melee Atk: {meleeAttack:+0;-#}");
+		sb.AppendLine($"Ranged Atk: {rangedAttack:+0;-#}");
+		sb.AppendLine($"Evasion: {evasion:+0;-#}");
+		sb.AppendLine($"Armor: {armor}");
+
+		_statsLabel.Text = sb.ToString();
 	}
 }

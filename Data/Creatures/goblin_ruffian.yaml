@@ -1,6 +1,10 @@
 name: Goblin Ruffian
 glyph: g
 color: "#8B4513"
+strength: 1
+agility: 0
+endurance: 1
+will: 0
 maxHP: 11
 visionRange: 10
 hasMovement: true
@@ -11,3 +15,4 @@ goals:
   - ReturnToSpawn
 equipment:
   - weaponsmelee_knobbed_club
+  - armor_leather_armor

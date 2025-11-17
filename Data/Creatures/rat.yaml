@@ -1,6 +1,10 @@
 name: Rat
 glyph: r
 color: "#808080"
+strength: -2
+agility: 0
+endurance: -2
+will: 0
 maxHP: 5
 visionRange: 10
 hasMovement: true
@@ -10,6 +14,7 @@ goals:
   - Wander
 attacks:
   - name: Bite
+    type: Melee
     minDamage: 1
     maxDamage: 3
     range: 1

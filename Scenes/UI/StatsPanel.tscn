@@ -41,3 +41,19 @@ Armor: (none)
 Rings: (none)"
 fit_content = true
 scroll_active = false
+
+[node name="StatsLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+bbcode_enabled = true
+text = "[b]Stats:[/b]
+STR: +0 | AGI: +0
+END: +0 | WIL: +0
+
+[b]Combat:[/b]
+Melee Atk: +0
+Ranged Atk: +0
+Evasion: +0
+Armor: 0"
+fit_content = true
+scroll_active = false

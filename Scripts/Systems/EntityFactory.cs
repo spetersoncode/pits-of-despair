@@ -125,7 +125,7 @@ public partial class EntityFactory : Node
             var healthComponent = new HealthComponent
             {
                 Name = "HealthComponent",
-                MaxHP = data.MaxHP
+                BaseMaxHP = data.MaxHP
             };
             entity.AddChild(healthComponent);
         }
@@ -189,6 +189,17 @@ public partial class EntityFactory : Node
             Name = data.Name // Set node name for debugging
         };
 
+        // Add StatsComponent (required for combat system)
+        var statsComponent = new StatsComponent
+        {
+            Name = "StatsComponent",
+            BaseStrength = data.Strength,
+            BaseAgility = data.Agility,
+            BaseEndurance = data.Endurance,
+            BaseWill = data.Will
+        };
+        entity.AddChild(statsComponent);
+
         // Add MovementComponent if entity can move
         if (data.HasMovement)
         {
@@ -216,7 +227,7 @@ public partial class EntityFactory : Node
             var healthComponent = new HealthComponent
             {
                 Name = "HealthComponent",
-                MaxHP = data.MaxHP
+                BaseMaxHP = data.MaxHP // Will be modified by Endurance in _Ready
             };
             entity.AddChild(healthComponent);
         }
@@ -234,6 +245,7 @@ public partial class EntityFactory : Node
                     var attack = new AttackData
                     {
                         Name = attackData.Name,
+                        Type = attackData.Type,
                         MinDamage = attackData.MinDamage,
                         MaxDamage = attackData.MaxDamage,
                         Range = attackData.Range
@@ -335,6 +347,7 @@ public partial class EntityFactory : Node
         return new AttackData
         {
             Name = "Punch",
+            Type = AttackType.Melee,
             MinDamage = 1,
             MaxDamage = 2,
             Range = 1

@@ -1,0 +1,8 @@
+name: Chain Mail
+type: armor
+glyph: "["
+color: "#C0C0C0"
+isEquippable: true
+equipSlot: Armor
+armorValue: 3
+evasionPenalty: -2

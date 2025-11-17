@@ -53,6 +53,25 @@ public partial class Player : BaseEntity
         // Get MovementComponent child
         _movementComponent = GetNode<MovementComponent>("MovementComponent");
 
+        // Add StatsComponent (base-0 stats: player starts average in all stats)
+        var statsComponent = new StatsComponent
+        {
+            Name = "StatsComponent",
+            BaseStrength = 0,
+            BaseAgility = 0,
+            BaseEndurance = 0,
+            BaseWill = 0
+        };
+        AddChild(statsComponent);
+
+        // Add HealthComponent (20 base HP + Endurance bonus)
+        var healthComponent = new HealthComponent
+        {
+            Name = "HealthComponent",
+            BaseMaxHP = 20
+        };
+        AddChild(healthComponent);
+
         // Note: Attack component with default punch is now created by EntityFactory
 
         // Add EquipComponent to player
@@ -90,6 +109,8 @@ public partial class Player : BaseEntity
             return;
         }
 
+        var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
+
         // Add short sword to inventory
         var shortSwordData = dataLoader.GetItem("weaponsmelee_short_sword");
         if (shortSwordData != null)
@@ -100,19 +121,39 @@ public partial class Player : BaseEntity
             _inventory.Add(slot);
 
             // Auto-equip the short sword
-            var equipComponent = GetNodeOrNull<EquipComponent>("EquipComponent");
             if (equipComponent != null)
             {
                 var equipSlot = shortSwordData.GetEquipmentSlot();
                 equipComponent.Equip(key, equipSlot);
             }
-
-            EmitSignal(SignalName.InventoryChanged);
         }
         else
         {
             GD.PushWarning("Player: Short sword data not found. Player starting with unarmed.");
         }
+
+        // Add leather armor to inventory
+        var leatherArmorData = dataLoader.GetItem("armor_leather_armor");
+        if (leatherArmorData != null)
+        {
+            var leatherArmorInstance = new ItemInstance(leatherArmorData);
+            char key = GetNextAvailableKey();
+            var slot = new InventorySlot(key, leatherArmorInstance, 1);
+            _inventory.Add(slot);
+
+            // Auto-equip the leather armor
+            if (equipComponent != null)
+            {
+                var equipSlot = leatherArmorData.GetEquipmentSlot();
+                equipComponent.Equip(key, equipSlot);
+            }
+        }
+        else
+        {
+            GD.PushWarning("Player: Leather armor data not found. Player starting without armor.");
+        }
+
+        EmitSignal(SignalName.InventoryChanged);
     }
 
     /// <summary>

@@ -15,6 +15,16 @@ public class CreatureData
 
     public string Color { get; set; } = "#FFFFFF";
 
+    // Stats
+    public int Strength { get; set; } = 0;
+    public int Agility { get; set; } = 0;
+    public int Endurance { get; set; } = 0;
+    public int Will { get; set; } = 0;
+
+    /// <summary>
+    /// Base MaxHP before Endurance modifiers.
+    /// Actual MaxHP will be: MaxHP + (Endurance × 2)
+    /// </summary>
     public int MaxHP { get; set; } = 1;
 
     public int VisionRange { get; set; } = 0;
