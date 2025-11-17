@@ -20,6 +20,9 @@ public partial class InputHandler : Node
     public delegate void InventoryToggleRequestedEventHandler();
 
     [Signal]
+    public delegate void HelpRequestedEventHandler();
+
+    [Signal]
     public delegate void ActivateItemRequestedEventHandler();
 
     [Signal]
@@ -125,6 +128,15 @@ public partial class InputHandler : Node
             if (_targetingSystem != null && _targetingSystem.IsActive)
             {
                 HandleTargetingInput(keyEvent);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Help modal works anytime (doesn't require player turn)
+            // Process before menu check so it can toggle even when help is open
+            if (keyEvent.Keycode == Key.Slash && keyEvent.ShiftPressed) // ? key
+            {
+                EmitSignal(SignalName.HelpRequested);
                 GetViewport().SetInputAsHandled();
                 return;
             }

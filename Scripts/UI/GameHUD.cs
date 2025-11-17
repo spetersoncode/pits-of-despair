@@ -29,6 +29,7 @@ public partial class GameHUD : Control
     private ActivateItemPanel _activateItemPanel;
     private DropItemPanel _dropItemPanel;
     private EquipPanel _equipPanel;
+    private HelpModal _helpModal;
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
@@ -41,6 +42,7 @@ public partial class GameHUD : Control
         _activateItemPanel = GetNode<ActivateItemPanel>("ActivateItemPanel");
         _dropItemPanel = GetNode<DropItemPanel>("DropItemPanel");
         _equipPanel = GetNode<EquipPanel>("EquipPanel");
+        _helpModal = GetNode<HelpModal>("HelpModal");
     }
 
     /// <summary>
@@ -87,6 +89,7 @@ public partial class GameHUD : Control
         _dropItemPanel.Cancelled += OnDropItemCancelled;
         _equipPanel.ItemSelected += OnEquipItemSelected;
         _equipPanel.Cancelled += OnEquipItemCancelled;
+        _helpModal.Cancelled += OnHelpCancelled;
 
         // Subscribe to entity additions to connect their HealthComponents to message log
         entityManager.EntityAdded += OnEntityAdded;
@@ -117,15 +120,15 @@ public partial class GameHUD : Control
         }
 
         // Add welcome message
-        _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape.");
+        _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
     }
 
     /// <summary>
-    /// Checks if any menu is currently open.
+    /// Checks if any menu is currently open (including help modal).
     /// </summary>
     public bool IsAnyMenuOpen()
     {
-        return _currentMenuState != MenuState.None;
+        return _currentMenuState != MenuState.None || _helpModal.Visible;
     }
 
     /// <summary>
@@ -212,6 +215,28 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
+    /// Shows the help modal, or hides it if already visible.
+    /// Called by InputHandler when '?' is pressed.
+    /// </summary>
+    public void ShowHelp()
+    {
+        // Toggle if already visible
+        if (_helpModal.Visible)
+        {
+            _helpModal.HideHelp();
+            return;
+        }
+
+        // Close any open menus first
+        if (_currentMenuState != MenuState.None)
+        {
+            CloseAllMenus();
+        }
+
+        _helpModal.ShowHelp();
+    }
+
+    /// <summary>
     /// Enters targeting mode.
     /// Called by InputHandler when 'F' is pressed with ranged weapon equipped.
     /// </summary>
@@ -287,6 +312,12 @@ public partial class GameHUD : Control
     {
         _equipPanel.HideMenu();
         _currentMenuState = MenuState.None;
+    }
+
+    private void OnHelpCancelled()
+    {
+        // Help modal doesn't change menu state, just hide it
+        // No turn is consumed, no menu state to reset
     }
 
     /// <summary>

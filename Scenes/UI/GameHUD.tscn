@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/DropItemPanel.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/EquipPanel.tscn" id="7"]
 [ext_resource type="Theme" uid="uid://ci6jrw6qhe3je" path="res://Resources/Themes/DefaultUITheme.tres" id="8"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HelpModal.tscn" id="9"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -56,4 +57,7 @@ layout_mode = 1
 layout_mode = 1
 
 [node name="EquipPanel" parent="." instance=ExtResource("7")]
+layout_mode = 1
+
+[node name="HelpModal" parent="." instance=ExtResource("9")]
 layout_mode = 1
