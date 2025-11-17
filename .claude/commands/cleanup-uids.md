@@ -1,0 +1,1 @@
+Search the Scripts/ folder and all subfolders for orphaned .uid files (those without corresponding script files). Present your findings, then delete the orphaned .uid files and commit the changes with an appropriate conventional commit message.
