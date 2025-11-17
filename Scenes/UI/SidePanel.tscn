@@ -47,25 +47,24 @@ text = "Gold: 0"
 [node name="Separator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="StandingOnLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = ""
-
-[node name="NearbyHeader" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="StatsHeader" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-text = "NEARBY:"
+text = "STATS:"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 180)
+[node name="StatsLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
-
-[node name="VisibleEntitiesLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/ScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 bbcode_enabled = true
-text = "(nothing visible)"
+text = "Strength: 0
+Agility: 0
+Endurance: 0
+Will: 0
+
+Melee Attack: 0
+Ranged Attack: 0
+Evasion: 0
+Armor: 0"
 fit_content = true
 scroll_active = false
 
@@ -92,23 +91,24 @@ scroll_active = false
 [node name="Separator4" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="StatsHeader" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="StandingOnLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = ""
+
+[node name="NearbyHeader" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-text = "STATS:"
+text = "NEARBY:"
 
-[node name="StatsLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 100)
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-bbcode_enabled = true
-text = "Strength: 0
-Agility: 0
-Endurance: 0
-Will: 0
+size_flags_vertical = 3
 
-Melee Attack: 0
-Ranged Attack: 0
-Evasion: 0
-Armor: 0"
+[node name="VisibleEntitiesLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "(nothing visible)"
 fit_content = true
 scroll_active = false
