@@ -92,7 +92,7 @@ public static class AStarPathfinder
                 int tentativeGScore = gScore[current] + 1;
 
                 // If this path to neighbor is better than any previous one
-                if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
+                if (!gScore.TryGetValue(neighbor, out int currentGScore) || tentativeGScore < currentGScore)
                 {
                     // Record this path
                     cameFrom[neighbor] = current;

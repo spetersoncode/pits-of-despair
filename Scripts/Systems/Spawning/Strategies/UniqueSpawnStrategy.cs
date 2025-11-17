@@ -99,8 +99,8 @@ public class UniqueSpawnStrategy : ISpawnStrategy
         }
 
         // Default to center for uniques (bosses typically in center of room)
-        return _placementStrategies.ContainsKey("center")
-            ? _placementStrategies["center"]
+        return _placementStrategies.TryGetValue("center", out var centerStrategy)
+            ? centerStrategy
             : _placementStrategies["random"];
     }
 

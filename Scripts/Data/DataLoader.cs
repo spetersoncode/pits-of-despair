@@ -144,7 +144,7 @@ public partial class DataLoader : Node
         while (fileName != string.Empty)
         {
             // Skip hidden files/folders
-            if (fileName.StartsWith("."))
+            if (fileName.StartsWith('.'))
             {
                 fileName = dir.GetNext();
                 continue;
@@ -256,7 +256,7 @@ public partial class DataLoader : Node
         while (fileName != string.Empty)
         {
             // Skip hidden files/folders
-            if (fileName.StartsWith("."))
+            if (fileName.StartsWith('.'))
             {
                 fileName = dir.GetNext();
                 continue;
@@ -387,7 +387,7 @@ public class PaletteColorConverter : IYamlTypeConverter
         var value = scalar.Value;
 
         // If it's already a hex color (starts with #), return as-is
-        if (value.StartsWith("#"))
+        if (value.StartsWith('#'))
         {
             return value;
         }

@@ -126,7 +126,7 @@ dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 
 #### Performance Rules (CA18xx - Critical for Game Development) ####
 dotnet_diagnostic.CA1802.severity = warning  # Use literals where appropriate
-dotnet_diagnostic.CA1805.severity = warning  # Do not initialize unnecessarily
+dotnet_diagnostic.CA1805.severity = none  # Do not initialize unnecessarily (explicit defaults aid readability in data classes)
 dotnet_diagnostic.CA1810.severity = warning  # Initialize static fields inline
 dotnet_diagnostic.CA1812.severity = warning  # Avoid uninstantiated internal classes
 dotnet_diagnostic.CA1813.severity = suggestion  # Avoid unsealed attributes
@@ -185,7 +185,7 @@ dotnet_diagnostic.CA1024.severity = suggestion  # Use properties where appropria
 dotnet_diagnostic.CA1027.severity = suggestion  # Mark enums with FlagsAttribute
 dotnet_diagnostic.CA1028.severity = suggestion  # Enum storage should be Int32
 dotnet_diagnostic.CA1030.severity = suggestion  # Use events where appropriate
-dotnet_diagnostic.CA1031.severity = warning  # Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = suggestion  # Do not catch general exception types (sometimes appropriate in data loading)
 dotnet_diagnostic.CA1033.severity = suggestion  # Interface methods should be callable by child types
 dotnet_diagnostic.CA1034.severity = suggestion  # Nested types should not be visible
 dotnet_diagnostic.CA1036.severity = suggestion  # Override methods on comparable types

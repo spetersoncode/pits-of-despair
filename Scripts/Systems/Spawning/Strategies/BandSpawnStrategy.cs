@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.Core;
@@ -160,7 +161,7 @@ public class BandSpawnStrategy : ISpawnStrategy
 
         // Get placement strategy - if surrounding, create with distance parameters
         IPlacementStrategy placementStrategy;
-        if (followerData.Placement.ToLower() == "surrounding")
+        if (followerData.Placement.Equals("surrounding", StringComparison.OrdinalIgnoreCase))
         {
             placementStrategy = new SurroundingPlacement(
                 followerData.Distance.Min,
