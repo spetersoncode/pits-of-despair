@@ -54,40 +54,6 @@ public partial class MapSystem : Node
     }
 
     /// <summary>
-    /// Initializes the map with floors and a border of walls.
-    /// DEPRECATED: Use GenerateMap() instead.
-    /// </summary>
-    [System.Obsolete("Use GenerateMap() instead")]
-    public void InitializeMap()
-    {
-        _grid = new TileType[MapWidth, MapHeight];
-
-        // Fill with floors
-        for (int x = 0; x < MapWidth; x++)
-        {
-            for (int y = 0; y < MapHeight; y++)
-            {
-                _grid[x, y] = TileType.Floor;
-            }
-        }
-
-        // Create wall border
-        for (int x = 0; x < MapWidth; x++)
-        {
-            _grid[x, 0] = TileType.Wall;                    // Top wall
-            _grid[x, MapHeight - 1] = TileType.Wall;        // Bottom wall
-        }
-
-        for (int y = 0; y < MapHeight; y++)
-        {
-            _grid[0, y] = TileType.Wall;                    // Left wall
-            _grid[MapWidth - 1, y] = TileType.Wall;         // Right wall
-        }
-
-        EmitSignal(SignalName.MapChanged);
-    }
-
-    /// <summary>
     /// Gets the tile type at the specified grid position.
     /// </summary>
     public TileType GetTileAt(GridPosition pos)

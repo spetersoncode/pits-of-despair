@@ -288,7 +288,7 @@ dotnet_diagnostic.IDE0052.severity = warning  # Remove unread private members
 dotnet_diagnostic.IDE0055.severity = warning  # Fix formatting issues
 dotnet_diagnostic.IDE0058.severity = none  # Expression value is never used (too noisy for game dev)
 dotnet_diagnostic.IDE0059.severity = warning  # Unnecessary assignment of a value
-dotnet_diagnostic.IDE0060.severity = warning  # Remove unused parameter
+dotnet_diagnostic.IDE0060.severity = suggestion  # Remove unused parameter (Godot virtual methods have fixed signatures)
 dotnet_diagnostic.IDE0080.severity = warning  # Remove unnecessary suppression operator
 dotnet_diagnostic.IDE0100.severity = warning  # Remove unnecessary equality operator
 dotnet_diagnostic.IDE0110.severity = warning  # Remove unnecessary discard
@@ -380,3 +380,17 @@ dotnet_diagnostic.IDE2004.severity = suggestion  # Blank line not allowed after 
 
 #### Nullable Reference Types ####
 csharp_style_nullable_reference_types = enable:suggestion
+# Suppress nullable annotation warnings - Godot pattern: fields initialized in _Ready(), not constructors
+dotnet_diagnostic.CS8632.severity = none  # Nullable annotation used outside nullable context
+
+#### Godot-Specific Patterns ####
+# This configuration is optimized for Godot 4.x C# development patterns:
+#
+# CA1051 = none     : Public fields allowed for [Export] attributes (Godot editor integration)
+# CA1063 = none     : QueueFree() lifecycle instead of IDisposable pattern
+# CA1805 = none     : Explicit initialization (= 0, = false) aids readability in data classes
+# CS8632 = none     : Nullable annotations as documentation (nullable enforcement disabled)
+# IDE0058 = none    : Expression values often intentionally unused in game loops
+# IDE0060 = suggest : Virtual methods like _Process(double delta) have fixed signatures
+# IDE0290 = none    : Primary constructors incompatible with Godot's partial class generation
+# CA2007 = none     : ConfigureAwait not needed in single-threaded game loop
