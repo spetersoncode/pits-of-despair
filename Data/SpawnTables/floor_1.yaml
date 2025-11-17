@@ -1,10 +1,8 @@
 name: floor 1
 creatureBudget:
-  min: 120
-  max: 140
+  dice: "2d20+100"
 itemBudget:
-  min: 40
-  max: 60
+  dice: "5d10+25"
 
 creaturePools:
   - id: common
@@ -14,15 +12,13 @@ creaturePools:
         creatureId: rat
         weight: 3
         count:
-          min: 1
-          max: 2
+          dice: "1d2"
 
       - type: multiple
         creatureId: goblin
         weight: 2
         count:
-          min: 1
-          max: 2
+          dice: "1d2"
 
       - type: single
         creatureId: goblin_scout
@@ -36,8 +32,7 @@ creaturePools:
           followers:
             - creatureId: rat
               count:
-                min: 3
-                max: 6
+                dice: "1d4+2"
               placement: surrounding
               distance:
                 min: 1

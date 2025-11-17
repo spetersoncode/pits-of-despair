@@ -113,7 +113,7 @@ public partial class ActivateItemPanel : PanelContainer
             string colorHex = isActivatable ? slot.Item.Template.Color : "#888888";
             string keyColor = isActivatable ? "#888888" : "#444444";
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
-            string chargesText = slot.Item.Template.MaxCharges > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.MaxCharges}]" : "";
+            string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
 
             sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]");
         }

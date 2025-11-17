@@ -50,7 +50,7 @@ public class BandFollowerData
     /// Number of followers to spawn.
     /// </summary>
     [YamlMember(Alias = "count")]
-    public CountRange Count { get; set; } = new CountRange { Min = 2, Max = 4 };
+    public CountRange Count { get; set; } = new CountRange { DiceNotation = "1d3+1" };
 
     /// <summary>
     /// Placement strategy for followers (surrounding, scattered, formation).

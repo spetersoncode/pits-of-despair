@@ -246,8 +246,7 @@ public partial class EntityFactory : Node
                     {
                         Name = attackData.Name,
                         Type = attackData.Type,
-                        MinDamage = attackData.MinDamage,
-                        MaxDamage = attackData.MaxDamage,
+                        DiceNotation = attackData.DiceNotation,
                         Range = attackData.Range
                     };
                     naturalAttacks.Add(attack);
@@ -348,9 +347,7 @@ public partial class EntityFactory : Node
         {
             Name = "punch",
             Type = AttackType.Melee,
-            MinDamage = 1,
-            MaxDamage = 2,
-            Range = 1
+            DiceNotation = "1d2"
         };
     }
 }

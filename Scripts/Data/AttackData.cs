@@ -1,4 +1,5 @@
 using Godot;
+using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Data;
 
@@ -32,9 +33,11 @@ public partial class AttackData : Resource
 	/// </summary>
 	public AttackType Type { get; set; } = AttackType.Melee;
 
-	public int MinDamage { get; set; } = 1;
-
-	public int MaxDamage { get; set; } = 1;
+	/// <summary>
+	/// Dice notation for weapon damage (e.g., "1d6", "2d4+1").
+	/// </summary>
+	[YamlMember(Alias = "dice")]
+	public string DiceNotation { get; set; } = "1d4";
 
 	public int Range { get; set; } = 1;
 }

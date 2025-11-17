@@ -14,6 +14,4 @@ goals:
 attacks:
   - name: desperate bite
     type: Melee
-    minDamage: 1
-    maxDamage: 2
-    range: 1
+    dice: "1d2"

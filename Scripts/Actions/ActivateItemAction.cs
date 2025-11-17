@@ -53,7 +53,7 @@ public class ActivateItemAction : Action
         }
 
         // If it's a charged item, check if it has charges remaining
-        if (slot.Item.Template.MaxCharges > 0 && slot.Item.CurrentCharges <= 0)
+        if (slot.Item.Template.GetMaxCharges() > 0 && slot.Item.CurrentCharges <= 0)
         {
             return false;
         }
@@ -91,7 +91,7 @@ public class ActivateItemAction : Action
         }
 
         // Check if charged item has charges remaining
-        if (itemTemplate.MaxCharges > 0 && slot.Item.CurrentCharges <= 0)
+        if (itemTemplate.GetMaxCharges() > 0 && slot.Item.CurrentCharges <= 0)
         {
             return ActionResult.CreateFailure($"The {itemTemplate.Name} has no charges remaining.");
         }
@@ -133,7 +133,7 @@ public class ActivateItemAction : Action
             // Consumable: remove one from stack
             player.RemoveItemFromInventory(_itemKey, 1);
         }
-        else if (itemTemplate.MaxCharges > 0)
+        else if (itemTemplate.GetMaxCharges() > 0)
         {
             // Charged item: use one charge
             slot.Item.UseCharge();

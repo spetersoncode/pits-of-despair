@@ -1,23 +1,33 @@
 using System;
 using Godot;
 using YamlDotNet.Serialization;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Systems.Spawning.Data;
 
 /// <summary>
-/// Represents a range with minimum and maximum values for spawn counts.
+/// Represents a dice-based count for spawn amounts.
 /// </summary>
 public class CountRange
 {
-    [YamlMember(Alias = "min")]
-    public int Min { get; set; } = 1;
-
-    [YamlMember(Alias = "max")]
-    public int Max { get; set; } = 1;
+    [YamlMember(Alias = "dice")]
+    public string DiceNotation { get; set; } = "1";
 
     public int GetRandom()
     {
-        return GD.RandRange(Min, Max);
+        return DiceRoller.Roll(DiceNotation);
+    }
+
+    /// <summary>
+    /// Gets the maximum possible value from the dice notation.
+    /// </summary>
+    public int GetMax()
+    {
+        if (DiceRoller.TryParse(DiceNotation, out int count, out int sides, out int modifier))
+        {
+            return (count * sides) + modifier;
+        }
+        return 1; // Default fallback
     }
 }
 
@@ -148,8 +158,8 @@ public class SpawnEntryData
         {
             SpawnEntryType.Single when !string.IsNullOrEmpty(CreatureId) => $"Single: {CreatureId}",
             SpawnEntryType.Single when !string.IsNullOrEmpty(ItemId) => $"Item: {ItemId}",
-            SpawnEntryType.Multiple when !string.IsNullOrEmpty(CreatureId) => $"Multiple: {CreatureId} x{Count.Min}-{Count.Max}",
-            SpawnEntryType.Multiple when !string.IsNullOrEmpty(ItemId) => $"Items: {ItemId} x{Count.Min}-{Count.Max}",
+            SpawnEntryType.Multiple when !string.IsNullOrEmpty(CreatureId) => $"Multiple: {CreatureId} ({Count.DiceNotation})",
+            SpawnEntryType.Multiple when !string.IsNullOrEmpty(ItemId) => $"Items: {ItemId} ({Count.DiceNotation})",
             SpawnEntryType.Band when !string.IsNullOrEmpty(BandId) => $"Band: {BandId}",
             SpawnEntryType.Band when Band != null => $"Band: {Band.Name ?? "Inline"}",
             SpawnEntryType.Unique => $"Unique: {CreatureId}",

@@ -108,7 +108,7 @@ public partial class DropItemPanel : PanelContainer
             // Format: key) glyph name (count/charges)
             string colorHex = slot.Item.Template.Color;
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
-            string chargesText = slot.Item.Template.MaxCharges > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.MaxCharges}]" : "";
+            string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
 
             sb.AppendLine($"[color=#888888]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}");
         }

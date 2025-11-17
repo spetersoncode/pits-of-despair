@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using PitsOfDespair.Effects;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Data;
 using YamlDotNet.Serialization;
 
@@ -97,17 +98,11 @@ public class ItemData
     public bool? IsConsumable { get; set; } = null;
 
     /// <summary>
-    /// Maximum number of charges this item can hold.
-    /// If 0, this item does not use charges. Optional in YAML.
+    /// Dice notation for item charges (e.g., "1d6", "2d3+1").
+    /// If empty/null, this item does not use charges. Optional in YAML.
     /// </summary>
-    public int MaxCharges { get; set; } = 0;
-
-    /// <summary>
-    /// Starting charges when this item is spawned.
-    /// If 0 and MaxCharges > 0, charges will be randomized between 1 and MaxCharges.
-    /// Optional in YAML.
-    /// </summary>
-    public int Charges { get; set; } = 0;
+    [YamlMember(Alias = "charges")]
+    public string? ChargesDice { get; set; } = null;
 
     /// <summary>
     /// Number of turns required to recharge 1 charge.
@@ -259,12 +254,32 @@ public class ItemData
     }
 
     /// <summary>
+    /// Calculates the maximum possible charges from dice notation.
+    /// Returns 0 if no charges dice notation is set.
+    /// </summary>
+    public int GetMaxCharges()
+    {
+        if (string.IsNullOrEmpty(ChargesDice))
+        {
+            return 0;
+        }
+
+        if (DiceRoller.TryParse(ChargesDice, out int count, out int sides, out int modifier))
+        {
+            return (count * sides) + modifier;
+        }
+
+        GD.PrintErr($"ItemData: Invalid charges dice notation '{ChargesDice}' for item '{Name}'");
+        return 0;
+    }
+
+    /// <summary>
     /// Determines if this item can be activated from inventory.
     /// Items are activatable if they are consumable or have charges.
     /// </summary>
     public bool IsActivatable()
     {
-        return GetIsConsumable() || MaxCharges > 0;
+        return GetIsConsumable() || !string.IsNullOrEmpty(ChargesDice);
     }
 
     /// <summary>

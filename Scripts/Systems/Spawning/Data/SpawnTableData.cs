@@ -18,16 +18,16 @@ public class SpawnTableData
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Total creature spawn budget (min-max) for the entire floor.
+    /// Total creature spawn budget for the entire floor.
     /// </summary>
     [YamlMember(Alias = "creatureBudget")]
-    public CountRange CreatureBudget { get; set; } = new CountRange { Min = 10, Max = 20 };
+    public CountRange CreatureBudget { get; set; } = new CountRange { DiceNotation = "1d11+9" };
 
     /// <summary>
-    /// Total item spawn budget (min-max) for the entire floor.
+    /// Total item spawn budget for the entire floor.
     /// </summary>
     [YamlMember(Alias = "itemBudget")]
-    public CountRange ItemBudget { get; set; } = new CountRange { Min = 5, Max = 10 };
+    public CountRange ItemBudget { get; set; } = new CountRange { DiceNotation = "1d6+4" };
 
     /// <summary>
     /// Creature spawn pools (common, uncommon, rare, etc.).
@@ -107,8 +107,8 @@ public class SpawnTableData
 
     public override string ToString()
     {
-        return $"SpawnTable '{Name}' (Creatures: {CreatureBudget.Min}-{CreatureBudget.Max}, " +
-               $"Items: {ItemBudget.Min}-{ItemBudget.Max}, " +
+        return $"SpawnTable '{Name}' (Creatures: {CreatureBudget.DiceNotation}, " +
+               $"Items: {ItemBudget.DiceNotation}, " +
                $"Creature Pools: {CreaturePools.Count}, Item Pools: {ItemPools.Count})";
     }
 }

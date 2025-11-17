@@ -5,8 +5,7 @@ leader:
 followers:
   - creatureId: goblin
     count:
-      min: 2
-      max: 4
+      dice: "1d3+1"
     placement: surrounding
     distance:
       min: 1

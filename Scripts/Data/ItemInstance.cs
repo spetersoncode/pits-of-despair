@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Data;
 
@@ -15,7 +16,7 @@ public class ItemInstance
 
     /// <summary>
     /// Current number of charges for this item instance.
-    /// Only relevant for items with MaxCharges > 0.
+    /// Only relevant for items with charges dice notation set.
     /// </summary>
     public int CurrentCharges { get; set; }
 
@@ -30,15 +31,10 @@ public class ItemInstance
         RechargeTurnCounter = 0;
 
         // Initialize charges based on template configuration
-        if (template.Charges > 0)
+        if (!string.IsNullOrEmpty(template.ChargesDice))
         {
-            // Explicit charges specified in YAML - use that value
-            CurrentCharges = template.Charges;
-        }
-        else if (template.MaxCharges > 0)
-        {
-            // No explicit charges - randomize between 1 and MaxCharges
-            CurrentCharges = GD.RandRange(1, template.MaxCharges);
+            // Roll dice for starting charges
+            CurrentCharges = DiceRoller.Roll(template.ChargesDice);
         }
         else
         {
@@ -68,7 +64,7 @@ public class ItemInstance
     /// <returns>True if a charge was added, false if already at max or not rechargeable.</returns>
     public bool Recharge()
     {
-        if (Template.RechargeTurns <= 0 || CurrentCharges >= Template.MaxCharges)
+        if (Template.RechargeTurns <= 0 || CurrentCharges >= Template.GetMaxCharges())
         {
             return false;
         }
@@ -82,7 +78,7 @@ public class ItemInstance
     /// </summary>
     public void ProcessTurn()
     {
-        if (Template.RechargeTurns <= 0 || CurrentCharges >= Template.MaxCharges)
+        if (Template.RechargeTurns <= 0 || CurrentCharges >= Template.GetMaxCharges())
         {
             return;
         }

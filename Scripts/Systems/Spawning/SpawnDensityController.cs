@@ -38,8 +38,8 @@ public class SpawnDensityController
     public string GetDebugInfo()
     {
         return $"SpawnDensityController: {_spawnTable.Name}\n" +
-               $"  Creature Budget: {_spawnTable.CreatureBudget.Min}-{_spawnTable.CreatureBudget.Max}\n" +
-               $"  Item Budget: {_spawnTable.ItemBudget.Min}-{_spawnTable.ItemBudget.Max}\n" +
+               $"  Creature Budget: {_spawnTable.CreatureBudget.DiceNotation}\n" +
+               $"  Item Budget: {_spawnTable.ItemBudget.DiceNotation}\n" +
                $"  Creature Pools: {_spawnTable.CreaturePools.Count}\n" +
                $"  Item Pools: {_spawnTable.ItemPools.Count}";
     }

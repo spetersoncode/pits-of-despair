@@ -3,6 +3,4 @@ type: weapon
 color: "#8B4513"
 attack:
   type: Melee
-  minDamage: 2
-  maxDamage: 4
-  range: 1
+  dice: "1d3+1"

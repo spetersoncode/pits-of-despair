@@ -246,7 +246,7 @@ public partial class SpawnManager : Node
         return entry.Type switch
         {
             SpawnEntryType.Single => 1,  // Single creature needs 1x1
-            SpawnEntryType.Multiple => CalculateSpaceForCount(entry.Count.Max),  // Calculate based on max spawn count
+            SpawnEntryType.Multiple => CalculateSpaceForCount(entry.Count.GetMax()),  // Calculate based on max spawn count
             SpawnEntryType.Band => 3,    // Bands need at least 3x3 for formation
             SpawnEntryType.Unique => 3,  // Uniques get some breathing room
             _ => 1

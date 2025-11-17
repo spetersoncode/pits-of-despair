@@ -124,8 +124,8 @@ public partial class CombatSystem : Node
         int attackModifier = attackerStats.GetAttackModifier(isMelee);
         int defenseModifier = targetStats.GetDefenseModifier();
 
-        int attackRoll = DiceRoller.Roll2d6(attackModifier);
-        int defenseRoll = DiceRoller.Roll2d6(defenseModifier);
+        int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
+        int defenseRoll = DiceRoller.Roll(2, 6, defenseModifier);
 
         // Check if attack hits (attacker roll >= defender roll, ties go to attacker)
         bool hit = attackRoll >= defenseRoll;
@@ -139,7 +139,7 @@ public partial class CombatSystem : Node
         }
 
         // PHASE 2: Damage Calculation (weapon damage + STR [if melee] - armor)
-        int baseDamage = DiceRoller.RollDamage(attackData.MinDamage, attackData.MaxDamage);
+        int baseDamage = DiceRoller.Roll(attackData.DiceNotation);
         int damageBonus = attackerStats.GetDamageBonus(isMelee);
         int armor = targetStats.TotalArmor;
 

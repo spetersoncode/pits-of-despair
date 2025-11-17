@@ -117,7 +117,7 @@ public partial class InventoryPanel : PanelContainer
             // Format: key) glyph name (count/charges) {EQUIPPED}
             string colorHex = slot.Item.Template.Color;
             string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
-            string chargesText = slot.Item.Template.MaxCharges > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.MaxCharges}]" : "";
+            string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
 
             // Check if this item is equipped
             string equippedText = "";

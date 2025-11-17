@@ -5,8 +5,7 @@ leader:
 followers:
   - creatureId: rat
     count:
-      min: 3
-      max: 6
+      dice: "1d4+2"
     placement: surrounding
     distance:
       min: 1

@@ -15,6 +15,4 @@ goals:
 attacks:
   - name: bite
     type: Melee
-    minDamage: 2
-    maxDamage: 4
-    range: 1
+    dice: "1d3+1"
