@@ -8,31 +8,47 @@ Pits of Despair is a classic-style tile-based dungeon crawler roguelike built wi
 
 The only way to survive is to descend into the deepest depths of the Pits and take the Crown of Command from its current owner, whoever that may be. Battle creatures, discover treasures, and grow powerful enough to claim your destiny - or perish like countless others before you.
 
-## Game Features
+## Gameplay & Mechanics
 
-- **Classic Roguelike Gameplay**: Turn-based tactical combat with permadeath
-- **Tile-Based Movement**: Grid-based dungeon exploration with strategic positioning
-- **Procedural Generation**: Ever-changing dungeon layouts ensure no two runs are the same
-- **Descending Depths**: Journey deeper into increasingly dangerous levels
-- **Resource Management**: Carefully manage health, equipment, and consumables to survive
-- **Discovery & Adaptation**: Learn enemy patterns and dungeon mechanics to progress
+- **Turn-Based Combat**: Opposed roll system, melee and ranged combat, armor reduces damage while evasion avoids hits
+- **Grid-Based Movement**: Tile-based positioning with 8-directional movement
+- **Procedural Dungeons**: Randomly generated dungeon layouts with rooms and corridors
+- **Intelligent Enemies**: Monsters hunt, flee when wounded, call for help, and remember your last known position
+- **Inventory System**: 26-slot inventory with item stacking for consumables, equipment slots, and item activation
+- **Equipment**: Weapons and armor with stat bonuses that affect combat effectiveness
+- **Status Effects**: Temporary buffs and debuffs that modify character attributes
+- **Line of Sight**: Exploration through fog of war with field-of-view based visibility
+
+## Inspirations
+
+- [**Brogue**](https://sites.google.com/site/broguegame/) - Streamlined interface and elegant procedural generation
+- [**Caves of Qud**](https://www.cavesofqud.com/) - Emergent gameplay through interacting systems
+- [**Dungeon Crawl: Stone Soup**](https://crawl.develz.org/) - Refined mechanics and tactical depth
+- [**Sil**](http://www.amirrorclear.net/flowers/game/sil/) - Minimalist stats and meaningful numbers
+- [**Smart Kobold**](https://www.roguebasin.com/index.php/Smart_Kobold) - Goal-based intelligent monster AI
 
 ## Technical Details
 
 - **Engine**: Godot 4.5.1
 - **Language**: C#
 - **Architecture**: Component-based design with signal-driven communication
-- **Style**: 2D top-down perspective
+- **Style**: 2D top-down perspective with ASCII-style rendering
 
-## Development
+## Architecture
 
-This project follows strict architectural principles emphasizing:
-- Decoupled systems using Godot's signal system
-- Composition over inheritance for flexible entity design
-- Clean, maintainable C# code adhering to Godot best practices
-- Conventional commit messages for clear project history
+**Component Composition**: Entities are built from composable child node components rather than inheritance hierarchies. Component types can be mixed and attached to entities as needed.
 
-See [CLAUDE.md](CLAUDE.md) for detailed development guidelines and project principles.
+**Signal-Based Decoupling**: Cross-system communication uses Godot's signal system to avoid direct dependencies. Components emit signals for state changes; systems subscribe to relevant signals without knowing implementation details.
+
+**Action System**: Turn-based gameplay uses an action queue with defined action types. Actions validate feasibility before execution and handle success/failure states.
+
+**Turn Management**: A centralized TurnManager coordinates the turn cycle, alternating between player input and AI execution phases. Each turn processes actions sequentially through the action system.
+
+**Data-Driven Configuration**: Game content (creatures, items, equipment, spawn tables, monster bands) is defined in YAML files loaded at runtime. The spawning system supports multiple placement strategies (formations, surrounding, random, center) with configurable density and out-of-depth spawning.
+
+**System Architecture**: Independent systems operate on entities through their components. Systems read component data, emit events, and update state without direct coupling to other systems.
+
+See [CLAUDE.md](CLAUDE.md) for detailed development guidelines and architectural principles.
 
 ## Getting Started
 
