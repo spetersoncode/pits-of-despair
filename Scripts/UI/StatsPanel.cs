@@ -20,6 +20,7 @@ public partial class StatsPanel : PanelContainer
 
 	private Label _healthLabel;
 	private Label _floorLabel;
+	private Label _goldLabel;
 	private Label _standingOnLabel;
 	private RichTextLabel _equipmentLabel;
 	private RichTextLabel _statsLabel;
@@ -32,11 +33,13 @@ public partial class StatsPanel : PanelContainer
 	{
 		_healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
 		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
+		_goldLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/GoldLabel");
 		_standingOnLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StandingOnLabel");
 		_equipmentLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/EquipmentLabel");
 		_statsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/StatsLabel");
 
 		UpdateFloorDisplay();
+		UpdateGoldDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
@@ -72,8 +75,12 @@ public partial class StatsPanel : PanelContainer
 			equipComponent.EquipmentChanged += OnEquipmentChanged;
 		}
 
+		// Subscribe to gold collection
+		player.GoldCollected += OnGoldCollected;
+
 		// Initialize display with current values
 		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
+		UpdateGoldDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
@@ -128,6 +135,20 @@ public partial class StatsPanel : PanelContainer
 		{
 			_floorLabel.Text = $"Floor: {_currentFloorDepth}";
 			_floorLabel.AddThemeColorOverride("font_color", DefaultTextColor);
+		}
+	}
+
+	private void OnGoldCollected(int amount, int totalGold)
+	{
+		UpdateGoldDisplay();
+	}
+
+	private void UpdateGoldDisplay()
+	{
+		if (_goldLabel != null && _player != null)
+		{
+			_goldLabel.Text = $"Gold: {_player.Score}";
+			_goldLabel.AddThemeColorOverride("font_color", new Color("#FFD700")); // Gold color
 		}
 	}
 

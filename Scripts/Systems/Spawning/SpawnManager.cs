@@ -121,7 +121,8 @@ public partial class SpawnManager : Node
         // Get spawn budgets
         int creatureBudget = densityController.GetCreatureBudget();
         int itemBudget = densityController.GetItemBudget();
-        GD.Print($"SpawnOrchestrator: Creature budget = {creatureBudget}, Item budget = {itemBudget}");
+        int goldBudget = spawnTable.GetRandomGoldBudget();
+        GD.Print($"SpawnOrchestrator: Creature budget = {creatureBudget}, Item budget = {itemBudget}, Gold budget = {goldBudget}");
 
         // Populate creatures using budget-based approach
         int totalCreatures = PopulateCreatures(
@@ -137,7 +138,13 @@ public partial class SpawnManager : Node
             itemBudget
         );
 
-        GD.Print($"SpawnOrchestrator: Spawned {totalCreatures} creatures and {totalItems} items");
+        // Populate gold piles
+        int totalGold = PopulateGold(
+            allWalkableTiles,
+            goldBudget
+        );
+
+        GD.Print($"SpawnOrchestrator: Spawned {totalCreatures} creatures, {totalItems} items, and {totalGold} gold in piles");
     }
 
     /// <summary>
@@ -379,6 +386,85 @@ public partial class SpawnManager : Node
         }
 
         return totalSpawned;
+    }
+
+    /// <summary>
+    /// Populates the dungeon with gold piles scattered randomly.
+    /// Divides the total gold budget into reasonably similar-sized piles.
+    /// </summary>
+    private int PopulateGold(
+        List<GridPosition> allWalkableTiles,
+        int totalGoldBudget)
+    {
+        if (totalGoldBudget <= 0)
+        {
+            return 0;
+        }
+
+        int totalGoldSpawned = 0;
+        int remainingGold = totalGoldBudget;
+        var occupiedPositions = new HashSet<Vector2I>();
+
+        // Mark positions occupied by creatures and items
+        foreach (var gridPos in allWalkableTiles)
+        {
+            if (_entityManager.IsPositionOccupied(gridPos))
+            {
+                occupiedPositions.Add(new Vector2I(gridPos.X, gridPos.Y));
+            }
+        }
+
+        // Determine pile sizes - randomize between 5-15 gold per pile
+        var piles = new List<int>();
+        while (remainingGold > 0)
+        {
+            int pileSize = Mathf.Min(remainingGold, GD.RandRange(5, 15));
+            piles.Add(pileSize);
+            remainingGold -= pileSize;
+        }
+
+        GD.Print($"SpawnOrchestrator: Dividing {totalGoldBudget} gold into {piles.Count} piles");
+
+        // Shuffle walkable tiles for random distribution
+        var shuffledTiles = allWalkableTiles.OrderBy(_ => GD.Randi()).ToList();
+
+        // Spawn each gold pile
+        int pileIndex = 0;
+        foreach (var pile in piles)
+        {
+            // Find an unoccupied tile
+            Vector2I? spawnPos = null;
+            foreach (var tile in shuffledTiles)
+            {
+                var vec = new Vector2I(tile.X, tile.Y);
+                if (!occupiedPositions.Contains(vec))
+                {
+                    spawnPos = vec;
+                    occupiedPositions.Add(vec);
+                    break;
+                }
+            }
+
+            if (!spawnPos.HasValue)
+            {
+                GD.Print($"SpawnOrchestrator: Could not find location for gold pile {pileIndex + 1}/{piles.Count}");
+                continue;
+            }
+
+            // Create gold entity
+            var goldEntity = new Entities.Gold
+            {
+                Name = $"Gold_{pileIndex}" // Set node name for debugging
+            };
+            goldEntity.Initialize(pile, new GridPosition(spawnPos.Value.X, spawnPos.Value.Y));
+
+            _entityManager.AddEntity(goldEntity);
+            totalGoldSpawned += pile;
+            pileIndex++;
+        }
+
+        GD.Print($"SpawnOrchestrator: Successfully spawned {pileIndex} gold piles totaling {totalGoldSpawned} gold");
+        return totalGoldSpawned;
     }
 
     /// <summary>

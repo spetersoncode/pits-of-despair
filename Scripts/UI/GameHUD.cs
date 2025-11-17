@@ -96,6 +96,12 @@ public partial class GameHUD : Control
         player.ItemUsed += OnItemUsed;
         player.ItemDropped += OnItemDropped;
 
+        // Subscribe to gold collection
+        player.GoldCollected += OnGoldCollected;
+
+        // Subscribe to standing on entities (for "You see here" messages)
+        player.StandingOnEntity += OnStandingOnEntity;
+
         // Add welcome message
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape.");
     }
@@ -286,6 +292,21 @@ public partial class GameHUD : Control
     private void OnItemDropped(string itemName)
     {
         _messageLog.AddMessage($"You drop {itemName}.", "#ffffff"); // White
+    }
+
+    private void OnGoldCollected(int amount, int totalGold)
+    {
+        string message = amount == 1
+            ? $"You collect 1 gold. (Total: {totalGold})"
+            : $"You collect {amount} gold. (Total: {totalGold})";
+        _messageLog.AddMessage(message, "#FFD700"); // Gold color
+    }
+
+    private void OnStandingOnEntity(string entityName, Color entityColor)
+    {
+        // Convert Color to hex string for message log
+        string colorHex = $"#{(int)(entityColor.R * 255):X2}{(int)(entityColor.G * 255):X2}{(int)(entityColor.B * 255):X2}";
+        _messageLog.AddMessage($"You stand over the {entityName}.", colorHex);
     }
 
     private void OnEntityAdded(BaseEntity entity)

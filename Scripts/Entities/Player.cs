@@ -36,12 +36,19 @@ public partial class Player : BaseEntity
     [Signal]
     public delegate void InventoryChangedEventHandler();
 
+    [Signal]
+    public delegate void GoldCollectedEventHandler(int amount, int totalGold);
+
+    [Signal]
+    public delegate void StandingOnEntityEventHandler(string entityName, Color entityColor);
+
     private const int MaxInventorySlots = 26;
 
     private MovementComponent? _movementComponent;
     private GridPosition _previousPosition;
     private List<InventorySlot> _inventory = new();
     private EntityManager? _entityManager;
+    private int _score = 0;
 
     public override void _Ready()
     {
@@ -230,16 +237,79 @@ public partial class Player : BaseEntity
     }
 
     /// <summary>
-    /// Handle position changes to emit turn completion.
+    /// Handle position changes to emit turn completion and auto-collect gold.
     /// </summary>
     private void OnPositionChanged(int x, int y)
     {
-        // Only emit turn completed if position actually changed
+        // Only process if position actually changed
         if (x != _previousPosition.X || y != _previousPosition.Y)
         {
-            EmitSignal(SignalName.TurnCompleted);
             _previousPosition = new GridPosition(x, y);
+
+            // Check for gold at new position and auto-collect
+            TryAutoCollectGold();
+
+            // Check for walkable entities to show "You see here" message
+            CheckForWalkableEntity();
+
+            EmitSignal(SignalName.TurnCompleted);
         }
+    }
+
+    /// <summary>
+    /// Checks for walkable entities at the player's position and emits signal for "You see here" message.
+    /// Called after gold collection, so it won't show collected gold.
+    /// </summary>
+    private void CheckForWalkableEntity()
+    {
+        if (_entityManager == null)
+        {
+            return;
+        }
+
+        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
+        if (entityAtPosition != null && entityAtPosition.IsWalkable)
+        {
+            EmitSignal(SignalName.StandingOnEntity, entityAtPosition.DisplayName, entityAtPosition.GlyphColor);
+        }
+    }
+
+    /// <summary>
+    /// Automatically collects gold at the player's current position.
+    /// Called when player moves to a new tile.
+    /// </summary>
+    private void TryAutoCollectGold()
+    {
+        if (_entityManager == null)
+        {
+            return;
+        }
+
+        // Check for entity at player's current position
+        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
+
+        // Check if the entity is a Gold pile
+        if (entityAtPosition is not Gold goldPile)
+        {
+            return;
+        }
+
+        // Get gold amount
+        int goldAmount = goldPile.Amount;
+        if (goldAmount <= 0)
+        {
+            goldAmount = 1; // Default to 1 if not set
+        }
+
+        // Add to score
+        _score += goldAmount;
+
+        // Remove gold entity from world
+        _entityManager.RemoveEntity(entityAtPosition);
+        entityAtPosition.QueueFree();
+
+        // Emit signal for UI feedback
+        EmitSignal(SignalName.GoldCollected, goldAmount, _score);
     }
 
     /// <summary>
@@ -259,6 +329,11 @@ public partial class Player : BaseEntity
     /// Gets the player's inventory (read-only).
     /// </summary>
     public IReadOnlyList<InventorySlot> Inventory => _inventory.AsReadOnly();
+
+    /// <summary>
+    /// Gets the player's current score (gold collected).
+    /// </summary>
+    public int Score => _score;
 
     /// <summary>
     /// Sets the EntityManager reference for item pickup.

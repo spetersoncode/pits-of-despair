@@ -3,6 +3,8 @@ creatureBudget:
   dice: "2d20+100"
 itemBudget:
   dice: "5d10+25"
+goldBudget:
+  dice: "10d20+100"
 
 creaturePools:
   - id: common
@@ -51,7 +53,7 @@ creaturePools:
         creatureId: goblin_ruffian
 
 itemPools:
-  - id: common_items
+  - id: common
     weight: 70
     entries:
       - itemId: potion_cure_light_wounds
@@ -59,12 +61,12 @@ itemPools:
 
       - itemId: scroll_blink
 
-  - id: uncommon_items
+  - id: uncommon
     weight: 25
     entries:
       - itemId: armor_leather
 
-  - id: rare_items
+  - id: rare
     weight: 5
     entries:
       - itemId: armor_studded_leather

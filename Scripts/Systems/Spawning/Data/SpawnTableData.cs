@@ -30,6 +30,12 @@ public class SpawnTableData
     public CountRange ItemBudget { get; set; } = new CountRange { DiceNotation = "1d6+4" };
 
     /// <summary>
+    /// Total gold spawn budget for the entire floor.
+    /// </summary>
+    [YamlMember(Alias = "goldBudget")]
+    public CountRange GoldBudget { get; set; } = new CountRange { DiceNotation = "10d20+100" };
+
+    /// <summary>
     /// Creature spawn pools (common, uncommon, rare, etc.).
     /// Powerful creatures should be placed in rare pools with low weights.
     /// </summary>
@@ -105,10 +111,19 @@ public class SpawnTableData
         return ItemBudget.GetRandom();
     }
 
+    /// <summary>
+    /// Gets a random gold spawn budget value within the configured range.
+    /// </summary>
+    public int GetRandomGoldBudget()
+    {
+        return GoldBudget.GetRandom();
+    }
+
     public override string ToString()
     {
         return $"SpawnTable '{Name}' (Creatures: {CreatureBudget.DiceNotation}, " +
                $"Items: {ItemBudget.DiceNotation}, " +
+               $"Gold: {GoldBudget.DiceNotation}, " +
                $"Creature Pools: {CreaturePools.Count}, Item Pools: {ItemPools.Count})";
     }
 }
