@@ -3,6 +3,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
+using System.Linq;
 using System.Text;
 
 namespace PitsOfDespair.UI;
@@ -106,7 +107,7 @@ public partial class EquipPanel : PanelContainer
         sb.AppendLine("[center][b]Equip which item?[/b][/center]");
         sb.AppendLine("[center](ESC to cancel)[/center]\n");
 
-        foreach (var slot in inventory)
+        foreach (var slot in inventory.OrderBy(s => s.Key))
         {
             var itemTemplate = slot.Item.Template;
             bool isEquippable = itemTemplate.GetIsEquippable();
