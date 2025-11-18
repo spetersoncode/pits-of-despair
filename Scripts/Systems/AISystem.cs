@@ -21,6 +21,7 @@ public partial class AISystem : Node
     private EntityManager _entityManager;
     private TurnManager _turnManager;
     private CombatSystem _combatSystem;
+    private EntityFactory _entityFactory;
     private ActionContext _actionContext;
     private List<AIComponent> _aiComponents = new List<AIComponent>();
 
@@ -58,14 +59,23 @@ public partial class AISystem : Node
     }
 
     /// <summary>
+    /// Sets the entity factory dependency.
+    /// </summary>
+    public void SetEntityFactory(EntityFactory entityFactory)
+    {
+        _entityFactory = entityFactory;
+        UpdateActionContext();
+    }
+
+    /// <summary>
     /// Updates the cached action context when dependencies change.
     /// </summary>
     private void UpdateActionContext()
     {
         // Only create context if all dependencies are set
-        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null)
+        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null && _entityFactory != null)
         {
-            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem);
+            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory);
         }
     }
 

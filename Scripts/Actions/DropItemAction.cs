@@ -72,17 +72,8 @@ public class DropItemAction : Action
 			return ActionResult.CreateFailure($"Failed to remove {itemName} from inventory.");
 		}
 
-		// Create the item entity at player's position
-		var itemEntity = new BaseEntity
-		{
-			GridPosition = player.GridPosition,
-			DisplayName = itemInstance.Template.Name,
-			Glyph = itemInstance.Template.GetGlyph(),
-			GlyphColor = itemInstance.Template.GetColor(),
-			IsWalkable = true, // Items are walkable
-			ItemData = itemInstance, // Store item instance (preserves charges)
-			Name = itemInstance.Template.Name
-		};
+		// Create item entity using factory (preserves ItemInstance state)
+		var itemEntity = context.EntityFactory.CreateItemFromInstance(itemInstance, player.GridPosition);
 
 		// Add to entity manager
 		context.EntityManager.AddEntity(itemEntity);

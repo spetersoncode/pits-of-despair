@@ -41,7 +41,8 @@ public partial class EntityFactory : Node
     }
 
     /// <summary>
-    /// Create an item from item ID and position it on the grid.
+    /// Create a new item from item ID and position it on the grid.
+    /// Creates a new ItemInstance with randomized charges.
     /// </summary>
     /// <param name="itemId">The item ID (YAML filename without extension).</param>
     /// <param name="position">The grid position to place the item.</param>
@@ -57,6 +58,36 @@ public partial class EntityFactory : Node
 
         // Create ItemInstance with randomized/specified charges
         var itemInstance = new ItemInstance(data);
+
+        // Delegate to builder for consistent entity construction
+        return BuildItemEntity(itemInstance, position);
+    }
+
+    /// <summary>
+    /// Creates an item entity from an existing ItemInstance.
+    /// Used when moving items from inventory to world (e.g., dropping items).
+    /// This preserves the item's state (charges, etc.) across the transition.
+    /// </summary>
+    /// <param name="itemInstance">The existing item instance with template and state.</param>
+    /// <param name="position">The grid position to place the item.</param>
+    /// <returns>The created and configured BaseEntity with ItemData.</returns>
+    public BaseEntity CreateItemFromInstance(ItemInstance itemInstance, GridPosition position)
+    {
+        return BuildItemEntity(itemInstance, position);
+    }
+
+    /// <summary>
+    /// Builds a BaseEntity from an existing ItemInstance.
+    /// This is the single source of truth for item entity construction,
+    /// ensuring consistent entity setup whether creating new items or
+    /// creating entities from inventory items being dropped.
+    /// </summary>
+    /// <param name="itemInstance">The item instance with template and state.</param>
+    /// <param name="position">Grid position for the entity.</param>
+    /// <returns>Configured BaseEntity ready to add to EntityManager.</returns>
+    private BaseEntity BuildItemEntity(ItemInstance itemInstance, GridPosition position)
+    {
+        var data = itemInstance.Template;
 
         // Create base entity for the item
         var entity = new BaseEntity

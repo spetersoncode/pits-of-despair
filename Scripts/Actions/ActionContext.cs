@@ -29,15 +29,22 @@ public class ActionContext
     /// </summary>
     public CombatSystem CombatSystem { get; }
 
+    /// <summary>
+    /// The entity factory for creating entities (e.g., dropping items).
+    /// </summary>
+    public EntityFactory EntityFactory { get; }
+
     public ActionContext(
         MapSystem mapSystem,
         EntityManager entityManager,
         Player player,
-        CombatSystem combatSystem)
+        CombatSystem combatSystem,
+        EntityFactory entityFactory)
     {
         MapSystem = mapSystem;
         EntityManager = entityManager;
         Player = player;
         CombatSystem = combatSystem;
+        EntityFactory = entityFactory;
     }
 }

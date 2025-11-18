@@ -137,7 +137,7 @@ public partial class GameLevel : Node
         _renderer.SetProjectileSystem(_projectileSystem);
 
         // Create action context for the action system
-        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem);
+        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory);
 
         // Wire up input handler
         _inputHandler.SetPlayer(_player);
@@ -160,6 +160,7 @@ public partial class GameLevel : Node
         _aiSystem.SetEntityManager(_entityManager);
         _aiSystem.SetTurnManager(_turnManager);
         _aiSystem.SetCombatSystem(_combatSystem);
+        _aiSystem.SetEntityFactory(_entityFactory);
 
         // Populate dungeon with creatures, items, etc.
         _spawnManager.PopulateDungeon();
