@@ -25,6 +25,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 
 **Core Systems**:
 - **[actions.md](actions.md)**: Action system architecture for turn-based entity behaviors
+- **[combat.md](combat.md)**: Combat resolution with opposed rolls, damage calculation, and attack types
 - **[components.md](components.md)**: Component-based entity composition patterns
 - **[dungeon-generator.md](dungeon-generator.md)**: Binary Space Partitioning algorithm for procedural dungeon generation
 - **[entities.md](entities.md)**: Entity architecture and lifecycle management
