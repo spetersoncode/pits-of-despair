@@ -1,6 +1,6 @@
 name: floor 1
 creatureBudget:
-  dice: "2d20+100"
+  dice: "2d20+60"
 itemBudget:
   dice: "5d10+25"
 goldBudget:
