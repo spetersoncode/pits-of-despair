@@ -96,6 +96,16 @@ public partial class GameHUD : Control
         // Subscribe to entity additions to connect their HealthComponents to message log
         entityManager.EntityAdded += OnEntityAdded;
 
+        // Connect existing entities that were added before HUD initialization
+        foreach (var entity in entityManager.GetAllEntities())
+        {
+            var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
+            if (healthComponent != null)
+            {
+                _messageLog.ConnectToHealthComponent(healthComponent, entity.DisplayName);
+            }
+        }
+
         // Also connect the player's HealthComponent (player is not added via EntityManager)
         var playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
         _messageLog.ConnectToHealthComponent(playerHealth, player.DisplayName);
