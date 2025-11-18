@@ -12,111 +12,51 @@ I am a professional Godot 4.5.1 C# developer and architect working collaborative
 
 ## About Pits of Despair
 
-**Pits of Despair** is a tile-based, top-down dungeon crawler roguelike in the tradition of classic dungeon crawlers. The game follows a prisoner condemned to die by exile into the Pits of Despair - a foreboding, ever-shifting dungeon complex filled with monsters and horrors.
+**Pits of Despair** is a tile-based, top-down dungeon crawler roguelike with classic turn-based mechanics, permadeath, and procedural generation. Players descend through increasingly difficult dungeon levels, managing resources and engaging in tactical combat.
 
-**Core Gameplay:**
-- Classic roguelike mechanics: turn-based movement, permadeath, procedural generation
-- Tile-based grid system with tactical positioning
-- Descending dungeon levels with increasing difficulty
-- Survival through careful resource management and strategic combat
-- Progression through discovery and adaptation
+## Documentation
 
-**Theme & Tone:**
-Dark, oppressive atmosphere with a focus on survival against overwhelming odds. The player must descend deeper into the Pits, seeking ultimate power to rule rather than become its latest victim.
+**Architecture Documentation**: The `Docs/` directory contains comprehensive design documentation for all major systems. Before implementing or modifying systems, consult the relevant documentation.
 
-**Catchphrase:** "Don't even think about trying to escape."
+**Key Documentation:**
+- `Docs/README.md` - Navigation hub and documentation index
+- **Core Systems**: Actions, Entities, Components, Turn-based, Dungeon Generation, Spawning
+- **Supporting Systems**: AI, Effects, Status Conditions
+- **Visual Systems**: Text Renderer, Color Palette, Glyphs
+- `Docs/documentation.md` - Documentation philosophy and guidelines
+
+**When to Consult Docs:**
+- Before implementing features in existing systems
+- When extending systems (new actions, effects, AI goals, spawn strategies, etc.)
+- To understand system interactions and integration points
+- When architectural questions arise
+
+**Documentation Philosophy**: Design-focused, token-efficient, implementation-agnostic. Documents capture architectural decisions and patterns, not implementation details. Each concept exists in one place with cross-references (DRY principle).
 
 ## Core Principles
 
-**Decoupling**: Use signals for cross-component communication. Avoid direct references between unrelated systems. Keep components independent, testable, and reusable.
-
-**Composition**: Build entities by composing child node components rather than deep inheritance chains. Godot's node system is designed for composition.
-
-**Separation of Concerns**: Create focused, single-responsibility classes. Break large systems into smaller, manageable components. Keep game logic separate from presentation.
-
-**Resource Management**: Use proper lifecycle methods (_Ready, _Process, _PhysicsProcess). Clean up resources and disconnect signals appropriately. Follow Godot's memory management patterns.
+- **Decoupling**: Signals for cross-component communication; avoid direct references between unrelated systems
+- **Composition**: Child node components over inheritance chains; Godot favors composition
+- **Separation of Concerns**: Single-responsibility classes; separate game logic from presentation
+- **Resource Management**: Proper lifecycle methods; clean up resources and signals
 
 ## Code Practices
 
-### Signals for Decoupling
+**Signals & Decoupling:**
+- Use signals (EmitSignal) instead of GetNode for cross-system communication
+- Avoid direct references between unrelated systems
+- Components communicate via signals; see `Docs/components.md` for patterns
 
-Use signals instead of direct references to keep systems independent.
-
-```csharp
-// ❌ Avoid - Tight coupling
-public partial class Enemy : Node2D
-{
-    private ScoreManager _scoreManager;
-
-    public override void _Ready()
-    {
-        _scoreManager = GetNode<ScoreManager>("/root/ScoreManager");
-    }
-
-    private void Die()
-    {
-        _scoreManager.AddScore(10);  // Direct dependency
-    }
-}
-
-// ✅ Prefer - Loose coupling
-public partial class Enemy : Node2D
-{
-    [Signal]
-    public delegate void DiedEventHandler(int scoreValue);
-
-    private void Die()
-    {
-        EmitSignal(SignalName.Died, 10);
-        QueueFree();
-    }
-}
-```
-
-### Composition Over Inheritance
-
-Compose child node components rather than building inheritance hierarchies.
-
-```csharp
-// ❌ Avoid - Rigid inheritance
-public partial class MovableEntity : Entity { }
-public partial class Worker : MovableEntity { }
-
-// ✅ Prefer - Flexible composition
-public partial class Worker : Node2D
-{
-    private MovementComponent _movement;
-    private HealthComponent _health;
-
-    public override void _Ready()
-    {
-        _movement = GetNode<MovementComponent>("MovementComponent");
-        _health = GetNode<HealthComponent>("HealthComponent");
-    }
-}
-```
-
-**Guidelines:**
-- Use inheritance for extending Godot nodes and true "is-a" relationships only
-- Use composition for optional behaviors and "has-a/can-do" relationships
+**Composition Guidelines:**
+- Inheritance only for Godot nodes and true "is-a" relationships
+- Composition for behaviors and "has-a/can-do" relationships
 - Avoid 3+ level inheritance chains
-- Add behavior as child nodes; use scene inheritance for visual reuse only
-- Components communicate via signals
+- Add behavior as child node components
 
-### Named Values Over Magic Numbers
-
-Replace hard-coded literals with descriptive names.
-
-```csharp
-// ❌ Avoid
-if (distance < 50) { }
-
-// ✅ Prefer
-[Export] public float InteractionRange { get; set; } = 50f;
-if (distance < InteractionRange) { }
-```
-
-Use `const` for fixed values, `[Export]` for designer-tweakable parameters, or configuration classes for shared settings. Acceptable: self-documenting math (`Mathf.Pi / 180f`) or clear conversions (`size / 2`).
+**Code Quality:**
+- Named constants/exports over magic numbers
+- Use `const` for fixed values, `[Export]` for designer-tweakable parameters
+- Self-documenting code with clear variable and method names
 
 ## Godot Conventions
 
@@ -160,18 +100,21 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) specificatio
 
 ### Development Process
 1. Understand requirements and clarify ambiguities
-2. Plan architecture and system interactions
-3. Implement incrementally in logical steps
-4. Use `dotnet build` to ensure no build errors
-5. Test and verify functionality
-6. Refactor for quality and maintainability
-7. Document complex logic
+2. **Consult relevant architecture documentation** in `Docs/` for existing systems
+3. Plan architecture and system interactions
+4. Implement incrementally in logical steps
+5. Use `dotnet build` to ensure no build errors
+6. Test and verify functionality
+7. Refactor for quality and maintainability
+8. Document complex logic (follow `Docs/documentation.md` guidelines)
 
 ### Communication
 - Ask clarifying questions when requirements are ambiguous
 - Explain architectural decisions and trade-offs
 - Suggest improvements and alternatives when appropriate
 - Be proactive about potential issues or technical debt
+- When documenting: Follow token-efficient, design-focused approach per `Docs/documentation.md`
+- When extending systems: Consult extensibility guides in relevant Docs (most include "Adding New [X]" sections)
 
 ---
 
