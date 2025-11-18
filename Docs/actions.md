@@ -119,59 +119,33 @@ Complete action integration requires implementing the action interface, register
 
 ### Action Implementation
 
-**Interface Definition**: Implement BaseAction abstract class defining GetName, CanExecute, and Execute methods. GetName returns descriptive identifier for logging and debugging. CanExecute performs side-effect-free validation checking preconditions. Execute applies effects assuming validation passed and returns detailed result.
+Implement BaseAction abstract class defining `GetName()`, `CanExecute()`, and `Execute()` methods. Validation must be pure—no state modifications, signal emissions, or component changes. Query for required components with GetNodeOrNull pattern, returning false if missing. Check spatial requirements (adjacency, line-of-sight) and game state preconditions (inventory space, resources, valid targets).
 
-**Validation Design**: CanExecute must be pure—no state modifications, no signal emissions, no component changes. Query for required components returning false if missing. Check game state preconditions (enough inventory space, valid target, sufficient resources). Validate spatial requirements (adjacency for melee, line-of-sight for ranged). AI and UI call CanExecute multiple times—performance matters but clarity matters more.
+Execution assumes validation passed—apply effects immediately without re-validation. Query components and call modification methods (HealthComponent.TakeDamage, InventoryComponent.AddItem). Emit signals for event notification. Construct ActionResult with success flag, descriptive message, and turn consumption flag.
 
-**Execution Contract**: Execute assumes CanExecute returned true—don't re-validate, apply effects immediately. Query components and call modification methods (HealthComponent.TakeDamage, InventoryComponent.AddItem). Emit signals for event notification (combat events, movement events). Construct ActionResult with success flag, descriptive message, and turn consumption flag. Messages follow existing tone and provide useful feedback.
+**Turn Consumption and Context**: Failed preconditions never consume turns (free retries). Successful execution usually consumes turn. ActionContext provides system access (MapSystem, EntityManager, CombatSystem)—request only needed systems. Actions work through component interfaces, not entity types.
 
-**Turn Consumption**: Determine whether action consumes turn through ActionResult.ConsumesTurn flag. Failed preconditions never consume turns (free retries). Successful execution usually consumes turn (movement, attacks, item use). Instant actions like examining or waiting might succeed without consuming turn. Clear turn economy prevents player frustration.
+**Result Messages**: Include descriptive feedback. Success messages confirm actions ("You move north"), failure messages explain rejection ("Path blocked"). Use third person for AI entities ("The goblin attacks").
 
-**Component Dependencies**: Actions work through component interfaces, not entity types. Query for components with GetNodeOrNull pattern. Missing components cause validation failure, not crashes. Required components documented in action class. Examples: movement needs position, attacks need AttackComponent, healing needs HealthComponent.
+**Design Considerations**: Consider both player and AI use cases. Player actions need clear feedback; AI actions need evaluable outcomes. Multi-step actions should decompose into atomic actions. Complex logic belongs in components—actions orchestrate, components implement.
 
-**Context Usage**: ActionContext provides access to game systems. MapSystem for spatial queries (walkable tiles, line-of-sight). EntityManager for entity lookup (position to entity, entity list). CombatSystem for combat resolution (damage calculation, armor application). ActionFactory for creating sub-actions (future). Request only needed systems—context provides minimal disclosure.
+### System Integration
 
-**Result Messages**: Include descriptive messages explaining what happened. Success messages confirm action ("You move north", "You hit the goblin for 5 damage"). Failure messages explain why action failed ("Path blocked", "No target in range"). Messages appear in message log and inform player decisions. Use third person for AI entities ("The goblin attacks").
+**Input Binding**: Input handler translates key presses to action instances (arrow keys → MovementAction, 'g' → PickupItemAction). Actions remain independent of input mechanism—same action works for player keyboard, gamepad, or AI selection. Input handler can call `CanExecute()` before execution for UI feedback and free validation.
 
-**Design Considerations**: Consider both player and AI use cases. Player actions need clear feedback; AI actions need evaluable outcomes. Spatial actions work with grid coordinates. Targeted actions validate target entity. Multi-step actions should decompose into simpler atomic actions. Complex logic belongs in components, not actions—actions orchestrate, components implement.
-
-### Input System Integration
-
-**Key Binding**: Player actions triggered by input handler translating key presses to action instances. Input handler maps keys to action creation (arrow keys → MovementAction with direction, 'g' → PickupItemAction at position, 'a-z' → ActivateItemAction with slot). Keeps actions independent of input mechanism—same action works for player keyboard, player gamepad, or AI selection.
-
-**Action Creation**: Input handler instantiates action with parameters from game state. Movement direction from key mapping. Item activation from inventory slot. Attack target from player position and facing. Action receives all required parameters in constructor—no hidden dependencies.
-
-**Validation Feedback**: Input handler can call CanExecute before execution for UI feedback. Show unavailable actions as disabled. Prevent invalid input (can't move into wall). Free validation enables responsive UI without turn consumption.
-
-### AI System Integration
-
-**Goal Selection**: AI goals evaluate game state and produce candidate actions. Threat detection creates AttackAction toward enemy. Low health creates FleeAction away from danger. Item pickup creates movement toward valuable items. Each goal scores actions by utility.
-
-**Action Scoring**: Goals rate actions by expected value. Attack actions scored by damage potential and hit chance. Movement actions scored by distance to objective. Healing actions scored by health deficit. Scores enable priority-based selection among competing goals.
-
-**Validation in Planning**: AI uses CanExecute to filter invalid actions before scoring. Don't score unreachable movement. Don't consider attacks without targets. Failed validation removes option from consideration. Enables AI to adapt to changing state.
-
-**Execution Feedback**: AI examines ActionResult to update world model. Success messages inform learning. Failure messages indicate obstacles. Turn consumption affects planning horizon. Results drive next decision cycle.
+**AI Integration**: AI goals evaluate state and produce candidate actions. Goals use `CanExecute()` to filter invalid actions before scoring. ActionResult feedback updates AI world model—success messages inform learning, turn consumption affects planning horizon.
 
 ### Testing and Validation
 
-**Unit Testing**: Actions are highly testable due to explicit dependencies. Mock ActionContext with test doubles. Create test entities with specific components. Call CanExecute and verify preconditions. Call Execute and verify component state changes. Validate ActionResult properties.
+Actions are highly testable due to explicit dependencies. Mock ActionContext with test doubles. Create test entities with specific components. Verify `CanExecute()` preconditions and `Execute()` state changes. Test with real components to verify signal emissions and turn consumption. Ensure `CanExecute()` and `Execute()` agree—if validation passes, execution must not fail on same state.
 
-**Integration Testing**: Test action with real components and systems. Verify signal emissions reach subscribers. Confirm turn consumption behavior. Test edge cases (blocked movement, invalid targets, missing resources). Ensure player and AI paths both work.
+### Implementation Examples
 
-**Validation Consistency**: CanExecute and Execute must agree. If CanExecute returns true, Execute must not fail on same state. Race conditions possible with delayed execution—mitigate by immediate execution after validation. Document any state dependencies.
+**Examine Action**: Read entity description without consuming turn. Validation checks entity exists at position. Execution retrieves description, emits message, returns success without turn cost.
 
-### Examples for Implementation
+**Throw Action**: Ranged item attack with arc trajectory. Validation checks item throwability, target range, and line-of-sight. Execution calculates damage, applies to target health, removes consumable item, emits combat signal, consumes turn. Demonstrates inventory and combat system integration.
 
-**Examine Action**: Read entity description without consuming turn. CanExecute checks entity exists at target position. Execute retrieves description from entity, emits message signal, returns success without turn consumption. No component modifications—pure information retrieval.
-
-**Rest Action**: Skip turn to recover resources (future: health regeneration, stamina recovery). CanExecute always returns true—can always wait. Execute emits wait message, triggers recovery effects through signals, consumes turn. Simple but enables resource regeneration mechanics.
-
-**Throw Action**: Ranged item attack with arc trajectory. CanExecute checks item is throwable, target in range, line-of-sight clear. Execute calculates damage, applies to target health, removes item from inventory (consumable), emits combat signal, consumes turn. Combines inventory and combat systems.
-
-**Shout Action**: Alert nearby entities to position. CanExecute always succeeds. Execute queries EntityManager for entities in radius, calls AlertComponent.AlertToPosition on each, emits sound event for audio, consumes turn. Enables stealth mechanics and AI aggro management.
-
-**Craft Action**: Combine items to create new item (future). CanExecute validates recipe exists, has required ingredients, inventory has space. Execute removes ingredients from inventory, adds crafted item, emits crafting signal, consumes turn. Complex validation with multiple resource checks.
+**Shout Action**: Alert nearby entities to position. Validation always succeeds. Execution queries EntityManager for entities in radius, calls AlertComponent.AlertToPosition on each, emits sound event, consumes turn. Enables stealth mechanics and AI coordination.
 
 ## Related Documentation
 

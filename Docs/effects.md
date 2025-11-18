@@ -68,23 +68,19 @@ Current instantaneous effect types demonstrate the system's flexibility and comp
 
 ## Extensibility
 
-### Adding Instantaneous Effects
+### Adding New Instantaneous Effects
 
-Complete effect integration requires touching four architectural layers: effect implementation, factory registration, data schema, and effect definition.
+Subclass Effect base class implementing Apply method that receives target entity and ActionContext. Query target for required components, returning failure result if missing. Apply modifications through component interfaces and return success result with message and color for UI feedback.
 
-**Effect Implementation**: Subclass Effect base class and implement Apply method receiving target entity and action context. Define constructor accepting parameters from YAML (amount, range, etc.). Query target for required components—return failure result if missing. Apply modifications through component interfaces. Return success result with message and color for UI feedback. Effect should validate all preconditions and fail gracefully.
+**Registration**: Register in ItemData factory by adding case to type switch, mapping string identifier to effect instantiation. Pass YAML parameters (amount, range, duration) to constructor. Handle invalid parameters with error logging. See **[actions.md](actions.md)** for detailed factory pattern.
 
-**Factory Registration**: Register effect in ItemData factory converting YAML definitions to effect instances. Add case to type switch mapping string identifier to effect instantiation. Pass parameters from effect definition to effect constructor. Handle missing or invalid parameters with error logging. Factory provides type safety boundary between untyped data and typed effect objects.
+**Configuration**: Create YAML item definitions using effect type identifier. Extend EffectDefinition structure only if new parameters needed beyond existing Type, Amount, Range, Duration fields. Effects automatically available to all item types. Test with simple consumable before complex compositions.
 
-**Data Schema**: Extend EffectDefinition data structure if effect requires parameters not already present. Effect definitions support Type (string identifier), Amount, Range, Duration fields. New parameter types require adding properties to definition structure and populating from YAML deserializer.
+**Design Considerations**: Component dependencies determine targetable entities. Spatial effects need MapSystem access through context. Multi-step effects decompose into simpler effects composed in YAML. Messages follow existing tone patterns.
 
-**Effect Definition**: Create YAML item definitions using new effect type. Specify type identifier matching factory case. Provide required parameters. Effects automatically available to any item type (potions, scrolls, wands, etc.). Test with simple consumable item before using in charged items or complex compositions.
+**Examples**: Direct damage (HealthComponent only). Attribute boosts (StatsComponent modifiers). Map revelation (MapSystem tile visibility). Summon creature (EntityManager spawning).
 
-**Design Considerations**: Component dependencies determine which entities effect can target. Spatial effects need map system access through context. Multi-step effects should decompose into simpler effects composed in YAML. Effect messages should follow existing tone and formatting patterns for consistency.
-
-**Examples for Implementation**: Direct damage (ignore armor, query HealthComponent only). Attribute boosts (query StatsComponent, apply temporary modifier). Map revelation (context provides MapSystem, mark tiles visible). Item identification (context provides inventory, mark item as identified). Summon creature (context provides EntityManager, spawn at position).
-
-### Adding Status Effects
+### Adding New Status Effects
 
 Status effects extend instantaneous effects with turn-based lifecycle requiring additional integration with StatusComponent and turn management. See **[status.md](status.md)** for complete implementation guide including status subclass creation, factory registration, lifecycle hooks, component integration, and turn processing patterns.
 

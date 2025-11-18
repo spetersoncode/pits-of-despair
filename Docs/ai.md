@@ -125,4 +125,4 @@ Register in `GoalFactory._goalRegistry` dictionary with string key. Add goal ID 
 
 ---
 
-*See also: [Actions](actions.md) for action system integration, [Components](components.md) for component architecture, [Turn System](turn-system.md) for turn coordination.*
+*See also: **[Actions](actions.md)** for action system integration, **[Components](components.md)** for component architecture, **[Turn System](turn-based.md)** for turn coordination.*

@@ -114,7 +114,7 @@ Add colors for: new semantic categories (status effects, UI states), material pr
 
 Don't add for: one-off tweaks, semantic duplicates, runtime variations (alpha/brightness), or personal preference.
 
-### Adding Process
+### Adding New Colors
 
 Choose semantic name, categorize appropriately, ensure high contrast against black, check distinctiveness, document meaning. Grow thoughtfully, not arbitrarily.
 

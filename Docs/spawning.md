@@ -84,21 +84,17 @@ The spawning system populates dungeon floors with creatures, items, and gold thr
 
 ## Extensibility
 
-### Adding Spawn Strategies
+### Adding New Spawn Strategies
 
-Complete spawn strategy integration requires strategy implementation, factory registration, and data configuration.
+Implement ISpawnStrategy interface with Name property and Execute method. Accept SpawnEntryData, available tiles, and occupied position set. Calculate entity count and positions using placement strategies. Call EntityFactory to create entities, register with EntityManager, add positions to occupied set, and return SpawnResult. Handle failures gracefully with partial or empty results.
 
-**Strategy Implementation**: Implement ISpawnStrategy interface with Name property and Execute method. Accept SpawnEntryData, available tiles, and occupied position set. Validate entry data—return empty result if invalid. Calculate entity count and positions using placement strategies. Call EntityFactory to create entities. Register entities with EntityManager. Add spawned positions to occupied set. Return SpawnResult with positions and count. Handle failures gracefully returning partial results or empty result.
+**Registration and Configuration**: Register strategy in SpawnManager InitializeStrategies dictionary. Update GetSpawnStrategy enum mapping. Extend SpawnEntryType if adding new type. Add type value to YAML schema only if existing types (single, multiple, band, unique) insufficient.
 
-**Strategy Registration**: Register strategy instance in SpawnManager InitializeStrategies. Add to _spawnStrategies dictionary with string key. Update GetSpawnStrategy method mapping SpawnEntryType enum to strategy. If adding new entry type, extend SpawnEntryType enum and update switch statement.
+**Design Considerations**: Work with any map topology. Respect occupied positions. Compose with placement strategies rather than custom positioning. Return meaningful counts for budget consumption. Log warnings for configuration issues.
 
-**Data Integration**: Add new type value to spawn entry YAML schema if needed. Existing types (single, multiple, band, unique) cover most cases. Complex strategies can repurpose existing types if behavior clear from context. Document YAML configuration requirements for designers including required fields and optional parameters.
+**Example Extensions**: Scattered placement for items across large areas. Guard formations around map features. Patrol routes along predefined paths. Ambush spawns near chokepoints.
 
-**Design Considerations**: Strategy should work with any map topology—not assume rooms or corridors. Respect occupied positions to prevent overlap. Use placement strategies rather than custom positioning—composition over custom logic. Return meaningful entity counts for budget consumption. Log warnings for configuration issues rather than failing silently.
-
-**Example Extensions**: Scattered placement strategy for items spread across large area. Guard formations placing defenders around critical map features. Patrol routes spawning creatures along predefined paths. Ambush spawns in specific room configurations or near chokepoints.
-
-### Adding Placement Strategies
+### Adding New Placement Strategies
 
 Placement strategies control spatial positioning requiring implementation and registration only—no data changes.
 
@@ -112,7 +108,7 @@ Placement strategies control spatial positioning requiring implementation and re
 
 **Example Extensions**: Perimeter placement around room edges. Corner placement in rectangular rooms. Diagonal or cardinal line formations. Spiral patterns outward from anchor. Distance-graduated placement (concentric rings). Cluster placement grouping entities tightly.
 
-### Adding Spawn Tables
+### Adding New Spawn Tables
 
 Spawn tables enable floor progression and biome variation requiring only data definition—no code changes.
 
