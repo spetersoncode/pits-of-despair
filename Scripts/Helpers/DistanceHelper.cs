@@ -31,8 +31,8 @@ public static class DistanceHelper
     }
 
     /// <summary>
-    /// Calculates squared Euclidean distance (L2 norm squared) between two grid positions.
-    /// This is an optimized version that avoids the expensive square root calculation.
+    /// Calculates Euclidean distance (L2 norm squared) between two grid positions.
+    /// Returns squared distance to avoid expensive square root calculation.
     ///
     /// Distance² = (x1 - x2)² + (y1 - y2)²
     ///
@@ -40,40 +40,16 @@ public static class DistanceHelper
     ///
     /// Use when:
     /// - You need circular areas of effect or ranges
-    /// - You only need to compare distances (not the actual value)
-    /// - Performance matters (vision systems, frequent range checks)
-    /// - You can compare squared values: distance² <= range²
+    /// - Vision systems and frequent range checks
+    /// - Modeling realistic sight/sound propagation
     ///
-    /// Note: Returns squared distance, not actual distance. To check if within range,
-    /// compare against range² to avoid sqrt: EuclideanDistanceSquared(a, b) <= range * range
+    /// Note: Returns squared distance for efficiency. To check if within range,
+    /// compare against range²: EuclideanDistance(a, b) <= range * range
     /// </summary>
-    public static int EuclideanDistanceSquared(GridPosition a, GridPosition b)
+    public static int EuclideanDistance(GridPosition a, GridPosition b)
     {
         int dx = a.X - b.X;
         int dy = a.Y - b.Y;
         return dx * dx + dy * dy;
-    }
-
-    /// <summary>
-    /// Calculates true Euclidean distance (L2 norm) between two grid positions.
-    /// This is the standard "straight-line" distance.
-    ///
-    /// Distance = √((x1 - x2)² + (y1 - y2)²)
-    ///
-    /// Creates circular-shaped ranges.
-    ///
-    /// Use when:
-    /// - You need the actual distance value (not just comparison)
-    /// - Circular areas of effect or ranges
-    /// - Physics calculations requiring real distance
-    ///
-    /// Note: More expensive than EuclideanDistanceSquared due to sqrt.
-    /// Prefer squared version when only comparing distances.
-    /// </summary>
-    public static float EuclideanDistance(GridPosition a, GridPosition b)
-    {
-        int dx = a.X - b.X;
-        int dy = a.Y - b.Y;
-        return Mathf.Sqrt(dx * dx + dy * dy);
     }
 }

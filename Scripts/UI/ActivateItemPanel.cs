@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using System.Linq;
@@ -111,11 +112,23 @@ public partial class ActivateItemPanel : PanelContainer
             // Check if item is equipped
             bool isEquipped = equipComponent != null && equipComponent.IsEquipped(slot.Key);
 
-            // Check if item is activatable (consumable or has charges > 0)
-            // Equipped items cannot be activated
-            bool isActivatable = !isEquipped &&
-                                 slot.Item.Template.IsActivatable() &&
-                                 (slot.Item.Template.GetIsConsumable() || slot.Item.CurrentCharges > 0);
+            // Check if item is activatable
+            // - Consumables and charged items: must not be equipped
+            // - Reach weapons (melee with range > 1): can be equipped
+            bool isActivatable;
+            if (isEquipped)
+            {
+                // Equipped items can only be activated if they're reach weapons
+                isActivatable = slot.Item.Template.Attack != null &&
+                               slot.Item.Template.Attack.Type == AttackType.Melee &&
+                               slot.Item.Template.Attack.Range > 1;
+            }
+            else
+            {
+                // Non-equipped items: activatable if consumable or have charges
+                isActivatable = slot.Item.Template.IsActivatable() &&
+                               (slot.Item.Template.GetIsConsumable() || slot.Item.CurrentCharges > 0);
+            }
 
             // Format: key) glyph name (count/charges) (equipped)
             string colorHex = isActivatable ? slot.Item.Template.Color : Palette.ToHex(Palette.Disabled);

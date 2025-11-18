@@ -66,15 +66,17 @@ public partial class TargetingSystem : Node
     /// <param name="origin">The position to target from (usually the player)</param>
     /// <param name="range">Maximum targeting range</param>
     /// <param name="requiresCreature">Whether targeting requires a creature (shows warning on empty tiles)</param>
-    public void StartTargeting(GridPosition origin, int range, bool requiresCreature = true)
+    public void StartTargeting(GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false)
     {
         _originPosition = origin;
         _maxRange = range;
         _requiresCreature = requiresCreature;
         _isActive = true;
 
-        // Calculate valid tiles using FOV
-        _validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem);
+        // Calculate valid tiles using FOV with appropriate distance metric
+        // Grid distance (Chebyshev) for tactical targeting, Euclidean for vision-based targeting
+        var distanceMetric = useGridDistance ? Helpers.DistanceMetric.Chebyshev : Helpers.DistanceMetric.Euclidean;
+        _validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem, distanceMetric);
 
         // Find all creatures in valid tiles
         _validCreatureTargets = new List<BaseEntity>();

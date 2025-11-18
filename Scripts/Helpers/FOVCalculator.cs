@@ -6,6 +6,23 @@ using PitsOfDespair.Systems;
 namespace PitsOfDespair.Helpers;
 
 /// <summary>
+/// Distance metric for range calculations.
+/// </summary>
+public enum DistanceMetric
+{
+    /// <summary>
+    /// Euclidean distance (circular area) - realistic vision/area effects.
+    /// </summary>
+    Euclidean,
+
+    /// <summary>
+    /// Chebyshev distance (square area) - grid-based targeting/movement.
+    /// Diagonals count as distance 1 (king's move).
+    /// </summary>
+    Chebyshev
+}
+
+/// <summary>
 /// Calculates field-of-view for grid-based vision systems.
 /// Uses the recursive shadowcasting algorithm for symmetric, efficient line-of-sight.
 /// </summary>
@@ -18,8 +35,13 @@ public static class FOVCalculator
     /// <param name="origin">The grid position to calculate vision from</param>
     /// <param name="range">Maximum vision distance in tiles</param>
     /// <param name="mapSystem">Map system to query for blocking tiles</param>
+    /// <param name="distanceMetric">Distance metric to use (Euclidean for circular, Chebyshev for square)</param>
     /// <returns>HashSet of all visible grid positions</returns>
-    public static HashSet<GridPosition> CalculateVisibleTiles(GridPosition origin, int range, MapSystem mapSystem)
+    public static HashSet<GridPosition> CalculateVisibleTiles(
+        GridPosition origin,
+        int range,
+        MapSystem mapSystem,
+        DistanceMetric distanceMetric = DistanceMetric.Euclidean)
     {
         var visibleTiles = new HashSet<GridPosition>();
 
@@ -29,7 +51,7 @@ public static class FOVCalculator
         // Cast shadows in all 8 octants
         for (int octant = 0; octant < 8; octant++)
         {
-            CastLight(visibleTiles, mapSystem, origin, range, 1, 1.0f, 0.0f, octant);
+            CastLight(visibleTiles, mapSystem, origin, range, 1, 1.0f, 0.0f, octant, distanceMetric);
         }
 
         return visibleTiles;
@@ -46,7 +68,8 @@ public static class FOVCalculator
         int row,
         float startSlope,
         float endSlope,
-        int octant)
+        int octant,
+        DistanceMetric distanceMetric)
     {
         if (startSlope < endSlope)
         {
@@ -76,9 +99,22 @@ public static class FOVCalculator
                 // Transform octant coordinates to actual map coordinates
                 GridPosition current = TransformOctant(origin, dx, dy, octant);
 
-                // Check if tile is in range (using squared distance to avoid sqrt)
-                int distanceSquared = DistanceHelper.EuclideanDistanceSquared(current, origin);
-                if (distanceSquared <= range * range)
+                // Check if tile is in range using the specified distance metric
+                bool inRange;
+                if (distanceMetric == DistanceMetric.Euclidean)
+                {
+                    // Euclidean: circular range (returns squared distance)
+                    int distanceSquared = DistanceHelper.EuclideanDistance(current, origin);
+                    inRange = distanceSquared <= range * range;
+                }
+                else // Chebyshev
+                {
+                    // Chebyshev: square range (grid-based, diagonals = 1)
+                    int distance = DistanceHelper.ChebyshevDistance(current, origin);
+                    inRange = distance <= range;
+                }
+
+                if (inRange)
                 {
                     visibleTiles.Add(current);
                 }
@@ -111,7 +147,7 @@ public static class FOVCalculator
                         blocked = true;
 
                         // Recursively scan the shadowed area
-                        CastLight(visibleTiles, mapSystem, origin, range, i + 1, startSlope, leftSlope, octant);
+                        CastLight(visibleTiles, mapSystem, origin, range, i + 1, startSlope, leftSlope, octant, distanceMetric);
 
                         nextStartSlope = rightSlope;
                     }

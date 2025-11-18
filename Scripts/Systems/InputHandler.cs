@@ -38,6 +38,7 @@ public partial class InputHandler : Node
     private PlayerVisionSystem _visionSystem;
     private TargetingSystem _targetingSystem;
     private char? _pendingItemKey = null;
+    private bool _isReachAttack = false;
 
     /// <summary>
     /// Sets the player to control.
@@ -86,6 +87,7 @@ public partial class InputHandler : Node
         if (_gameHUD != null)
         {
             _gameHUD.StartItemTargeting += OnStartItemTargeting;
+            _gameHUD.StartReachAttackTargeting += OnStartReachAttackTargeting;
         }
     }
 
@@ -211,7 +213,8 @@ public partial class InputHandler : Node
                     int range = GetRangedWeaponRange();
                     if (range > 0)
                     {
-                        _targetingSystem.StartTargeting(_player.GridPosition, range);
+                        // Use Chebyshev (grid-based) distance for tactical targeting
+                        _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true, useGridDistance: true);
                         _gameHUD.EnterTargetingMode();
                     }
                 }
@@ -365,13 +368,38 @@ public partial class InputHandler : Node
 
         // Store the pending item key
         _pendingItemKey = itemKey;
+        _isReachAttack = false;
 
         // Get the item to determine range
         var slot = _player.GetInventorySlot(itemKey);
         if (slot != null)
         {
             int range = slot.Item.Template.GetTargetingRange();
-            _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true);
+            // Use Chebyshev (grid-based) distance for consistent tactical targeting
+            _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true, useGridDistance: true);
+        }
+    }
+
+    /// <summary>
+    /// Called when user requests to use a reach attack with an equipped weapon.
+    /// Starts targeting mode for the reach attack.
+    /// </summary>
+    private void OnStartReachAttackTargeting(char itemKey)
+    {
+        if (_player == null || _targetingSystem == null)
+            return;
+
+        // Store the pending item key and mark as reach attack
+        _pendingItemKey = itemKey;
+        _isReachAttack = true;
+
+        // Get the weapon to determine range
+        var slot = _player.GetInventorySlot(itemKey);
+        if (slot != null && slot.Item.Template.Attack != null)
+        {
+            int range = slot.Item.Template.Attack.Range;
+            // Use Chebyshev (grid-based) distance for reach attacks
+            _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true, useGridDistance: true);
         }
     }
 
@@ -391,15 +419,33 @@ public partial class InputHandler : Node
             _gameHUD.ExitTargetingMode();
         }
 
-        // Check if we're targeting for an item or ranged weapon
+        // Check if we're targeting for an item, reach attack, or ranged weapon
         if (_pendingItemKey.HasValue)
         {
-            // Execute targeted item action
-            var itemAction = new ActivateTargetedItemAction(_pendingItemKey.Value, GridPosition.FromVector2I(targetPosition));
-            _player.ExecuteAction(itemAction, _actionContext);
+            if (_isReachAttack)
+            {
+                // Execute reach attack action
+                // Get the equipped weapon's attack index
+                var attackComponent = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
+                if (attackComponent != null)
+                {
+                    var reachAttackAction = new ReachAttackAction(GridPosition.FromVector2I(targetPosition), attackIndex: 0);
+                    _player.ExecuteAction(reachAttackAction, _actionContext);
+                }
 
-            // Clear pending item
-            _pendingItemKey = null;
+                // Clear pending state
+                _pendingItemKey = null;
+                _isReachAttack = false;
+            }
+            else
+            {
+                // Execute targeted item action
+                var itemAction = new ActivateTargetedItemAction(_pendingItemKey.Value, GridPosition.FromVector2I(targetPosition));
+                _player.ExecuteAction(itemAction, _actionContext);
+
+                // Clear pending item
+                _pendingItemKey = null;
+            }
         }
         else
         {
@@ -443,8 +489,9 @@ public partial class InputHandler : Node
             _gameHUD.ExitTargetingMode();
         }
 
-        // Clear pending item if any
+        // Clear pending item and reach attack state
         _pendingItemKey = null;
+        _isReachAttack = false;
 
         // No turn consumed
     }

@@ -80,7 +80,7 @@ Actions are the atomic unit of turn consumption. Player/creatures execute one ac
 
 **Movement & Positioning**: Grid movement with collision, waiting/resting
 
-**Combat**: Melee (adjacent), ranged (line-of-sight), area effects (future)
+**Combat**: Melee (adjacent), reach (extended melee with LOS), ranged (line-of-sight), area effects (future)
 
 **Inventory**: Pickup, drop, equip/unequip, item activation
 
@@ -146,6 +146,8 @@ Actions are highly testable due to explicit dependencies. Mock ActionContext wit
 **Throw Action**: Ranged item attack with arc trajectory. Validation checks item throwability, target range, and line-of-sight. Execution calculates damage, applies to target health, removes consumable item, emits combat signal, consumes turn. Demonstrates inventory and combat system integration.
 
 **Shout Action**: Alert nearby entities to position. Validation always succeeds. Execution queries EntityManager for entities in radius, calls AlertComponent.AlertToPosition on each, emits sound event, consumes turn. Enables stealth mechanics and AI coordination.
+
+**Reach Attack Action**: Melee weapon attack with extended range (e.g., spears). Validation checks weapon is melee type with range > 1, target within weapon range using Chebyshev distance, line-of-sight to target (unlike basic melee), and target has health component. Execution uses standard melee mechanics (STR modifier for attack/damage) via AttackComponent.RequestAttack. Demonstrates hybrid combat mechanics—melee damage model with ranged targeting requirements. Activated via activate menu (A key) for equipped reach weapons, entering targeting mode.
 
 ## Related Documentation
 

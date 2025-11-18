@@ -353,7 +353,8 @@ public partial class TextRenderer : Control
 			{
 				foreach (var tile in _targetingSystem.ValidTiles)
 				{
-					Vector2 tileWorldPos = new Vector2(tile.X * TileSize, tile.Y * TileSize);
+					// Apply same Y offset as entity rendering for visual alignment
+					Vector2 tileWorldPos = new Vector2(tile.X * TileSize, tile.Y * TileSize - TileSize);
 					Vector2 tileDrawPos = offset + tileWorldPos;
 
 					// Draw subtle background highlight for tiles in range

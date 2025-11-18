@@ -74,6 +74,8 @@ itemPools:
     entries:
       - itemId: scroll_teleport
 
+      - itemId: weapon_spear
+
   - id: rare
     weight: 5
     entries:

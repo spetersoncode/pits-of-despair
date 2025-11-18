@@ -279,11 +279,19 @@ public class ItemData
 
     /// <summary>
     /// Determines if this item can be activated from inventory.
-    /// Items are activatable if they are consumable or have charges.
+    /// Items are activatable if they are consumable, have charges, or are reach weapons (melee weapons with range > 1).
     /// </summary>
     public bool IsActivatable()
     {
-        return GetIsConsumable() || !string.IsNullOrEmpty(ChargesDice);
+        // Consumables and charged items
+        if (GetIsConsumable() || !string.IsNullOrEmpty(ChargesDice))
+            return true;
+
+        // Reach weapons (melee weapons with range > 1)
+        if (Attack != null && Attack.Type == AttackType.Melee && Attack.Range > 1)
+            return true;
+
+        return false;
     }
 
     /// <summary>

@@ -1,0 +1,9 @@
+name: spear
+type: weapon
+glyph: "/"
+color: Steel
+equipSlot: MeleeWeapon
+attack:
+  type: Melee
+  dice: "1d6"
+  range: 2

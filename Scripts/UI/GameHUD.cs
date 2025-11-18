@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 
@@ -25,6 +26,9 @@ public partial class GameHUD : Control
 {
     [Signal]
     public delegate void StartItemTargetingEventHandler(char itemKey);
+
+    [Signal]
+    public delegate void StartReachAttackTargetingEventHandler(char itemKey);
 
     private SidePanel _sidePanel;
     private MessageLog _messageLog;
@@ -286,9 +290,27 @@ public partial class GameHUD : Control
         _activateItemPanel.HideMenu();
         _currentMenuState = MenuState.None;
 
-        // Get the item to check if it requires targeting
+        // Get the item to check what type of activation it needs
         var slot = _player.GetInventorySlot(key);
-        if (slot != null && slot.Item.Template.RequiresTargeting())
+        if (slot == null)
+        {
+            return;
+        }
+
+        var equipComponent = _player.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
+        bool isEquipped = equipComponent != null && equipComponent.IsEquipped(key);
+
+        // Check if this is a reach weapon (equipped melee weapon with range > 1)
+        if (isEquipped &&
+            slot.Item.Template.Attack != null &&
+            slot.Item.Template.Attack.Type == AttackType.Melee &&
+            slot.Item.Template.Attack.Range > 1)
+        {
+            // Reach weapon - signal InputHandler to start reach attack targeting
+            EmitSignal(SignalName.StartReachAttackTargeting, key);
+            EnterTargetingMode();
+        }
+        else if (slot.Item.Template.RequiresTargeting())
         {
             // Item requires targeting - signal InputHandler to start targeting
             EmitSignal(SignalName.StartItemTargeting, key);
