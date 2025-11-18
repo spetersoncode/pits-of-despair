@@ -29,12 +29,12 @@ public class CreatureData
         ["goblinoid"] = new CreatureTypeInfo
         {
             DefaultGlyph = "g",
-            DefaultColor = Palette.ToHex(Palette.Common)
+            DefaultColor = Palette.ToHex(Palette.Default)
         },
         ["vermin"] = new CreatureTypeInfo
         {
             DefaultGlyph = "r",
-            DefaultColor = Palette.ToHex(Palette.Common)
+            DefaultColor = Palette.ToHex(Palette.Default)
         }
     };
 

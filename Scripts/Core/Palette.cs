@@ -59,25 +59,6 @@ public static class Palette
 
     #endregion
 
-    #region UI - Mana States
-
-    /// <summary>Mana bar at full capacity (>80%)</summary>
-    public static readonly Color ManaFull = new("#5566DD");
-
-    /// <summary>Mana bar at high level (60-80%)</summary>
-    public static readonly Color ManaHigh = new("#6677DD");
-
-    /// <summary>Mana bar at medium level (40-60%)</summary>
-    public static readonly Color ManaMedium = new("#7788DD");
-
-    /// <summary>Mana bar at low level (20-40%)</summary>
-    public static readonly Color ManaLow = new("#8899DD");
-
-    /// <summary>Mana bar empty or critical (&lt;20%)</summary>
-    public static readonly Color ManaEmpty = new("#9AAAEE");
-
-    #endregion
-
     #region UI - Targeting System
 
     /// <summary>Targeting range overlay background</summary>
@@ -91,31 +72,6 @@ public static class Palette
 
     /// <summary>Targeting trace line from player to cursor</summary>
     public static readonly Color TargetingLine = new("#CCCC4D");
-
-    #endregion
-
-    #region Items - Quality Tiers
-
-    /// <summary>Common quality item (gray-white)</summary>
-    public static readonly Color Common = new("#999999");
-
-    /// <summary>Uncommon quality item (green)</summary>
-    public static readonly Color Uncommon = new("#66DD66");
-
-    /// <summary>Rare quality item (blue)</summary>
-    public static readonly Color Rare = new("#5588FF");
-
-    /// <summary>Epic quality item (purple)</summary>
-    public static readonly Color Epic = new("#AA55DD");
-
-    /// <summary>Legendary quality item (orange)</summary>
-    public static readonly Color Legendary = new("#FFAA00");
-
-    /// <summary>Artifact quality, powerful unique item (cyan)</summary>
-    public static readonly Color Artifact = new("#77BBBB");
-
-    /// <summary>Unique item, one-of-a-kind (lavender-purple)</summary>
-    public static readonly Color Unique = new("#BB88DD");
 
     #endregion
 
@@ -238,7 +194,7 @@ public static class Palette
     /// <summary>Clay, earthy reddish-brown</summary>
     public static readonly Color Clay = new("#8B6B51");
 
-    /// <summary>Rust, aggressive red-orange for ruffians</summary>
+    /// <summary>Rust, aggressive red-orange color</summary>
     public static readonly Color Rust = new("#AA5533");
 
     /// <summary>Blood, dark red organic fluid</summary>
