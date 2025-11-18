@@ -50,7 +50,7 @@ public partial class HelpModal : PanelContainer
     {
         var content = new System.Text.StringBuilder();
 
-        content.AppendLine($"[center][color={Palette.ToHex(Palette.Player)}]═══ PITS OF DESPAIR - CONTROLS ═══[/color][/center]");
+        content.AppendLine($"[center][color={Palette.ToHex(Palette.Player)}]═══ PITS OF DESPAIR - HOW TO PLAY ═══[/color][/center]");
         content.AppendLine();
 
         // Movement
@@ -82,6 +82,16 @@ public partial class HelpModal : PanelContainer
         content.AppendLine($"[color={Palette.ToHex(Palette.Alert)}]OTHER[/color]");
         content.AppendLine("  ? - Show this help screen");
         content.AppendLine("  Escape - Close menus");
+        content.AppendLine();
+
+        // Stats
+        content.AppendLine($"[color={Palette.ToHex(Palette.Cyan)}]STATS[/color]");
+        content.AppendLine("  Strength - Increases melee attack accuracy and damage");
+        content.AppendLine("  Agility - Increases ranged attack accuracy and evasion");
+        content.AppendLine("  Endurance - Increases maximum hit points");
+        content.AppendLine("  Will - Reserved for future magic abilities");
+        content.AppendLine("  Armor - Reduces damage taken from attacks");
+        content.AppendLine("  Evasion - Your ability to dodge attacks (heavy armor reduces this)");
         content.AppendLine();
 
         content.AppendLine($"[center][color={Palette.ToHex(Palette.Disabled)}]Press Escape or ? to close[/color][/center]");
