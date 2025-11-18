@@ -1,0 +1,7 @@
+name: confusion
+type: scroll
+color: Violet
+effects:
+  - type: apply_status
+    statusType: confusion
+    durationDice: 2d3

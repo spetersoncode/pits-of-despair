@@ -67,6 +67,8 @@ itemPools:
 
       - itemId: scroll_blink
 
+      - itemId: scroll_confusion
+
   - id: uncommon
     weight: 25
     entries:

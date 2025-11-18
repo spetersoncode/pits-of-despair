@@ -26,6 +26,7 @@ public partial class TargetingSystem : Node
     private List<BaseEntity> _validCreatureTargets;
     private int _currentCreatureIndex = -1;
     private bool _isActive = false;
+    private bool _requiresCreature = true;
 
     private MapSystem _mapSystem;
     private EntityManager _entityManager;
@@ -34,6 +35,11 @@ public partial class TargetingSystem : Node
     /// Gets whether targeting mode is currently active.
     /// </summary>
     public bool IsActive => _isActive;
+
+    /// <summary>
+    /// Gets whether this targeting mode requires a creature target.
+    /// </summary>
+    public bool RequiresCreature => _requiresCreature;
 
     /// <summary>
     /// Gets the current cursor position.
@@ -59,10 +65,12 @@ public partial class TargetingSystem : Node
     /// </summary>
     /// <param name="origin">The position to target from (usually the player)</param>
     /// <param name="range">Maximum targeting range</param>
-    public void StartTargeting(GridPosition origin, int range)
+    /// <param name="requiresCreature">Whether targeting requires a creature (shows warning on empty tiles)</param>
+    public void StartTargeting(GridPosition origin, int range, bool requiresCreature = true)
     {
         _originPosition = origin;
         _maxRange = range;
+        _requiresCreature = requiresCreature;
         _isActive = true;
 
         // Calculate valid tiles using FOV

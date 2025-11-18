@@ -231,6 +231,13 @@ public static class Palette
 
     #endregion
 
+    #region Scrolls
+
+    /// <summary>Violet scroll color (mind-affecting magic)</summary>
+    public static readonly Color Violet = new("#9966DD");
+
+    #endregion
+
     #region Effects - Magical
 
     /// <summary>Barkskin, olive-brown nature magic (tree-like protection)</summary>

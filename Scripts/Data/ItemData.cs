@@ -284,6 +284,36 @@ public class ItemData
     }
 
     /// <summary>
+    /// Determines if this item requires targeting when activated.
+    /// Currently, items with "confusion" status effects require targeting.
+    /// </summary>
+    public bool RequiresTargeting()
+    {
+        // Check if any effect is an apply_status effect with confusion type
+        foreach (var effectDef in Effects)
+        {
+            if (effectDef.Type?.ToLower() == "apply_status" &&
+                effectDef.StatusType?.ToLower() == "confusion")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets the targeting range for this item.
+    /// Returns the range specified in effects, or a default of 8 if not specified.
+    /// </summary>
+    public int GetTargetingRange()
+    {
+        // For now, return a default range for all targeted items
+        // In the future, this could be specified in the YAML
+        return 8;
+    }
+
+    /// <summary>
     /// Converts this data to a Godot Color object.
     /// </summary>
     public Color GetColor()
@@ -320,6 +350,19 @@ public class ItemData
             case "blink":
                 return new BlinkEffect(definition.Range);
 
+            case "apply_status":
+                // Generic status effect - uses StatusType and DurationDice from definition
+                string statusType = definition.StatusType ?? string.Empty;
+                string durationDice = definition.DurationDice ?? string.Empty;
+
+                if (string.IsNullOrEmpty(statusType))
+                {
+                    GD.PrintErr($"ItemData.CreateEffect: apply_status effect in item '{Name}' has no statusType specified");
+                    return null;
+                }
+
+                return new ApplyStatusEffect(statusType, definition.Amount, definition.Duration, durationDice);
+
             case "armor_buff":
                 return new ApplyStatusEffect("armor_buff", definition.Amount, definition.Duration);
 
@@ -348,7 +391,7 @@ public class ItemData
 public class EffectDefinition
 {
     /// <summary>
-    /// The type of effect (e.g., "heal", "damage", "teleport").
+    /// The type of effect (e.g., "heal", "damage", "teleport", "apply_status").
     /// </summary>
     public string Type { get; set; } = string.Empty;
 
@@ -366,4 +409,14 @@ public class EffectDefinition
     /// Duration parameter for status effects (in turns).
     /// </summary>
     public int Duration { get; set; } = 0;
+
+    /// <summary>
+    /// Dice notation for duration (e.g., "2d3", "1d4"). Overrides Duration if specified.
+    /// </summary>
+    public string? DurationDice { get; set; } = null;
+
+    /// <summary>
+    /// Status type for apply_status effects (e.g., "confusion", "armor_buff").
+    /// </summary>
+    public string? StatusType { get; set; } = null;
 }

@@ -54,21 +54,22 @@ public partial class StatusComponent : Node
 
     #region Initialization
 
+    private bool _isConnected = false;
+
     public override void _Ready()
     {
-        // Find TurnManager by traversing up to GameLevel then searching for TurnManager
-        // StatusComponent is on Player/Creature, which is child of GameLevel
-        Node gameLevel = GetParent()?.GetParent();
-        if (gameLevel == null)
+        // Prevent duplicate connections
+        if (_isConnected)
         {
-            GD.PrintErr("StatusComponent: Cannot find GameLevel (parent's parent is null)");
             return;
         }
 
-        _turnManager = gameLevel.GetNodeOrNull<TurnManager>("TurnManager");
+        // Find TurnManager in GameLevel
+        _turnManager = GetTree().Root.GetNodeOrNull<TurnManager>("GameLevel/TurnManager");
+
         if (_turnManager == null)
         {
-            GD.PrintErr("StatusComponent: TurnManager not found in GameLevel");
+            GD.PrintErr("StatusComponent: TurnManager not found at GameLevel/TurnManager");
             return;
         }
 
@@ -82,7 +83,7 @@ public partial class StatusComponent : Node
             _turnManager.CreatureTurnsStarted += OnTurnStarted;
         }
 
-        GD.Print($"StatusComponent: Successfully connected to TurnManager (IsPlayerControlled={IsPlayerControlled})");
+        _isConnected = true;
     }
 
     public override void _ExitTree()
@@ -225,8 +226,6 @@ public partial class StatusComponent : Node
 
         foreach (var status in _activeStatuses)
         {
-            GD.Print($"  Processing status: {status.Name}, Remaining: {status.RemainingTurns} turns");
-
             // Let status do per-turn processing (e.g., poison damage)
             string turnMessage = status.OnTurnProcessed(target);
             if (!string.IsNullOrEmpty(turnMessage))
@@ -236,12 +235,10 @@ public partial class StatusComponent : Node
 
             // Decrement remaining turns
             status.RemainingTurns--;
-            GD.Print($"  After decrement: {status.RemainingTurns} turns remaining");
 
             // Mark as expired if duration reached
             if (status.RemainingTurns <= 0)
             {
-                GD.Print($"  Status {status.Name} expired!");
                 expiredStatuses.Add(status);
             }
         }
@@ -250,7 +247,6 @@ public partial class StatusComponent : Node
         foreach (var status in expiredStatuses)
         {
             string removeMessage = RemoveStatus(status);
-            GD.Print($"  Removed status: {status.Name}, Message: {removeMessage}");
             if (!string.IsNullOrEmpty(removeMessage))
             {
                 EmitSignal(SignalName.StatusMessage, removeMessage);

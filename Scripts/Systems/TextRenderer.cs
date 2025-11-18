@@ -388,9 +388,9 @@ public partial class TextRenderer : Control
 				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
 				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
 			}
-			else
+			else if (_targetingSystem.RequiresCreature)
 			{
-				// Draw pulsing red tint for empty tile (no target)
+				// Draw pulsing red tint for empty tile (only if targeting requires a creature)
 				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.1 + 0.15);
 				Color baseColor = Palette.TargetingInvalid;
 				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);

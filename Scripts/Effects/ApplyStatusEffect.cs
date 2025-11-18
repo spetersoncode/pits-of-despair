@@ -3,6 +3,7 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Status;
 
 namespace PitsOfDespair.Effects;
@@ -13,7 +14,7 @@ namespace PitsOfDespair.Effects;
 public class ApplyStatusEffect : Effect
 {
     /// <summary>
-    /// The type of status to apply (e.g., "armor_buff", "poison", "paralyze").
+    /// The type of status to apply (e.g., "armor_buff", "poison", "paralyze", "confusion").
     /// </summary>
     public string StatusType { get; set; }
 
@@ -27,6 +28,11 @@ public class ApplyStatusEffect : Effect
     /// </summary>
     public int Duration { get; set; }
 
+    /// <summary>
+    /// Dice notation for duration (e.g., "2d3"). Overrides Duration if specified.
+    /// </summary>
+    public string DurationDice { get; set; }
+
     public override string Name => "Apply Status";
 
     public ApplyStatusEffect()
@@ -34,13 +40,15 @@ public class ApplyStatusEffect : Effect
         StatusType = string.Empty;
         Amount = 0;
         Duration = 0;
+        DurationDice = string.Empty;
     }
 
-    public ApplyStatusEffect(string statusType, int amount, int duration)
+    public ApplyStatusEffect(string statusType, int amount, int duration, string durationDice = "")
     {
         StatusType = statusType;
         Amount = amount;
         Duration = duration;
+        DurationDice = durationDice;
     }
 
     public override EffectResult Apply(BaseEntity target, ActionContext context)
@@ -57,8 +65,15 @@ public class ApplyStatusEffect : Effect
             );
         }
 
+        // Determine actual duration (roll dice if specified, otherwise use Duration)
+        int actualDuration = Duration;
+        if (!string.IsNullOrEmpty(DurationDice))
+        {
+            actualDuration = DiceRoller.Roll(DurationDice);
+        }
+
         // Create the appropriate status based on type
-        var status = CreateStatus(StatusType, Amount, Duration);
+        var status = CreateStatus(StatusType, Amount, actualDuration);
         if (status == null)
         {
             GD.PrintErr($"ApplyStatusEffect: Unknown status type '{StatusType}'");
@@ -98,6 +113,9 @@ public class ApplyStatusEffect : Effect
 
             case "endurance_buff":
                 return new EnduranceBuffStatus(amount, duration);
+
+            case "confusion":
+                return new ConfusionStatus(duration);
 
             default:
                 return null;

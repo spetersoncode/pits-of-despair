@@ -37,6 +37,7 @@ public partial class InputHandler : Node
     private GameHUD _gameHUD;
     private PlayerVisionSystem _visionSystem;
     private TargetingSystem _targetingSystem;
+    private char? _pendingItemKey = null;
 
     /// <summary>
     /// Sets the player to control.
@@ -80,6 +81,12 @@ public partial class InputHandler : Node
     public void SetGameHUD(GameHUD gameHUD)
     {
         _gameHUD = gameHUD;
+
+        // Connect to item targeting signal
+        if (_gameHUD != null)
+        {
+            _gameHUD.StartItemTargeting += OnStartItemTargeting;
+        }
     }
 
     /// <summary>
@@ -348,7 +355,28 @@ public partial class InputHandler : Node
     }
 
     /// <summary>
-    /// Called when targeting is confirmed. Executes ranged attack action.
+    /// Called when user requests to target an item.
+    /// Starts targeting mode for the specified item.
+    /// </summary>
+    private void OnStartItemTargeting(char itemKey)
+    {
+        if (_player == null || _targetingSystem == null)
+            return;
+
+        // Store the pending item key
+        _pendingItemKey = itemKey;
+
+        // Get the item to determine range
+        var slot = _player.GetInventorySlot(itemKey);
+        if (slot != null)
+        {
+            int range = slot.Item.Template.GetTargetingRange();
+            _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true);
+        }
+    }
+
+    /// <summary>
+    /// Called when targeting is confirmed. Executes ranged attack or targeted item action.
     /// </summary>
     private void OnTargetConfirmed(Vector2I targetPosition)
     {
@@ -363,32 +391,45 @@ public partial class InputHandler : Node
             _gameHUD.ExitTargetingMode();
         }
 
-        // Find the ranged attack index
-        var attackComponent = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
-        if (attackComponent == null)
+        // Check if we're targeting for an item or ranged weapon
+        if (_pendingItemKey.HasValue)
         {
-            return;
-        }
+            // Execute targeted item action
+            var itemAction = new ActivateTargetedItemAction(_pendingItemKey.Value, GridPosition.FromVector2I(targetPosition));
+            _player.ExecuteAction(itemAction, _actionContext);
 
-        int rangedAttackIndex = -1;
-        for (int i = 0; i < attackComponent.Attacks.Count; i++)
+            // Clear pending item
+            _pendingItemKey = null;
+        }
+        else
         {
-            var attack = attackComponent.Attacks[i];
-            if (attack != null && attack.Type == AttackType.Ranged)
+            // Find the ranged attack index
+            var attackComponent = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
+            if (attackComponent == null)
             {
-                rangedAttackIndex = i;
-                break;
+                return;
             }
-        }
 
-        if (rangedAttackIndex == -1)
-        {
-            return;
-        }
+            int rangedAttackIndex = -1;
+            for (int i = 0; i < attackComponent.Attacks.Count; i++)
+            {
+                var attack = attackComponent.Attacks[i];
+                if (attack != null && attack.Type == AttackType.Ranged)
+                {
+                    rangedAttackIndex = i;
+                    break;
+                }
+            }
 
-        // Execute ranged attack action
-        var rangedAttackAction = new RangedAttackAction(GridPosition.FromVector2I(targetPosition), rangedAttackIndex);
-        _player.ExecuteAction(rangedAttackAction, _actionContext);
+            if (rangedAttackIndex == -1)
+            {
+                return;
+            }
+
+            // Execute ranged attack action
+            var rangedAttackAction = new RangedAttackAction(GridPosition.FromVector2I(targetPosition), rangedAttackIndex);
+            _player.ExecuteAction(rangedAttackAction, _actionContext);
+        }
     }
 
     /// <summary>
@@ -401,6 +442,9 @@ public partial class InputHandler : Node
         {
             _gameHUD.ExitTargetingMode();
         }
+
+        // Clear pending item if any
+        _pendingItemKey = null;
 
         // No turn consumed
     }

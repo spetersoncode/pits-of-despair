@@ -23,6 +23,9 @@ public enum MenuState
 /// </summary>
 public partial class GameHUD : Control
 {
+    [Signal]
+    public delegate void StartItemTargetingEventHandler(char itemKey);
+
     private SidePanel _sidePanel;
     private MessageLog _messageLog;
     private InventoryPanel _inventoryPanel;
@@ -283,9 +286,20 @@ public partial class GameHUD : Control
         _activateItemPanel.HideMenu();
         _currentMenuState = MenuState.None;
 
-        // Execute ActivateItemAction
-        var action = new ActivateItemAction(key);
-        _player.ExecuteAction(action, _actionContext);
+        // Get the item to check if it requires targeting
+        var slot = _player.GetInventorySlot(key);
+        if (slot != null && slot.Item.Template.RequiresTargeting())
+        {
+            // Item requires targeting - signal InputHandler to start targeting
+            EmitSignal(SignalName.StartItemTargeting, key);
+            EnterTargetingMode();
+        }
+        else
+        {
+            // Regular activation (no targeting needed)
+            var action = new ActivateItemAction(key);
+            _player.ExecuteAction(action, _actionContext);
+        }
     }
 
     private void OnActivateItemCancelled()
