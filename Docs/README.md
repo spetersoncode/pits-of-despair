@@ -14,11 +14,33 @@ When working on this project, **prioritize these documents** before conducting d
 - Use docs for: System architecture, design patterns, data formats, intended behavior, cross-system interactions
 - Use code exploration for: Implementation details, current state, specific APIs, edge cases
 
+## Documentation Philosophy
+
+**Focus on Design, Not Implementation**
+
+Documentation should capture enduring design decisions, architectural principles, and the "why" behind systems - not implementation details that change over time.
+
+**What to Document:**
+- Design philosophy and core principles
+- Architectural patterns and system interactions
+- Data formats and their intended semantics
+- Decision rationale and trade-offs
+- Conceptual models and intended behavior
+
+**What NOT to Document:**
+- Specific file paths or class names
+- Detailed code examples or APIs
+- Step-by-step implementation instructions
+- Current state of the codebase
+
+Implementation details belong in code, comments, and exploration. Documentation should help you understand the system's design so you can navigate the implementation effectively.
+
 ## Conventions
 
 - **File naming**: lowercase with hyphens (e.g., `action-system.md`, `ai-architecture.md`)
 - **Format**: Markdown with clear headings for easy parsing and navigation
 - **Structure**: Optimized for both human readability and AI consumption with scannable sections
+- **Content**: Design-focused and implementation-agnostic where possible
 
 ## Project Overview
 
