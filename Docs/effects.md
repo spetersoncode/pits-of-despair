@@ -32,21 +32,7 @@ Current instantaneous effect types demonstrate the system's flexibility and comp
 
 **Blink**: Short-range random teleport within radius. Finds valid positions within Chebyshev distance (default 5), selects random unoccupied walkable tile. Unlike teleportation, range-limited and tactical. Fizzles if no valid nearby positions.
 
-**Status Application**: Bridge between instantaneous and duration-based systems. Creates status instances and adds to target's status component. Uses internal factory to instantiate correct status type from string identifier and parameters.
-
-## Status Effects System
-
-**Status Lifecycle**: Three-phase lifecycle with hooks for implementation. OnApplied fires when status first added (register stat modifiers, visual effects). OnTurnProcessed executes each turn while active (damage over time, healing). OnRemoved fires on expiration or manual removal (cleanup modifiers, restore original state).
-
-**StatusComponent**: Manages collection of active statuses on entity. Subscribes to turn manager signals (PlayerTurnStarted or CreatureTurnsStarted based on IsPlayerControlled flag). Automatically processes all statuses at turn start, decrements remaining turns, removes expired statuses, emits messages for effects and expirations.
-
-**Non-Stacking Design**: Statuses share same TypeId don't stack—reapplying refreshes duration to maximum rather than creating duplicate. Prevents buff stacking exploits while allowing different status types to coexist. Multiple armor buffs won't stack; armor buff and haste can coexist.
-
-**Turn Integration**: Status processing happens automatically via signals. Player-controlled entities process statuses on player turn start. Creatures process on creature turn phase. Ensures statuses tick at correct phase of turn cycle without manual update loops.
-
-**Multi-Source Modifiers**: Statuses integrate with stats component's multi-source modifier system. Each status instance generates unique source identifier (GUID-based). Stat modifiers registered with source ID on application, cleanly removed by ID on expiration. No orphaned modifiers or cleanup conflicts.
-
-**Example Status (Armor Buff)**: Temporary defense increase with configurable amount and duration. OnApplied adds armor modifier to stats component with unique source. OnRemoved strips modifier by source ID. Integrates seamlessly with equipment and other buff sources through multi-source tracking.
+**Status Application**: Bridge between instantaneous and duration-based systems. Creates status instances and adds to target's status component. Uses internal factory to instantiate correct status type from string identifier and parameters. See **[status.md](status.md)** for comprehensive status system architecture.
 
 ## Data Configuration
 
@@ -100,23 +86,7 @@ Complete effect integration requires touching four architectural layers: effect 
 
 ### Adding Status Effects
 
-Status effects extend instantaneous effects with turn-based lifecycle requiring additional integration with StatusComponent and turn management.
-
-**Status Implementation**: Subclass Status base class defining Name, TypeId (for stacking rules), Duration. Implement lifecycle hooks—OnApplied for initial setup (register stat modifiers), OnTurnProcessed for per-turn effects (damage, healing), OnRemoved for cleanup (unregister modifiers). Generate unique source identifiers for multi-source modifier tracking. Store amount or configuration in status instance fields.
-
-**Bridge Effect**: Create status effects by applying ApplyStatusEffect which bridges instantaneous and duration-based systems. Alternatively, create dedicated bridge effect for complex status initialization. Bridge effect creates status instance and adds to target's StatusComponent.
-
-**Factory Registration**: Register status type in ApplyStatusEffect factory (or custom bridge effect). Map string identifier to status class instantiation. Pass amount and duration from effect definition to status constructor. Status factory separate from main effect factory—maintains separation between instantaneous and duration-based systems.
-
-**Component Integration**: Status effects query components and modify state through them. Stats modifiers registered with unique source ID for clean removal. Health modifications use standard HealthComponent interface. Custom component integration requires defining interfaces status can use.
-
-**Turn Processing**: StatusComponent automatically processes statuses at turn start via signal subscription. Statuses process in order added. Multiple statuses can coexist if different TypeIds. Same TypeId refreshes duration rather than stacking. No manual update loops required—turn manager orchestrates timing.
-
-**Data Definition**: YAML defines status effects using type identifier, amount (modifier strength), duration (turns). Bridge effect type indicates status application. Same item can have multiple status effects or mix instantaneous and status effects.
-
-**Design Considerations**: Turn timing determined by StatusComponent's IsPlayerControlled flag—player statuses process on player turn, creature statuses on creature turn. Status messages should explain both application and expiration clearly. Modifier source IDs must be unique per status instance to prevent removal conflicts. Consider what happens if status reapplied—duration refresh is intentional design for most cases.
-
-**Examples for Implementation**: Poison (OnTurnProcessed damages health, tracks damage amount). Regeneration (OnTurnProcessed heals health each turn). Haste (OnApplied modifies movement speed stat, OnRemoved restores). Slow (movement penalty). Paralysis (prevents action execution, requires action system integration). Confusion (OnTurnProcessed randomizes movement, requires movement system integration). Invisibility (modifies stealth stat or visibility flag).
+Status effects extend instantaneous effects with turn-based lifecycle requiring additional integration with StatusComponent and turn management. See **[status.md](status.md)** for complete implementation guide including status subclass creation, factory registration, lifecycle hooks, component integration, and turn processing patterns.
 
 ### Advanced Extensions
 
@@ -150,4 +120,4 @@ Status effects extend instantaneous effects with turn-based lifecycle requiring 
 
 ---
 
-*See [components.md](components.md) for component architecture and composition patterns. See [actions.md](actions.md) for action system integration and turn consumption.*
+*See [status.md](status.md) for status system architecture. See [components.md](components.md) for component architecture and composition patterns. See [actions.md](actions.md) for action system integration and turn consumption.*

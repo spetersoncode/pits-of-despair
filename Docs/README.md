@@ -45,7 +45,7 @@ Each document has single, focused purpose. Information exists in exactly one pla
 
 ## Conventions
 
-- **File naming**: lowercase with hyphens (e.g., `action-system.md`, `ai-architecture.md`)
+- **File naming**: lowercase, favor one word names, otherwise with hyphens (e.g., `action-system.md`, `ai-architecture.md`)
 - **Format**: Markdown with clear headings for easy parsing and navigation
 - **Structure**: Optimized for both human readability and AI consumption with scannable sections
 - **Content**: Design-focused and implementation-agnostic where possible
@@ -84,3 +84,25 @@ Each document has single, focused purpose. Information exists in exactly one pla
 ## Project Overview
 
 See **[README.md](../README.md)** for game overview, mechanics, and technical stack. See **[CLAUDE.md](../CLAUDE.md)** for development principles, code practices, and workflow.
+
+## System Documentation
+
+**Core Systems**:
+- **[actions.md](actions.md)**: Action system architecture for turn-based entity behaviors
+- **[components.md](components.md)**: Component-based entity composition patterns
+- **[dungeon-generator.md](dungeon-generator.md)**: Binary Space Partitioning algorithm for procedural dungeon generation
+- **[entities.md](entities.md)**: Entity architecture and lifecycle management
+- **[spawning.md](spawning.md)**: Budget-based dungeon population with weighted spawn tables
+- **[turn-based.md](turn-based.md)**: Turn-based coordination and phase management
+
+**Supporting Systems**:
+- **[ai.md](ai.md)**: AI architecture and goal-based decision making
+- **[effects.md](effects.md)**: Instantaneous and time-based effect application
+- **[status.md](status.md)**: Status effect system with turn-based lifecycle
+
+**Rendering & Presentation**:
+- **[text-renderer.md](text-renderer.md)**: Tile-based glyph rendering with fog-of-war and layered display
+
+**Visual Design**:
+- **[color.md](color.md)**: Color theming and visual feedback patterns
+- **[glyphs.md](glyphs.md)**: Glyph design philosophy and readability guidelines
