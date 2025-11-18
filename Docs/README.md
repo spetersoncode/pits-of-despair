@@ -4,53 +4,44 @@ This folder contains architecture and game design documentation for **Pits of De
 
 ## For AI Coding Agents
 
-When working on this project, **prioritize these documents** before conducting deep codebase exploration:
+**Prioritize these documents before deep codebase exploration** for efficiency (quickly understand architecture and decisions), context (the "why" behind choices), and accuracy (align with established patterns).
 
-- **Efficiency**: Check relevant docs here first to quickly understand system architecture and design decisions
-- **Context**: Use documentation to understand the "why" behind implementation choices
-- **Accuracy**: Reference docs to ensure changes align with established patterns and architectural principles
-
-**When to use documentation vs code exploration:**
-- Use docs for: System architecture, design patterns, data formats, intended behavior, cross-system interactions
-- Use code exploration for: Implementation details, current state, specific APIs, edge cases
+- **Use docs for**: System architecture, design patterns, data formats, intended behavior, cross-system interactions
+- **Use code for**: Implementation details, current state, specific APIs, edge cases
 
 ## Documentation Philosophy
 
 **Focus on Design, Not Implementation**
 
-Documentation should capture enduring design decisions, architectural principles, and the "why" behind systems - not implementation details that change over time.
+Capture enduring design decisions, architectural principles, and the "why"—not implementation details that change over time.
 
-**What to Document:**
-- Design philosophy and core principles
-- Architectural patterns and system interactions
-- Data formats and their intended semantics
-- Decision rationale and trade-offs
-- Conceptual models and intended behavior
+- **Document**: Design philosophy, architectural patterns, system interactions, data formats, decision rationale, conceptual models
+- **Don't document**: File paths, class names, code examples, APIs, implementation steps, current codebase state
 
-**What NOT to Document:**
-- Specific file paths or class names
-- Detailed code examples or APIs
-- Step-by-step implementation instructions
-- Current state of the codebase
+Implementation details belong in code and comments. Documentation helps understand design for effective navigation.
 
-Implementation details belong in code, comments, and exploration. Documentation should help you understand the system's design so you can navigate the implementation effectively.
+**Token Efficiency and Information Density**
+
+Documentation should be concise and information-dense, maximizing value per token for AI consumption:
+
+- **Get to the point**: Lead with key concepts, no lengthy preambles
+- **No filler**: Every sentence should convey meaningful information
+- **Dense explanations**: Pack concepts tightly without sacrificing clarity
+- **Avoid redundancy**: Don't restate concepts already explained unless adding new insight
+- **Concise examples**: Use minimal, targeted examples that illustrate the concept
+- **Active voice**: Prefer direct, active constructions over passive voice
+
+Think of documentation as a compressed knowledge format - readers (human or AI) should gain maximum understanding with minimum token expenditure.
 
 **DRY and Atomic Documentation**
 
-Each document should have a single, focused purpose without duplicating content from other documents:
-
-- **Don't Repeat Yourself**: Information should exist in exactly one place
-- **Atomic topics**: Each document covers one coherent subject area
-- **Cross-reference liberally**: Link to related documents rather than duplicating their content
-- **Extract common themes**: If multiple documents repeat the same concept, extract it into a dedicated document
+Each document has single, focused purpose. Information exists in exactly one place. Documents cover one coherent subject. Cross-reference rather than duplicate. Extract repeated concepts into dedicated documents.
 
 **When you find duplication:**
-1. Identify which document owns the concept (most relevant context)
-2. Remove duplicated content from other documents
-3. Add cross-references to the authoritative document
-4. If no clear owner exists, create a new focused document for the shared concept
-
-**Example:** Component design patterns belong in `components.md`. Entity architecture belongs in `entities.md`. Both can reference each other for context, but neither should duplicate the other's core content.
+1. Identify which document owns the concept
+2. Remove duplicated content from others
+3. Add cross-references to authoritative document
+4. If no clear owner, create new focused document for shared concept
 
 ## Conventions
 
@@ -61,10 +52,4 @@ Each document should have a single, focused purpose without duplicating content 
 
 ## Project Overview
 
-For general project information, see:
-- **[README.md](../README.md)** - Game overview, mechanics, and technical stack
-- **[CLAUDE.md](../CLAUDE.md)** - Development principles, code practices, and workflow
-
----
-
-*As the project evolves, this library will grow to include comprehensive documentation on major systems, architectural patterns, and game design decisions.*
+See **[README.md](../README.md)** for game overview, mechanics, and technical stack. See **[CLAUDE.md](../CLAUDE.md)** for development principles, code practices, and workflow.

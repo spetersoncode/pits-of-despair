@@ -10,151 +10,84 @@ This approach aligns with Godot's design philosophy: **composition over inherita
 
 ### Why Components?
 
-**Flexibility Through Composition**
-- Entities gain capabilities by attaching components as child nodes
-- Behaviors can be mixed and matched freely without rigid class hierarchies
-- New entity types emerge from combining existing components in different ways
+**Flexibility**: Entities gain capabilities through child node components. Behaviors mix freely without class hierarchies. New entity types emerge from component combinations.
 
-**Independence and Reusability**
-- Each component is self-contained with minimal dependencies
-- Components work on any entity, from player to goblin to item
-- Adding vision to a new creature type requires only adding a VisionComponent child node
+**Independence**: Self-contained components with minimal dependencies work on any entity. Adding vision requires only adding VisionComponent child node.
 
-**Signal-Based Decoupling**
-- Components communicate via Godot signals, not direct references
-- Systems subscribe to component signals to coordinate behavior
-- Components remain testable and swappable without breaking dependencies
+**Decoupling**: Components communicate via signals, not direct references. Systems subscribe to signals. Components remain testable and swappable.
 
-**Designer Empowerment**
-- Components expose `[Export]` properties configurable in the Godot editor
-- Non-programmers can create entity variants by adjusting component parameters
-- Scene composition in the editor naturally maps to component architecture
+**Designer Empowerment**: `[Export]` properties enable non-programmers to create variants through editor configuration.
 
 ## Component Categories
 
 Components fall into distinct conceptual categories based on their role:
 
 ### State Components
-**Purpose**: Track entity state and emit change notifications
-
-Components like health, stats, and status effects manage numerical values and persistent state. They calculate derived values (e.g., MaxHP from Endurance), emit signals when state changes, and respond to modification requests.
-
-**Key Characteristic**: Other components and systems listen to their change signals to react to state updates.
+Track entity state and emit change notifications. Calculate derived values (MaxHP from Endurance), emit signals on changes, respond to modifications. Others listen to change signals.
 
 ### Behavior Components
-**Purpose**: Request actions without executing them
-
-Components like movement and attack emit signals requesting behaviors (move, attack) but don't execute the requests themselves. This separates intent from execution, allowing systems to validate and coordinate actions.
-
-**Key Characteristic**: They emit "request" signals that systems process and fulfill.
+Request actions without executing them. Emit "request" signals (move, attack) that systems process and fulfill. Separates intent from execution.
 
 ### Capability Components
-**Purpose**: Mark entities as possessing an ability
-
-Components like vision and inventory indicate that an entity has a particular capability. They store capability-specific data (vision range, inventory slots) and provide interfaces for systems to interact with that capability.
-
-**Key Characteristic**: Their mere presence indicates the entity can perform certain actions.
+Mark entities as possessing abilities. Store capability data (vision range, inventory slots), provide interaction interfaces. Presence indicates capability.
 
 ### Data Components
-**Purpose**: Store and manage structured data
-
-Components like AI and equipment hold complex data structures (goal lists, equipped items) and provide accessors for that data. They encapsulate data organization and expose methods to query or modify it safely.
-
-**Key Characteristic**: They manage data lifetime and enforce invariants on that data.
+Store and manage structured data (goal lists, equipped items). Encapsulate organization, expose query/modify methods, enforce invariants.
 
 ## Communication Patterns
 
 ### Component → System: Signal Emission
 
-Components emit signals when they need external coordination:
-- Movement requests when an entity wants to move
-- Attack requests when initiating combat
-- Health change notifications when HP changes
-- Stat change notifications when modifiers update
-
-Systems subscribe to these signals and orchestrate responses, often involving multiple components or entities.
+Components emit signals for external coordination: movement requests, attack requests, health changes, stat updates. Systems subscribe and orchestrate responses.
 
 ### System → Component: Method Calls
 
-Systems call component methods to:
-- Query state (GetAttackModifier, IsAlive)
-- Trigger effects (TakeDamage, Heal)
-- Update data (SetGoals, AddStatus)
-
-Components provide clean interfaces for these interactions, hiding implementation details.
+Systems call component methods to query state, trigger effects, or update data. Components provide clean interfaces hiding implementation.
 
 ### Component ↔ Component: Sibling Reference
 
-Components on the same entity can reference each other when calculating derived values:
-- HealthComponent references StatsComponent to calculate MaxHP from Endurance
-- AttackComponent might reference EquipComponent to determine current weapon attacks
-
-**Guideline**: Sibling references are acceptable for reading state within the same entity. Avoid components modifying sibling state directly—prefer signals for coordination.
+Components on same entity can reference siblings for derived values (HealthComponent reads StatsComponent for MaxHP). Acceptable for reading state; avoid direct modification, prefer signals.
 
 ## Multi-Source Modifiers
 
-Many components support modifiers from multiple sources (equipment, buffs, temporary effects). This pattern allows stacking bonuses and penalties from different origins.
+Components support modifiers from multiple sources (equipment, buffs, effects). Each modifier tracked by unique source identifier enables adding/removing specific modifiers, preventing duplicates, and calculating totals.
 
-**Key Design**: Each modifier is tracked by a unique source identifier (string key). This enables:
-- Adding/removing specific modifiers without affecting others
-- Preventing duplicate modifiers from the same source
-- Calculating total values as the sum of all active modifiers
-
-**Example Applications**:
-- Stats: equipment bonuses, potion buffs, curse debuffs
-- Armor: worn armor, magical shields, defensive stances
-- Evasion penalties: heavy armor, slow status effects
-
-When a source is removed (unequip item, buff expires), its modifier cleanly disappears without disrupting other modifiers.
+Examples: stats (equipment/buffs/debuffs), armor (worn/magical/stances), evasion (armor/status). Source removal cleanly removes modifier.
 
 ## Component Composition Patterns
 
-Entities gain capabilities by combining components. A combat-capable entity typically composes Health, Stats, and Attack components. An autonomous creature adds Movement, Vision, and AI components. Complex entities layer additional components for inventory, equipment, and status effects.
+Entities combine components for capabilities: combat (Health, Stats, Attack), autonomy (Movement, Vision, AI), complexity (Inventory, Equipment, Status). See **[entities.md](entities.md)** for specific compositions.
 
-For specific entity types and their component compositions, see **[entities.md](entities.md)**.
+## Benefits
 
-## Benefits Realized
+**Rapid Prototyping**: Compose existing components in new configurations. No code for variants.
 
-**Rapid Prototyping**
-Creating new entity types is fast—compose existing components in new configurations and tune parameters. No code required for variants.
+**Maintainability**: Component changes automatically apply to all entities using it.
 
-**Maintainability**
-Changes to a component (like adding armor reduction to damage calculation) automatically apply to all entities with that component.
+**Testing**: Test components in isolation with mock entities.
 
-**Testing**
-Components can be tested in isolation. Mock entities with only the components needed for the test scenario.
+**Performance**: Godot's node system optimized for this pattern. Lightweight components, efficient signals.
 
-**Performance**
-Godot's node system is optimized for this pattern. Components are lightweight. Signal emissions are efficient.
-
-**Extensibility**
-New behaviors extend the system by adding new components, not by modifying existing code. New components integrate via signals without breaking existing functionality.
+**Extensibility**: Add new behaviors via new components without modifying existing code. Signal integration preserves functionality.
 
 ## Design Constraints
 
-**Parent Reference Pattern**
-Components typically cache a reference to their parent entity during `_Ready()`. This provides quick access to the entity and enables traversal to sibling components.
+**Parent Reference**: Components cache parent entity reference in `_Ready()` for quick access and sibling traversal.
 
-**Initialization Order**
-Components must handle initialization gracefully. Sibling components may not be ready when a component's `_Ready()` executes. Use null-safe accessors when referencing siblings during initialization.
+**Initialization Order**: Handle gracefully—siblings may not be ready. Use null-safe accessors.
 
-**Signal Lifecycle**
-Components that subscribe to signals must disconnect them in `_ExitTree()` to prevent memory leaks and errors when nodes are freed.
+**Signal Lifecycle**: Disconnect signals in `_ExitTree()` to prevent leaks.
 
-**Export Properties**
-Components expose tunable parameters via `[Export]` attributes. This makes entities data-driven and designer-friendly, reducing hardcoded values.
+**Export Properties**: Expose tunable parameters via `[Export]` for data-driven, designer-friendly entities.
 
 ## Trade-offs
 
-**Indirection**
-Signal-based communication adds indirection compared to direct method calls. The benefit of decoupling outweighs the slight complexity increase.
+**Indirection**: Signal communication adds indirection vs direct calls. Decoupling benefits outweigh complexity.
 
-**Discovery**
-Understanding entity behavior requires looking at multiple component files rather than a single class. Good naming and documentation mitigate this.
+**Discovery**: Understanding behavior requires viewing multiple files vs single class. Mitigated by naming and documentation.
 
-**Overhead**
-Each component is a node with lifecycle overhead. For entities with many components, this is acceptable given Godot's optimization. Avoid creating components for trivial properties—use simple properties on the entity instead.
+**Overhead**: Each component has node lifecycle overhead. Acceptable given Godot optimization. Use entity properties for trivial data.
 
 ---
 
-*This component architecture provides the foundation for flexible, maintainable entity design in Pits of Despair. By embracing composition and signal-based communication, the system supports rapid iteration and robust gameplay systems.*
+*For entity composition patterns using these components, see **[entities.md](entities.md)**.*

@@ -8,13 +8,7 @@ This document focuses on entity architecture and creation. For component design 
 
 ## Entity as Minimal Container
 
-The base entity is intentionally minimal—a lightweight container providing only universal properties:
-- **Grid position** - Tile-based world location
-- **Visual representation** - Glyph (Unicode character) and color for ASCII-style rendering
-- **Walkability** - Whether other entities can pass through this tile
-- **Item data** - Optional reference for collectible items
-
-**Design rationale:** Entities provide structure and identity. Behavior comes from components.
+Base entity provides only universal properties: grid position, visual representation (glyph and color), walkability, and optional item data. Entities provide structure and identity; behavior comes from components.
 
 ## No Creature Hierarchies
 
@@ -34,43 +28,25 @@ BaseEntity (minimal container)
   └── [Dynamic creatures built by factory from YAML]
 ```
 
-**Rationale:** Creatures are data, not code. A goblin and rat differ in stats and components, not class hierarchy. This eliminates rigid type systems and enables infinite creature variants through data file iteration—no new classes required.
+Creatures are data, not code. Goblins and rats differ in stats/components, not class hierarchy. Enables infinite creature variants through data files without new classes.
 
 ## Data-Driven Entity Creation
 
 ### Creature Data Structure
 
-Creature definitions in YAML files specify:
-- **Visual properties** - Glyph, color, or creature type
-- **Base attributes** - Stats (Strength, Agility, Endurance, Will), HP, vision range
-- **Capability flags** - HasMovement, HasAI
-- **Combat** - Attack patterns (name, type, dice notation, range)
-- **AI configuration** - List of available goal types
-- **Starting loadout** - Equipment items to equip on creation
+YAML definitions specify: visual properties (glyph, color, type), base attributes (stats, HP, vision), capability flags (HasMovement, HasAI), combat (attack patterns), AI configuration (goal types), and starting loadout.
 
-The factory reads these definitions and assembles appropriate components based on flags and data presence.
+Factory assembles components based on flags and data presence.
 
 ### Factory Assembly Pattern
 
-**Conditional component creation:**
-- Stats component → Always for creatures
-- Movement component → If `HasMovement` flag set
-- Vision component → If `VisionRange > 0`
-- Health component → If `MaxHP > 0`
-- Attack component → If attacks defined OR can equip weapons
-- Inventory + Equipment → If equipment list present
-- AI component → If `HasAI` flag set
+Conditional creation: Stats (always), Movement (`HasMovement` flag), Vision (`VisionRange > 0`), Health (`MaxHP > 0`), Attack (attacks defined or equips weapons), Inventory/Equipment (equipment present), AI (`HasAI` flag).
 
-This enables YAML files to define entity capabilities declaratively—the factory handles component wiring, signal connections, and initialization automatically.
+YAML defines capabilities declaratively; factory handles wiring, signals, and initialization.
 
 ### Type System for Variants
 
-Creatures can specify optional types (e.g., "goblinoid", "vermin") that provide default visual properties:
-- **Base type** defines defaults (goblin glyph, color)
-- **Variants** specify only differences (stats, equipment, attacks)
-- Designers create new creatures without artist intervention
-
-**Example:** A "goblin shaman" variant might use the "goblinoid" type for visuals but override stats and attacks, inheriting the default goblin appearance automatically.
+Creatures can specify types ("goblinoid", "vermin") providing default visuals. Base type defines defaults (glyph, color), variants specify only differences (stats, equipment, attacks). Enables designer-created creatures without artist intervention.
 
 ## Action System
 
@@ -78,22 +54,15 @@ Actions represent discrete turn-consuming activities (move, attack, pickup, equi
 
 ### Two-Phase Processing
 
-**Validation phase:** `action.CanExecute()` checks if action is legal (range, resources, terrain, state)
-**Execution phase:** `action.Execute()` performs the action, often emitting signals for systems to process
+**Validation**: `CanExecute()` checks legality (range, resources, terrain, state).
 
-**Why separation matters:**
-- AI evaluates action viability without side effects
-- Player UI shows valid actions before commitment
-- Action preconditions are centralized and testable
+**Execution**: `Execute()` performs action, emits signals.
+
+Separation enables AI evaluation without side effects, UI previewing, and centralized testable preconditions.
 
 ### Entity Integration
 
-Entities invoke actions but don't implement action logic:
-- Player executes actions from input (keyboard commands)
-- AI entities execute actions selected by goal evaluation
-- Systems execute actions for NPCs (automatic gold pickup, item use)
-
-This decouples entity identity from entity behavior—a goblin and player use identical action code.
+Entities invoke actions without implementing logic. Player executes from input, AI from goal evaluation, systems for NPCs. Decouples identity from behavior—goblins and player use identical action code.
 
 ## AI System
 
@@ -101,30 +70,11 @@ AI entities have an AI component that stores a list of available goals (Idle, Wa
 
 ### Data-Driven Behavior
 
-Creature YAML files specify available goals:
-```yaml
-Goals:
-  - Wander
-  - MeleeAttack
-  - Idle
-```
-
-This enables per-creature behavior customization:
-- Simple rat: Wander, MeleeAttack, Idle
-- Cowardly goblin: Wander, MeleeAttack, FleeForHelp, Idle
-- Guard patrol: ReturnToSpawn, MeleeAttack, SearchLastKnownPosition, Idle
-
-No code changes required—behaviors emerge from goal combinations.
+YAML files specify available goals. Examples: simple rat (Wander, MeleeAttack, Idle), cowardly goblin (adds FleeForHelp), guard patrol (adds ReturnToSpawn, SearchLastKnownPosition). Behaviors emerge from goal combinations without code changes.
 
 ### Multi-Turn State
 
-The AI component tracks persistent state across turns:
-- Last known player position
-- Turns since player last seen
-- Current pathfinding route
-- Search/flee duration counters
-
-Goals read and update this shared state, enabling complex behaviors that span multiple turns (chase player → lose sight → search last seen location → give up and return to spawn).
+AI component tracks: last known player position, turns since seen, pathfinding route, search/flee counters. Goals read/update shared state, enabling multi-turn behaviors (chase → lose sight → search → return to spawn).
 
 ## Entity Lifecycle Management
 
@@ -132,70 +82,28 @@ The entity manager provides centralized lifecycle coordination:
 
 ### Registration and Tracking
 
-When entities are created:
-1. Factory creates entity with appropriate components
-2. Manager adds entity to scene tree
-3. Manager registers in tracking list
-4. Manager caches position for spatial queries
-5. Manager emits `EntityAdded` signal for systems to react
+Entity creation flow: factory creates with components → manager adds to scene tree → registers in tracking list → caches position for spatial queries → emits `EntityAdded` signal.
 
 ### Automatic Cleanup
 
-Entities don't remove themselves. Instead:
-1. Health component emits `Died` signal
-2. Manager receives signal (subscribed during registration)
-3. Manager removes from scene, tracking list, and position cache
-4. Manager emits `EntityRemoved` signal
-
-**Benefit:** Death handling is centralized—entities don't need cleanup logic.
+Entities don't self-remove. Health emits `Died` → manager receives signal → removes from scene/tracking/cache → emits `EntityRemoved`. Centralizes death handling.
 
 ### Position Caching
 
-The manager maintains a dictionary mapping grid positions to entities for O(1) spatial queries:
-- "What entity is at this position?"
-- "Can I move to this tile?"
-- "What creature am I bumping?"
-
-Cache updates automatically—entities emit `PositionChanged` signals, manager updates cache. No manual synchronization required.
+Manager maintains position-to-entity dictionary for O(1) spatial queries. Cache updates automatically via `PositionChanged` signals. No manual synchronization.
 
 ## Scene Composition
 
-Entities can have components added two ways:
+**Scene-based**: Player defined in `.tscn` with child component nodes, properties in inspector. For persistent components.
 
-**Scene-based (Godot editor):**
-- Player entity defined in `.tscn` file with child component nodes
-- Components visible in scene tree
-- Properties configured via inspector
-- Use for persistent, always-present components
+**Code-based**: Dynamic creatures assembled by factory from YAML with conditional components. For data-driven entities.
 
-**Code-based (factory/initialization):**
-- Dynamic creatures assembled by factory from YAML
-- Conditional component creation based on data flags
-- Programmatic configuration from data values
-- Use for data-driven, conditional components
-
-The player uses scene composition. Dynamic creatures use code composition. This hybrid approach balances visual editing convenience with data-driven flexibility.
+Hybrid approach balances visual editing convenience with data-driven flexibility.
 
 ## Item Entities
 
-Items are minimal entities—no components, just data:
-- Marked as walkable (entities can move through item tiles)
-- Carry `ItemInstance` reference with charges, type, and properties
-- Auto-collected when player moves onto their tile
-- Can be dropped from inventory, creating new entity at target position
-
-**Design choice:** Items don't need components because they're passive—they don't act, they're acted upon. This keeps item entities lightweight.
-
-## Design Philosophy Summary
-
-**Entities are identities, not implementations.** A goblin isn't defined by its class hierarchy—it's defined by its data file. The factory assembles the goblin from components based on YAML configuration.
-
-**No special cases.** Player, goblins, rats, and items all follow the same entity architecture. Player has unique methods for player-specific signals, but uses standard components for combat, inventory, stats, and health.
-
-**Data drives behavior.** Want a new creature? Write YAML. Want a cowardly variant? Add FleeForHelp goal to YAML. Want an elite with better gear? Specify equipment in YAML.
-
-**Centralized coordination.** Factory creates, manager tracks, systems process. Entities don't coordinate themselves—they emit signals and hold state.
+Items are minimal entities without components: walkable, carry `ItemInstance` reference (charges, type, properties), auto-collected on player movement, droppable to create new entities. Passive items don't need components—keeps them lightweight.
 
 ---
 
-*For component design patterns and communication details, see **[components.md](components.md)**.*
+*For component design patterns, see **[components.md](components.md)**.*

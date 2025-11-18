@@ -17,27 +17,23 @@ This document describes the color design philosophy and palette organization for
 
 **High Contrast on Black**
 
-All colors are designed for maximum readability against pure black backgrounds. This is essential for the classic roguelike aesthetic where clarity and visual hierarchy matter more than subtle gradients. Every color must "pop" against darkness.
+All colors maximize readability against pure black backgrounds, essential for classic roguelike aesthetics where clarity trumps subtlety. Every color must pop against darkness.
 
 **Semantic Over Arbitrary**
 
-Colors have meaning. We use `HealthCritical`, `Steel`, or `Poison` - not `Red3`, `Gray7`, or `Green2`. When you see a color name, you understand its purpose without consulting a reference chart.
+Colors have meaning. Use `HealthCritical`, `Steel`, or `Poison`—not `Red3`, `Gray7`, or `Green2`. Color names communicate purpose directly.
 
 **Material-Driven Design**
 
-Many colors represent physical materials: metals, stones, woods, fabrics. This creates intuitive visual consistency - steel items look like steel, bronze looks like bronze, leather looks like leather. Players develop recognition patterns for materials without explicit labels.
+Colors represent physical materials (metals, stones, woods, fabrics), creating intuitive visual consistency. Players recognize materials without labels.
 
 **Intentional Limitation**
 
-The palette is deliberately constrained. Not every subtle shade variation gets its own entry. This constraint forces consistency and prevents color proliferation that would dilute the visual language.
+Deliberately constrained palette prevents color proliferation that dilutes visual language. Not every shade variation warrants its own entry.
 
 **Color as Functional Distinction**
 
-In a text-based roguelike, color is a critical tool for instant recognition. When multiple items share the same glyph (e.g., multiple swords all displayed as `/`), color becomes the primary way players distinguish them at a glance. Similarly, different creatures must be visually distinct so players can quickly assess threats and make tactical decisions.
-
-**Design Rule**: Items of the same type should use different colors whenever possible. A bronze sword, iron sword, and steel sword might all use the `/` glyph, but their distinct colors (Bronze, Iron, Steel) let players instantly recognize which is which. The same principle applies to creatures - different goblin types, different undead, different beasts should all have distinct colors.
-
-This isn't just aesthetics - it's gameplay clarity. Players scan the dungeon floor quickly, and color coding enables instant pattern recognition without reading detailed descriptions.
+Color enables instant recognition when glyphs repeat. Multiple swords sharing `/` glyph differentiate through color (Bronze, Iron, Steel). Creature variants need distinct colors for quick threat assessment. This gameplay clarity enables rapid scanning and tactical decisions without reading descriptions.
 
 ## Palette Organization
 
@@ -65,11 +61,11 @@ The palette is organized into **semantic categories** that reflect the game's st
 
 ### Organizational Philosophy
 
-**Progression Systems**: Material categories often represent progression - crude metals to refined, common stones to rare. This creates visual hierarchies players learn to read.
+**Progression Systems**: Material categories represent progression (crude → refined metals, common → rare stones), creating visual hierarchies players learn.
 
-**Thematic Grouping**: Related concepts share color families. All elemental effects are bright and distinct. All metals share a metallic quality. This builds intuitive associations.
+**Thematic Grouping**: Related concepts share color families (bright elemental effects, metallic metals), building intuitive associations.
 
-**Practical Purpose**: Categories emerge from gameplay needs, not arbitrary organization. Health states exist because players need instant health feedback. Material colors exist because items need material-based distinction.
+**Practical Purpose**: Categories emerge from gameplay needs, not arbitrary organization.
 
 ## Design Patterns
 
@@ -77,140 +73,58 @@ The palette is organized into **semantic categories** that reflect the game's st
 
 Color names follow consistent patterns that communicate purpose:
 
-**State-Based**: `HealthCritical`, `HealthFull`
-**Material-Based**: `Iron`, `Steel`, `Copper`, `Bronze`
-**Function-Based**: `Success`, `Danger`, `Disabled`
-**Element-Based**: `Fire`, `Ice`, `Lightning`, `Poison`
+- **State-Based**: `HealthCritical`, `HealthFull`
+- **Material-Based**: `Iron`, `Steel`, `Copper`, `Bronze`
+- **Function-Based**: `Success`, `Danger`, `Disabled`
+- **Element-Based**: `Fire`, `Ice`, `Lightning`, `Poison`
 
 Never name colors by appearance alone (`BrightRed`, `DarkGreen`). Always name by semantic meaning.
 
 ### Semantic Usage
 
-Use colors by their **meaning**, not their **appearance**:
-
-- ✅ Use `Success` for positive messages
-- ❌ Don't use `HealthFull` for positive messages just because it's also green
-
-Both colors might be green, but they serve different semantic purposes. Using the correct semantic color ensures consistency if you later adjust the palette.
+Use colors by meaning, not appearance. `Success` and `HealthFull` may both be green, but serve different semantic purposes. Correct semantic usage ensures consistency when palette changes.
 
 ### Material Consistency
 
-Equipment colors should match their composition:
-
-- Steel swords use Steel color
-- Bronze armor uses Bronze color
-- Leather armor uses leather colors
-- Wooden clubs use wood colors
-
-This creates instant visual recognition of equipment materials.
+Equipment colors match composition (steel swords use Steel, bronze armor uses Bronze), creating instant material recognition.
 
 ### Distinct Items, Distinct Colors
 
-When assigning colors to items and creatures, prioritize visual distinction:
+Prioritize visual distinction when assigning colors:
 
-**Items of the Same Type**
+**Same-glyph items must differ**: Short sword (Iron), Longsword (Steel), Bastard sword (ForgedSteel) all use `/` but different colors.
 
-Items sharing the same glyph must use different colors to be distinguishable:
+**Creature variants never share colors**: Goblin, Goblin warrior, Goblin shaman each get distinct colors for threat assessment.
 
-- ✅ Short sword (Iron), Longsword (Steel), Bastard sword (ForgedSteel) - All use `/` glyph but different colors
-- ❌ Short sword (Iron), Longsword (Iron), Bastard sword (Iron) - Indistinguishable at a glance
-
-Even items with different glyphs benefit from color variety when they appear together frequently.
-
-**Creature Variants**
-
-Different creature types should never share colors, even if related:
-
-- ✅ Goblin (one color), Goblin warrior (different color), Goblin shaman (third color)
-- ❌ All goblins using the same green - Players can't distinguish threats
-
-**Balancing Realism and Clarity**
-
-Sometimes material realism conflicts with distinction. A copper dagger and copper sword are both copper - they "should" be copper-colored. But if they commonly appear together and share similar glyphs, consider:
-
-- Using material progression (CrudeIron vs Iron vs Steel)
-- Differentiating by quality or craftsmanship
-- Prioritizing gameplay clarity over strict material accuracy
-
-The player experience of "I can tell these apart instantly" outweighs "these are technically the same material."
-
-**Visual Scanning**
-
-Players should be able to scan a room full of items or creatures and immediately understand what they're seeing through color alone. This enables quick tactical decisions in a turn-based environment where information density matters.
+**Clarity over realism**: When material accuracy conflicts with distinction (two copper items with similar glyphs), prioritize gameplay clarity through quality variations (CrudeIron vs Iron vs Steel). Instant recognition outweighs material accuracy.
 
 ### Fog of War Pattern
 
-The game uses color to distinguish three visibility states:
-
-1. **Unexplored** (Empty/black) - Never seen
-2. **Explored but not visible** (FogOfWar/gray) - Seen before, memory
-3. **Currently visible** (Full color) - Real-time
-
-This pattern extends to all entities, not just tiles.
+Three visibility states: **Unexplored** (black), **Explored** (FogOfWar gray), **Visible** (full color). Applies to all entities.
 
 ### Alpha Transparency for Overlays
 
-Palette colors are opaque. When you need semi-transparent overlays (targeting ranges, area effects), derive them at runtime:
-
-- Take the base palette color
-- Apply desired alpha transparency
-- Don't add separate palette entries for transparency variations
-
-This keeps the palette focused on semantic colors, not rendering variations.
+Palette colors are opaque. Derive semi-transparent overlays (targeting, area effects) at runtime by applying alpha to base colors. Don't add palette entries for transparency variations.
 
 ## Guidelines for Adding Colors
 
 ### When to Add Colors
 
-Add new palette colors when:
+Add colors for: new semantic categories (status effects, UI states), material progression gaps, or concepts current palette can't express.
 
-- **New semantic category emerges**: New status effects, new UI states, new feedback types
-- **Material progression needs steps**: New equipment tiers between existing materials
-- **UI requires new feedback states**: New gameplay systems need distinct visual communication
-- **Existing colors don't communicate meaning**: The current palette can't express a new concept
+Don't add for: one-off tweaks, semantic duplicates, runtime variations (alpha/brightness), or personal preference.
 
-### When NOT to Add Colors
+### Adding Process
 
-Don't add colors for:
-
-- **One-off visual tweaks**: Use existing semantic colors
-- **Slight variations without semantic difference**: If it means the same thing, it should use the same color
-- **Runtime variations**: Alpha blending, brightness modulation, etc.
-- **Personal preference**: "I just like this shade better" is not sufficient reason
-
-### Adding New Colors Process
-
-When adding a color:
-
-1. **Choose a semantic name** that communicates purpose
-2. **Place in appropriate category** (or create new category if needed)
-3. **Ensure high contrast** against pure black
-4. **Check distinctiveness** against similar colors
-5. **Document the meaning** and intended usage
-
-The palette should grow thoughtfully, not arbitrarily.
+Choose semantic name, categorize appropriately, ensure high contrast against black, check distinctiveness, document meaning. Grow thoughtfully, not arbitrarily.
 
 ## Color Accessibility
 
-While the game embraces classic roguelike aesthetics with heavy color use, important information should not rely on color alone:
+Important information doesn't rely on color alone: health shows numeric percentages, targeting uses borders/text, status effects include symbols, UI feedback combines color with text. High-contrast design and bright, saturated colors aid readability.
 
-- **Health states**: Also shown as numeric percentages
-- **Targeting**: Combined with borders/highlights and text indicators
-- **Status effects**: Accompanied by symbols or text descriptions
-- **UI feedback**: Color enhances messages but doesn't carry them alone
+## Technical Implementation
 
-The high-contrast-on-black design naturally provides good readability for most players. The bright, saturated colors aid clarity rather than relying on subtle distinctions.
-
-## Technical Implementation Notes
-
-The palette is implemented as a centralized color definition system that:
-
-- Provides global access to semantic colors
-- Supports referencing colors by name in data files (YAML)
-- Converts between color formats as needed (native color objects vs. hex strings for text formatting)
-- Organizes colors into logical groups using code regions
-
-For specific implementation details, explore the codebase. The design principles above should guide you to the right patterns regardless of how the technical implementation evolves.
+Centralized system provides global access to semantic colors, supports YAML color references by name, converts between formats (native objects vs hex strings), and organizes colors using code regions. Explore codebase for implementation details.
 
 ---
 
