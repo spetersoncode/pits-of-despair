@@ -33,6 +33,7 @@ public partial class SidePanel : PanelContainer
 	private Entities.Player _player;
 	private Systems.EntityManager _entityManager;
 	private Systems.PlayerVisionSystem _visionSystem;
+	private Systems.GoldManager _goldManager;
 
 	public override void _Ready()
 	{
@@ -83,15 +84,21 @@ public partial class SidePanel : PanelContainer
 			equipComponent.EquipmentChanged += OnEquipmentChanged;
 		}
 
-		// Subscribe to gold collection
-		player.GoldCollected += OnGoldCollected;
-
 		// Initialize display with current values
 		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
-		UpdateGoldDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
+	}
+
+	/// <summary>
+	/// Connects to the gold manager to receive gold updates.
+	/// </summary>
+	public void ConnectToGoldManager(Systems.GoldManager goldManager)
+	{
+		_goldManager = goldManager;
+		_goldManager.GoldChanged += OnGoldChanged;
+		UpdateGoldDisplay();
 	}
 
 	/// <summary>
@@ -166,16 +173,16 @@ public partial class SidePanel : PanelContainer
 		}
 	}
 
-	private void OnGoldCollected(int amount, int totalGold)
+	private void OnGoldChanged(int amount, int totalGold)
 	{
 		UpdateGoldDisplay();
 	}
 
 	private void UpdateGoldDisplay()
 	{
-		if (_goldLabel != null && _player != null)
+		if (_goldLabel != null && _goldManager != null)
 		{
-			_goldLabel.Text = $"Gold: {_player.Score}";
+			_goldLabel.Text = $"Gold: {_goldManager.Gold}";
 			_goldLabel.AddThemeColorOverride("font_color", Palette.Gold);
 		}
 	}

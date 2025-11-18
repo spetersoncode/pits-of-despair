@@ -42,6 +42,7 @@ public partial class GameLevel : Node
     private GameHUD _gameHUD;
     private TargetingSystem _targetingSystem;
     private ProjectileSystem _projectileSystem;
+    private GoldManager _goldManager;
 
     public override void _Ready()
     {
@@ -61,7 +62,10 @@ public partial class GameLevel : Node
         _aiSystem = GetNode<AISystem>("AISystem");
         _gameHUD = GetNode<GameHUD>("HUD/GameHUD");
 
-        // Create targeting and projectile systems
+        // Create gold manager, targeting and projectile systems
+        _goldManager = new GoldManager { Name = "GoldManager" };
+        AddChild(_goldManager);
+
         _targetingSystem = new TargetingSystem { Name = "TargetingSystem" };
         AddChild(_targetingSystem);
 
@@ -88,6 +92,9 @@ public partial class GameLevel : Node
 
         // Wire up player's entity manager reference (for item pickup)
         _player.SetEntityManager(_entityManager);
+
+        // Wire up gold manager to player
+        _player.SetGoldManager(_goldManager);
 
         // Wire up player reference to movement system (for bump-to-attack)
         _movementSystem.SetPlayer(_player);
@@ -186,7 +193,7 @@ public partial class GameLevel : Node
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
         // Initialize HUD
-        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _visionSystem);
+        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem);
 
         // Start the first player turn
         _turnManager.StartFirstPlayerTurn();

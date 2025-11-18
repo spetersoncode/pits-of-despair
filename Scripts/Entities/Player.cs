@@ -47,7 +47,7 @@ public partial class Player : BaseEntity
     private InventoryComponent? _inventoryComponent;
     private GridPosition _previousPosition;
     private EntityManager? _entityManager;
-    private int _score = 0;
+    private GoldManager? _goldManager;
 
     public override void _Ready()
     {
@@ -129,24 +129,6 @@ public partial class Player : BaseEntity
         _movementComponent.RequestMove(direction);
     }
 
-    /// <summary>
-    /// Wait for one turn, recovering 1 HP.
-    /// </summary>
-    public void Wait()
-    {
-        // Heal the player
-        var healthComponent = GetNodeOrNull<HealthComponent>("HealthComponent");
-        if (healthComponent != null)
-        {
-            healthComponent.Heal(1);
-        }
-
-        // Emit waited signal for message log
-        EmitSignal(SignalName.Waited);
-
-        // End the turn
-        EmitSignal(SignalName.TurnCompleted);
-    }
 
     /// <summary>
     /// Execute an action using the action system.
@@ -229,7 +211,7 @@ public partial class Player : BaseEntity
     /// </summary>
     private void TryAutoCollectGold()
     {
-        if (_entityManager == null)
+        if (_entityManager == null || _goldManager == null)
         {
             return;
         }
@@ -250,15 +232,15 @@ public partial class Player : BaseEntity
             goldAmount = 1; // Default to 1 if not set
         }
 
-        // Add to score
-        _score += goldAmount;
+        // Add to gold manager
+        _goldManager.AddGold(goldAmount);
 
         // Remove gold entity from world
         _entityManager.RemoveEntity(entityAtPosition);
         entityAtPosition.QueueFree();
 
         // Emit signal for UI feedback
-        EmitSignal(SignalName.GoldCollected, goldAmount, _score);
+        EmitSignal(SignalName.GoldCollected, goldAmount, _goldManager.Gold);
     }
 
     /// <summary>
@@ -280,11 +262,6 @@ public partial class Player : BaseEntity
     public IReadOnlyList<InventorySlot> Inventory => _inventoryComponent?.Inventory ?? System.Array.Empty<InventorySlot>();
 
     /// <summary>
-    /// Gets the player's current score (gold collected).
-    /// </summary>
-    public int Score => _score;
-
-    /// <summary>
     /// Sets the EntityManager reference for item pickup.
     /// Called by GameLevel during initialization.
     /// </summary>
@@ -294,82 +271,15 @@ public partial class Player : BaseEntity
     }
 
     /// <summary>
-    /// Attempts to pick up an item at the player's current position.
-    /// Returns true if an item was picked up and turn should be consumed.
+    /// Sets the GoldManager reference for gold tracking.
+    /// Called by GameLevel during initialization.
     /// </summary>
-    public bool TryPickupItem()
+    public void SetGoldManager(GoldManager goldManager)
     {
-        if (_entityManager == null || _inventoryComponent == null)
-        {
-            GD.PushWarning("Player: EntityManager or InventoryComponent not set!");
-            return false;
-        }
-
-        // Check for item at player's current position
-        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
-        var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
-
-        if (itemComponent == null)
-        {
-            EmitSignal(SignalName.ItemPickedUp, "", false, "Nothing to pick up.");
-            return false; // No turn consumed
-        }
-
-        // Try to add item to inventory (excludes equipped items from stacking)
-        var key = _inventoryComponent.AddItem(itemComponent.Item, out string message, excludeEquipped: false);
-
-        if (key == null)
-        {
-            // Inventory full and couldn't stack
-            EmitSignal(SignalName.ItemPickedUp, entityAtPosition.DisplayName, false, message);
-            return false; // No turn consumed
-        }
-
-        // Remove item from world
-        _entityManager.RemoveEntity(entityAtPosition);
-        entityAtPosition.QueueFree();
-
-        // Notify listeners
-        string itemName = entityAtPosition.DisplayName;
-        EmitSignal(SignalName.ItemPickedUp, itemName, true, $"You pick up the {itemName}.");
-        // Note: InventoryChanged signal is already emitted by InventoryComponent
-
-        return true; // Turn consumed
+        _goldManager = goldManager;
     }
 
-    /// <summary>
-    /// Adds an item to the player's inventory.
-    /// Used by PickupAction to manage inventory.
-    /// </summary>
-    /// <param name="itemEntity">The entity with ItemComponent to add.</param>
-    /// <param name="message">Output message describing the result.</param>
-    /// <returns>True if the item was added successfully.</returns>
-    public bool AddItemToInventory(BaseEntity itemEntity, out string message)
-    {
-        if (_inventoryComponent == null)
-        {
-            message = "InventoryComponent not found!";
-            return false;
-        }
 
-        var itemComponent = itemEntity.GetNodeOrNull<ItemComponent>("ItemComponent");
-        if (itemComponent == null)
-        {
-            message = "Not an item!";
-            return false;
-        }
-
-        // Add item to inventory (exclude equipped items from stacking)
-        var key = _inventoryComponent.AddItem(itemComponent.Item, out message, excludeEquipped: true);
-
-        if (key != null)
-        {
-            message = $"You pick up the {itemEntity.DisplayName}.";
-            return true;
-        }
-
-        return false;
-    }
 
     /// <summary>
     /// Emits item pickup feedback signals.

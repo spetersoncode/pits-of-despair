@@ -5,7 +5,7 @@ namespace PitsOfDespair.Actions;
 
 /// <summary>
 /// Action for picking up an item at the actor's current position.
-/// Currently player-only, as only the player has inventory.
+/// Works for any entity with an InventoryComponent.
 /// </summary>
 public class PickupAction : Action
 {
@@ -18,8 +18,9 @@ public class PickupAction : Action
             return false;
         }
 
-        // Only players can pick up items (for now)
-        if (actor is not Player)
+        // Actor must have inventory component
+        var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
         {
             return false;
         }
@@ -33,36 +34,47 @@ public class PickupAction : Action
 
     public override ActionResult Execute(BaseEntity actor, ActionContext context)
     {
-        if (actor is not Player player)
+        // Get actor's inventory component
+        var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
         {
-            return ActionResult.CreateFailure("Only the player can pick up items.");
+            return ActionResult.CreateFailure("Cannot pick up items without inventory.");
         }
 
-        // Check for item at player's current position
-        var entityAtPosition = context.EntityManager.GetEntityAtPosition(player.GridPosition);
+        // Check for item at actor's current position
+        var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
         var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
 
         if (itemComponent == null)
         {
-            string message = "Nothing to pick up.";
-            player.EmitItemPickupFeedback("", false, message);
-            return ActionResult.CreateFailure(message);
+            return ActionResult.CreateFailure("Nothing to pick up.");
         }
 
         // Try to add to inventory
-        if (!player.AddItemToInventory(entityAtPosition, out string resultMessage))
+        var key = inventory.AddItem(itemComponent.Item, out string message, excludeEquipped: true);
+
+        if (key == null)
         {
-            player.EmitItemPickupFeedback(entityAtPosition.DisplayName, false, resultMessage);
-            return ActionResult.CreateFailure(resultMessage);
+            // Failed to add (inventory full or other issue)
+            return ActionResult.CreateFailure(message);
         }
 
         // Remove item from world
         context.EntityManager.RemoveEntity(entityAtPosition);
         entityAtPosition.QueueFree();
 
-        // Emit feedback
-        player.EmitItemPickupFeedback(entityAtPosition.DisplayName, true, resultMessage);
+        // Success - item picked up
+        string successMessage = $"Picked up {entityAtPosition.DisplayName}.";
 
-        return ActionResult.CreateSuccess(resultMessage);
+        // Emit UI feedback for player only
+        // Note: Core logic is generic (works with any InventoryComponent),
+        // but UI feedback is player-specific since only player has message log.
+        // This is acceptable as it's purely presentational, not game logic.
+        if (actor is Player player)
+        {
+            player.EmitItemPickupFeedback(entityAtPosition.DisplayName, true, successMessage);
+        }
+
+        return ActionResult.CreateSuccess(successMessage);
     }
 }

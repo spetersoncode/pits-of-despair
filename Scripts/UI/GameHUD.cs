@@ -54,14 +54,16 @@ public partial class GameHUD : Control
     /// <param name="entityManager">The entity manager for death notifications.</param>
     /// <param name="floorDepth">The current floor depth.</param>
     /// <param name="actionContext">The action context for executing actions.</param>
+    /// <param name="goldManager">The gold manager for tracking player gold.</param>
     /// <param name="visionSystem">The player vision system for checking visible entities.</param>
-    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, PlayerVisionSystem visionSystem = null)
+    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, GoldManager goldManager, PlayerVisionSystem visionSystem = null)
     {
         _player = player;
         _actionContext = actionContext;
 
         // Wire up side panel
         _sidePanel.ConnectToPlayer(player);
+        _sidePanel.ConnectToGoldManager(goldManager);
         _sidePanel.SetFloorDepth(floorDepth);
         _sidePanel.SetEntityManager(entityManager);
         if (visionSystem != null)
