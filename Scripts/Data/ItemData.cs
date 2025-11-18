@@ -323,6 +323,15 @@ public class ItemData
             case "armor_buff":
                 return new ApplyStatusEffect("armor_buff", definition.Amount, definition.Duration);
 
+            case "strength_buff":
+                return new ApplyStatusEffect("strength_buff", definition.Amount, definition.Duration);
+
+            case "agility_buff":
+                return new ApplyStatusEffect("agility_buff", definition.Amount, definition.Duration);
+
+            case "endurance_buff":
+                return new ApplyStatusEffect("endurance_buff", definition.Amount, definition.Duration);
+
             case "teleport":
                 return new TeleportEffect();
 

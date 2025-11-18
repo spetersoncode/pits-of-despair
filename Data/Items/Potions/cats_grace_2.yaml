@@ -1,0 +1,7 @@
+name: cat's grace 2
+type: potion
+color: Cyan
+effects:
+  - type: agility_buff
+    amount: 2
+    duration: 40

@@ -90,6 +90,15 @@ public class ApplyStatusEffect : Effect
             case "armor_buff":
                 return new ArmorBuffStatus(amount, duration);
 
+            case "strength_buff":
+                return new StrengthBuffStatus(amount, duration);
+
+            case "agility_buff":
+                return new AgilityBuffStatus(amount, duration);
+
+            case "endurance_buff":
+                return new EnduranceBuffStatus(amount, duration);
+
             default:
                 return null;
         }

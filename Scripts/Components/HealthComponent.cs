@@ -86,7 +86,7 @@ public partial class HealthComponent : Node
             CurrentHP = MaxHP;
         }
 
-        EmitSignal(SignalName.HealthChanged, CurrentHP, MaxHP);
+        CallDeferred(MethodName.EmitHealthChangedSignal, CurrentHP, MaxHP);
     }
 
     /// <summary>
@@ -146,5 +146,13 @@ public partial class HealthComponent : Node
     public bool IsAlive()
     {
         return CurrentHP > 0;
+    }
+
+    /// <summary>
+    /// Helper method to emit HealthChanged signal (called deferred to avoid re-entrancy issues).
+    /// </summary>
+    private void EmitHealthChangedSignal(int current, int max)
+    {
+        EmitSignal(SignalName.HealthChanged, current, max);
     }
 }

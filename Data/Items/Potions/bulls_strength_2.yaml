@@ -1,0 +1,7 @@
+name: bull's strength 2
+type: potion
+color: Rust
+effects:
+  - type: strength_buff
+    amount: 2
+    duration: 40

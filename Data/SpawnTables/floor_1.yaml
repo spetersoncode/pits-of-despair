@@ -12,13 +12,12 @@ creaturePools:
     entries:
       - type: multiple
         creatureId: rat
-        weight: 3
+        weight: 2
         count:
           dice: "1d2"
 
       - type: multiple
         creatureId: goblin
-        weight: 2
         count:
           dice: "1d2"
 
@@ -56,11 +55,15 @@ itemPools:
   - id: common
     weight: 70
     entries:
-      - itemId: potion_minor_healing
-        weight: 2
+      - itemId: potion_healing_8
 
-      - itemId: potion_minor_barkskin
-        weight: 2
+      - itemId: potion_barkskin_2
+
+      - itemId: potion_bulls_strength_2
+
+      - itemId: potion_cats_grace_2
+
+      - itemId: potion_bears_endurance_2
 
       - itemId: scroll_blink
 

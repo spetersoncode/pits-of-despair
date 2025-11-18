@@ -36,7 +36,7 @@ public partial class StatsComponent : Node
 
 	/// <summary>
 	/// Base Endurance value (before modifiers).
-	/// Affects hit points (+2 HP per point).
+	/// Affects hit points (+Endurance HP per level).
 	/// </summary>
 	[Export] public int BaseEndurance { get; set; } = 0;
 
@@ -45,6 +45,12 @@ public partial class StatsComponent : Node
 	/// Reserved for future magic/abilities system.
 	/// </summary>
 	[Export] public int BaseWill { get; set; } = 0;
+
+	/// <summary>
+	/// Character level (affects HP from Endurance).
+	/// HP bonus = Endurance × Level
+	/// </summary>
+	[Export] public int Level { get; set; } = 1;
 
 	#endregion
 
@@ -268,10 +274,10 @@ public partial class StatsComponent : Node
 	/// <summary>
 	/// Gets the HP bonus from Endurance.
 	/// </summary>
-	/// <returns>Endurance × 2</returns>
+	/// <returns>Endurance × Level</returns>
 	public int GetHPBonus()
 	{
-		return TotalEndurance * 2;
+		return TotalEndurance * Level;
 	}
 
 	#endregion
