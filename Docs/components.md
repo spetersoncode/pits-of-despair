@@ -107,33 +107,11 @@ Many components support modifiers from multiple sources (equipment, buffs, tempo
 
 When a source is removed (unequip item, buff expires), its modifier cleanly disappears without disrupting other modifiers.
 
-## Entity Composition
+## Component Composition Patterns
 
-Entities are built by combining components that provide the needed capabilities:
+Entities gain capabilities by combining components. A combat-capable entity typically composes Health, Stats, and Attack components. An autonomous creature adds Movement, Vision, and AI components. Complex entities layer additional components for inventory, equipment, and status effects.
 
-**Simple Creature**:
-- Health (can take damage and die)
-- Stats (has attributes)
-- Movement (can move)
-- Vision (can see)
-- Attack (can fight)
-
-**Complex Creature**:
-- All simple creature components, plus:
-- AI (autonomous behavior)
-- Status (can be affected by buffs/debuffs)
-- Inventory (can carry items)
-- Equipment (can wear armor and wield weapons)
-
-**Player**:
-- Similar to complex creature
-- Different signal subscriptions (player turn vs creature turn)
-- May have player-specific components for input handling
-
-**Item**:
-- No health, movement, or combat components
-- Exists as an entity for consistent handling in the game world
-- Marked as walkable so entities can move through item tiles
+For specific entity types and their component compositions, see **[entities.md](entities.md)**.
 
 ## Benefits Realized
 
