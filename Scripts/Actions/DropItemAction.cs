@@ -79,16 +79,10 @@ public class DropItemAction : Action
 			DisplayName = itemInstance.Template.Name,
 			Glyph = itemInstance.Template.GetGlyph(),
 			GlyphColor = itemInstance.Template.GetColor(),
+			IsWalkable = true, // Items are walkable
+			ItemData = itemInstance, // Store item instance (preserves charges)
 			Name = itemInstance.Template.Name
 		};
-
-		// Add ItemComponent with the item instance (preserves charges)
-		var itemComponent = new ItemComponent
-		{
-			Name = "ItemComponent",
-			Item = itemInstance
-		};
-		itemEntity.AddChild(itemComponent);
 
 		// Add to entity manager
 		context.EntityManager.AddEntity(itemEntity);

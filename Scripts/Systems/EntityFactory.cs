@@ -45,7 +45,7 @@ public partial class EntityFactory : Node
     /// </summary>
     /// <param name="itemId">The item ID (JSON filename without extension).</param>
     /// <param name="position">The grid position to place the item.</param>
-    /// <returns>The created and configured BaseEntity with ItemComponent, or null if item not found.</returns>
+    /// <returns>The created and configured BaseEntity with ItemData, or null if item not found.</returns>
     public BaseEntity CreateItem(string itemId, GridPosition position)
     {
         var data = _dataLoader.GetItem(itemId);
@@ -55,6 +55,9 @@ public partial class EntityFactory : Node
             return null;
         }
 
+        // Create ItemInstance with randomized/specified charges
+        var itemInstance = new ItemInstance(data);
+
         // Create base entity for the item
         var entity = new BaseEntity
         {
@@ -62,18 +65,10 @@ public partial class EntityFactory : Node
             DisplayName = data.Name,
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
+            IsWalkable = true, // Items are walkable (entities can walk over them)
+            ItemData = itemInstance, // Store item instance with per-instance state
             Name = data.Name // Set node name for debugging
         };
-
-        // Add ItemComponent to mark as collectible item
-        // Create ItemInstance with randomized/specified charges
-        var itemInstance = new ItemInstance(data);
-        var itemComponent = new ItemComponent
-        {
-            Name = "ItemComponent",
-            Item = itemInstance // Store item instance with per-instance state
-        };
-        entity.AddChild(itemComponent);
 
         return entity;
     }

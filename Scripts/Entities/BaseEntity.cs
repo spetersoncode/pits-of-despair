@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using System.Globalization;
 
 namespace PitsOfDespair.Entities;
@@ -76,6 +77,12 @@ public partial class BaseEntity : Node2D
     /// True for items, false for creatures.
     /// </summary>
     public bool IsWalkable { get; set; } = false;
+
+    /// <summary>
+    /// Item data if this entity is a collectible item.
+    /// Null for non-item entities (creatures, player, etc.).
+    /// </summary>
+    public ItemInstance? ItemData { get; set; } = null;
 
     /// <summary>
     /// Updates the entity's grid position and emits PositionChanged signal.

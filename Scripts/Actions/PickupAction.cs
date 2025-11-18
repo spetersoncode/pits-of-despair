@@ -27,9 +27,8 @@ public class PickupAction : Action
 
         // Check if there's an item at the actor's position
         var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
-        var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
 
-        return itemComponent != null;
+        return entityAtPosition?.ItemData != null;
     }
 
     public override ActionResult Execute(BaseEntity actor, ActionContext context)
@@ -43,15 +42,14 @@ public class PickupAction : Action
 
         // Check for item at actor's current position
         var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
-        var itemComponent = entityAtPosition?.GetNodeOrNull<ItemComponent>("ItemComponent");
 
-        if (itemComponent == null)
+        if (entityAtPosition?.ItemData == null)
         {
             return ActionResult.CreateFailure("Nothing to pick up.");
         }
 
         // Try to add to inventory
-        var key = inventory.AddItem(itemComponent.Item, out string message, excludeEquipped: true);
+        var key = inventory.AddItem(entityAtPosition.ItemData, out string message, excludeEquipped: true);
 
         if (key == null)
         {
