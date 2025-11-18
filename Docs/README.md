@@ -35,6 +35,23 @@ Documentation should capture enduring design decisions, architectural principles
 
 Implementation details belong in code, comments, and exploration. Documentation should help you understand the system's design so you can navigate the implementation effectively.
 
+**DRY and Atomic Documentation**
+
+Each document should have a single, focused purpose without duplicating content from other documents:
+
+- **Don't Repeat Yourself**: Information should exist in exactly one place
+- **Atomic topics**: Each document covers one coherent subject area
+- **Cross-reference liberally**: Link to related documents rather than duplicating their content
+- **Extract common themes**: If multiple documents repeat the same concept, extract it into a dedicated document
+
+**When you find duplication:**
+1. Identify which document owns the concept (most relevant context)
+2. Remove duplicated content from other documents
+3. Add cross-references to the authoritative document
+4. If no clear owner exists, create a new focused document for the shared concept
+
+**Example:** Component design patterns belong in `components.md`. Entity architecture belongs in `entities.md`. Both can reference each other for context, but neither should duplicate the other's core content.
+
 ## Conventions
 
 - **File naming**: lowercase with hyphens (e.g., `action-system.md`, `ai-architecture.md`)
