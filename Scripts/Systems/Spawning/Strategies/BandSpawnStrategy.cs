@@ -132,7 +132,7 @@ public class BandSpawnStrategy : ISpawnStrategy
         var gridPosition = new GridPosition(position.X, position.Y);
 
         // Create and register leader entity
-        var entity = _entityFactory.CreateEntity(leaderData.CreatureId, gridPosition);
+        var entity = _entityFactory.CreateCreature(leaderData.CreatureId, gridPosition);
         if (entity != null)
         {
             _entityManager.AddEntity(entity);
@@ -185,7 +185,7 @@ public class BandSpawnStrategy : ISpawnStrategy
         foreach (var position in positions)
         {
             var gridPosition = new GridPosition(position.X, position.Y);
-            var entity = _entityFactory.CreateEntity(followerData.CreatureId, gridPosition);
+            var entity = _entityFactory.CreateCreature(followerData.CreatureId, gridPosition);
 
             if (entity != null)
             {

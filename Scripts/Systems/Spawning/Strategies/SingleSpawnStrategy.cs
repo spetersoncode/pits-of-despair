@@ -60,7 +60,7 @@ public class SingleSpawnStrategy : ISpawnStrategy
 
             // Spawn creature or item based on entry type
             var entity = !string.IsNullOrEmpty(entry.CreatureId)
-                ? _entityFactory.CreateEntity(entry.CreatureId, gridPosition)
+                ? _entityFactory.CreateCreature(entry.CreatureId, gridPosition)
                 : _entityFactory.CreateItem(entry.ItemId, gridPosition);
 
             if (entity != null)

@@ -74,7 +74,7 @@ public class UniqueSpawnStrategy : ISpawnStrategy
         var gridPosition = new GridPosition(position.X, position.Y);
 
         // Spawn unique creature
-        var entity = _entityFactory.CreateEntity(entry.CreatureId, gridPosition);
+        var entity = _entityFactory.CreateCreature(entry.CreatureId, gridPosition);
         if (entity != null)
         {
             _entityManager.AddEntity(entity);
