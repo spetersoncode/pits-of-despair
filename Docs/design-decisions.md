@@ -16,6 +16,8 @@ This document captures conscious design choices that shape gameplay philosophy a
 
 **No Hunger Clock**: Hunger timers force movement through levels without adding interesting decisions—just "eat food or die slowly." Pacing and difficulty scaling managed through spawning mechanics (enemy density, reinforcements, elite spawns) that create dynamic pressure without arbitrary timers.
 
+**No Backtracking**: Strictly linear descent through dungeon levels with no branches. Players win by progressing forward and collecting the macguffin—never returning through cleared content or revisiting explored branches. Eliminates tedious navigation through empty areas and choice paralysis from branch exploration. Level transitions are one-way—decisions about engagement and descent become permanent, adding weight to resource management without requiring memory of cleared areas or navigation busywork.
+
 ## Design Constraints
 
 **UI Complexity Budget**: Each new mechanic evaluated against UI cost. Features requiring dedicated panels, mode switching, or resource sub-types must provide proportional strategic depth.
