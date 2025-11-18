@@ -90,4 +90,17 @@ public class ItemInstance
             RechargeTurnCounter = 0;
         }
     }
+
+    /// <summary>
+    /// Creates a copy of this ItemInstance with the same template and state.
+    /// Used when dropping items from inventory to ensure inventory and ground entities don't share state.
+    /// </summary>
+    public ItemInstance Clone()
+    {
+        return new ItemInstance(Template)
+        {
+            CurrentCharges = this.CurrentCharges,
+            RechargeTurnCounter = this.RechargeTurnCounter
+        };
+    }
 }

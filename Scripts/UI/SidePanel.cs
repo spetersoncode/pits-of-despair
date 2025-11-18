@@ -357,7 +357,10 @@ public partial class SidePanel : PanelContainer
 		if (entityAtPosition != null && entityAtPosition.IsWalkable)
 		{
 			// Display the item with its glyph
-			_standingOnLabel.Text = $"{entityAtPosition.Glyph} {entityAtPosition.DisplayName}";
+			string displayName = entityAtPosition.ItemData != null
+				? entityAtPosition.ItemData.Template.GetDisplayName(1)
+				: entityAtPosition.DisplayName;
+			_standingOnLabel.Text = $"{entityAtPosition.Glyph} {displayName}";
 			_standingOnLabel.AddThemeColorOverride("font_color", entityAtPosition.GlyphColor);
 		}
 		else

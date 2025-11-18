@@ -16,6 +16,7 @@ namespace PitsOfDespair.Data;
 public class ItemTypeInfo
 {
     public string Prefix { get; set; } = string.Empty;
+    public string? PluralType { get; set; } = null;
     public string DefaultGlyph { get; set; } = DataDefaults.UnknownGlyph;
     public string DefaultColor { get; set; } = DataDefaults.DefaultColor;
     public bool IsEquippable { get; set; } = false;
@@ -38,6 +39,7 @@ public class ItemData
         ["potion"] = new ItemTypeInfo
         {
             Prefix = "potion of ",
+            PluralType = "potions",
             DefaultGlyph = "!",
             DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
@@ -46,6 +48,7 @@ public class ItemData
         ["scroll"] = new ItemTypeInfo
         {
             Prefix = "scroll of ",
+            PluralType = "scrolls",
             DefaultGlyph = "♪",
             DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
@@ -281,6 +284,42 @@ public class ItemData
     public bool IsActivatable()
     {
         return GetIsConsumable() || !string.IsNullOrEmpty(ChargesDice);
+    }
+
+    /// <summary>
+    /// Gets the display name for this item with proper pluralization based on count.
+    /// For count=1: returns "potion of healing"
+    /// For count>1 with plural type: returns "3 potions of healing"
+    /// For count>1 without plural type: returns "sword (3)"
+    /// </summary>
+    public string GetDisplayName(int count = 1)
+    {
+        // Single item - just return the name
+        if (count == 1)
+        {
+            return Name;
+        }
+
+        // Multiple items - check if we have a plural type
+        if (!string.IsNullOrEmpty(Type))
+        {
+            var typeKey = Type.ToLower();
+            if (TypeInfo.TryGetValue(typeKey, out var info) && !string.IsNullOrEmpty(info.PluralType))
+            {
+                // Extract the base name (everything after the prefix)
+                string baseName = Name;
+                if (!string.IsNullOrEmpty(info.Prefix) && Name.StartsWith(info.Prefix))
+                {
+                    baseName = Name.Substring(info.Prefix.Length);
+                }
+
+                // Construct plural form: "3 potions of healing"
+                return $"{count} {info.PluralType} of {baseName}";
+            }
+        }
+
+        // Fallback for items without plural type (weapons, armor, etc.)
+        return $"{Name} ({count})";
     }
 
     /// <summary>

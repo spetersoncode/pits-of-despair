@@ -76,31 +76,32 @@ public class ActivateItemAction : Action
         }
 
         var itemTemplate = slot.Item.Template;
+        string itemName = itemTemplate.GetDisplayName(1);
 
         // Check if item is equipped (can't activate equipped items)
         var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
         if (equipComponent != null && equipComponent.IsEquipped(_itemKey))
         {
-            return ActionResult.CreateFailure($"{itemTemplate.Name} is equipped. Unequip it first.");
+            return ActionResult.CreateFailure($"{itemName} is equipped. Unequip it first.");
         }
 
         // Check if the item is activatable
         if (!itemTemplate.IsActivatable())
         {
-            return ActionResult.CreateFailure($"You can't activate {itemTemplate.Name}.");
+            return ActionResult.CreateFailure($"You can't activate {itemName}.");
         }
 
         // Check if charged item has charges remaining
         if (itemTemplate.GetMaxCharges() > 0 && slot.Item.CurrentCharges <= 0)
         {
-            return ActionResult.CreateFailure($"The {itemTemplate.Name} has no charges remaining.");
+            return ActionResult.CreateFailure($"The {itemName} has no charges remaining.");
         }
 
         // Get the item's effects
         var effects = itemTemplate.GetEffects();
         if (effects.Count == 0)
         {
-            return ActionResult.CreateFailure($"{itemTemplate.Name} has no effects.");
+            return ActionResult.CreateFailure($"{itemName} has no effects.");
         }
 
         // Apply all effects
@@ -140,7 +141,7 @@ public class ActivateItemAction : Action
         }
 
         // Emit feedback signal for logging
-        player.EmitItemUsed(itemTemplate.Name, true, messages.ToString().TrimEnd());
+        player.EmitItemUsed(itemName, true, messages.ToString().TrimEnd());
 
         return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
     }

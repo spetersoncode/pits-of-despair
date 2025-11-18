@@ -136,7 +136,7 @@ public partial class InventoryComponent : Node
         }
 
         // Remove the specified count
-        bool removed = slot.Remove(count);
+        slot.Remove(count);
 
         // If slot is empty, remove it from inventory
         if (slot.Count <= 0)
@@ -144,14 +144,9 @@ public partial class InventoryComponent : Node
             _inventory.Remove(slot);
         }
 
-        // Notify listeners
-        if (removed || slot.Count <= 0)
-        {
-            EmitSignal(SignalName.InventoryChanged);
-            return true;
-        }
-
-        return false;
+        // Notify listeners and return success
+        EmitSignal(SignalName.InventoryChanged);
+        return true;
     }
 
     /// <summary>

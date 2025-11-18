@@ -54,9 +54,10 @@ public class DropItemAction : Action
 			return ActionResult.CreateFailure("No item in that slot.");
 		}
 
-		// Store item instance before removing from inventory
-		var itemInstance = slot.Item;
-		string itemName = itemInstance.Template.Name;
+		// Clone the item instance before removing from inventory
+		// This ensures the dropped entity doesn't share state with inventory items
+		var itemInstance = slot.Item.Clone();
+		string itemName = itemInstance.Template.GetDisplayName(1);
 
 		// If item is equipped, unequip it first
 		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");

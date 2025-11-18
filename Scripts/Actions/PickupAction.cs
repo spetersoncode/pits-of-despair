@@ -62,7 +62,8 @@ public class PickupAction : Action
         entityAtPosition.QueueFree();
 
         // Success - item picked up
-        string successMessage = $"Picked up {entityAtPosition.DisplayName}.";
+        string itemName = entityAtPosition.ItemData.Template.GetDisplayName(1);
+        string successMessage = $"Picked up {itemName}.";
 
         // Emit UI feedback for player only
         // Note: Core logic is generic (works with any InventoryComponent),
@@ -70,7 +71,7 @@ public class PickupAction : Action
         // This is acceptable as it's purely presentational, not game logic.
         if (actor is Player player)
         {
-            player.EmitItemPickupFeedback(entityAtPosition.DisplayName, true, successMessage);
+            player.EmitItemPickupFeedback(itemName, true, successMessage);
         }
 
         return ActionResult.CreateSuccess(successMessage);

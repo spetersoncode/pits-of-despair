@@ -117,7 +117,7 @@ public partial class InventoryPanel : PanelContainer
         {
             // Format: key) glyph name (count/charges) {EQUIPPED}
             string colorHex = slot.Item.Template.Color;
-            string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
+            string displayName = slot.Item.Template.GetDisplayName(slot.Count);
             string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
 
             // Check if this item is equipped
@@ -129,7 +129,7 @@ public partial class InventoryPanel : PanelContainer
                 equippedText = $" [color={Palette.ToHex(Palette.Success)}]{{EQUIPPED: {slotName}}}[/color]";
             }
 
-            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {slot.Item.Template.Name}{countText}{chargesText}{equippedText}");
+            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {displayName}{chargesText}{equippedText}");
         }
 
         _inventoryLabel.Text = sb.ToString();

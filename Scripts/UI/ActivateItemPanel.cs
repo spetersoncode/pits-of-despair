@@ -120,11 +120,11 @@ public partial class ActivateItemPanel : PanelContainer
             // Format: key) glyph name (count/charges) (equipped)
             string colorHex = isActivatable ? slot.Item.Template.Color : Palette.ToHex(Palette.Disabled);
             string keyColor = isActivatable ? Palette.ToHex(Palette.Disabled) : Palette.ToHex(Palette.Basalt);
-            string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
+            string displayName = slot.Item.Template.GetDisplayName(slot.Count);
             string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
             string equippedText = isEquipped ? $" [color={Palette.ToHex(Palette.Disabled)}](equipped)[/color]" : "";
 
-            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{slot.Item.Template.Name}{countText}{chargesText}[/color]{equippedText}");
+            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] [color={colorHex}]{displayName}{chargesText}[/color]{equippedText}");
         }
 
         _itemsLabel.Text = sb.ToString();
