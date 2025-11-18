@@ -127,11 +127,15 @@ public partial class CombatSystem : Node
         int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
         int defenseRoll = DiceRoller.Roll(2, 6, defenseModifier);
 
+        string attackType = isMelee ? "Melee" : "Ranged";
+        GD.Print($"Combat: {attacker.DisplayName} {attackType} attack vs {target.DisplayName}: Attack {attackRoll} (2d6+{attackModifier}) vs Defense {defenseRoll} (2d6+{defenseModifier})");
+
         // Check if attack hits (attacker roll >= defender roll, ties go to attacker)
         bool hit = attackRoll >= defenseRoll;
 
         if (!hit)
         {
+            GD.Print($"Combat: MISS");
             // Attack missed
             EmitSignal(SignalName.AttackMissed, attacker, target, attackData.Name);
             EmitSignal(SignalName.AttackExecuted, attacker, target, 0, attackData.Name); // Legacy support
@@ -144,6 +148,8 @@ public partial class CombatSystem : Node
         int armor = targetStats.TotalArmor;
 
         int finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
+
+        GD.Print($"Combat: HIT - Damage: {baseDamage} ({attackData.DiceNotation}) + {damageBonus} bonus - {armor} armor = {finalDamage} final damage");
 
         // PHASE 3: Apply Damage and Emit Feedback
         if (finalDamage > 0)

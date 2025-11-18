@@ -107,9 +107,6 @@ public partial class TargetingSystem : Node
 
             _currentCreatureIndex = 0;
             _cursorPosition = _validCreatureTargets[0].GridPosition;
-
-            GD.Print($"[Targeting] Auto-selected: {_validCreatureTargets[0].DisplayName} at {_validCreatureTargets[0].GridPosition}");
-            GD.Print($"[Targeting] Cursor set to: {_cursorPosition}");
         }
         else
         {
