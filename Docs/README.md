@@ -71,6 +71,16 @@ Each document has single, focused purpose. Information exists in exactly one pla
 
 **Code Identifiers**: Use backticks for method names with parentheses (`CanExecute()`), flags (`HasMovement`), and type names.
 
+## Creating New Documentation
+
+**When to create**: Coherent systems reach sufficient architectural complexity. Design decisions need recording. Cross-system interactions require clarification. New contributors would benefit from design context before exploring code.
+
+**When not to create**: Single classes or small features (use code comments). Implementation details that change frequently. Temporary features. Topics already covered (extend existing docs instead).
+
+**Process**: Research codebase thoroughly to understand architecture. Focus on design decisions, patterns, and integration points—not implementation details. Follow conventions above for structure and style. Check for duplication with existing docs—cross-reference rather than duplicate.
+
+**Extensible Patterns**: If documenting a system following a command or factory pattern (actions, effects, components, etc.) where developers create new instances, include an "Adding New [X]" section. Explain the complete wiring process: what needs to be implemented, where to register (factories, inputs, etc.), integration points with other systems, and design considerations. See effects.md and actions.md for examples.
+
 ## Project Overview
 
 See **[README.md](../README.md)** for game overview, mechanics, and technical stack. See **[CLAUDE.md](../CLAUDE.md)** for development principles, code practices, and workflow.
