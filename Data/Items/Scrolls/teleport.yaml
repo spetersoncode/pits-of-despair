@@ -1,0 +1,5 @@
+name: teleport
+type: scroll
+color: Magenta
+effects:
+  - type: teleport

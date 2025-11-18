@@ -270,6 +270,9 @@ public static class Palette
     /// <summary>Cyan dye, classic blue-green (scrolls, magic items)</summary>
     public static readonly Color Cyan = new("#00BBDD");
 
+    /// <summary>Magenta dye, bright pink-purple (teleportation, dimensional magic)</summary>
+    public static readonly Color Magenta = new("#EE55DD");
+
     #endregion
 
     #region Effects - Magical

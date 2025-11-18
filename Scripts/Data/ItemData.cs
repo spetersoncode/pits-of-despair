@@ -323,6 +323,9 @@ public class ItemData
             case "armor_buff":
                 return new ApplyStatusEffect("armor_buff", definition.Amount, definition.Duration);
 
+            case "teleport":
+                return new TeleportEffect();
+
             default:
                 GD.PrintErr($"ItemData: Unknown effect type '{definition.Type}' in item '{Name}'");
                 return null;

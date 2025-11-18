@@ -67,9 +67,11 @@ itemPools:
   - id: uncommon
     weight: 25
     entries:
-      - itemId: armor_leather
+      - itemId: scroll_teleport
 
   - id: rare
     weight: 5
     entries:
+      - itemId: armor_leather
+
       - itemId: armor_studded_leather
