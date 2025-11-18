@@ -31,6 +31,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 - **[ai.md](ai.md)**: AI architecture and goal-based decision making
 - **[effects.md](effects.md)**: Instantaneous and time-based effect application
 - **[status.md](status.md)**: Status effect system with turn-based lifecycle
+- **[targeting.md](targeting.md)**: Unified targeting system for ranged attacks, reach weapons, and targeted items
 
 **Rendering & Presentation**:
 - **[text-renderer.md](text-renderer.md)**: Tile-based glyph rendering with fog-of-war and layered display
