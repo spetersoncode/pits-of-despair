@@ -64,43 +64,6 @@ public class BSPDungeonGenerator : IDungeonGenerator
         return grid;
     }
 
-    /// <summary>
-    /// Get all room bounds from the generated BSP tree.
-    /// Must be called after Generate().
-    /// </summary>
-    /// <returns>List of room bounds for all rooms in the dungeon.</returns>
-    public List<RoomBounds> GetRooms()
-    {
-        var rooms = new List<RoomBounds>();
-        if (_root != null)
-        {
-            CollectRooms(_root, rooms);
-        }
-        return rooms;
-    }
-
-    /// <summary>
-    /// Recursively collect room bounds from BSP tree leaf nodes.
-    /// </summary>
-    private void CollectRooms(BSPNode node, List<RoomBounds> rooms)
-    {
-        if (node.IsLeaf())
-        {
-            if (node.Room.HasValue)
-            {
-                var rect = node.Room.Value;
-                rooms.Add(new RoomBounds(rect.X, rect.Y, rect.Width, rect.Height));
-            }
-        }
-        else
-        {
-            if (node.LeftChild != null)
-                CollectRooms(node.LeftChild, rooms);
-            if (node.RightChild != null)
-                CollectRooms(node.RightChild, rooms);
-        }
-    }
-
     private void SplitNode(BSPNode node, int depth)
     {
         // Safety limit to prevent infinite recursion
