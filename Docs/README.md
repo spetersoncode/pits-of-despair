@@ -50,6 +50,27 @@ Each document has single, focused purpose. Information exists in exactly one pla
 - **Structure**: Optimized for both human readability and AI consumption with scannable sections
 - **Content**: Design-focused and implementation-agnostic where possible
 
+### Markdown Style Guide
+
+**Bold Labels**: Use `**Label**: description` format with colon after bold text for consistency.
+
+**Lists**: Use bullet points (`-`) for categorized items or related concepts. Examples:
+- Semantic naming patterns (State-Based, Material-Based, etc.)
+- Document/Don't document guidelines
+- Validation and execution patterns
+
+**Two-Part Patterns**: When describing complementary concepts (Validation/Execution, Scene-based/Code-based), format as:
+
+```
+**First**: Description of first concept.
+
+**Second**: Description of second concept.
+```
+
+**Document Closings**: Architecture docs end with `---` separator and italicized cross-reference or summary statement. Meta-docs (like this README) don't require closings.
+
+**Code Identifiers**: Use backticks for method names with parentheses (`CanExecute()`), flags (`HasMovement`), and type names.
+
 ## Project Overview
 
 See **[README.md](../README.md)** for game overview, mechanics, and technical stack. See **[CLAUDE.md](../CLAUDE.md)** for development principles, code practices, and workflow.
