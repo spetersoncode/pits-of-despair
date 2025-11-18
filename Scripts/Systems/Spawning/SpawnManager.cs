@@ -113,7 +113,6 @@ public partial class SpawnManager : Node
 
         // Create density controller
         var densityController = new SpawnDensityController(spawnTable);
-        GD.Print(densityController.GetDebugInfo());
 
         // Get spawn budgets
         int creatureBudget = densityController.GetCreatureBudget();

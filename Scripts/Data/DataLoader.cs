@@ -34,8 +34,6 @@ public partial class DataLoader : Node
         LoadAllItems();
         LoadAllSpawnTables();
         LoadAllBands();
-
-        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures, {_items.Count} items, {_spawnTables.Count} spawn tables, {_bands.Count} bands");
     }
 
     /// <summary>
@@ -294,7 +292,6 @@ public partial class DataLoader : Node
                         postLoadAction?.Invoke(data, id);
 
                         targetDictionary[id] = data;
-                        GD.Print($"DataLoader: Loaded {fileTypeName} '{id}' from {relativePath}");
                     }
                 }
             }
