@@ -17,6 +17,10 @@ See **[documentation.md](documentation.md)** for documentation philosophy, conve
 
 See **[README.md](../README.md)** for game overview, mechanics, and technical stack. See **[CLAUDE.md](../CLAUDE.md)** for development principles, code practices, and workflow.
 
+## Game Design
+
+- **[design-decisions.md](design-decisions.md)**: Conscious design choices and rejected mechanics
+
 ## System Documentation
 
 **Core Systems**:
