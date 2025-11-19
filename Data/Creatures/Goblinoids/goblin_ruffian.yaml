@@ -2,9 +2,7 @@ name: goblin ruffian
 type: goblinoid
 color: Rust
 strength: 1
-agility: 0
 endurance: 1
-will: 0
 maxHP: 11
 goals:
   - MeleeAttack

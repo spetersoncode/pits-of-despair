@@ -1,9 +1,6 @@
 name: skeleton
 type: undead
-strength: 0
-agility: 0
 endurance: 1
-will: 0
 maxHP: 7
 goals:
   - MeleeAttack

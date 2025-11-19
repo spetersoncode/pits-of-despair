@@ -1,9 +1,7 @@
 name: rat
 type: vermin
 strength: -2
-agility: 0
 endurance: -2
-will: 0
 maxHP: 5
 goals:
   - MeleeAttack

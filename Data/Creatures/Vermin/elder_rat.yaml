@@ -2,9 +2,6 @@ name: elder rat
 type: vermin
 color: Fur
 strength: -1
-agility: 0
-endurance: 0
-will: 0
 maxHP: 7
 goals:
   - MeleeAttack

@@ -4,7 +4,6 @@ color: Coral
 strength: -1
 agility: 1
 endurance: -1
-will: 0
 maxHP: 6
 visionRange: 12
 goals:

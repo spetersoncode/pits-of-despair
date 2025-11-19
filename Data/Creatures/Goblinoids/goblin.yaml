@@ -10,11 +10,12 @@ type: goblinoid
 # Creature type determines default glyph ('g') and color
 # Available types: goblinoid, vermin, undead
 
-# --- Stats (all required) ---
-strength: 0      # Melee damage bonus: STR/2 (rounded down)
-agility: 0       # Ranged to-hit and defense bonus
-endurance: 0     # HP bonus: END × 2
-will: 0          # Reserved for future mental resistance
+# --- Stats (optional, default to 0) ---
+# strength: 0    # Melee damage bonus: STR/2 (rounded down)
+# agility: 0     # Ranged to-hit and defense bonus
+# endurance: 0   # HP bonus: END × 2
+# will: 0        # Reserved for future mental resistance
+# Omit stats that are 0; only specify non-zero values
 
 maxHP: 8
 # Base HP before Endurance modifier (actual HP = 8 + (0 × 2) = 8)
