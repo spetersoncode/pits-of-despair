@@ -57,6 +57,21 @@ public partial class InventoryModal : ItemSelectionModal
         {
             EmitSignal(SignalName.Cancelled);
             GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Check for a-z key selection to open item details
+        if (keyEvent.Keycode >= Key.A && keyEvent.Keycode <= Key.Z)
+        {
+            char selectedKey = (char)('a' + (keyEvent.Keycode - Key.A));
+
+            // Check if this item exists in inventory
+            var slot = _player.GetInventorySlot(selectedKey);
+            if (slot != null)
+            {
+                EmitSignal(SignalName.ItemSelected, selectedKey);
+                GetViewport().SetInputAsHandled();
+            }
         }
     }
 

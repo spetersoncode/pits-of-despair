@@ -16,7 +16,8 @@ public enum MenuState
     Inventory,
     Activate,
     Drop,
-    Equip
+    Equip,
+    ItemDetail
 }
 
 /// <summary>
@@ -37,6 +38,7 @@ public partial class GameHUD : Control
     private DropItemModal _dropItemPanel;
     private EquipModal _equipPanel;
     private HelpModal _helpModal;
+    private ItemDetailModal _itemDetailModal;
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
@@ -50,6 +52,7 @@ public partial class GameHUD : Control
         _dropItemPanel = GetNode<DropItemModal>("DropItemModal");
         _equipPanel = GetNode<EquipModal>("EquipModal");
         _helpModal = GetNode<HelpModal>("HelpModal");
+        _itemDetailModal = GetNode<ItemDetailModal>("ItemDetailModal");
     }
 
     /// <summary>
@@ -82,10 +85,15 @@ public partial class GameHUD : Control
 
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
+        _inventoryPanel.Connect(InventoryModal.SignalName.ItemSelected, Callable.From<char>(OnInventoryItemSelected));
 
         _activateItemPanel.ConnectToPlayer(player);
         _dropItemPanel.ConnectToPlayer(player);
         _equipPanel.ConnectToPlayer(player);
+
+        _itemDetailModal.ConnectToPlayer(player);
+        _itemDetailModal.Connect(ItemDetailModal.SignalName.KeyRebound, Callable.From<char, char>(OnItemKeyRebound));
+        _itemDetailModal.Connect(ItemDetailModal.SignalName.Cancelled, Callable.From(OnItemDetailCancelled));
 
         _activateItemPanel.Connect(ActivateItemModal.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
         _activateItemPanel.Connect(ActivateItemModal.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
@@ -273,6 +281,68 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.None;
     }
 
+    private void OnInventoryItemSelected(char key)
+    {
+        // Hide inventory modal to avoid transparency stacking
+        _inventoryPanel.Hide();
+
+        // Open ItemDetailModal for the selected item
+        _itemDetailModal.ShowMenu(key);
+        _currentMenuState = MenuState.ItemDetail;
+    }
+
+    private void OnItemDetailCancelled()
+    {
+        // Close detail modal and return to inventory view
+        _itemDetailModal.HideMenu();
+
+        // Show inventory modal again
+        _inventoryPanel.Show();
+        _currentMenuState = MenuState.Inventory;
+    }
+
+    private void OnItemKeyRebound(char oldKey, char newKey)
+    {
+        // Get inventory component and perform rebind
+        var inventoryComponent = _player.GetNodeOrNull<Components.InventoryComponent>("InventoryComponent");
+        if (inventoryComponent != null)
+        {
+            bool success = inventoryComponent.RebindItemKey(oldKey, newKey);
+            if (success)
+            {
+                var slot = _player.GetInventorySlot(newKey);
+                if (slot != null)
+                {
+                    // Build message explaining what happened
+                    string message;
+                    if (oldKey == newKey)
+                    {
+                        message = $"{slot.Item.Template.Name} remains on '{newKey}'.";
+                    }
+                    else
+                    {
+                        // Check if there was a swap
+                        var oldSlot = _player.GetInventorySlot(oldKey);
+                        if (oldSlot != null)
+                        {
+                            message = $"{slot.Item.Template.Name} rebound to '{newKey}' (swapped with {oldSlot.Item.Template.Name} on '{oldKey}').";
+                        }
+                        else
+                        {
+                            message = $"{slot.Item.Template.Name} rebound to '{newKey}'.";
+                        }
+                    }
+                    _messageLog.AddMessage(message, Palette.ToHex(Palette.Success));
+                }
+            }
+        }
+
+        // Close all modals and return to game
+        _itemDetailModal.HideMenu();
+        _inventoryPanel.ToggleInventory(); // Use toggle to properly reset the _isVisible flag
+        _currentMenuState = MenuState.None;
+    }
+
     private void OnActivateItemSelected(char key)
     {
         _activateItemPanel.HideMenu();
@@ -365,6 +435,7 @@ public partial class GameHUD : Control
         _activateItemPanel.HideMenu();
         _dropItemPanel.HideMenu();
         _equipPanel.HideMenu();
+        _itemDetailModal.HideMenu();
         _currentMenuState = MenuState.None;
     }
 

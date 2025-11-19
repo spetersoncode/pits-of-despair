@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Data;
@@ -126,6 +127,24 @@ public partial class EquipComponent : Node
             }
         }
         return EquipmentSlot.None;
+    }
+
+    /// <summary>
+    /// Updates equipped item keys after inventory key rebinding.
+    /// Called when inventory keys are swapped or reassigned.
+    /// </summary>
+    /// <param name="oldKey">The old inventory key</param>
+    /// <param name="newKey">The new inventory key</param>
+    public void UpdateEquippedKey(char oldKey, char newKey)
+    {
+        // Find all slots that have the old key equipped and update them
+        foreach (var slot in _equippedSlots.Keys.ToList())
+        {
+            if (_equippedSlots[slot] == oldKey)
+            {
+                _equippedSlots[slot] = newKey;
+            }
+        }
     }
 
 

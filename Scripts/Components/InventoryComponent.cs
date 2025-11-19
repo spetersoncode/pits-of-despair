@@ -167,6 +167,72 @@ public partial class InventoryComponent : Node
     }
 
     /// <summary>
+    /// Rebinds an item from one key to another.
+    /// If the target key is occupied, swaps the items.
+    /// Also updates EquipComponent to keep equipped items tracking the correct keys.
+    /// </summary>
+    /// <param name="oldKey">The current key of the item to rebind.</param>
+    /// <param name="newKey">The desired new key for the item.</param>
+    /// <returns>True if rebinding was successful, false if oldKey doesn't exist or keys are the same.</returns>
+    public bool RebindItemKey(char oldKey, char newKey)
+    {
+        // Validate input
+        if (oldKey == newKey)
+        {
+            return false;
+        }
+
+        // Find the source slot
+        var sourceSlot = GetSlot(oldKey);
+        if (sourceSlot == null)
+        {
+            return false;
+        }
+
+        // Get EquipComponent to update equipped keys
+        var equipComponent = GetParent()?.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
+
+        // Check if target key is occupied
+        var targetSlot = GetSlot(newKey);
+
+        if (targetSlot != null)
+        {
+            // Update equipped keys BEFORE swapping inventory keys
+            // This ensures equipped status follows the items, not the keys
+            if (equipComponent != null)
+            {
+                // Use a temporary key that's not in use to avoid conflicts
+                char tempKey = '\0';
+
+                // Move oldKey's equipped status to temp
+                equipComponent.UpdateEquippedKey(oldKey, tempKey);
+                // Move newKey's equipped status to oldKey
+                equipComponent.UpdateEquippedKey(newKey, oldKey);
+                // Move temp (originally oldKey) to newKey
+                equipComponent.UpdateEquippedKey(tempKey, newKey);
+            }
+
+            // Swap the inventory keys
+            sourceSlot.Key = newKey;
+            targetSlot.Key = oldKey;
+        }
+        else
+        {
+            // Simple reassignment
+            sourceSlot.Key = newKey;
+
+            // Update equipped key in EquipComponent
+            if (equipComponent != null)
+            {
+                equipComponent.UpdateEquippedKey(oldKey, newKey);
+            }
+        }
+
+        EmitSignal(SignalName.InventoryChanged);
+        return true;
+    }
+
+    /// <summary>
     /// Clears all items from the inventory.
     /// </summary>
     public void Clear()

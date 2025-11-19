@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://dhxcfbllslpbg"]
+[gd_scene load_steps=11 format=3 uid="uid://dhxcfbllslpbg"]
 
 [ext_resource type="Script" uid="uid://bea0co2ut1ptd" path="res://Scripts/UI/GameHUD.cs" id="1"]
 [ext_resource type="PackedScene" uid="uid://cr4kky5x07a1s" path="res://Scenes/UI/SidePanel.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://ci6u43a1m13op" path="res://Scenes/UI/EquipModal.tscn" id="7"]
 [ext_resource type="Theme" uid="uid://ci6jrw6qhe3je" path="res://Resources/Themes/DefaultUITheme.tres" id="8"]
 [ext_resource type="PackedScene" uid="uid://dohggk4cu2v8r" path="res://Scenes/UI/HelpModal.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/ItemDetailModal.tscn" id="10"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -60,4 +61,7 @@ layout_mode = 1
 layout_mode = 1
 
 [node name="HelpModal" parent="." instance=ExtResource("9")]
+layout_mode = 1
+
+[node name="ItemDetailModal" parent="." instance=ExtResource("10")]
 layout_mode = 1
