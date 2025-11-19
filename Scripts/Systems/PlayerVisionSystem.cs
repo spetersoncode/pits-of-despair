@@ -53,8 +53,8 @@ public partial class PlayerVisionSystem : Node
         _visibleTiles = new bool[_mapWidth, _mapHeight];
         _exploredTiles = new bool[_mapWidth, _mapHeight];
 
-        // Subscribe to player turn completion
-        _player.TurnCompleted += OnPlayerTurnCompleted;
+        // Connect to player turn completion
+        _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
 
         // Calculate initial vision
         CalculateVision();
@@ -195,7 +195,7 @@ public partial class PlayerVisionSystem : Node
         // Cleanup signal connections
         if (_player != null)
         {
-            _player.TurnCompleted -= OnPlayerTurnCompleted;
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
         }
     }
 }

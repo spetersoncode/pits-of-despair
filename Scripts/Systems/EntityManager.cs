@@ -45,14 +45,14 @@ public partial class EntityManager : Node
         _positionCache[entity.GridPosition] = entity;
 
         // Subscribe to position changes to keep cache updated
-        entity.PositionChanged += (x, y) => OnEntityPositionChanged(entity, new GridPosition(x, y));
+        entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>((x, y) => OnEntityPositionChanged(entity, new GridPosition(x, y))));
 
         // Subscribe to death if entity has health
         var healthComponent = entity.GetNode<HealthComponent>("HealthComponent");
         if (healthComponent != null)
         {
             // Use lambda to capture entity reference
-            healthComponent.Died += () => OnEntityDied(entity);
+            healthComponent.Connect(HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
         }
 
         EmitSignal(SignalName.EntityAdded, entity);

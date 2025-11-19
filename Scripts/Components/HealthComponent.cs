@@ -55,10 +55,10 @@ public partial class HealthComponent : Node
         RecalculateMaxHP();
         CurrentHP = MaxHP;
 
-        // Subscribe to stat changes if StatsComponent exists
+        // Connect to stat changes if StatsComponent exists
         if (_stats != null)
         {
-            _stats.StatsChanged += OnStatsChanged;
+            _stats.Connect(StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
         }
     }
 

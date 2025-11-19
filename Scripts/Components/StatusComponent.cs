@@ -73,14 +73,14 @@ public partial class StatusComponent : Node
             return;
         }
 
-        // Subscribe to appropriate turn signal based on entity type
+        // Connect to appropriate turn signal based on entity type
         if (IsPlayerControlled)
         {
-            _turnManager.PlayerTurnStarted += OnTurnStarted;
+            _turnManager.Connect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnTurnStarted));
         }
         else
         {
-            _turnManager.CreatureTurnsStarted += OnTurnStarted;
+            _turnManager.Connect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnTurnStarted));
         }
 
         _isConnected = true;
@@ -93,11 +93,11 @@ public partial class StatusComponent : Node
         {
             if (IsPlayerControlled)
             {
-                _turnManager.PlayerTurnStarted -= OnTurnStarted;
+                _turnManager.Disconnect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnTurnStarted));
             }
             else
             {
-                _turnManager.CreatureTurnsStarted -= OnTurnStarted;
+                _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnTurnStarted));
             }
         }
     }

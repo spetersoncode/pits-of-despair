@@ -148,11 +148,11 @@ public partial class GameLevel : Node
         _inputHandler.SetTargetingSystem(_targetingSystem);
 
         // Connect input handler signals to HUD
-        _inputHandler.InventoryToggleRequested += _gameHUD.ToggleInventory;
-        _inputHandler.ActivateItemRequested += _gameHUD.ShowActivateMenu;
-        _inputHandler.DropItemRequested += _gameHUD.ShowDropMenu;
-        _inputHandler.EquipMenuRequested += _gameHUD.ShowEquipMenu;
-        _inputHandler.HelpRequested += _gameHUD.ShowHelp;
+        _inputHandler.Connect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
+        _inputHandler.Connect(InputHandler.SignalName.ActivateItemRequested, Callable.From(_gameHUD.ShowActivateMenu));
+        _inputHandler.Connect(InputHandler.SignalName.DropItemRequested, Callable.From(_gameHUD.ShowDropMenu));
+        _inputHandler.Connect(InputHandler.SignalName.EquipMenuRequested, Callable.From(_gameHUD.ShowEquipMenu));
+        _inputHandler.Connect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
 
         // Wire up AI system
         _aiSystem.SetMapSystem(_mapSystem);

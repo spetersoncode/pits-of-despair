@@ -84,18 +84,18 @@ public partial class AISystem : Node
     /// </summary>
     public void SetTurnManager(TurnManager turnManager)
     {
-        // Unsubscribe from old turn manager if exists
+        // Disconnect from old turn manager if exists
         if (_turnManager != null)
         {
-            _turnManager.CreatureTurnsStarted -= OnCreatureTurnsStarted;
+            _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
         }
 
         _turnManager = turnManager;
 
-        // Subscribe to new turn manager
+        // Connect to new turn manager
         if (_turnManager != null)
         {
-            _turnManager.CreatureTurnsStarted += OnCreatureTurnsStarted;
+            _turnManager.Connect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
         }
     }
 

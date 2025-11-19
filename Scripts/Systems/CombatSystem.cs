@@ -52,7 +52,7 @@ public partial class CombatSystem : Node
     public void RegisterAttackComponent(AttackComponent component)
     {
         // Use lambda to capture the component reference in a closure
-        component.AttackRequested += (target, attackIndex) => OnAttackRequested(component, target, attackIndex);
+        component.Connect(AttackComponent.SignalName.AttackRequested, Callable.From<BaseEntity, int>((target, attackIndex) => OnAttackRequested(component, target, attackIndex)));
     }
 
     /// <summary>

@@ -41,14 +41,14 @@ public partial class TextRenderer : Control
 	{
 		if (_mapSystem != null)
 		{
-			_mapSystem.MapChanged -= OnMapChanged;
+			_mapSystem.Disconnect(MapSystem.SignalName.MapChanged, Callable.From(OnMapChanged));
 		}
 
 		_mapSystem = mapSystem;
 
 		if (_mapSystem != null)
 		{
-			_mapSystem.MapChanged += OnMapChanged;
+			_mapSystem.Connect(MapSystem.SignalName.MapChanged, Callable.From(OnMapChanged));
 			QueueRedraw();
 		}
 	}
@@ -60,14 +60,14 @@ public partial class TextRenderer : Control
 	{
 		if (_player != null)
 		{
-			_player.PositionChanged -= OnPlayerMoved;
+			_player.Disconnect(Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerMoved));
 		}
 
 		_player = player;
 
 		if (_player != null)
 		{
-			_player.PositionChanged += OnPlayerMoved;
+			_player.Connect(Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerMoved));
 			QueueRedraw();
 		}
 	}
@@ -79,16 +79,16 @@ public partial class TextRenderer : Control
 	{
 		if (_entityManager != null)
 		{
-			_entityManager.EntityAdded -= OnEntityAdded;
-			_entityManager.EntityRemoved -= OnEntityRemoved;
+			_entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+			_entityManager.Disconnect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));
 		}
 
 		_entityManager = entityManager;
 
 		if (_entityManager != null)
 		{
-			_entityManager.EntityAdded += OnEntityAdded;
-			_entityManager.EntityRemoved += OnEntityRemoved;
+			_entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+			_entityManager.Connect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));
 
 			// Add existing entities
 			_entities.Clear();
@@ -97,7 +97,7 @@ public partial class TextRenderer : Control
 			// Subscribe to position changes for all entities
 			foreach (var entity in _entities)
 			{
-				entity.PositionChanged += OnEntityMoved;
+				entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
 			}
 
 			QueueRedraw();
@@ -111,14 +111,14 @@ public partial class TextRenderer : Control
 	{
 		if (_visionSystem != null)
 		{
-			_visionSystem.VisionChanged -= OnVisionChanged;
+			_visionSystem.Disconnect(PlayerVisionSystem.SignalName.VisionChanged, Callable.From(OnVisionChanged));
 		}
 
 		_visionSystem = visionSystem;
 
 		if (_visionSystem != null)
 		{
-			_visionSystem.VisionChanged += OnVisionChanged;
+			_visionSystem.Connect(PlayerVisionSystem.SignalName.VisionChanged, Callable.From(OnVisionChanged));
 			QueueRedraw();
 		}
 	}
@@ -152,13 +152,13 @@ public partial class TextRenderer : Control
 	private void OnEntityAdded(BaseEntity entity)
 	{
 		_entities.Add(entity);
-		entity.PositionChanged += OnEntityMoved;
+		entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
 		QueueRedraw();
 	}
 
 	private void OnEntityRemoved(BaseEntity entity)
 	{
-		entity.PositionChanged -= OnEntityMoved;
+		entity.Disconnect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
 		_entities.Remove(entity);
 		QueueRedraw();
 	}

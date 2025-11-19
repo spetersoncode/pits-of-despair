@@ -34,18 +34,18 @@ public partial class InventoryPanel : PanelContainer
     /// </summary>
     public void ConnectToPlayer(Player player)
     {
-        // Unsubscribe from old player if exists
+        // Disconnect from old player if exists
         if (_player != null)
         {
-            _player.InventoryChanged -= OnInventoryChanged;
+            _player.Disconnect(Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
         }
 
         _player = player;
 
-        // Subscribe to new player's inventory changes
+        // Connect to new player's inventory changes
         if (_player != null)
         {
-            _player.InventoryChanged += OnInventoryChanged;
+            _player.Connect(Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
         }
 
         UpdateInventoryDisplay();

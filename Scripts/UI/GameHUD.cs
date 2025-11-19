@@ -84,7 +84,7 @@ public partial class GameHUD : Control
 
         // Wire up inventory panel
         _inventoryPanel.ConnectToPlayer(player);
-        _inventoryPanel.Cancelled += OnInventoryCancelled;
+        _inventoryPanel.Connect(InventoryPanel.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
 
         // Wire up activate, drop, and equip panels
         _activateItemPanel.ConnectToPlayer(player);
@@ -92,16 +92,16 @@ public partial class GameHUD : Control
         _equipPanel.ConnectToPlayer(player);
 
         // Connect panel signals
-        _activateItemPanel.ItemSelected += OnActivateItemSelected;
-        _activateItemPanel.Cancelled += OnActivateItemCancelled;
-        _dropItemPanel.ItemSelected += OnDropItemSelected;
-        _dropItemPanel.Cancelled += OnDropItemCancelled;
-        _equipPanel.ItemSelected += OnEquipItemSelected;
-        _equipPanel.Cancelled += OnEquipItemCancelled;
-        _helpModal.Cancelled += OnHelpCancelled;
+        _activateItemPanel.Connect(ActivateItemPanel.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
+        _activateItemPanel.Connect(ActivateItemPanel.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
+        _dropItemPanel.Connect(DropItemPanel.SignalName.ItemSelected, Callable.From<char>(OnDropItemSelected));
+        _dropItemPanel.Connect(DropItemPanel.SignalName.Cancelled, Callable.From(OnDropItemCancelled));
+        _equipPanel.Connect(EquipPanel.SignalName.ItemSelected, Callable.From<char>(OnEquipItemSelected));
+        _equipPanel.Connect(EquipPanel.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
+        _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
 
         // Subscribe to entity additions to connect their HealthComponents to message log
-        entityManager.EntityAdded += OnEntityAdded;
+        entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
 
         // Connect existing entities that were added before HUD initialization
         foreach (var entity in entityManager.GetAllEntities())
@@ -118,24 +118,24 @@ public partial class GameHUD : Control
         _messageLog.ConnectToHealthComponent(playerHealth, player.DisplayName);
 
         // Subscribe to wait action
-        player.Waited += () => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success));
+        player.Connect(Player.SignalName.Waited, Callable.From(() => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success))));
 
         // Subscribe to item events
-        player.ItemPickedUp += OnItemPickedUp;
-        player.ItemUsed += OnItemUsed;
-        player.ItemDropped += OnItemDropped;
+        player.Connect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
+        player.Connect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
+        player.Connect(Player.SignalName.ItemDropped, Callable.From<string>(OnItemDropped));
 
         // Subscribe to gold collection
-        player.GoldCollected += OnGoldCollected;
+        player.Connect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
 
         // Subscribe to standing on entities (for "You see here" messages)
-        player.StandingOnEntity += OnStandingOnEntity;
+        player.Connect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
 
         // Subscribe to status effect messages
         var statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
         if (statusComponent != null)
         {
-            statusComponent.StatusMessage += (message) => _messageLog.AddMessage(message, Palette.ToHex(Palette.HealthFull));
+            statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string>((message) => _messageLog.AddMessage(message, Palette.ToHex(Palette.HealthFull))));
         }
 
         // Add welcome message

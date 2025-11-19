@@ -27,8 +27,8 @@ public partial class NonPlayerVisionSystem : Node
         _player = player;
         _entityManager = entityManager;
 
-        // Subscribe to player turn completion
-        _player.TurnCompleted += OnPlayerTurnCompleted;
+        // Connect to player turn completion
+        _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
 
         // Check initial vision
         CheckNonPlayerVision();
@@ -76,7 +76,7 @@ public partial class NonPlayerVisionSystem : Node
         // Cleanup signal connections
         if (_player != null)
         {
-            _player.TurnCompleted -= OnPlayerTurnCompleted;
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
         }
     }
 }

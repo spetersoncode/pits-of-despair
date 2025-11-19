@@ -43,9 +43,34 @@ I am a professional Godot 4.5.1 C# developer and architect working collaborative
 ## Code Practices
 
 **Signals & Decoupling:**
-- Use signals (EmitSignal) instead of GetNode for cross-system communication
+- Use **pure Godot signals** with `Connect()` and `Disconnect()` methods (NOT C# event syntax `+=`/`-=`)
+- Declare signals with `[Signal]` attribute and delegate definitions
+- Emit signals using `EmitSignal(SignalName.YourSignal, ...)`
+- Subscribe using `node.Connect(Node.SignalName.YourSignal, Callable.From<T1, T2>(Handler))`
+- Unsubscribe using `node.Disconnect(Node.SignalName.YourSignal, Callable.From<T1, T2>(Handler))`
+- Always clean up signal connections in `_ExitTree()` or cleanup methods
 - Avoid direct references between unrelated systems
 - Components communicate via signals; see `Docs/components.md` for patterns
+
+**Signal Pattern Examples:**
+```csharp
+// Declaration
+[Signal]
+public delegate void HealthChangedEventHandler(int current, int max);
+
+// Emission
+EmitSignal(SignalName.HealthChanged, CurrentHP, MaxHP);
+
+// Subscription (correct - Godot pattern)
+healthComponent.Connect(HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
+
+// Cleanup
+healthComponent.Disconnect(HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
+
+// NEVER use C# event syntax (incorrect)
+healthComponent.HealthChanged += OnHealthChanged;  // ❌ WRONG
+healthComponent.HealthChanged -= OnHealthChanged;  // ❌ WRONG
+```
 
 **Composition Guidelines:**
 - Inheritance only for Godot nodes and true "is-a" relationships

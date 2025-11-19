@@ -40,7 +40,7 @@ public partial class ProjectileSystem : Node
     public void ConnectToPlayer(Player player)
     {
         _player = player;
-        player.RangedAttackRequested += OnRangedAttackRequested;
+        player.Connect(Player.SignalName.RangedAttackRequested, Callable.From<Vector2I, Vector2I, BaseEntity, int>(OnRangedAttackRequested));
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public partial class ProjectileSystem : Node
         _activeProjectiles.Add(projectile);
 
         // Connect impact signal
-        projectile.ImpactReached += () => OnProjectileImpact(projectile);
+        projectile.Connect(Projectile.SignalName.ImpactReached, Callable.From(() => OnProjectileImpact(projectile)));
 
         // Start animation
         AnimateProjectile(projectile);

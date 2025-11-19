@@ -85,7 +85,7 @@ public partial class Player : BaseEntity
         AddChild(_inventoryComponent);
 
         // Relay inventory changed signal for UI compatibility
-        _inventoryComponent.InventoryChanged += () => EmitSignal(SignalName.InventoryChanged);
+        _inventoryComponent.Connect(InventoryComponent.SignalName.InventoryChanged, Callable.From(() => EmitSignal(SignalName.InventoryChanged)));
 
         // Add EquipComponent to player
         var equipComponent = new EquipComponent { Name = "EquipComponent" };
@@ -94,7 +94,7 @@ public partial class Player : BaseEntity
         // Note: Starting equipment will be added by EntityFactory in GameLevel initialization
 
         // Track position changes to emit Moved signal for backwards compatibility
-        PositionChanged += OnPositionChanged;
+        Connect(SignalName.PositionChanged, Callable.From<int, int>(OnPositionChanged));
     }
 
     /// <summary>

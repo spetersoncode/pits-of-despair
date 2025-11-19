@@ -45,18 +45,18 @@ public partial class InputHandler : Node
     /// </summary>
     public void SetPlayer(Player player)
     {
-        // Unsubscribe from old player if exists
+        // Disconnect from old player if exists
         if (_player != null)
         {
-            _player.TurnCompleted -= OnPlayerTurnCompleted;
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
         }
 
         _player = player;
 
-        // Subscribe to new player's turn completion
+        // Connect to new player's turn completion
         if (_player != null)
         {
-            _player.TurnCompleted += OnPlayerTurnCompleted;
+            _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
         }
     }
 
@@ -86,8 +86,8 @@ public partial class InputHandler : Node
         // Connect to item targeting signal
         if (_gameHUD != null)
         {
-            _gameHUD.StartItemTargeting += OnStartItemTargeting;
-            _gameHUD.StartReachAttackTargeting += OnStartReachAttackTargeting;
+            _gameHUD.Connect(GameHUD.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
+            _gameHUD.Connect(GameHUD.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
         }
     }
 
@@ -109,8 +109,8 @@ public partial class InputHandler : Node
         // Connect to targeting signals
         if (_targetingSystem != null)
         {
-            _targetingSystem.TargetConfirmed += OnTargetConfirmed;
-            _targetingSystem.TargetCanceled += OnTargetCanceled;
+            _targetingSystem.Connect(TargetingSystem.SignalName.TargetConfirmed, Callable.From<Vector2I>(OnTargetConfirmed));
+            _targetingSystem.Connect(TargetingSystem.SignalName.TargetCanceled, Callable.From(OnTargetCanceled));
         }
     }
 
@@ -119,7 +119,7 @@ public partial class InputHandler : Node
         // Clean up signal connections
         if (_player != null)
         {
-            _player.TurnCompleted -= OnPlayerTurnCompleted;
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
         }
     }
 

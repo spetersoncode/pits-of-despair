@@ -51,7 +51,7 @@ public partial class MovementSystem : Node
     public void RegisterMovementComponent(MovementComponent component)
     {
         // Use lambda to capture the component reference in a closure
-        component.MoveRequested += (direction) => OnMoveRequested(component, direction);
+        component.Connect(MovementComponent.SignalName.MoveRequested, Callable.From<Vector2I>((direction) => OnMoveRequested(component, direction)));
     }
 
     /// <summary>

@@ -62,26 +62,26 @@ public partial class SidePanel : PanelContainer
 		_player = player;
 
 		var healthComponent = player.GetNode<Components.HealthComponent>("HealthComponent");
-		healthComponent.HealthChanged += OnHealthChanged;
+		healthComponent.Connect(Components.HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
 
 		// Subscribe to stats changes
 		var statsComponent = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
 		if (statsComponent != null)
 		{
-			statsComponent.StatsChanged += OnStatsChanged;
+			statsComponent.Connect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
 		}
 
 		// Subscribe to player position changes
-		player.PositionChanged += OnPlayerPositionChanged;
+		player.Connect(Entities.Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerPositionChanged));
 
 		// Subscribe to inventory changes (for when items are picked up)
-		player.InventoryChanged += OnInventoryChanged;
+		player.Connect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
 
 		// Subscribe to equipment changes
 		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
 		if (equipComponent != null)
 		{
-			equipComponent.EquipmentChanged += OnEquipmentChanged;
+			equipComponent.Connect(EquipComponent.SignalName.EquipmentChanged, Callable.From<EquipmentSlot>(OnEquipmentChanged));
 		}
 
 		// Initialize display with current values
@@ -97,7 +97,7 @@ public partial class SidePanel : PanelContainer
 	public void ConnectToGoldManager(Systems.GoldManager goldManager)
 	{
 		_goldManager = goldManager;
-		_goldManager.GoldChanged += OnGoldChanged;
+		_goldManager.Connect(Systems.GoldManager.SignalName.GoldChanged, Callable.From<int, int>(OnGoldChanged));
 		UpdateGoldDisplay();
 	}
 
