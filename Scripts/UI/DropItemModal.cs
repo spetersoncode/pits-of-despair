@@ -2,17 +2,16 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
 using System.Linq;
 using System.Text;
 
 namespace PitsOfDespair.UI;
 
 /// <summary>
-/// Displays a selection menu for equipping items from inventory.
-/// Shows items with their keys, greying out non-equippable items.
+/// Displays a selection menu for dropping items from inventory.
+/// Shows all items with their keys for selection.
 /// </summary>
-public partial class EquipPanel : PanelContainer
+public partial class DropItemModal : PanelContainer
 {
     [Signal]
     public delegate void ItemSelectedEventHandler(char key);
@@ -41,7 +40,7 @@ public partial class EquipPanel : PanelContainer
     }
 
     /// <summary>
-    /// Shows the equip menu.
+    /// Shows the drop item menu.
     /// </summary>
     public void ShowMenu()
     {
@@ -51,7 +50,7 @@ public partial class EquipPanel : PanelContainer
     }
 
     /// <summary>
-    /// Hides the equip menu.
+    /// Hides the drop item menu.
     /// </summary>
     public void HideMenu()
     {
@@ -99,54 +98,28 @@ public partial class EquipPanel : PanelContainer
 
         if (inventory.Count == 0)
         {
-            _itemsLabel.Text = $"[center][b]Equip which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
+            _itemsLabel.Text = $"[center][b]Drop which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
             return;
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine("[center][b]Equip which item?[/b][/center]");
+        sb.AppendLine("[center][b]Drop which item?[/b][/center]");
         sb.AppendLine("[center](ESC to cancel)[/center]\n");
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
-            var itemTemplate = slot.Item.Template;
-            bool isEquippable = itemTemplate.GetIsEquippable();
-            var equipSlot = itemTemplate.GetEquipmentSlot();
+            // Check if item is equipped
+            bool isEquipped = equipComponent != null && equipComponent.IsEquipped(slot.Key);
 
-            // Check if this item is currently equipped
-            bool isEquipped = equipComponent?.IsEquipped(slot.Key) ?? false;
-            string equippedText = "";
-            if (isEquipped)
-            {
-                var currentSlot = equipComponent.GetSlotForItem(slot.Key);
-                equippedText = $" [color={Palette.ToHex(Palette.Success)}]{{EQUIPPED: {FormatSlotName(currentSlot)}}}[/color]";
-            }
+            // Format: key) glyph name (count/charges) (equipped)
+            string colorHex = slot.Item.Template.Color;
+            string displayName = slot.Item.Template.GetDisplayName(slot.Count);
+            string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
+            string equippedText = isEquipped ? $" [color={Palette.ToHex(Palette.Disabled)}](equipped)[/color]" : "";
 
-            // Format: key) glyph name [slot] {EQUIPPED: SlotName}
-            string colorHex = isEquippable ? itemTemplate.Color : Palette.ToHex(Palette.Basalt);
-            string keyColor = isEquippable ? Palette.ToHex(Palette.Disabled) : Palette.ToHex(Palette.Basalt);
-            string slotText = isEquippable ? $" [color={Palette.ToHex(Palette.AshGray)}][{FormatSlotName(equipSlot)}][/color]" : "";
-            string countText = slot.Count > 1 ? $" ({slot.Count})" : "";
-
-            sb.AppendLine($"[color={keyColor}]{slot.Key})[/color] [color={colorHex}]{itemTemplate.GetGlyph()}[/color] [color={colorHex}]{itemTemplate.Name}{countText}[/color]{slotText}{equippedText}");
+            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {displayName}{chargesText}{equippedText}");
         }
 
         _itemsLabel.Text = sb.ToString();
-    }
-
-    /// <summary>
-    /// Formats an equipment slot name for display.
-    /// </summary>
-    private string FormatSlotName(EquipmentSlot slot)
-    {
-        return slot switch
-        {
-            EquipmentSlot.MeleeWeapon => "Melee",
-            EquipmentSlot.RangedWeapon => "Ranged",
-            EquipmentSlot.Armor => "Armor",
-            EquipmentSlot.Ring1 => "Ring1",
-            EquipmentSlot.Ring2 => "Ring2",
-            _ => "Unknown"
-        };
     }
 }

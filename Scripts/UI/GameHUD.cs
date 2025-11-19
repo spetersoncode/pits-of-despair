@@ -32,10 +32,10 @@ public partial class GameHUD : Control
 
     private SidePanel _sidePanel;
     private MessageLog _messageLog;
-    private InventoryPanel _inventoryPanel;
-    private ActivateItemPanel _activateItemPanel;
-    private DropItemPanel _dropItemPanel;
-    private EquipPanel _equipPanel;
+    private InventoryModal _inventoryPanel;
+    private ActivateItemModal _activateItemPanel;
+    private DropItemModal _dropItemPanel;
+    private EquipModal _equipPanel;
     private HelpModal _helpModal;
     private Player _player;
     private ActionContext _actionContext;
@@ -45,10 +45,10 @@ public partial class GameHUD : Control
     {
         _sidePanel = GetNode<SidePanel>("HBoxContainer/SidePanel");
         _messageLog = GetNode<MessageLog>("HBoxContainer/VBoxContainer/MessageLog");
-        _inventoryPanel = GetNode<InventoryPanel>("InventoryPanel");
-        _activateItemPanel = GetNode<ActivateItemPanel>("ActivateItemPanel");
-        _dropItemPanel = GetNode<DropItemPanel>("DropItemPanel");
-        _equipPanel = GetNode<EquipPanel>("EquipPanel");
+        _inventoryPanel = GetNode<InventoryModal>("InventoryModal");
+        _activateItemPanel = GetNode<ActivateItemModal>("ActivateItemModal");
+        _dropItemPanel = GetNode<DropItemModal>("DropItemModal");
+        _equipPanel = GetNode<EquipModal>("EquipModal");
         _helpModal = GetNode<HelpModal>("HelpModal");
     }
 
@@ -84,7 +84,7 @@ public partial class GameHUD : Control
 
         // Wire up inventory panel
         _inventoryPanel.ConnectToPlayer(player);
-        _inventoryPanel.Connect(InventoryPanel.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
+        _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
 
         // Wire up activate, drop, and equip panels
         _activateItemPanel.ConnectToPlayer(player);
@@ -92,12 +92,12 @@ public partial class GameHUD : Control
         _equipPanel.ConnectToPlayer(player);
 
         // Connect panel signals
-        _activateItemPanel.Connect(ActivateItemPanel.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
-        _activateItemPanel.Connect(ActivateItemPanel.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
-        _dropItemPanel.Connect(DropItemPanel.SignalName.ItemSelected, Callable.From<char>(OnDropItemSelected));
-        _dropItemPanel.Connect(DropItemPanel.SignalName.Cancelled, Callable.From(OnDropItemCancelled));
-        _equipPanel.Connect(EquipPanel.SignalName.ItemSelected, Callable.From<char>(OnEquipItemSelected));
-        _equipPanel.Connect(EquipPanel.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
+        _activateItemPanel.Connect(ActivateItemModal.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
+        _activateItemPanel.Connect(ActivateItemModal.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
+        _dropItemPanel.Connect(DropItemModal.SignalName.ItemSelected, Callable.From<char>(OnDropItemSelected));
+        _dropItemPanel.Connect(DropItemModal.SignalName.Cancelled, Callable.From(OnDropItemCancelled));
+        _equipPanel.Connect(EquipModal.SignalName.ItemSelected, Callable.From<char>(OnEquipItemSelected));
+        _equipPanel.Connect(EquipModal.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
         _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
 
         // Subscribe to entity additions to connect their HealthComponents to message log
@@ -246,10 +246,10 @@ public partial class GameHUD : Control
             return;
         }
 
-        // Close any open menus first
+        // Don't open help if another menu is already open
         if (_currentMenuState != MenuState.None)
         {
-            CloseAllMenus();
+            return;
         }
 
         _helpModal.ShowHelp();

@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://dohggk4cu2v8r"]
+[gd_scene load_steps=3 format=3 uid="uid://dohggk4cu2v8r"]
 
 [ext_resource type="Script" uid="uid://bpusg4dmaxbop" path="res://Scripts/UI/HelpModal.cs" id="1"]
 

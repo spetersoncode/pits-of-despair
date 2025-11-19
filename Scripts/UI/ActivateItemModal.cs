@@ -12,7 +12,7 @@ namespace PitsOfDespair.UI;
 /// Displays a selection menu for activating (using) items from inventory.
 /// Shows items with their keys, greying out non-activatable items.
 /// </summary>
-public partial class ActivateItemPanel : PanelContainer
+public partial class ActivateItemModal : PanelContainer
 {
     [Signal]
     public delegate void ItemSelectedEventHandler(char key);

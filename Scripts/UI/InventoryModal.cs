@@ -12,7 +12,7 @@ namespace PitsOfDespair.UI;
 /// Displays the player's inventory as a full-screen overlay.
 /// Shows items assigned to keys a-z with glyph, name, and count.
 /// </summary>
-public partial class InventoryPanel : PanelContainer
+public partial class InventoryModal : PanelContainer
 {
     [Signal]
     public delegate void CancelledEventHandler();

@@ -1,14 +1,14 @@
-[gd_scene load_steps=9 format=3 uid="uid://dhxcfbllslpbg"]
+[gd_scene load_steps=10 format=3 uid="uid://dhxcfbllslpbg"]
 
 [ext_resource type="Script" uid="uid://bea0co2ut1ptd" path="res://Scripts/UI/GameHUD.cs" id="1"]
 [ext_resource type="PackedScene" uid="uid://cr4kky5x07a1s" path="res://Scenes/UI/SidePanel.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://ck8pejk1eqpp7" path="res://Scenes/UI/MessageLog.tscn" id="3"]
-[ext_resource type="PackedScene" uid="uid://drdqlwrxhbv7g" path="res://Scenes/UI/InventoryPanel.tscn" id="4"]
-[ext_resource type="PackedScene" path="res://Scenes/UI/ActivateItemPanel.tscn" id="5"]
-[ext_resource type="PackedScene" path="res://Scenes/UI/DropItemPanel.tscn" id="6"]
-[ext_resource type="PackedScene" path="res://Scenes/UI/EquipPanel.tscn" id="7"]
+[ext_resource type="PackedScene" uid="uid://dmoqlyqpeql06" path="res://Scenes/UI/InventoryModal.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://bcu7tdn145jgp" path="res://Scenes/UI/ActivateItemModal.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://bhaeussr553nh" path="res://Scenes/UI/DropItemModal.tscn" id="6"]
+[ext_resource type="PackedScene" uid="uid://ci6u43a1m13op" path="res://Scenes/UI/EquipModal.tscn" id="7"]
 [ext_resource type="Theme" uid="uid://ci6jrw6qhe3je" path="res://Resources/Themes/DefaultUITheme.tres" id="8"]
-[ext_resource type="PackedScene" path="res://Scenes/UI/HelpModal.tscn" id="9"]
+[ext_resource type="PackedScene" uid="uid://dohggk4cu2v8r" path="res://Scenes/UI/HelpModal.tscn" id="9"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -47,16 +47,16 @@ mouse_filter = 2
 [node name="MessageLog" parent="HBoxContainer/VBoxContainer" instance=ExtResource("3")]
 layout_mode = 2
 
-[node name="InventoryPanel" parent="." instance=ExtResource("4")]
+[node name="InventoryModal" parent="." instance=ExtResource("4")]
 layout_mode = 1
 
-[node name="ActivateItemPanel" parent="." instance=ExtResource("5")]
+[node name="ActivateItemModal" parent="." instance=ExtResource("5")]
 layout_mode = 1
 
-[node name="DropItemPanel" parent="." instance=ExtResource("6")]
+[node name="DropItemModal" parent="." instance=ExtResource("6")]
 layout_mode = 1
 
-[node name="EquipPanel" parent="." instance=ExtResource("7")]
+[node name="EquipModal" parent="." instance=ExtResource("7")]
 layout_mode = 1
 
 [node name="HelpModal" parent="." instance=ExtResource("9")]

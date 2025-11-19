@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://bm6fg5nxshg5"]
+[gd_scene load_steps=3 format=3 uid="uid://ci6u43a1m13op"]
 
-[ext_resource type="Script" uid="uid://da8arpjisg7g" path="res://Scripts/UI/ActivateItemPanel.cs" id="1"]
+[ext_resource type="Script" path="res://Scripts/UI/EquipModal.cs" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
 bg_color = Color(0, 0, 0, 0.85)
@@ -10,7 +10,7 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.5, 0.5, 0.5, 1)
 
-[node name="ActivateItemPanel" type="PanelContainer"]
+[node name="EquipModal" type="PanelContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -34,7 +34,7 @@ theme_override_constants/separation = 16
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "[center][b]Activate which item?[/b][/center]
+text = "[center][b]Equip which item?[/b][/center]
 [center](ESC to cancel)[/center]
 
 [center][color=#888888]No items[/color][/center]"
