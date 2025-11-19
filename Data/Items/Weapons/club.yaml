@@ -4,3 +4,4 @@ color: AshWood
 attack:
   type: Melee
   dice: "1d3+1"
+  damageType: Bludgeoning

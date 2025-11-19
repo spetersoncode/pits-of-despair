@@ -31,9 +31,22 @@ Weapons define attacks via `AttackData` resource:
 - **Name**: Display name for combat messages
 - **Type**: `AttackType.Melee` or `AttackType.Ranged`
 - **DiceNotation**: Damage formula (e.g., "1d6+2", "2d4", "5")
+- **DamageType**: Physical damage type (`Bludgeoning`, `Slashing`, or `Piercing`)
 - **Range**: Attack distance in tiles (defaults to 1 for melee)
 
 Equipment YAML specifies attack configuration. Natural attacks (unarmed) defined similarly for creatures without weapons.
+
+## Damage Types
+
+All attacks have a damage type representing the physical mechanism of harm:
+
+**Bludgeoning**: Impact from blunt force (clubs, maces, fists, crushing). Default for attacks without specified type.
+
+**Slashing**: Cuts from bladed weapons (swords, axes, claws).
+
+**Piercing**: Penetration from pointed weapons (spears, arrows, bites).
+
+Currently damage types are informational only—future systems may add resistance/vulnerability mechanics. When adding new weapons or natural attacks, choose the appropriate type based on the attack's physical nature.
 
 ## Combat Components
 

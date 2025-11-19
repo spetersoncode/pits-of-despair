@@ -7,3 +7,4 @@ attack:
   type: Melee
   dice: "1d6"
   range: 2
+  damageType: Piercing

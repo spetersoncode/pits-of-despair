@@ -39,5 +39,11 @@ public partial class AttackData : Resource
 	[YamlMember(Alias = "dice")]
 	public string DiceNotation { get; set; } = "1d4";
 
+	/// <summary>
+	/// Type of damage dealt by this attack (Bludgeoning, Slashing, or Piercing).
+	/// Defaults to Bludgeoning for backwards compatibility.
+	/// </summary>
+	public DamageType DamageType { get; set; } = DamageType.Bludgeoning;
+
 	public int Range { get; set; } = 1;
 }

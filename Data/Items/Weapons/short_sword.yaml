@@ -6,3 +6,4 @@ equipSlot: MeleeWeapon
 attack:
   type: Melee
   dice: "1d6"
+  damageType: Slashing

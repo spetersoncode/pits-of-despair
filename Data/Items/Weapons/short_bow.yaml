@@ -7,3 +7,4 @@ attack:
   type: Ranged
   dice: "1d6"
   range: 8
+  damageType: Piercing

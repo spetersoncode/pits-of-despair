@@ -4,3 +4,4 @@ color: Oak
 attack:
   type: Melee
   dice: "1d3+2"
+  damageType: Bludgeoning

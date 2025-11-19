@@ -16,3 +16,4 @@ attacks:
   - name: bite
     type: Melee
     dice: "1d3+1"
+    damageType: Piercing
