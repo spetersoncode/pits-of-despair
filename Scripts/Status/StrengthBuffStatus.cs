@@ -45,13 +45,13 @@ public class StrengthBuffStatus : Status
         Duration = duration;
     }
 
-    public override string OnApplied(BaseEntity target)
+    public override StatusMessage OnApplied(BaseEntity target)
     {
         var stats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
         if (stats == null)
         {
             GD.PrintErr($"StrengthBuffStatus: {target.DisplayName} has no StatsComponent");
-            return string.Empty;
+            return StatusMessage.Empty;
         }
 
         // Create unique source ID for this status instance
@@ -60,25 +60,31 @@ public class StrengthBuffStatus : Status
         // Add strength modifier
         stats.AddStrengthModifier(_sourceId, Amount);
 
-        return $"{target.DisplayName} feels mighty! (+{Amount} STR for {Duration} turns)";
+        return new StatusMessage(
+            $"{target.DisplayName} feels mighty! (+{Amount} STR for {Duration} turns)",
+            Palette.ToHex(Palette.StatusBuff)
+        );
     }
 
-    public override string OnRemoved(BaseEntity target)
+    public override StatusMessage OnRemoved(BaseEntity target)
     {
         if (string.IsNullOrEmpty(_sourceId))
         {
-            return string.Empty;
+            return StatusMessage.Empty;
         }
 
         var stats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
         if (stats == null)
         {
-            return string.Empty;
+            return StatusMessage.Empty;
         }
 
         // Remove strength modifier
         stats.RemoveStrengthModifier(_sourceId);
 
-        return $"{target.DisplayName}'s strength returns to normal.";
+        return new StatusMessage(
+            $"{target.DisplayName}'s strength returns to normal.",
+            Palette.ToHex(Palette.Default)
+        );
     }
 }

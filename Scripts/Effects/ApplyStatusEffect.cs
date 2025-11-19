@@ -84,13 +84,13 @@ public class ApplyStatusEffect : Effect
             );
         }
 
-        // Add status to target and get the resulting message
-        string message = statusComponent.AddStatus(status);
+        // Add status to target (message will be emitted via signal)
+        statusComponent.AddStatus(status);
 
-        // Return success with the message from the status
+        // Return success (the actual message is emitted by StatusComponent signal)
         return new EffectResult(
             true,
-            message,
+            string.Empty,
             Palette.ToHex(Palette.Success)
         );
     }

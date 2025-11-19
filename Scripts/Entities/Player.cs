@@ -32,6 +32,12 @@ public partial class Player : BaseEntity
     public delegate void ItemDroppedEventHandler(string itemName);
 
     [Signal]
+    public delegate void ItemEquippedEventHandler(string itemName);
+
+    [Signal]
+    public delegate void ItemUnequippedEventHandler(string itemName);
+
+    [Signal]
     public delegate void InventoryChangedEventHandler();
 
     [Signal]

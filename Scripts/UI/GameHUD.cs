@@ -109,13 +109,13 @@ public partial class GameHUD : Control
             var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
             if (healthComponent != null)
             {
-                _messageLog.ConnectToHealthComponent(healthComponent, entity.DisplayName);
+                _messageLog.ConnectToHealthComponent(healthComponent, entity);
             }
         }
 
         // Also connect the player's HealthComponent (player is not added via EntityManager)
         var playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
-        _messageLog.ConnectToHealthComponent(playerHealth, player.DisplayName);
+        _messageLog.ConnectToHealthComponent(playerHealth, player);
 
         // Subscribe to wait action
         player.Connect(Player.SignalName.Waited, Callable.From(() => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success))));
@@ -124,6 +124,8 @@ public partial class GameHUD : Control
         player.Connect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
         player.Connect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
         player.Connect(Player.SignalName.ItemDropped, Callable.From<string>(OnItemDropped));
+        player.Connect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
+        player.Connect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
 
         // Subscribe to gold collection
         player.Connect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
@@ -135,7 +137,7 @@ public partial class GameHUD : Control
         var statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
         if (statusComponent != null)
         {
-            statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string>((message) => _messageLog.AddMessage(message, Palette.ToHex(Palette.HealthFull))));
+            statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
         // Add welcome message
@@ -411,6 +413,16 @@ public partial class GameHUD : Control
         _messageLog.AddMessage($"You drop {itemName}.", Palette.ToHex(Palette.Default));
     }
 
+    private void OnItemEquipped(string itemName)
+    {
+        _messageLog.AddMessage($"You equip {itemName}.", Palette.ToHex(Palette.Equipment));
+    }
+
+    private void OnItemUnequipped(string itemName)
+    {
+        _messageLog.AddMessage($"You unequip {itemName}.", Palette.ToHex(Palette.Equipment));
+    }
+
     private void OnGoldCollected(int amount, int totalGold)
     {
         string message = amount == 1
@@ -433,7 +445,7 @@ public partial class GameHUD : Control
         var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
         if (healthComponent != null)
         {
-            _messageLog.ConnectToHealthComponent(healthComponent, entity.DisplayName);
+            _messageLog.ConnectToHealthComponent(healthComponent, entity);
         }
     }
 }

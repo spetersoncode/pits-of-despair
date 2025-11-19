@@ -75,6 +75,12 @@ public class UnequipAction : Action
             return ActionResult.CreateFailure($"Failed to unequip {itemName}.");
         }
 
+        // Emit unequipment signal for UI feedback (if player)
+        if (actor is Player player2)
+        {
+            player2.EmitSignal(Player.SignalName.ItemUnequipped, itemName);
+        }
+
         return ActionResult.CreateSuccess($"Unequipped {itemName}.");
     }
 }

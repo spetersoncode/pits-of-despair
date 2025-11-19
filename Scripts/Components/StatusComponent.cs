@@ -31,7 +31,7 @@ public partial class StatusComponent : Node
     /// Emitted when a status message needs to be displayed.
     /// </summary>
     [Signal]
-    public delegate void StatusMessageEventHandler(string message);
+    public delegate void StatusMessageEventHandler(string message, string color);
 
     #endregion
 
@@ -109,14 +109,14 @@ public partial class StatusComponent : Node
     /// <summary>
     /// Adds a status to this entity.
     /// If a status with the same TypeId already exists, refreshes its duration instead of stacking.
-    /// Returns a message describing what happened (empty string if no message).
+    /// Emits a signal with the status message and color.
     /// </summary>
-    public string AddStatus(Status.Status status)
+    public void AddStatus(Status.Status status)
     {
         if (status == null)
         {
             GD.PrintErr("StatusComponent: Attempted to add null status");
-            return string.Empty;
+            return;
         }
 
         // Check if this status type is already active
@@ -125,7 +125,9 @@ public partial class StatusComponent : Node
         {
             // Refresh duration instead of stacking
             existingStatus.RefreshDuration(status.Duration);
-            return $"{status.Name} duration refreshed to {status.Duration} turns.";
+            var refreshMessage = $"{status.Name} duration refreshed to {status.Duration} turns.";
+            EmitSignal(SignalName.StatusMessage, refreshMessage, Core.Palette.ToHex(Core.Palette.StatusNeutral));
+            return;
         }
 
         // Add new status
@@ -136,56 +138,54 @@ public partial class StatusComponent : Node
         var target = GetParent() as Entities.BaseEntity;
         if (target != null)
         {
-            string message = status.OnApplied(target);
+            var statusMsg = status.OnApplied(target);
             EmitSignal(SignalName.StatusAdded, status.Name);
-            return message;
+            if (!string.IsNullOrEmpty(statusMsg.Message))
+            {
+                EmitSignal(SignalName.StatusMessage, statusMsg.Message, statusMsg.Color);
+            }
         }
-
-        return string.Empty;
     }
 
     /// <summary>
     /// Removes a specific status from this entity.
-    /// Returns a message describing what happened (empty string if no message).
+    /// Emits a signal with the removal message and color.
     /// </summary>
-    public string RemoveStatus(Status.Status status)
+    public void RemoveStatus(Status.Status status)
     {
         if (status == null || !_activeStatuses.Contains(status))
         {
-            return string.Empty;
+            return;
         }
 
         var target = GetParent() as Entities.BaseEntity;
-        string message = string.Empty;
+        Status.StatusMessage statusMsg = Status.StatusMessage.Empty;
 
         if (target != null)
         {
-            message = status.OnRemoved(target);
+            statusMsg = status.OnRemoved(target);
         }
 
         _activeStatuses.Remove(status);
         EmitSignal(SignalName.StatusRemoved, status.Name);
 
-        return message;
+        if (!string.IsNullOrEmpty(statusMsg.Message))
+        {
+            EmitSignal(SignalName.StatusMessage, statusMsg.Message, statusMsg.Color);
+        }
     }
 
     /// <summary>
     /// Removes all statuses of a specific type.
-    /// Returns messages for all removed statuses.
+    /// Emits signals for each removed status.
     /// </summary>
-    public List<string> RemoveStatusByType(string typeId)
+    public void RemoveStatusByType(string typeId)
     {
-        var messages = new List<string>();
         var statusesToRemove = _activeStatuses.Where(s => s.TypeId == typeId).ToList();
         foreach (var status in statusesToRemove)
         {
-            string message = RemoveStatus(status);
-            if (!string.IsNullOrEmpty(message))
-            {
-                messages.Add(message);
-            }
+            RemoveStatus(status);
         }
-        return messages;
     }
 
     /// <summary>
@@ -227,10 +227,10 @@ public partial class StatusComponent : Node
         foreach (var status in _activeStatuses)
         {
             // Let status do per-turn processing (e.g., poison damage)
-            string turnMessage = status.OnTurnProcessed(target);
-            if (!string.IsNullOrEmpty(turnMessage))
+            var turnMessage = status.OnTurnProcessed(target);
+            if (!string.IsNullOrEmpty(turnMessage.Message))
             {
-                EmitSignal(SignalName.StatusMessage, turnMessage);
+                EmitSignal(SignalName.StatusMessage, turnMessage.Message, turnMessage.Color);
             }
 
             // Decrement remaining turns
@@ -243,14 +243,10 @@ public partial class StatusComponent : Node
             }
         }
 
-        // Remove expired statuses and emit their messages
+        // Remove expired statuses (RemoveStatus now emits signals internally)
         foreach (var status in expiredStatuses)
         {
-            string removeMessage = RemoveStatus(status);
-            if (!string.IsNullOrEmpty(removeMessage))
-            {
-                EmitSignal(SignalName.StatusMessage, removeMessage);
-            }
+            RemoveStatus(status);
         }
     }
 

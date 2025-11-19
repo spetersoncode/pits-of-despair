@@ -3,6 +3,7 @@ using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Status;
@@ -36,13 +37,13 @@ public class ConfusionStatus : Status
 		Duration = duration;
 	}
 
-	public override string OnApplied(BaseEntity target)
+	public override StatusMessage OnApplied(BaseEntity target)
 	{
 		var aiComponent = target.GetNodeOrNull<AIComponent>("AIComponent");
 		if (aiComponent == null)
 		{
 			GD.PrintErr($"ConfusionStatus: {target.DisplayName} has no AIComponent");
-			return string.Empty;
+			return StatusMessage.Empty;
 		}
 
 		// Save current goals and replace with only WanderGoal
@@ -51,21 +52,24 @@ public class ConfusionStatus : Status
 		aiComponent.CurrentGoal = null; // Force re-evaluation
 		aiComponent.ClearPath();
 
-		return $"{target.DisplayName} looks confused!";
+		return new StatusMessage(
+			$"{target.DisplayName} looks confused!",
+			Palette.ToHex(Palette.StatusDebuff)
+		);
 	}
 
-	public override string OnTurnProcessed(BaseEntity target)
+	public override StatusMessage OnTurnProcessed(BaseEntity target)
 	{
 		// No message during turn processing (only on apply/remove)
-		return string.Empty;
+		return StatusMessage.Empty;
 	}
 
-	public override string OnRemoved(BaseEntity target)
+	public override StatusMessage OnRemoved(BaseEntity target)
 	{
 		var aiComponent = target.GetNodeOrNull<AIComponent>("AIComponent");
 		if (aiComponent == null)
 		{
-			return string.Empty;
+			return StatusMessage.Empty;
 		}
 
 		// Restore original goals
@@ -77,6 +81,9 @@ public class ConfusionStatus : Status
 		aiComponent.CurrentGoal = null; // Force re-evaluation with restored goals
 		aiComponent.ClearPath();
 
-		return $"{target.DisplayName} is no longer confused.";
+		return new StatusMessage(
+			$"{target.DisplayName} is no longer confused.",
+			Palette.ToHex(Palette.Default)
+		);
 	}
 }

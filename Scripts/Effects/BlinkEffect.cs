@@ -72,7 +72,7 @@ public class BlinkEffect : Effect
             return new EffectResult(
                 false,
                 $"{name} tries to blink, but the magic fizzles!",
-                "#888888"
+                Palette.ToHex(Palette.Disabled)
             );
         }
 
@@ -86,7 +86,7 @@ public class BlinkEffect : Effect
         return new EffectResult(
             true,
             $"{name} blinks to a new location!",
-            "#00DDFF"  // Cyan for magic/teleportation
+            Palette.ToHex(Palette.Cyan)
         );
     }
 }

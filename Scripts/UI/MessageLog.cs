@@ -12,13 +12,15 @@ namespace PitsOfDespair.UI;
 public partial class MessageLog : PanelContainer
 {
 	private const int MaxMessages = 100;
-	private static readonly string ColorDamageTaken = Palette.ToHex(Palette.HealthCritical);
+	private static readonly string ColorCombatDamage = Palette.ToHex(Palette.CombatDamage);
+	private static readonly string ColorCombatBlocked = Palette.ToHex(Palette.CombatBlocked);
 	private static readonly string ColorDeath = Palette.ToHex(Palette.HealthMedium);
 	private static readonly string ColorDefault = Palette.ToHex(Palette.Default);
 
 	private RichTextLabel _logLabel;
 	private readonly Queue<string> _messageHistory = new();
 	private Entities.Player _player;
+	private readonly Dictionary<Entities.BaseEntity, Entities.BaseEntity> _lastAttacker = new();
 
 	public override void _Ready()
 	{
@@ -51,9 +53,9 @@ public partial class MessageLog : PanelContainer
 	/// <summary>
 	/// Connects to an entity's health component to receive death notifications.
 	/// </summary>
-	public void ConnectToHealthComponent(Components.HealthComponent healthComponent, string entityName)
+	public void ConnectToHealthComponent(Components.HealthComponent healthComponent, Entities.BaseEntity entity)
 	{
-		healthComponent.Connect(Components.HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entityName)));
+		healthComponent.Connect(Components.HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
 	}
 
 	/// <summary>
@@ -80,10 +82,13 @@ public partial class MessageLog : PanelContainer
 	/// </summary>
 	private void OnAttackHit(Entities.BaseEntity attacker, Entities.BaseEntity target, int damage, string attackName)
 	{
+		// Track the last attacker for death messages
+		_lastAttacker[target] = attacker;
+
 		// Determine if this is the player taking or dealing damage
 		bool isPlayerAttacker = attacker.DisplayName == "Player";
 		bool isPlayerTarget = target.DisplayName == "Player";
-		string color = isPlayerTarget ? ColorDamageTaken : ColorDefault;
+		string color = isPlayerTarget ? ColorCombatDamage : ColorDefault;
 
 		// Get colored weapon name for player attacks
 		string weaponDisplay = GetWeaponDisplay(attacker, attackName);
@@ -111,7 +116,7 @@ public partial class MessageLog : PanelContainer
 	{
 		bool isPlayerAttacker = attacker.DisplayName == "Player";
 		bool isPlayerTarget = target.DisplayName == "Player";
-		string color = isPlayerTarget ? ColorDamageTaken : ColorDefault;
+		string color = isPlayerTarget ? ColorCombatBlocked : ColorDefault;
 
 		// Get colored weapon name for player attacks
 		string weaponDisplay = GetWeaponDisplay(attacker, attackName);
@@ -158,9 +163,40 @@ public partial class MessageLog : PanelContainer
 		AddMessage(message, color);
 	}
 
-	private void OnEntityDied(string entityName)
+	private void OnEntityDied(Entities.BaseEntity victim)
 	{
-		AddMessage($"{entityName} dies!", ColorDeath);
+		string entityName = victim.DisplayName;
+		bool isPlayer = entityName == "Player";
+
+		// Check if we know who killed them
+		if (_lastAttacker.TryGetValue(victim, out var killer))
+		{
+			bool killerIsPlayer = killer.DisplayName == "Player";
+
+			if (killerIsPlayer)
+			{
+				// Player killed someone
+				AddMessage($"You kill the {entityName}!", ColorDeath);
+			}
+			else if (isPlayer)
+			{
+				// Player was killed by something
+				AddMessage($"The {killer.DisplayName} kills you!", ColorDeath);
+			}
+			else
+			{
+				// NPC vs NPC
+				AddMessage($"The {killer.DisplayName} kills the {entityName}!", ColorDeath);
+			}
+
+			// Clean up the tracker
+			_lastAttacker.Remove(victim);
+		}
+		else
+		{
+			// Fallback for unknown cause of death
+			AddMessage($"{entityName} dies!", ColorDeath);
+		}
 	}
 
 	/// <summary>

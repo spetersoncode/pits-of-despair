@@ -112,6 +112,9 @@ public class EquipAction : Action
             return ActionResult.CreateFailure($"Failed to equip {itemTemplate.Name}.");
         }
 
+        // Emit equipment signal for UI feedback
+        player.EmitSignal(Player.SignalName.ItemEquipped, itemTemplate.Name);
+
         return ActionResult.CreateSuccess($"Equipped {itemTemplate.Name}.");
     }
 }

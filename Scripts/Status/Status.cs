@@ -1,7 +1,25 @@
 using PitsOfDespair.Actions;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Core;
 
 namespace PitsOfDespair.Status;
+
+/// <summary>
+/// Represents a status message with associated color.
+/// </summary>
+public readonly struct StatusMessage
+{
+    public string Message { get; init; }
+    public string Color { get; init; }
+
+    public StatusMessage(string message, string color)
+    {
+        Message = message;
+        Color = color;
+    }
+
+    public static StatusMessage Empty => new StatusMessage(string.Empty, Palette.ToHex(Palette.Default));
+}
 
 /// <summary>
 /// Base class for all status effects in the game.
@@ -33,32 +51,32 @@ public abstract class Status
     /// <summary>
     /// Called when this status is first applied to an entity.
     /// Use this to apply stat modifiers or other initial effects.
-    /// Returns a message describing the effect application (empty string for no message).
+    /// Returns a status message with color describing the effect application.
     /// </summary>
     /// <param name="target">The entity receiving the status.</param>
-    /// <returns>Message to display, or empty string for no message.</returns>
-    public abstract string OnApplied(BaseEntity target);
+    /// <returns>StatusMessage with text and color, or StatusMessage.Empty for no message.</returns>
+    public abstract StatusMessage OnApplied(BaseEntity target);
 
     /// <summary>
     /// Called when this status is removed from an entity (either by expiration or manual removal).
     /// Use this to clean up stat modifiers or other effects.
-    /// Returns a message describing the effect removal (empty string for no message).
+    /// Returns a status message with color describing the effect removal.
     /// </summary>
     /// <param name="target">The entity losing the status.</param>
-    /// <returns>Message to display, or empty string for no message.</returns>
-    public abstract string OnRemoved(BaseEntity target);
+    /// <returns>StatusMessage with text and color, or StatusMessage.Empty for no message.</returns>
+    public abstract StatusMessage OnRemoved(BaseEntity target);
 
     /// <summary>
     /// Called each turn while this status is active.
     /// Override this if the status needs to do something each turn (e.g., poison damage).
-    /// Returns a message describing turn effects (empty string for no message).
+    /// Returns a status message with color describing turn effects.
     /// </summary>
     /// <param name="target">The entity with this status.</param>
-    /// <returns>Message to display, or empty string for no message.</returns>
-    public virtual string OnTurnProcessed(BaseEntity target)
+    /// <returns>StatusMessage with text and color, or StatusMessage.Empty for no message.</returns>
+    public virtual StatusMessage OnTurnProcessed(BaseEntity target)
     {
         // Default: do nothing each turn
-        return string.Empty;
+        return StatusMessage.Empty;
     }
 
     /// <summary>

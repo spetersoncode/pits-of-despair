@@ -45,13 +45,13 @@ public class EnduranceBuffStatus : Status
         Duration = duration;
     }
 
-    public override string OnApplied(BaseEntity target)
+    public override StatusMessage OnApplied(BaseEntity target)
     {
         var stats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
         if (stats == null)
         {
             GD.PrintErr($"EnduranceBuffStatus: {target.DisplayName} has no StatsComponent");
-            return string.Empty;
+            return StatusMessage.Empty;
         }
 
         // Create unique source ID for this status instance
@@ -60,25 +60,31 @@ public class EnduranceBuffStatus : Status
         // Add endurance modifier
         stats.AddEnduranceModifier(_sourceId, Amount);
 
-        return $"{target.DisplayName} feels resilient! (+{Amount} END for {Duration} turns)";
+        return new StatusMessage(
+            $"{target.DisplayName} feels resilient! (+{Amount} END for {Duration} turns)",
+            Palette.ToHex(Palette.StatusBuff)
+        );
     }
 
-    public override string OnRemoved(BaseEntity target)
+    public override StatusMessage OnRemoved(BaseEntity target)
     {
         if (string.IsNullOrEmpty(_sourceId))
         {
-            return string.Empty;
+            return StatusMessage.Empty;
         }
 
         var stats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
         if (stats == null)
         {
-            return string.Empty;
+            return StatusMessage.Empty;
         }
 
         // Remove endurance modifier
         stats.RemoveEnduranceModifier(_sourceId);
 
-        return $"{target.DisplayName}'s endurance returns to normal.";
+        return new StatusMessage(
+            $"{target.DisplayName}'s endurance returns to normal.",
+            Palette.ToHex(Palette.Default)
+        );
     }
 }

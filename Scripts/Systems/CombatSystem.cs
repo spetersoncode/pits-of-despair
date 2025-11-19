@@ -179,8 +179,9 @@ public partial class CombatSystem : Node
     /// Emit a general action message for display in the message log.
     /// Used by actions to provide feedback about non-combat activities.
     /// </summary>
-    public void EmitActionMessage(BaseEntity actor, string message, string color = "#ffffff")
+    public void EmitActionMessage(BaseEntity actor, string message, string? color = null)
     {
+        color ??= Palette.ToHex(Palette.Default);
         EmitSignal(SignalName.ActionMessage, actor, message, color);
     }
 }

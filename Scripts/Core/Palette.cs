@@ -40,6 +40,28 @@ public static class Palette
 
     #endregion
 
+    #region UI - Message Log
+
+    /// <summary>Combat damage taken by player (hit messages)</summary>
+    public static readonly Color CombatDamage = new("#DD6655");
+
+    /// <summary>Combat damage blocked or deflected (no harm done)</summary>
+    public static readonly Color CombatBlocked = new("#99AABB");
+
+    /// <summary>Positive status effects and buffs</summary>
+    public static readonly Color StatusBuff = new("#66DD66");
+
+    /// <summary>Negative status effects and debuffs</summary>
+    public static readonly Color StatusDebuff = new("#EEAA55");
+
+    /// <summary>Neutral status changes or informational status messages</summary>
+    public static readonly Color StatusNeutral = new("#EEDD77");
+
+    /// <summary>Equipment changes (equip/unequip)</summary>
+    public static readonly Color Equipment = new("#AABBCC");
+
+    #endregion
+
     #region UI - Health States
 
     /// <summary>Health bar at full capacity (>80%)</summary>

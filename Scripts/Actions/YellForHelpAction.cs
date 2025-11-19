@@ -77,7 +77,7 @@ public class YellForHelpAction : Action
             : $"The {actor.DisplayName} shrieks for help, but no one is nearby.";
 
         // Emit action message via CombatSystem (orange color for alerts)
-        context.CombatSystem.EmitActionMessage(actor, message, "#ffaa00");
+        context.CombatSystem.EmitActionMessage(actor, message, Palette.ToHex(Palette.Caution));
 
         return ActionResult.CreateSuccess(message);
     }
