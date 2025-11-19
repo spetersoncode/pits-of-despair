@@ -7,8 +7,6 @@ endurance: -1
 will: 0
 maxHP: 6
 visionRange: 12
-hasMovement: true
-hasAI: true
 goals:
   - FleeForHelp
 attacks:

@@ -11,10 +11,10 @@ public partial class VisionComponent : Node
 {
     /// <summary>
     /// Maximum range this entity can see in tiles.
-    /// Default: 10 tiles (medium range, balanced for roguelike gameplay)
+    /// Default: 16 tiles (medium range, balanced for roguelike gameplay)
     /// </summary>
     [Export]
-    public int VisionRange { get; set; } = 10;
+    public int VisionRange { get; set; } = 16;
 
     /// <summary>
     /// Gets the parent entity this component is attached to.

@@ -29,11 +29,13 @@ Game data (creatures, items, bands, spawn tables) is defined in YAML files under
 
 ### Creatures
 
-**Required**: name, type, stats (strength/agility/endurance/will), maxHP, visionRange, hasMovement, hasAI
+**Required**: name, type, stats (strength/agility/endurance/will), maxHP
 
-**Optional**: glyph (type default), color (type default), goals (AI), attacks, equipment
+**Optional**: glyph (type default), color (type default), visionRange (default: 16), hasMovement (default: true), hasAI (default: true), goals (AI), attacks, equipment, immunities, resistances, vulnerabilities
 
 **Type Defaults**: Each creature type ("vermin", "goblinoid", etc.) defines default glyph and color applied if not specified.
+
+**Behavioral Defaults**: Most creatures are mobile with AI and 16-tile vision. Override when needed (e.g., `visionRange: 0` for blind creatures, `hasMovement: false` for stationary traps).
 
 ### Items
 

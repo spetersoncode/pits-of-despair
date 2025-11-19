@@ -1,16 +1,79 @@
+# Goblin - Basic goblinoid enemy
+# Standard melee combatant with club, uses patrol and search behaviors
+
+# === REQUIRED FIELDS ===
+
 name: goblin
+# Display name shown to player
+
 type: goblinoid
-strength: 0
-agility: 0
-endurance: 0
-will: 0
+# Creature type determines default glyph ('g') and color
+# Available types: goblinoid, vermin, undead
+
+# --- Stats (all required) ---
+strength: 0      # Melee damage bonus: STR/2 (rounded down)
+agility: 0       # Ranged to-hit and defense bonus
+endurance: 0     # HP bonus: END × 2
+will: 0          # Reserved for future mental resistance
+
 maxHP: 8
-visionRange: 10
-hasMovement: true
-hasAI: true
+# Base HP before Endurance modifier (actual HP = 8 + (0 × 2) = 8)
+
+# === OPTIONAL FIELDS (showing defaults) ===
+
+# visionRange: 16
+# How far creature can see in tiles. Omitted = uses default (16)
+# Set to 0 to create blind creatures
+
+# hasMovement: true
+# Whether creature can move. Omitted = true
+# Set to false for stationary creatures (traps, turrets)
+
+# hasAI: true
+# Whether creature has AI behavior. Omitted = true
+# Set to false for player-controlled or inactive entities
+
+# glyph: "g"
+# Visual character. Omitted = uses type default ("g" for goblinoid)
+
+# color: Default
+# Visual color. Omitted = uses type default (Default for goblinoid)
+# Color names from Palette.cs
+
+# === AI CONFIGURATION ===
+
 goals:
-  - MeleeAttack
-  - SearchLastKnown
-  - ReturnToSpawn
+# AI goal priorities (evaluated top to bottom)
+  - MeleeAttack        # Attack adjacent enemies
+  - SearchLastKnown    # Search area where enemy was last seen
+  - ReturnToSpawn      # Return to spawn point when no threats
+
+# Available goals: MeleeAttack, SearchLastKnown, ReturnToSpawn, Wander,
+#                  FleeForHelp, Idle (auto-added as fallback)
+
+# === EQUIPMENT & ATTACKS ===
+
 equipment:
   - weapon_club
+# Items creature starts equipped with (requires matching item YAML files)
+# Creates InventoryComponent and EquipComponent automatically
+# Items are added to inventory and auto-equipped to appropriate slots
+
+# attacks:
+# Natural attacks (if no equipment). Omitted = defaults to 1d2 punch
+# Example:
+#   - name: bite
+#     type: Melee        # Melee or Ranged
+#     dice: "1d4"        # Damage dice notation
+#     damageType: Piercing  # Bludgeoning (default), Slashing, Piercing, Poison
+
+# === DAMAGE MODIFIERS (optional) ===
+
+# immunities:
+#   - Poison           # Takes 0 damage from these types
+
+# resistances:
+#   - Piercing         # Takes half damage (rounded down)
+
+# vulnerabilities:
+#   - Bludgeoning      # Takes double damage

@@ -67,11 +67,11 @@ public class CreatureData
     /// </summary>
     public int MaxHP { get; set; } = 1;
 
-    public int VisionRange { get; set; } = 0;
+    public int VisionRange { get; set; } = 16;
 
-    public bool HasMovement { get; set; } = false;
+    public bool HasMovement { get; set; } = true;
 
-    public bool HasAI { get; set; } = false;
+    public bool HasAI { get; set; } = true;
 
     public List<AttackData> Attacks { get; set; } = new();
 

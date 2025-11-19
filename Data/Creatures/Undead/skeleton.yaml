@@ -5,9 +5,6 @@ agility: 0
 endurance: 1
 will: 0
 maxHP: 7
-visionRange: 10
-hasMovement: true
-hasAI: true
 goals:
   - MeleeAttack
 attacks:

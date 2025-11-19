@@ -31,26 +31,38 @@ Weapons define attacks via `AttackData` resource:
 - **Name**: Display name for combat messages
 - **Type**: `AttackType.Melee` or `AttackType.Ranged`
 - **DiceNotation**: Damage formula (e.g., "1d6+2", "2d4", "5")
-- **DamageType**: Physical damage type (`Bludgeoning`, `Slashing`, or `Piercing`)
+- **DamageType**: Physical damage type (`Bludgeoning`, `Slashing`, `Piercing`, or `Poison`)
 - **Range**: Attack distance in tiles (defaults to 1 for melee)
 
 Equipment YAML specifies attack configuration. Natural attacks (unarmed) defined similarly for creatures without weapons.
 
 ## Damage Types
 
-All attacks have a damage type representing the physical mechanism of harm:
+All attacks have a damage type representing the physical mechanism of harm. Damage types interact with creature resistances to modify final damage:
 
 **Bludgeoning**: Impact from blunt force (clubs, maces, fists, crushing). Default for attacks without specified type.
 
 **Slashing**: Cuts from bladed weapons (swords, axes, claws).
 
-**Piercing**: Penetration from pointed weapons (spears, arrows, bites).
+**Piercing**: Penetration from pointed weapons (spears, arrows, bites, stingers).
 
-Currently damage types are informational only—future systems may add resistance/vulnerability mechanics. When adding new weapons or natural attacks, choose the appropriate type based on the attack's physical nature.
+**Poison**: Toxins, venom, and poisonous substances. Not currently used by weapons but reserved for future poison effects.
+
+### Damage Modifiers
+
+Creatures can have three types of damage modifiers defined in their YAML:
+
+**Immunity**: Entity takes 0 damage from specified types. Applied before other modifiers. Example: Skeletons are immune to poison.
+
+**Resistance**: Entity takes half damage (rounded down) from specified types. Example: Skeletons resist piercing (arrows pass through bones).
+
+**Vulnerability**: Entity takes double damage from specified types. Example: Skeletons are vulnerable to bludgeoning (bones shatter).
+
+Damage modification occurs in `HealthComponent.TakeDamage()` after armor reduction. Order: immunity check → vulnerability/resistance multiplier → HP reduction. Only one modifier applies per damage type (vulnerability and resistance are mutually exclusive).
 
 ## Combat Components
 
-**HealthComponent**: Manages hit points and damage application. `MaxHP` calculated as `BaseMaxHP + (Endurance × Level)`. `TakeDamage()` reduces CurrentHP and emits signals. Emits `Died` when HP reaches 0, triggering entity removal.
+**HealthComponent**: Manages hit points and damage application. `MaxHP` calculated as `BaseMaxHP + (Endurance × Level)`. Stores damage modifiers (immunities, resistances, vulnerabilities). `TakeDamage(amount, damageType)` applies modifiers, reduces CurrentHP, and emits signals. Emits `Died` when HP reaches 0, triggering entity removal.
 
 **AttackComponent**: Interface between actions and combat resolution. Holds `Attacks` array (weapon or natural attacks). `RequestAttack(target, attackIndex)` emits signal to CombatSystem for processing. Updated automatically when equipment changes.
 
