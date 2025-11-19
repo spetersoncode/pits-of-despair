@@ -174,7 +174,7 @@ public partial class Player : BaseEntity
     }
 
     /// <summary>
-    /// Handle position changes to emit turn completion and auto-collect gold.
+    /// Handle position changes to auto-collect gold and check for entities.
     /// </summary>
     private void OnPositionChanged(int x, int y)
     {
@@ -189,7 +189,7 @@ public partial class Player : BaseEntity
             // Check for walkable entities to show "You see here" message
             CheckForWalkableEntity();
 
-            EmitSignal(SignalName.TurnCompleted);
+            // Turn completion is handled by ExecuteAction override
         }
     }
 
