@@ -75,6 +75,10 @@ creaturePools:
       - type: band
         bandId: goblin_pack # References Data/Bands/goblin_pack.yaml
 
+      # Single skeleton - undead with damage resistances
+      - type: single
+        creatureId: skeleton
+
   # Rare pool (5% weight) - Dangerous encounters
   - id: rare
     weight: 5

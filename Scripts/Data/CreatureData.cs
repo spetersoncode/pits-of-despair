@@ -35,6 +35,11 @@ public class CreatureData
         {
             DefaultGlyph = "r",
             DefaultColor = Palette.ToHex(Palette.Default)
+        },
+        ["undead"] = new CreatureTypeInfo
+        {
+            DefaultGlyph = "s",
+            DefaultColor = Palette.ToHex(Palette.Default)
         }
     };
 
@@ -81,6 +86,21 @@ public class CreatureData
     /// If specified, the creature will have an EquipComponent and items will be added and equipped.
     /// </summary>
     public List<string> Equipment { get; set; } = new();
+
+    /// <summary>
+    /// Damage types this creature is immune to (takes 0 damage).
+    /// </summary>
+    public List<DamageType> Immunities { get; set; } = new();
+
+    /// <summary>
+    /// Damage types this creature resists (takes half damage, rounded down).
+    /// </summary>
+    public List<DamageType> Resistances { get; set; } = new();
+
+    /// <summary>
+    /// Damage types this creature is vulnerable to (takes double damage).
+    /// </summary>
+    public List<DamageType> Vulnerabilities { get; set; } = new();
 
     /// <summary>
     /// Gets whether this creature can equip items.

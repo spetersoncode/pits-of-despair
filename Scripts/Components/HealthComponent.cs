@@ -1,5 +1,7 @@
 using Godot;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using System.Collections.Generic;
 
 namespace PitsOfDespair.Components;
 
@@ -42,6 +44,21 @@ public partial class HealthComponent : Node
     /// Current hit points
     /// </summary>
     public int CurrentHP { get; private set; }
+
+    /// <summary>
+    /// Damage types this entity is immune to (takes 0 damage).
+    /// </summary>
+    public List<DamageType> Immunities { get; set; } = new();
+
+    /// <summary>
+    /// Damage types this entity resists (takes half damage, rounded down).
+    /// </summary>
+    public List<DamageType> Resistances { get; set; } = new();
+
+    /// <summary>
+    /// Damage types this entity is vulnerable to (takes double damage).
+    /// </summary>
+    public List<DamageType> Vulnerabilities { get; set; } = new();
 
     private BaseEntity? _entity;
     private StatsComponent? _stats;
@@ -99,14 +116,31 @@ public partial class HealthComponent : Node
     }
 
     /// <summary>
-    /// Apply damage to this entity
+    /// Apply damage to this entity with damage type modifiers.
     /// </summary>
-    /// <param name="amount">Amount of damage to take</param>
-    public void TakeDamage(int amount)
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="damageType">Type of damage being dealt</param>
+    public void TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning)
     {
         if (amount <= 0)
             return;
 
+        // Check immunity - immune entities take 0 damage
+        if (Immunities.Contains(damageType))
+            return;
+
+        // Apply vulnerability - double damage
+        if (Vulnerabilities.Contains(damageType))
+        {
+            amount *= 2;
+        }
+        // Apply resistance - half damage (rounded down)
+        else if (Resistances.Contains(damageType))
+        {
+            amount /= 2;
+        }
+
+        // Apply damage after modifiers
         int oldHP = CurrentHP;
         CurrentHP = Mathf.Max(0, CurrentHP - amount);
 

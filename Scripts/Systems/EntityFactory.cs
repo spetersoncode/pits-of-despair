@@ -162,7 +162,10 @@ public partial class EntityFactory : Node
             var healthComponent = new HealthComponent
             {
                 Name = "HealthComponent",
-                BaseMaxHP = data.MaxHP // Will be modified by Endurance in _Ready
+                BaseMaxHP = data.MaxHP, // Will be modified by Endurance in _Ready
+                Immunities = new List<DamageType>(data.Immunities),
+                Resistances = new List<DamageType>(data.Resistances),
+                Vulnerabilities = new List<DamageType>(data.Vulnerabilities)
             };
             entity.AddChild(healthComponent);
         }
@@ -182,7 +185,8 @@ public partial class EntityFactory : Node
                         Name = attackData.Name,
                         Type = attackData.Type,
                         DiceNotation = attackData.DiceNotation,
-                        Range = attackData.Range
+                        Range = attackData.Range,
+                        DamageType = attackData.DamageType
                     };
                     naturalAttacks.Add(attack);
                 }

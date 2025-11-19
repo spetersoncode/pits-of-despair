@@ -151,10 +151,10 @@ public partial class CombatSystem : Node
 
         GD.Print($"Combat: HIT - Damage: {baseDamage} ({attackData.DiceNotation}) + {damageBonus} bonus - {armor} armor = {finalDamage} final damage");
 
-        // PHASE 3: Apply Damage and Emit Feedback
+        // PHASE 3: Apply Damage with Damage Type and Emit Feedback
         if (finalDamage > 0)
         {
-            targetHealth.TakeDamage(finalDamage);
+            targetHealth.TakeDamage(finalDamage, attackData.DamageType);
             EmitSignal(SignalName.AttackHit, attacker, target, finalDamage, attackData.Name);
             EmitSignal(SignalName.AttackExecuted, attacker, target, finalDamage, attackData.Name); // Legacy support
         }

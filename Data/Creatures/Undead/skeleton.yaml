@@ -1,0 +1,23 @@
+name: skeleton
+type: undead
+strength: 0
+agility: 0
+endurance: 1
+will: 0
+maxHP: 7
+visionRange: 10
+hasMovement: true
+hasAI: true
+goals:
+  - MeleeAttack
+attacks:
+  - name: claw
+    type: Melee
+    dice: "1d4"
+    damageType: Slashing
+immunities:
+  - Poison
+resistances:
+  - Piercing
+vulnerabilities:
+  - Bludgeoning

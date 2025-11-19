@@ -20,5 +20,10 @@ public enum DamageType
     /// <summary>
     /// Piercing damage from pointed weapons (spears, arrows, stingers).
     /// </summary>
-    Piercing
+    Piercing,
+
+    /// <summary>
+    /// Poison damage from toxins, venom, and poisonous substances.
+    /// </summary>
+    Poison
 }
