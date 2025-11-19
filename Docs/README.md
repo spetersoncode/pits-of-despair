@@ -31,6 +31,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 - **[entities.md](entities.md)**: Entity architecture and lifecycle management
 - **[spawning.md](spawning.md)**: Budget-based dungeon population with weighted spawn tables
 - **[turn-based.md](turn-based.md)**: Turn-based coordination and phase management
+- **[yaml.md](yaml.md)**: YAML data system with type-based defaults and content creation patterns
 
 **Supporting Systems**:
 - **[ai.md](ai.md)**: AI architecture and goal-based decision making

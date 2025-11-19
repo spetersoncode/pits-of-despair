@@ -1,62 +1,104 @@
-name: floor 1
-creatureBudget:
-  dice: "2d20+60"
-itemBudget:
-  dice: "5d10+25"
-goldBudget:
-  dice: "10d20+100"
+# Floor 1 Spawn Table
+# Defines what creatures and items spawn on the first dungeon level.
+# Uses a budget-based system with weighted pools for randomized spawning.
 
+name: floor 1
+
+# Budgets determine how many creatures/items spawn per level generation
+# Values are dice notation (e.g., "2d20+60" = roll 2 twenty-sided dice, add 60)
+creatureBudget:
+  dice: "2d20+60" # Total creature budget points for this floor
+itemBudget:
+  dice: "5d10+25" # Total item budget points for this floor
+goldBudget:
+  dice: "10d20+100" # Total gold available for distribution
+
+# Creature Pools
+# Each pool has a weight (higher = more likely to be selected)
+# The system randomly selects a pool based on weights, then spawns entries from it
 creaturePools:
+  # Common pool (70% weight) - Basic early-game enemies
   - id: common
     weight: 70
     entries:
+      # Entry types:
+      # - single: Spawns one creature
+      # - multiple: Spawns a small group (uses count dice)
+      # - band: Spawns a creature band (leader + followers)
+      # - unique: Spawns once per level (not used here)
+
+      # Multiple rats (weight: 2, more common than other entries)
+      # Spawns 1-2 rats per occurrence
       - type: multiple
         creatureId: rat
-        weight: 2
+        weight: 2 # Higher weight = more likely to spawn
         count:
-          dice: "1d2"
+          dice: "1d2" # Rolls 1d2 to determine how many
 
+      # Multiple goblins (weight defaults to 1)
+      # Spawns 1-2 goblins per occurrence
       - type: multiple
         creatureId: goblin
         count:
           dice: "1d2"
 
+      # Single goblin scout (weight defaults to 1)
+      # Spawns exactly one scout per occurrence
       - type: single
         creatureId: goblin_scout
 
+      # Band example - INLINE definition
+      # This demonstrates defining a band directly in the spawn table
+      # Useful for one-off or level-specific band configurations (like this rat swarm)
       - type: band
         band:
           name: rat swarm
           leader:
             creatureId: elder_rat
-            placement: center
+            placement: center # Leader spawns in center of band area
           followers:
             - creatureId: rat
               count:
-                dice: "1d4+2"
-              placement: surrounding
+                dice: "1d4+2" # Spawns 3-6 rats around the leader
+              placement: surrounding # Places followers around leader
               distance:
-                min: 1
-                max: 2
+                min: 1 # Minimum tiles away from leader
+                max: 2 # Maximum tiles away from leader
 
+  # Uncommon pool (25% weight) - Tougher encounters
   - id: uncommon
     weight: 25
     entries:
+      # Band example - EXTERNAL reference
+      # This demonstrates referencing a band defined in Data/Bands/
+      # Better for reusable bands used across multiple spawn tables
       - type: band
-        bandId: goblin_pack
+        bandId: goblin_pack # References Data/Bands/goblin_pack.yaml
 
+  # Rare pool (5% weight) - Dangerous encounters
   - id: rare
     weight: 5
     entries:
+      # Multiple goblin ruffians - tough enemies in small groups
+      # count defaults to "1" when not specified
       - type: multiple
         creatureId: goblin_ruffian
 
+# Item Pools
+# Similar structure to creature pools: weighted pools with entries
+# Item entries are simpler - just reference item IDs
 itemPools:
+  # Common items (70% weight) - Consumables and basic gear
   - id: common
     weight: 70
     entries:
+      # All entries have weight: 1 by default (equal probability within pool)
+      # Item IDs follow pattern: {type}_{name}
+
+      # Healing potions
       - itemId: potion_healing_8
 
+      # Stat buff potions (temporary bonuses)
       - itemId: potion_barkskin_2
 
       - itemId: potion_bulls_strength_2
@@ -65,10 +107,12 @@ itemPools:
 
       - itemId: potion_bears_endurance_2
 
+      # Utility scrolls
       - itemId: scroll_blink
 
       - itemId: scroll_confusion
 
+  # Uncommon items (25% weight) - Better equipment
   - id: uncommon
     weight: 25
     entries:
@@ -76,6 +120,7 @@ itemPools:
 
       - itemId: weapon_spear
 
+  # Rare items (5% weight)
   - id: rare
     weight: 5
     entries:
