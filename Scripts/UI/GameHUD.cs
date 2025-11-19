@@ -68,7 +68,6 @@ public partial class GameHUD : Control
         _player = player;
         _actionContext = actionContext;
 
-        // Wire up side panel
         _sidePanel.ConnectToPlayer(player);
         _sidePanel.ConnectToGoldManager(goldManager);
         _sidePanel.SetFloorDepth(floorDepth);
@@ -78,20 +77,16 @@ public partial class GameHUD : Control
             _sidePanel.SetVisionSystem(visionSystem);
         }
 
-        // Wire up message log
         _messageLog.ConnectToCombatSystem(combatSystem);
         _messageLog.SetPlayer(player);
 
-        // Wire up inventory panel
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
 
-        // Wire up activate, drop, and equip panels
         _activateItemPanel.ConnectToPlayer(player);
         _dropItemPanel.ConnectToPlayer(player);
         _equipPanel.ConnectToPlayer(player);
 
-        // Connect panel signals
         _activateItemPanel.Connect(ActivateItemModal.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
         _activateItemPanel.Connect(ActivateItemModal.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
         _dropItemPanel.Connect(DropItemModal.SignalName.ItemSelected, Callable.From<char>(OnDropItemSelected));
@@ -100,10 +95,8 @@ public partial class GameHUD : Control
         _equipPanel.Connect(EquipModal.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
         _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
 
-        // Subscribe to entity additions to connect their HealthComponents to message log
         entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
 
-        // Connect existing entities that were added before HUD initialization
         foreach (var entity in entityManager.GetAllEntities())
         {
             var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
@@ -113,34 +106,27 @@ public partial class GameHUD : Control
             }
         }
 
-        // Also connect the player's HealthComponent (player is not added via EntityManager)
         var playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
         _messageLog.ConnectToHealthComponent(playerHealth, player);
 
-        // Subscribe to wait action
         player.Connect(Player.SignalName.Waited, Callable.From(() => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success))));
 
-        // Subscribe to item events
         player.Connect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
         player.Connect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
         player.Connect(Player.SignalName.ItemDropped, Callable.From<string>(OnItemDropped));
         player.Connect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
         player.Connect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
 
-        // Subscribe to gold collection
         player.Connect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
 
-        // Subscribe to standing on entities (for "You see here" messages)
         player.Connect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
 
-        // Subscribe to status effect messages
         var statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
         if (statusComponent != null)
         {
             statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
-        // Add welcome message
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
     }
 

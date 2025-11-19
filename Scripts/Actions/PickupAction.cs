@@ -61,11 +61,9 @@ public class PickupAction : Action
         context.EntityManager.RemoveEntity(entityAtPosition);
         entityAtPosition.QueueFree();
 
-        // Success - item picked up
         string itemName = entityAtPosition.ItemData.Template.GetDisplayName(1);
         string successMessage = $"Picked up {itemName}.";
 
-        // Emit UI feedback for player only
         // Note: Core logic is generic (works with any InventoryComponent),
         // but UI feedback is player-specific since only player has message log.
         // This is acceptable as it's purely presentational, not game logic.

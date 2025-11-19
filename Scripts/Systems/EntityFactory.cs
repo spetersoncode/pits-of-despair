@@ -78,9 +78,7 @@ public partial class EntityFactory : Node
 
     /// <summary>
     /// Builds a BaseEntity from an existing ItemInstance.
-    /// This is the single source of truth for item entity construction,
-    /// ensuring consistent entity setup whether creating new items or
-    /// creating entities from inventory items being dropped.
+    /// Ensures consistent entity setup whether creating new items or creating entities from dropped inventory items.
     /// </summary>
     /// <param name="itemInstance">The item instance with template and state.</param>
     /// <param name="position">Grid position for the entity.</param>
@@ -268,8 +266,6 @@ public partial class EntityFactory : Node
             };
             entity.AddChild(aiComponent);
 
-            // Initialize AI with spawn position
-            // Note: Must be called after AddChild so component is in tree
             aiComponent.Initialize(position);
 
             // Instantiate goals from creature data

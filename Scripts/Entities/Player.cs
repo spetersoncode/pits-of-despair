@@ -12,7 +12,6 @@ namespace PitsOfDespair.Entities;
 
 /// <summary>
 /// The player character.
-/// Now uses component-based architecture with MovementComponent.
 /// </summary>
 public partial class Player : BaseEntity
 {
@@ -57,15 +56,12 @@ public partial class Player : BaseEntity
 
     public override void _Ready()
     {
-        // Set player properties
         DisplayName = "Player";
         Glyph = "@";
         GlyphColor = Palette.Player;
 
-        // Get MovementComponent child
         _movementComponent = GetNode<MovementComponent>("MovementComponent");
 
-        // Add StatsComponent (base-0 stats: player starts average in all stats)
         var statsComponent = new StatsComponent
         {
             Name = "StatsComponent",
@@ -76,7 +72,6 @@ public partial class Player : BaseEntity
         };
         AddChild(statsComponent);
 
-        // Add HealthComponent (20 base HP + Endurance bonus)
         var healthComponent = new HealthComponent
         {
             Name = "HealthComponent",
@@ -84,22 +79,14 @@ public partial class Player : BaseEntity
         };
         AddChild(healthComponent);
 
-        // Note: Attack component with default punch is now created by EntityFactory
-
-        // Add InventoryComponent to player
         _inventoryComponent = new InventoryComponent { Name = "InventoryComponent" };
         AddChild(_inventoryComponent);
 
-        // Relay inventory changed signal for UI compatibility
         _inventoryComponent.Connect(InventoryComponent.SignalName.InventoryChanged, Callable.From(() => EmitSignal(SignalName.InventoryChanged)));
 
-        // Add EquipComponent to player
         var equipComponent = new EquipComponent { Name = "EquipComponent" };
         AddChild(equipComponent);
 
-        // Note: Starting equipment will be added by EntityFactory in GameLevel initialization
-
-        // Track position changes to emit Moved signal for backwards compatibility
         Connect(SignalName.PositionChanged, Callable.From<int, int>(OnPositionChanged));
     }
 
@@ -138,7 +125,6 @@ public partial class Player : BaseEntity
 
     /// <summary>
     /// Execute an action using the action system.
-    /// This is the unified entry point for all turn-consuming actions.
     /// Overrides base to emit TurnCompleted signal when appropriate.
     /// </summary>
     /// <param name="action">The action to execute.</param>
@@ -178,18 +164,12 @@ public partial class Player : BaseEntity
     /// </summary>
     private void OnPositionChanged(int x, int y)
     {
-        // Only process if position actually changed
         if (x != _previousPosition.X || y != _previousPosition.Y)
         {
             _previousPosition = new GridPosition(x, y);
 
-            // Check for gold at new position and auto-collect
             TryAutoCollectGold();
-
-            // Check for walkable entities to show "You see here" message
             CheckForWalkableEntity();
-
-            // Turn completion is handled by ExecuteAction override
         }
     }
 
@@ -222,30 +202,24 @@ public partial class Player : BaseEntity
             return;
         }
 
-        // Check for entity at player's current position
         var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
 
-        // Check if the entity is a Gold pile
         if (entityAtPosition is not Gold goldPile)
         {
             return;
         }
 
-        // Get gold amount
         int goldAmount = goldPile.Amount;
         if (goldAmount <= 0)
         {
-            goldAmount = 1; // Default to 1 if not set
+            goldAmount = 1;
         }
 
-        // Add to gold manager
         _goldManager.AddGold(goldAmount);
 
-        // Remove gold entity from world
         _entityManager.RemoveEntity(entityAtPosition);
         entityAtPosition.QueueFree();
 
-        // Emit signal for UI feedback
         EmitSignal(SignalName.GoldCollected, goldAmount, _goldManager.Gold);
     }
 

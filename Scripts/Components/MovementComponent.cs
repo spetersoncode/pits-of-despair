@@ -21,7 +21,6 @@ public partial class MovementComponent : Node
 
     public override void _Ready()
     {
-        // Get reference to parent entity
         _entity = GetParent<BaseEntity>();
     }
 

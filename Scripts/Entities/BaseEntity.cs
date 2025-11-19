@@ -96,7 +96,6 @@ public partial class BaseEntity : Node2D
 
     /// <summary>
     /// Execute an action using the action system.
-    /// This is the unified entry point for all turn-consuming actions.
     /// Can be overridden by subclasses to add additional behavior (e.g., Player emits TurnCompleted).
     /// </summary>
     /// <param name="action">The action to execute.</param>

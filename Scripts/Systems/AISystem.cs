@@ -250,10 +250,9 @@ public partial class AISystem : Node
 
     public override void _ExitTree()
     {
-        // Cleanup signal connections
         if (_turnManager != null)
         {
-            _turnManager.CreatureTurnsStarted -= OnCreatureTurnsStarted;
+            _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
         }
     }
 }

@@ -18,10 +18,8 @@ public class IdleGoal : Goal
 
     public override ActionResult Execute(AIContext context)
     {
-        // Clear any existing path since we're idling
         context.AIComponent.ClearPath();
 
-        // Just wait - consume the turn but do nothing
         return new ActionResult
         {
             Success = true,

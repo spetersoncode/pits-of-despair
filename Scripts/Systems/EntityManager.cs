@@ -121,15 +121,12 @@ public partial class EntityManager : Node
     /// </summary>
     private void OnEntityPositionChanged(BaseEntity entity, GridPosition newPosition)
     {
-        // Remove old position from cache (need to find it)
-        // This is safe because GridPosition struct equality works correctly
         var oldPositionEntry = _positionCache.FirstOrDefault(kvp => kvp.Value == entity);
         if (oldPositionEntry.Value != null)
         {
             _positionCache.Remove(oldPositionEntry.Key);
         }
 
-        // Add new position to cache
         _positionCache[newPosition] = entity;
     }
 }

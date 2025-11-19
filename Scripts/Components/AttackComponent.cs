@@ -18,13 +18,11 @@ public partial class AttackComponent : Node
 
     /// <summary>
     /// Natural attacks for this entity (baseline attacks - used when no weapon equipped).
-    /// Set from creature YAML or hardcoded for special entities like the player.
     /// </summary>
     [Export] public Array<AttackData> NaturalAttacks { get; set; } = new();
 
     /// <summary>
-    /// Current effective attacks for this entity.
-    /// This is either weapon attacks (if equipped) or natural attacks (if unarmed).
+    /// Current effective attacks for this entity (weapon attacks if equipped, otherwise natural attacks).
     /// </summary>
     [Export] public Array<AttackData> Attacks { get; set; } = new();
 
