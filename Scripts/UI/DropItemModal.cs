@@ -11,82 +11,9 @@ namespace PitsOfDespair.UI;
 /// Displays a selection menu for dropping items from inventory.
 /// Shows all items with their keys for selection.
 /// </summary>
-public partial class DropItemModal : PanelContainer
+public partial class DropItemModal : ItemSelectionModal
 {
-    [Signal]
-    public delegate void ItemSelectedEventHandler(char key);
-
-    [Signal]
-    public delegate void CancelledEventHandler();
-
-    private RichTextLabel _itemsLabel;
-    private Player _player;
-    private bool _isVisible = false;
-
-    public override void _Ready()
-    {
-        _itemsLabel = GetNode<RichTextLabel>("MarginContainer/VBoxContainer/ItemsLabel");
-
-        // Start hidden
-        Hide();
-    }
-
-    /// <summary>
-    /// Connects to the player to access inventory.
-    /// </summary>
-    public void ConnectToPlayer(Player player)
-    {
-        _player = player;
-    }
-
-    /// <summary>
-    /// Shows the drop item menu.
-    /// </summary>
-    public void ShowMenu()
-    {
-        _isVisible = true;
-        Show();
-        UpdateDisplay();
-    }
-
-    /// <summary>
-    /// Hides the drop item menu.
-    /// </summary>
-    public void HideMenu()
-    {
-        _isVisible = false;
-        Hide();
-    }
-
-    public override void _Input(InputEvent @event)
-    {
-        // Only process input when visible
-        if (!_isVisible)
-        {
-            return;
-        }
-
-        if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
-        {
-            // Cancel on ESC
-            if (keyEvent.Keycode == Key.Escape)
-            {
-                EmitSignal(SignalName.Cancelled);
-                GetViewport().SetInputAsHandled();
-                return;
-            }
-
-            // Check for a-z key selection
-            if (keyEvent.Keycode >= Key.A && keyEvent.Keycode <= Key.Z)
-            {
-                char selectedKey = (char)('a' + (keyEvent.Keycode - Key.A));
-                EmitSignal(SignalName.ItemSelected, selectedKey);
-                GetViewport().SetInputAsHandled();
-            }
-        }
-    }
-
-    private void UpdateDisplay()
+    protected override void UpdateDisplay()
     {
         if (_itemsLabel == null || _player == null)
         {
@@ -94,30 +21,23 @@ public partial class DropItemModal : PanelContainer
         }
 
         var inventory = _player.Inventory;
-        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 
         if (inventory.Count == 0)
         {
-            _itemsLabel.Text = $"[center][b]Drop which item?[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
+            ShowEmptyMessage("Drop which item?");
             return;
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine("[center][b]Drop which item?[/b][/center]");
-        sb.AppendLine("[center](ESC to cancel)[/center]\n");
+        sb.Append(BuildHeader("Drop which item?"));
+
+        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
-            // Check if item is equipped
-            bool isEquipped = equipComponent != null && equipComponent.IsEquipped(slot.Key);
-
-            // Format: key) glyph name (count/charges) (equipped)
-            string colorHex = slot.Item.Template.Color;
-            string displayName = slot.Item.Template.GetDisplayName(slot.Count);
-            string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
-            string equippedText = isEquipped ? $" [color={Palette.ToHex(Palette.Disabled)}](equipped)[/color]" : "";
-
-            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {displayName}{chargesText}{equippedText}");
+            var options = ItemDisplayOptions.ShowCount | ItemDisplayOptions.ShowSlot | ItemDisplayOptions.ShowEquipped;
+            string line = ItemFormatter.FormatItemLine(slot, options, equipComponent);
+            sb.AppendLine(line);
         }
 
         _itemsLabel.Text = sb.ToString();

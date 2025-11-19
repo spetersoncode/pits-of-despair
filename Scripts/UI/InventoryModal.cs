@@ -2,7 +2,6 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Systems;
 using System.Linq;
 using System.Text;
 
@@ -12,27 +11,9 @@ namespace PitsOfDespair.UI;
 /// Displays the player's inventory as a full-screen overlay.
 /// Shows items assigned to keys a-z with glyph, name, and count.
 /// </summary>
-public partial class InventoryModal : PanelContainer
+public partial class InventoryModal : ItemSelectionModal
 {
-    [Signal]
-    public delegate void CancelledEventHandler();
-
-    private RichTextLabel _inventoryLabel;
-    private Player _player;
-    private bool _isVisible = false;
-
-    public override void _Ready()
-    {
-        _inventoryLabel = GetNode<RichTextLabel>("MarginContainer/VBoxContainer/InventoryLabel");
-
-        // Start hidden
-        Hide();
-    }
-
-    /// <summary>
-    /// Connects to the player to receive inventory updates.
-    /// </summary>
-    public void ConnectToPlayer(Player player)
+    public override void ConnectToPlayer(Player player)
     {
         // Disconnect from old player if exists
         if (_player != null)
@@ -40,7 +21,7 @@ public partial class InventoryModal : PanelContainer
             _player.Disconnect(Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
         }
 
-        _player = player;
+        base.ConnectToPlayer(player);
 
         // Connect to new player's inventory changes
         if (_player != null)
@@ -48,7 +29,7 @@ public partial class InventoryModal : PanelContainer
             _player.Connect(Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
         }
 
-        UpdateInventoryDisplay();
+        UpdateDisplay();
     }
 
     /// <summary>
@@ -61,7 +42,7 @@ public partial class InventoryModal : PanelContainer
         if (_isVisible)
         {
             Show();
-            UpdateInventoryDisplay();
+            UpdateDisplay();
         }
         else
         {
@@ -69,33 +50,24 @@ public partial class InventoryModal : PanelContainer
         }
     }
 
-    public override void _Input(InputEvent @event)
+    protected override void HandleKeyInput(InputEventKey keyEvent)
     {
-        // Only process input when visible
-        if (!_isVisible)
-        {
-            return;
-        }
-
         // Close on 'I' or ESC
-        if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
+        if (keyEvent.Keycode == Key.I || keyEvent.Keycode == Key.Escape)
         {
-            if (keyEvent.Keycode == Key.I || keyEvent.Keycode == Key.Escape)
-            {
-                EmitSignal(SignalName.Cancelled);
-                GetViewport().SetInputAsHandled();
-            }
+            EmitSignal(SignalName.Cancelled);
+            GetViewport().SetInputAsHandled();
         }
     }
 
     private void OnInventoryChanged()
     {
-        UpdateInventoryDisplay();
+        UpdateDisplay();
     }
 
-    private void UpdateInventoryDisplay()
+    protected override void UpdateDisplay()
     {
-        if (_inventoryLabel == null || _player == null)
+        if (_itemsLabel == null || _player == null)
         {
             return;
         }
@@ -104,7 +76,7 @@ public partial class InventoryModal : PanelContainer
 
         if (inventory.Count == 0)
         {
-            _inventoryLabel.Text = $"[center][b]Inventory (a-z)[/b][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]Empty[/color][/center]";
+            _itemsLabel.Text = $"[center][b]Inventory (a-z)[/b][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]Empty[/color][/center]";
             return;
         }
 
@@ -115,39 +87,11 @@ public partial class InventoryModal : PanelContainer
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
-            // Format: key) glyph name (count/charges) {EQUIPPED}
-            string colorHex = slot.Item.Template.Color;
-            string displayName = slot.Item.Template.GetDisplayName(slot.Count);
-            string chargesText = slot.Item.Template.GetMaxCharges() > 0 ? $" [{slot.Item.CurrentCharges}/{slot.Item.Template.GetMaxCharges()}]" : "";
-
-            // Check if this item is equipped
-            string equippedText = "";
-            if (equipComponent != null && equipComponent.IsEquipped(slot.Key))
-            {
-                var equipSlot = equipComponent.GetSlotForItem(slot.Key);
-                string slotName = FormatSlotName(equipSlot);
-                equippedText = $" [color={Palette.ToHex(Palette.Success)}]{{EQUIPPED: {slotName}}}[/color]";
-            }
-
-            sb.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{slot.Key})[/color] [color={colorHex}]{slot.Item.Template.GetGlyph()}[/color] {displayName}{chargesText}{equippedText}");
+            var options = ItemDisplayOptions.ShowCount | ItemDisplayOptions.ShowSlot | ItemDisplayOptions.ShowEquipped;
+            string line = ItemFormatter.FormatItemLine(slot, options, equipComponent);
+            sb.AppendLine(line);
         }
 
-        _inventoryLabel.Text = sb.ToString();
-    }
-
-    /// <summary>
-    /// Formats an equipment slot name for display.
-    /// </summary>
-    private string FormatSlotName(Scripts.Data.EquipmentSlot slot)
-    {
-        return slot switch
-        {
-            Scripts.Data.EquipmentSlot.MeleeWeapon => "Melee",
-            Scripts.Data.EquipmentSlot.RangedWeapon => "Ranged",
-            Scripts.Data.EquipmentSlot.Armor => "Armor",
-            Scripts.Data.EquipmentSlot.Ring1 => "Ring1",
-            Scripts.Data.EquipmentSlot.Ring2 => "Ring2",
-            _ => "Unknown"
-        };
+        _itemsLabel.Text = sb.ToString();
     }
 }
