@@ -5,6 +5,17 @@ using PitsOfDespair.Core;
 namespace PitsOfDespair.Status;
 
 /// <summary>
+/// Types of stats that can be buffed by status effects.
+/// </summary>
+public enum StatType
+{
+    Armor,
+    Strength,
+    Agility,
+    Endurance
+}
+
+/// <summary>
 /// Represents a status message with associated color.
 /// </summary>
 public readonly struct StatusMessage

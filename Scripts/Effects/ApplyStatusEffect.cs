@@ -103,16 +103,16 @@ public class ApplyStatusEffect : Effect
         switch (statusType.ToLower())
         {
             case "armor_buff":
-                return new ArmorBuffStatus(amount, duration);
+                return new StatBuffStatus(StatType.Armor, amount, duration);
 
             case "strength_buff":
-                return new StrengthBuffStatus(amount, duration);
+                return new StatBuffStatus(StatType.Strength, amount, duration);
 
             case "agility_buff":
-                return new AgilityBuffStatus(amount, duration);
+                return new StatBuffStatus(StatType.Agility, amount, duration);
 
             case "endurance_buff":
-                return new EnduranceBuffStatus(amount, duration);
+                return new StatBuffStatus(StatType.Endurance, amount, duration);
 
             case "confusion":
                 return new ConfusionStatus(duration);

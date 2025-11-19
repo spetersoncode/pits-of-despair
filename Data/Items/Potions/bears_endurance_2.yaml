@@ -2,6 +2,7 @@ name: bear's endurance (+2)
 type: potion
 color: Oak
 effects:
-  - type: endurance_buff
+  - type: apply_status
+    statusType: endurance_buff
     amount: 2
     duration: 40
