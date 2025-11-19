@@ -81,6 +81,7 @@ When analyzing visual design requests, follow this process:
 - Explain semantic appropriateness and visual hierarchy
 - Note any trade-offs or alternatives considered
 - If new color needed, suggest category, name, hex value, and justification
+- Remind user to update appropriate documentation after implementation
 
 ## Design Principles to Uphold
 
