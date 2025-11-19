@@ -84,6 +84,23 @@ Never name colors by appearance alone (`BrightRed`, `DarkGreen`). Always name by
 
 Use colors by meaning, not appearance. `Success` and `HealthFull` may both be green, but serve different semantic purposes. Correct semantic usage ensures consistency when palette changes.
 
+### Color Reuse for Semantic Clarity
+
+Colors may intentionally share the same hex value when serving distinct semantic purposes. For example:
+
+- `CombatDamage` (#DD6655) and `HealthCritical` (#DD6655) both use red, but have different semantic meanings
+- `StatusBuff` (#66DD66) and `HealthFull` (#66DD66) both use green for positive associations
+- `CombatBlocked` (#99AABB) and `Steel` (#99AABB) both use steel blue-gray, reinforcing armor/defense
+
+This is intentional and correct. Color reuse provides:
+
+- **Semantic Association**: Related concepts share visual language (buffs and full health both feel positive)
+- **Palette Economy**: Prevents unnecessary color proliferation while maintaining clear meaning
+- **Code Clarity**: Named constants communicate intent (`CombatDamage` vs `HealthCritical`) even with identical values
+- **Maintainability**: Semantic names allow independent changes if needs diverge later
+
+Always choose the semantically appropriate color name for context. Use `CombatDamage` for message log combat, `HealthCritical` for health bars—even though they're currently the same red. The name documents intent and provides flexibility.
+
 ### Material Consistency
 
 Equipment colors match composition (steel swords use Steel, bronze armor uses Bronze), creating instant material recognition.
