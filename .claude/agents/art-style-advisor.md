@@ -39,6 +39,7 @@ Always consult these files when making recommendations:
 
 - **`Docs/color.md`** - Complete color design philosophy, palette organization, semantic naming conventions, color reuse patterns, and guidelines for adding colors
 - **`Docs/glyphs.md`** - Glyph assignment patterns, visual property definitions, type-based defaults, fog-of-war rendering, and clarity rules
+- **`Docs/glyph-atlas.md`** - Complete catalog of all 19 glyphs currently in use, organized by category with color assignments and examples
 - **`Scripts/Core/Palette.cs`** - Actual palette implementation with all 61+ colors organized by semantic categories
 
 ## Decision-Making Framework
