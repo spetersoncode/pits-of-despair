@@ -8,6 +8,10 @@ This document captures conscious design choices that shape gameplay philosophy a
 
 **UI Clarity Over Feature Depth**: Game design prioritizes clarity, readability, and providing information needed for tactical gameplay. New mechanics must justify their UI complexity cost. Simple, clear interfaces that communicate essential information beat feature-rich systems requiring constant menu navigation.
 
+## Core Mechanics
+
+**Plentiful Consumables with Large Inventory**: Consumables are abundant resources for tactical problem-solving, not precious hoarded items. Large inventory space (52 slots) removes artificial scarcity and "save it for later" syndrome. Players make tactical decisions about *which* consumables solve current problems, not *whether* to use them at all. Combat depth comes from consumable combinations and situational usage, not resource anxiety. Liberal consumable use rewards experimentation and tactical creativity over hoarding.
+
 ## Rejected Mechanics
 
 **No Identification System**: Item identification adds tedium (burning consumables to learn effects) or becomes rote puzzle-solving once players memorize "tricks" (price-checking, dip-testing, etc.). Players see exact item properties immediately. Focus stays on tactical decisions rather than meta-game knowledge.
