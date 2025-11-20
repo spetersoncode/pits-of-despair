@@ -1,9 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://dy0k0f46hdsj4"]
+[gd_scene load_steps=6 format=3 uid="uid://dy0k0f46hdsj4"]
 
 [ext_resource type="Script" uid="uid://db2qbm38sy7ml" path="res://Scripts/Entities/Player.cs" id="1"]
 [ext_resource type="Script" uid="uid://c5grertq4iuq6" path="res://Scripts/Components/MovementComponent.cs" id="2"]
 [ext_resource type="Script" uid="uid://m3ixdoaih2d2" path="res://Scripts/Components/VisionComponent.cs" id="3"]
-[ext_resource type="Script" uid="uid://baqjnyvmkd8oy" path="res://Scripts/Components/HealthComponent.cs" id="4"]
 [ext_resource type="Script" uid="uid://bk7e7g53qojtb" path="res://Scripts/Components/AttackComponent.cs" id="5"]
 [ext_resource type="Script" uid="uid://bthanqm2ppqpf" path="res://Scripts/Components/StatusComponent.cs" id="6"]
 
@@ -15,10 +14,6 @@ script = ExtResource("2")
 
 [node name="VisionComponent" type="Node" parent="."]
 script = ExtResource("3")
-
-[node name="HealthComponent" type="Node" parent="."]
-script = ExtResource("4")
-BaseMaxHP = 20
 
 [node name="AttackComponent" type="Node" parent="."]
 script = ExtResource("5")
