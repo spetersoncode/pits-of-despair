@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Debug;
+using PitsOfDespair.Systems.Input.Processors;
 
 namespace PitsOfDespair.UI;
 
@@ -80,7 +81,7 @@ public partial class DebugConsoleModal : CenterContainer
 
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            if (keyEvent.Keycode == Key.Escape)
+            if (MenuInputProcessor.IsCloseKey(keyEvent))
             {
                 HideConsole();
                 GetViewport().SetInputAsHandled();

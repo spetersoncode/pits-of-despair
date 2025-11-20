@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://cv4lwpmujpdon" path="res://Scripts/Generation/Generators/BSPConfig.cs" id="3_3llyg"]
 [ext_resource type="PackedScene" uid="uid://dy0k0f46hdsj4" path="res://Scenes/Entities/Player.tscn" id="4"]
 [ext_resource type="PackedScene" uid="uid://dhxcfbllslpbg" path="res://Scenes/UI/GameHUD.tscn" id="4_hud"]
-[ext_resource type="Script" uid="uid://ho1xma5n2udq" path="res://Scripts/Systems/InputHandler.cs" id="5"]
+[ext_resource type="Script" uid="uid://x1rfjf5e48iv" path="res://Scripts/Systems/Input/InputHandler.cs" id="5"]
 [ext_resource type="Script" uid="uid://dphyic36ojemq" path="res://Scripts/Systems/MovementSystem.cs" id="6"]
 [ext_resource type="Script" uid="uid://c5qm4mqaaosr4" path="res://Scripts/Systems/EntityManager.cs" id="7"]
 [ext_resource type="Script" uid="uid://d3tegar1puao7" path="res://Scripts/Systems/CombatSystem.cs" id="7_combat"]

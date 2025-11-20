@@ -1,6 +1,8 @@
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Input;
+using PitsOfDespair.Systems.Input.Processors;
 
 namespace PitsOfDespair.UI;
 
@@ -79,18 +81,19 @@ public abstract partial class ItemSelectionModal : PanelContainer
     /// </summary>
     protected virtual void HandleKeyInput(InputEventKey keyEvent)
     {
-        // Cancel on ESC
-        if (keyEvent.Keycode == Key.Escape)
+        // Cancel on modal close key
+        if (MenuInputProcessor.IsCloseKey(keyEvent))
         {
             EmitSignal(SignalName.Cancelled);
             GetViewport().SetInputAsHandled();
             return;
         }
 
-        // Check for a-z key selection
-        if (keyEvent.Keycode >= Key.A && keyEvent.Keycode <= Key.Z)
+        // Check for letter key selection
+        if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {
-            char selectedKey = (char)('a' + (keyEvent.Keycode - Key.A));
+            // Convert to lowercase for inventory slot lookup
+            selectedKey = char.ToLower(selectedKey);
             EmitSignal(SignalName.ItemSelected, selectedKey);
             GetViewport().SetInputAsHandled();
         }
@@ -108,7 +111,8 @@ public abstract partial class ItemSelectionModal : PanelContainer
     {
         if (_itemsLabel != null)
         {
-            _itemsLabel.Text = $"[center][b]{title}[/b][/center]\n[center](ESC to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
+            var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
+            _itemsLabel.Text = $"[center][b]{title}[/b][/center]\n[center]({closeKey} to cancel)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No items[/color][/center]";
         }
     }
 
@@ -117,6 +121,7 @@ public abstract partial class ItemSelectionModal : PanelContainer
     /// </summary>
     protected string BuildHeader(string title)
     {
-        return $"[center][b]{title}[/b][/center]\n[center](ESC to cancel)[/center]\n";
+        var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
+        return $"[center][b]{title}[/b][/center]\n[center]({closeKey} to cancel)[/center]\n";
     }
 }

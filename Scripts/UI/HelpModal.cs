@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Systems.Input.Processors;
 
 namespace PitsOfDespair.UI;
 
@@ -48,74 +49,49 @@ public partial class HelpModal : PanelContainer
     /// </summary>
     private void UpdateHelpContent()
     {
-        var content = new System.Text.StringBuilder();
+        _helpLabel.Text = $@"[center][color={Palette.ToHex(Palette.Player)}]PITS OF DESPAIR[/color][/center]
 
-        content.AppendLine($"[center][color={Palette.ToHex(Palette.Player)}]═══ PITS OF DESPAIR - HOW TO PLAY ═══[/color][/center]");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Success)}]MOVEMENT[/color]
+  Arrow Keys / Numpad - Move & attack
+  Space / Numpad 5 - Wait
 
-        // Movement
-        content.AppendLine($"[color={Palette.ToHex(Palette.Success)}]MOVEMENT[/color]");
-        content.AppendLine("  Arrow Keys / Numpad / hjklyubn - Move & attack");
-        content.AppendLine("  Space / Numpad 5 / Period (.) - Wait one turn");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Alert)}]ACTIONS[/color]
+  G - Pickup   F - Fire Ranged
 
-        // Combat
-        content.AppendLine($"[color={Palette.ToHex(Palette.Danger)}]COMBAT[/color]");
-        content.AppendLine("  Move into enemy - Melee attack");
-        content.AppendLine("  f - Fire ranged weapon (if equipped)");
-        content.AppendLine("    Tab / Numpad +/- - Cycle targets");
-        content.AppendLine("    Arrow Keys / Numpad - Move cursor");
-        content.AppendLine("    Enter / Space / f - Confirm target");
-        content.AppendLine("    Escape - Cancel targeting");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Gold)}]MENUS[/color]
+  I - Inventory   A - Activate   D - Drop
+  E - Equip       X - Examine
 
-        // Inventory & Items
-        content.AppendLine($"[color={Palette.ToHex(Palette.Gold)}]INVENTORY & ITEMS[/color]");
-        content.AppendLine("  i - View inventory");
-        content.AppendLine("  g - Pick up item");
-        content.AppendLine("  d - Drop item");
-        content.AppendLine("  a - Activate/use item");
-        content.AppendLine("  e - Equip/unequip item");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Caution)}]SYSTEM[/color]
+  ? - Help   Ctrl+D - Debug   / - Console
 
-        // Exploration
-        content.AppendLine($"[color={Palette.ToHex(Palette.Alert)}]EXPLORATION[/color]");
-        content.AppendLine("  x - Examine mode (look around)");
-        content.AppendLine("    Arrow Keys / Numpad - Move cursor");
-        content.AppendLine("    x / Escape - Exit examine mode");
-        content.AppendLine("  ? - Show this help screen");
-        content.AppendLine("  Escape - Close menus");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Danger)}]TARGETING[/color]
+  Enter/Space/F - Confirm   Esc - Cancel
+  Tab/Numpad +/- - Cycle targets
 
-        // Debug
-        content.AppendLine($"[color={Palette.ToHex(Palette.Caution)}]DEBUG[/color]");
-        content.AppendLine("  Ctrl+D - Toggle debug mode");
-        content.AppendLine("  / - Open debug console (type /help for commands)");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Cyan)}]STATS[/color]
+  Strength - Melee damage and accuracy
+  Agility - Ranged damage and accuracy
+  Endurance - Maximum hit points
+  Will - Reserved for future magic
+  Armor - Reduces incoming damage
+  Evasion - Chance to dodge attacks
 
-        // Stats
-        content.AppendLine($"[color={Palette.ToHex(Palette.Cyan)}]STATS[/color]");
-        content.AppendLine("  Strength - Increases melee attack accuracy and damage");
-        content.AppendLine("  Agility - Increases ranged attack accuracy and evasion");
-        content.AppendLine("  Endurance - Increases maximum hit points");
-        content.AppendLine("  Will - Reserved for future magic abilities");
-        content.AppendLine("  Armor - Reduces damage taken from attacks");
-        content.AppendLine("  Evasion - Your ability to dodge attacks (heavy armor reduces this)");
-        content.AppendLine();
+[color={Palette.ToHex(Palette.Caution)}]DEBUG COMMANDS[/color]
+  Ctrl-D - Toggle Debug Mode   / - enter command (if debug mode enabled)
+  Type /help in console for all commands
 
-        content.AppendLine($"[center][color={Palette.ToHex(Palette.Disabled)}]Press Escape or ? to close[/color][/center]");
-
-        _helpLabel.Text = content.ToString();
+[center][color={Palette.ToHex(Palette.Disabled)}]Esc to close[/color][/center]";
     }
 
     public override void _Input(InputEvent @event)
     {
         if (!Visible) return;
 
-        // Close on Escape key
+        // Close on modal close key (Escape)
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            if (keyEvent.Keycode == Key.Escape)
+            if (MenuInputProcessor.IsCloseKey(keyEvent))
             {
                 HideHelp();
                 GetViewport().SetInputAsHandled();

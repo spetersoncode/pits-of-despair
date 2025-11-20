@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Systems.Input.Processors;
 using System.Linq;
 using System.Text;
 
@@ -52,18 +53,19 @@ public partial class InventoryModal : ItemSelectionModal
 
     protected override void HandleKeyInput(InputEventKey keyEvent)
     {
-        // Close on ESC
-        if (keyEvent.Keycode == Key.Escape)
+        // Close on modal close key
+        if (MenuInputProcessor.IsCloseKey(keyEvent))
         {
             EmitSignal(SignalName.Cancelled);
             GetViewport().SetInputAsHandled();
             return;
         }
 
-        // Check for a-z key selection to open item details
-        if (keyEvent.Keycode >= Key.A && keyEvent.Keycode <= Key.Z)
+        // Check for letter key selection to open item details
+        if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {
-            char selectedKey = (char)('a' + (keyEvent.Keycode - Key.A));
+            // Convert to lowercase for inventory slot lookup
+            selectedKey = char.ToLower(selectedKey);
 
             // Check if this item exists in inventory
             var slot = _player.GetInventorySlot(selectedKey);

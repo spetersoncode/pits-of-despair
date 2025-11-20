@@ -2,6 +2,8 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Input;
+using PitsOfDespair.Systems.Input.Processors;
 
 namespace PitsOfDespair.UI;
 
@@ -108,8 +110,8 @@ public partial class ItemDetailModal : CenterContainer
 
 	private void HandleViewingInput(InputEventKey keyEvent)
 	{
-		// Cancel on ESC
-		if (keyEvent.Keycode == Key.Escape)
+		// Cancel on modal close key
+		if (MenuInputProcessor.IsCloseKey(keyEvent))
 		{
 			EmitSignal(SignalName.Cancelled);
 			GetViewport().SetInputAsHandled();
@@ -117,7 +119,7 @@ public partial class ItemDetailModal : CenterContainer
 		}
 
 		// Enter rebind mode on '='
-		if (keyEvent.Keycode == Key.Equal)
+		if (MenuInputProcessor.IsKey(keyEvent, Key.Equal))
 		{
 			_currentState = State.AwaitingRebind;
 			UpdateDisplay();
@@ -132,8 +134,8 @@ public partial class ItemDetailModal : CenterContainer
 
 	private void HandleRebindInput(InputEventKey keyEvent)
 	{
-		// Cancel rebind on ESC
-		if (keyEvent.Keycode == Key.Escape)
+		// Cancel rebind on modal close key
+		if (MenuInputProcessor.IsCloseKey(keyEvent))
 		{
 			_currentState = State.Viewing;
 			UpdateDisplay();
@@ -141,10 +143,11 @@ public partial class ItemDetailModal : CenterContainer
 			return;
 		}
 
-		// Accept a-z keys for rebinding
-		if (keyEvent.Keycode >= Key.A && keyEvent.Keycode <= Key.Z)
+		// Accept letter keys for rebinding
+		if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char newKey))
 		{
-			char newKey = (char)('a' + (keyEvent.Keycode - Key.A));
+			// Convert to lowercase
+			newKey = char.ToLower(newKey);
 			char oldKey = _currentSlot.Key;
 
 			// Emit signal for rebinding
@@ -226,9 +229,10 @@ public partial class ItemDetailModal : CenterContainer
 		}
 
 		// Commands section
+		var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
 		string commands = $"\n\n[color={Palette.ToHex(Palette.Disabled)}]Commands:[/color]\n";
 		commands += $"[color={Palette.ToHex(Palette.Default)}]=[/color] Rebind hotkey\n";
-		commands += $"[color={Palette.ToHex(Palette.Default)}]ESC[/color] Close";
+		commands += $"[color={Palette.ToHex(Palette.Default)}]{closeKey}[/color] Close";
 
 		return $"[center][b]Item Details[/b][/center]\n\n" +
 		       $"{glyph} {name}{countInfo}\n" +
@@ -243,10 +247,11 @@ public partial class ItemDetailModal : CenterContainer
 		string name = $"[color={itemTemplate.Color}]{itemTemplate.Name}[/color]";
 		string currentKey = $"[color={Palette.ToHex(Palette.Caution)}]{_currentSlot.Key}[/color]";
 
+		var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
 		string instructions = $"\n\n[center][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/center]\n\n";
 		instructions += $"Current hotkey: {currentKey}\n\n";
 		instructions += $"Press [color={Palette.ToHex(Palette.Default)}]a-z[/color] to assign new hotkey\n";
-		instructions += $"Press [color={Palette.ToHex(Palette.Default)}]ESC[/color] to cancel";
+		instructions += $"Press [color={Palette.ToHex(Palette.Default)}]{closeKey}[/color] to cancel";
 
 		return $"[center][b]Rebind Hotkey[/b][/center]\n\n" +
 		       $"{glyph} {name}" +
