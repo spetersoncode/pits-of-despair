@@ -36,8 +36,7 @@ public partial class InputHandler : Node
     private ActionContext _actionContext;
     private GameHUD _gameHUD;
     private PlayerVisionSystem _visionSystem;
-    private TargetingSystem _targetingSystem;
-    private ExamineSystem _examineSystem;
+    private CursorTargetingSystem _cursorSystem;
     private char? _pendingItemKey = null;
     private bool _isReachAttack = false;
 
@@ -101,31 +100,17 @@ public partial class InputHandler : Node
     }
 
     /// <summary>
-    /// Sets the TargetingSystem reference for ranged attacks.
+    /// Sets the CursorTargetingSystem reference for all cursor-based modes.
     /// </summary>
-    public void SetTargetingSystem(TargetingSystem targetingSystem)
+    public void SetCursorTargetingSystem(CursorTargetingSystem cursorSystem)
     {
-        _targetingSystem = targetingSystem;
+        _cursorSystem = cursorSystem;
 
-        // Connect to targeting signals
-        if (_targetingSystem != null)
+        // Connect to cursor signals
+        if (_cursorSystem != null)
         {
-            _targetingSystem.Connect(TargetingSystem.SignalName.TargetConfirmed, Callable.From<Vector2I>(OnTargetConfirmed));
-            _targetingSystem.Connect(TargetingSystem.SignalName.TargetCanceled, Callable.From(OnTargetCanceled));
-        }
-    }
-
-    /// <summary>
-    /// Sets the ExamineSystem reference for examining entities.
-    /// </summary>
-    public void SetExamineSystem(ExamineSystem examineSystem)
-    {
-        _examineSystem = examineSystem;
-
-        // Connect to examine signals
-        if (_examineSystem != null)
-        {
-            _examineSystem.Connect(ExamineSystem.SignalName.ExamineCanceled, Callable.From(OnExamineCanceled));
+            _cursorSystem.Connect(CursorTargetingSystem.SignalName.TargetConfirmed, Callable.From<Vector2I>(OnTargetConfirmed));
+            _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorCanceled, Callable.From<int>(OnCursorCanceled));
         }
     }
 
@@ -148,18 +133,10 @@ public partial class InputHandler : Node
         // Only process key presses, not key releases or repeats
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            // Handle examine mode input first (before targeting)
-            if (_examineSystem != null && _examineSystem.IsActive)
+            // Handle cursor targeting input (both examine and action modes)
+            if (_cursorSystem != null && _cursorSystem.IsActive)
             {
-                HandleExamineInput(keyEvent);
-                GetViewport().SetInputAsHandled();
-                return;
-            }
-
-            // Handle targeting mode input separately
-            if (_targetingSystem != null && _targetingSystem.IsActive)
-            {
-                HandleTargetingInput(keyEvent);
+                HandleCursorInput(keyEvent);
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -217,14 +194,14 @@ public partial class InputHandler : Node
             // Examine mode (doesn't require player turn)
             if (keyEvent.Keycode == Key.X)
             {
-                if (_examineSystem != null && _player != null && _gameHUD != null)
+                if (_cursorSystem != null && _player != null && _gameHUD != null)
                 {
                     // Close any open menus before entering examine mode
                     if (_gameHUD.IsAnyMenuOpen())
                     {
                         _gameHUD.CloseAllMenus();
                     }
-                    _examineSystem.StartExamine(_player.GridPosition);
+                    _cursorSystem.StartExamine(_player.GridPosition);
                 }
                 GetViewport().SetInputAsHandled();
                 return;
@@ -247,13 +224,13 @@ public partial class InputHandler : Node
             // Check for fire/targeting mode (F key)
             if (keyEvent.Keycode == Key.F)
             {
-                if (HasRangedWeaponEquipped() && _targetingSystem != null && _gameHUD != null)
+                if (HasRangedWeaponEquipped() && _cursorSystem != null && _gameHUD != null)
                 {
                     int range = GetRangedWeaponRange();
                     if (range > 0)
                     {
                         // Use Chebyshev (grid-based) distance for tactical targeting
-                        _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true, useGridDistance: true);
+                        _cursorSystem.StartActionTargeting(CursorTargetingSystem.TargetingMode.RangedAttack, _player.GridPosition, range, requiresCreature: true, useGridDistance: true);
                         _gameHUD.EnterTargetingMode();
                     }
                 }
@@ -340,82 +317,71 @@ public partial class InputHandler : Node
     }
 
     /// <summary>
-    /// Handles input while in targeting mode.
+    /// Handles input while cursor targeting is active (both examine and action modes).
     /// </summary>
-    private void HandleTargetingInput(InputEventKey keyEvent)
+    private void HandleCursorInput(InputEventKey keyEvent)
     {
-        if (_targetingSystem == null)
+        if (_cursorSystem == null)
             return;
 
-        // ESC cancels targeting
+        bool isExamineMode = _cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.Examine;
+
+        // ESC cancels all modes
         if (keyEvent.Keycode == Key.Escape)
         {
-            _targetingSystem.CancelTarget();
+            _cursorSystem.Cancel();
             return;
         }
 
-        // Enter, Space, or F confirms targeting
-        if (keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.KpEnter || keyEvent.Keycode == Key.Space || keyEvent.Keycode == Key.F)
+        // X also exits examine mode
+        if (isExamineMode && keyEvent.Keycode == Key.X)
         {
-            _targetingSystem.ConfirmTarget();
+            _cursorSystem.Cancel();
             return;
         }
 
-        // Tab cycles to next target
-        if (keyEvent.Keycode == Key.Tab && !keyEvent.ShiftPressed)
+        // Confirm target (action modes only)
+        if (!isExamineMode)
         {
-            _targetingSystem.CycleNextTarget();
-            return;
+            if (keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.KpEnter || keyEvent.Keycode == Key.Space || keyEvent.Keycode == Key.F)
+            {
+                _cursorSystem.ConfirmTarget();
+                return;
+            }
+
+            // Tab cycles to next target (action modes only)
+            if (keyEvent.Keycode == Key.Tab && !keyEvent.ShiftPressed)
+            {
+                _cursorSystem.CycleNextTarget();
+                return;
+            }
+
+            // Shift+Tab cycles to previous target (action modes only)
+            if (keyEvent.Keycode == Key.Tab && keyEvent.ShiftPressed)
+            {
+                _cursorSystem.CyclePreviousTarget();
+                return;
+            }
+
+            // Numpad +/- for target cycling (action modes only)
+            if (keyEvent.Keycode == Key.KpAdd)
+            {
+                _cursorSystem.CycleNextTarget();
+                return;
+            }
+
+            if (keyEvent.Keycode == Key.KpSubtract)
+            {
+                _cursorSystem.CyclePreviousTarget();
+                return;
+            }
         }
 
-        // Shift+Tab cycles to previous target
-        if (keyEvent.Keycode == Key.Tab && keyEvent.ShiftPressed)
-        {
-            _targetingSystem.CyclePreviousTarget();
-            return;
-        }
-
-        // Numpad +/- for target cycling
-        if (keyEvent.Keycode == Key.KpAdd)
-        {
-            _targetingSystem.CycleNextTarget();
-            return;
-        }
-
-        if (keyEvent.Keycode == Key.KpSubtract)
-        {
-            _targetingSystem.CyclePreviousTarget();
-            return;
-        }
-
-        // Numpad directions move cursor
+        // Movement works in all modes
         Vector2I direction = GetDirectionFromKey(keyEvent.Keycode);
         if (direction != Vector2I.Zero)
         {
-            _targetingSystem.MoveCursor(direction);
-        }
-    }
-
-    /// <summary>
-    /// Handles input while in examine mode.
-    /// </summary>
-    private void HandleExamineInput(InputEventKey keyEvent)
-    {
-        if (_examineSystem == null)
-            return;
-
-        // ESC or X exits examine mode
-        if (keyEvent.Keycode == Key.Escape || keyEvent.Keycode == Key.X)
-        {
-            _examineSystem.CancelExamine();
-            return;
-        }
-
-        // Arrow keys and numpad move cursor
-        Vector2I direction = GetDirectionFromKey(keyEvent.Keycode);
-        if (direction != Vector2I.Zero)
-        {
-            _examineSystem.MoveCursor(direction);
+            _cursorSystem.MoveCursor(direction);
         }
     }
 
@@ -425,7 +391,7 @@ public partial class InputHandler : Node
     /// </summary>
     private void OnStartItemTargeting(char itemKey)
     {
-        if (_player == null || _targetingSystem == null)
+        if (_player == null || _cursorSystem == null)
             return;
 
         // Store the pending item key
@@ -438,7 +404,7 @@ public partial class InputHandler : Node
         {
             int range = slot.Item.Template.GetTargetingRange();
             // Use Chebyshev (grid-based) distance for consistent tactical targeting
-            _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true, useGridDistance: true);
+            _cursorSystem.StartActionTargeting(CursorTargetingSystem.TargetingMode.TargetedItem, _player.GridPosition, range, requiresCreature: true, useGridDistance: true);
         }
     }
 
@@ -448,7 +414,7 @@ public partial class InputHandler : Node
     /// </summary>
     private void OnStartReachAttackTargeting(char itemKey)
     {
-        if (_player == null || _targetingSystem == null)
+        if (_player == null || _cursorSystem == null)
             return;
 
         // Store the pending item key and mark as reach attack
@@ -461,7 +427,7 @@ public partial class InputHandler : Node
         {
             int range = slot.Item.Template.Attack.Range;
             // Use Chebyshev (grid-based) distance for reach attacks
-            _targetingSystem.StartTargeting(_player.GridPosition, range, requiresCreature: true, useGridDistance: true);
+            _cursorSystem.StartActionTargeting(CursorTargetingSystem.TargetingMode.ReachAttack, _player.GridPosition, range, requiresCreature: true, useGridDistance: true);
         }
     }
 
@@ -541,29 +507,22 @@ public partial class InputHandler : Node
     }
 
     /// <summary>
-    /// Called when targeting is canceled. Returns to normal gameplay.
+    /// Called when cursor targeting is canceled. Returns to normal gameplay.
     /// </summary>
-    private void OnTargetCanceled()
+    private void OnCursorCanceled(int mode)
     {
-        // Exit targeting mode in UI
-        if (_gameHUD != null)
+        var targetingMode = (CursorTargetingSystem.TargetingMode)mode;
+
+        // Exit targeting mode in UI if it was an action mode
+        if (targetingMode != CursorTargetingSystem.TargetingMode.Examine && _gameHUD != null)
         {
             _gameHUD.ExitTargetingMode();
+
+            // Clear pending item and reach attack state
+            _pendingItemKey = null;
+            _isReachAttack = false;
         }
 
-        // Clear pending item and reach attack state
-        _pendingItemKey = null;
-        _isReachAttack = false;
-
-        // No turn consumed
-    }
-
-    /// <summary>
-    /// Called when examine mode is canceled. Returns to normal gameplay.
-    /// </summary>
-    private void OnExamineCanceled()
-    {
-        // No UI cleanup needed - examine mode doesn't change UI state
         // No turn consumed
     }
 

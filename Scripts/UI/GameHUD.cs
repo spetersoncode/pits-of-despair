@@ -42,7 +42,7 @@ public partial class GameHUD : Control
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
-    private ExamineSystem _examineSystem;
+    private CursorTargetingSystem _cursorSystem;
 
     public override void _Ready()
     {
@@ -142,15 +142,15 @@ public partial class GameHUD : Control
     /// <summary>
     /// Connects to the examine system to display entity descriptions.
     /// </summary>
-    public void ConnectToExamineSystem(ExamineSystem examineSystem)
+    public void ConnectToCursorTargetingSystem(CursorTargetingSystem cursorSystem)
     {
-        _examineSystem = examineSystem;
+        _cursorSystem = cursorSystem;
 
-        if (_examineSystem != null)
+        if (_cursorSystem != null)
         {
-            _examineSystem.Connect(ExamineSystem.SignalName.ExamineStarted, Callable.From(OnExamineStarted));
-            _examineSystem.Connect(ExamineSystem.SignalName.ExamineUpdated, Callable.From<BaseEntity>(OnExamineUpdated));
-            _examineSystem.Connect(ExamineSystem.SignalName.ExamineCanceled, Callable.From(OnExamineCanceled));
+            _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorStarted, Callable.From<int>(OnCursorStarted));
+            _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorMoved, Callable.From<BaseEntity>(OnCursorMoved));
+            _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorCanceled, Callable.From<int>(OnCursorCanceled));
         }
     }
 
@@ -525,39 +525,53 @@ public partial class GameHUD : Control
     /// <summary>
     /// Called when examine mode starts.
     /// </summary>
-    private void OnExamineStarted()
+    private void OnCursorStarted(int mode)
     {
-        _messageLog.AddMessage("[EXAMINE MODE] Use arrow keys to look around. Press X or ESC to exit.", Palette.ToHex(Palette.Alert));
-    }
+        var targetingMode = (CursorTargetingSystem.TargetingMode)mode;
 
-    /// <summary>
-    /// Called when the examine cursor moves to a new position.
-    /// Displays the entity's description in the message log.
-    /// </summary>
-    private void OnExamineUpdated(BaseEntity entity)
-    {
-        // Only display message if there's an entity at the cursor position
-        if (entity != null)
+        if (targetingMode == CursorTargetingSystem.TargetingMode.Examine)
         {
-            // Format: "EntityName: Description"
-            string message = string.IsNullOrEmpty(entity.Description)
-                ? $"You see {entity.DisplayName}."
-                : $"{entity.DisplayName}: {entity.Description}";
-
-            // Convert entity color to hex string for colored display name
-            string colorHex = Palette.ToHex(entity.GlyphColor);
-            string coloredMessage = $"[color={colorHex}]{message}[/color]";
-
-            _messageLog.AddMessage(coloredMessage, null);
+            _messageLog.AddMessage("[EXAMINE MODE] Use arrow keys to look around. Press X or ESC to exit.", Palette.ToHex(Palette.Alert));
         }
-        // Silent for empty tiles (as per user preference)
     }
 
     /// <summary>
-    /// Called when examine mode is canceled.
+    /// Called when the cursor moves to a new position.
+    /// For examine mode, displays the entity's description in the message log.
     /// </summary>
-    private void OnExamineCanceled()
+    private void OnCursorMoved(BaseEntity entity)
     {
-        _messageLog.AddMessage("[EXAMINE MODE] Exited.", Palette.ToHex(Palette.Disabled));
+        // Only display examine messages when in examine mode
+        if (_cursorSystem != null && _cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.Examine)
+        {
+            // Only display message if there's an entity at the cursor position
+            if (entity != null)
+            {
+                // Format: "EntityName: Description"
+                string message = string.IsNullOrEmpty(entity.Description)
+                    ? $"You see {entity.DisplayName}."
+                    : $"{entity.DisplayName}: {entity.Description}";
+
+                // Convert entity color to hex string for colored display name
+                string colorHex = Palette.ToHex(entity.GlyphColor);
+                string coloredMessage = $"[color={colorHex}]{message}[/color]";
+
+                _messageLog.AddMessage(coloredMessage, null);
+            }
+            // Silent for empty tiles (as per user preference)
+        }
+    }
+
+    /// <summary>
+    /// Called when cursor targeting is canceled.
+    /// </summary>
+    private void OnCursorCanceled(int mode)
+    {
+        var targetingMode = (CursorTargetingSystem.TargetingMode)mode;
+
+        if (targetingMode == CursorTargetingSystem.TargetingMode.Examine)
+        {
+            _messageLog.AddMessage("[EXAMINE MODE] Exited.", Palette.ToHex(Palette.Disabled));
+        }
     }
 }

@@ -17,14 +17,12 @@ public partial class TextRenderer : Control
 	private Player _player;
 	private EntityManager? _entityManager;
 	private PlayerVisionSystem _visionSystem;
-	private TargetingSystem _targetingSystem;
-	private ExamineSystem _examineSystem;
+	private CursorTargetingSystem _cursorSystem;
 	private ProjectileSystem _projectileSystem;
 	private Font _font;
 	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 	private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
-	private bool _wasTargetingActive = false;
-	private bool _wasExamineActive = false;
+	private bool _wasCursorActive = false;
 
 	public override void _Ready()
 	{
@@ -126,19 +124,11 @@ public partial class TextRenderer : Control
 	}
 
 	/// <summary>
-	/// Sets the targeting system for rendering targeting overlay.
+	/// Sets the cursor targeting system for rendering cursor overlay (examine and action modes).
 	/// </summary>
-	public void SetTargetingSystem(TargetingSystem targetingSystem)
+	public void SetCursorTargetingSystem(CursorTargetingSystem cursorSystem)
 	{
-		_targetingSystem = targetingSystem;
-	}
-
-	/// <summary>
-	/// Sets the examine system for rendering examine cursor overlay.
-	/// </summary>
-	public void SetExamineSystem(ExamineSystem examineSystem)
-	{
-		_examineSystem = examineSystem;
+		_cursorSystem = cursorSystem;
 	}
 
 	/// <summary>
@@ -185,34 +175,21 @@ public partial class TextRenderer : Control
 
 	public override void _Process(double delta)
 	{
-		// Continuously redraw during targeting/examine mode or when projectiles are active
+		// Continuously redraw during cursor targeting mode or when projectiles are active
 		bool needsRedraw = false;
 
-		bool isTargetingActive = _targetingSystem != null && _targetingSystem.IsActive;
-		if (isTargetingActive)
+		bool isCursorActive = _cursorSystem != null && _cursorSystem.IsActive;
+		if (isCursorActive)
 		{
 			needsRedraw = true;
 		}
 
-		// If targeting just stopped, queue one final redraw to clear the overlay
-		if (_wasTargetingActive && !isTargetingActive)
+		// If cursor just stopped, queue one final redraw to clear the overlay
+		if (_wasCursorActive && !isCursorActive)
 		{
 			needsRedraw = true;
 		}
-		_wasTargetingActive = isTargetingActive;
-
-		bool isExamineActive = _examineSystem != null && _examineSystem.IsActive;
-		if (isExamineActive)
-		{
-			needsRedraw = true;
-		}
-
-		// If examine just stopped, queue one final redraw to clear the overlay
-		if (_wasExamineActive && !isExamineActive)
-		{
-			needsRedraw = true;
-		}
-		_wasExamineActive = isExamineActive;
+		_wasCursorActive = isCursorActive;
 
 		if (_projectileSystem != null && _projectileSystem.ActiveProjectiles.Count > 0)
 		{
@@ -368,107 +345,63 @@ public partial class TextRenderer : Control
 			}
 		}
 
-		// Draw targeting overlay (on top of everything else)
-		if (_targetingSystem != null && _targetingSystem.IsActive)
+		// Draw cursor targeting overlay (examine and action modes)
+		if (_cursorSystem != null && _cursorSystem.IsActive)
 		{
-			// Draw valid tiles in range with subtle highlight
-			if (_targetingSystem.ValidTiles != null)
+			GridPosition cursorPos = _cursorSystem.CursorPosition;
+			Vector2 cursorWorldPos = new Vector2(
+				cursorPos.X * TileSize - 2.0f,
+				cursorPos.Y * TileSize - TileSize + 4.0f
+			);
+			Vector2 cursorDrawPos = offset + cursorWorldPos;
+
+			// Check if there's an entity/creature at cursor position
+			var cursorEntity = _entityManager?.GetEntityAtPosition(cursorPos);
+			bool hasEntity = cursorEntity != null;
+			bool hasCreature = hasEntity &&
+				cursorEntity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null;
+
+			bool isExamineMode = _cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.Examine;
+
+			// Draw range overlay and trace line for action modes only
+			if (!isExamineMode)
 			{
-				foreach (var tile in _targetingSystem.ValidTiles)
+				// Draw valid tiles in range with subtle highlight
+				if (_cursorSystem.ValidTiles != null)
 				{
-					// Apply same Y offset as entity rendering for visual alignment
-					Vector2 tileWorldPos = new Vector2(tile.X * TileSize, tile.Y * TileSize - TileSize);
-					Vector2 tileDrawPos = offset + tileWorldPos;
+					foreach (var tile in _cursorSystem.ValidTiles)
+					{
+						Vector2 tileWorldPos = new Vector2(tile.X * TileSize, tile.Y * TileSize - TileSize);
+						Vector2 tileDrawPos = offset + tileWorldPos;
 
-					// Draw subtle background highlight for tiles in range
-					Color baseColor = Palette.TargetingRangeOverlay;
-					Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.3f);
-					DrawRect(new Rect2(tileDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+						Color baseColor = Palette.TargetingRangeOverlay;
+						Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.3f);
+						DrawRect(new Rect2(tileDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+					}
 				}
+
+				// Draw trace line from origin to cursor
+				DrawTraceLine(_cursorSystem.OriginPosition, cursorPos, offset);
 			}
 
-			// Draw trace line from player to cursor
-			GridPosition cursorPos = _targetingSystem.CursorPosition;
-			DrawTraceLine(_player.GridPosition, cursorPos, offset);
+			// Draw box border cursor for ALL modes
+			// Always show white border for visibility (solid, no pulse)
+			Color borderColor = new Color(1.0f, 1.0f, 1.0f, 1.0f); // White, fully opaque
 
-			// Draw cursor at target position
-			// Adjust upward to align with glyph visual center (baseline positioning)
-			Vector2 cursorWorldPos = new Vector2(
-				cursorPos.X * TileSize - 2.0f,
-				cursorPos.Y * TileSize - TileSize + 4.0f
-			);
-			Vector2 cursorDrawPos = offset + cursorWorldPos;
+			// Draw thin border (1 pixel)
+			float borderWidth = 1.0f;
+			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, TileSize, borderWidth), borderColor, true); // Top
+			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y + TileSize - borderWidth, TileSize, borderWidth), borderColor, true); // Bottom
+			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true); // Left
+			DrawRect(new Rect2(cursorDrawPos.X + TileSize - borderWidth, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true); // Right
 
-			// Check if there's a creature at cursor position
-			var targetEntity = _entityManager?.GetEntityAtPosition(cursorPos);
-			bool hasCreature = targetEntity != null &&
-				targetEntity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null;
-
-			if (hasCreature)
-			{
-				// Draw pulsing green highlight for valid target (creature)
-				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.15 + 0.25);
-				Color baseColor = Palette.TargetingValid;
-				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
-				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
-			}
-			else if (_targetingSystem.RequiresCreature)
-			{
-				// Draw pulsing red tint for empty tile (only if targeting requires a creature)
-				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.1 + 0.15);
-				Color baseColor = Palette.TargetingInvalid;
-				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
-				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
-			}
-		}
-
-		// Draw examine overlay (on top of everything else, but distinct from targeting)
-		if (_examineSystem != null && _examineSystem.IsActive)
-		{
-			// Draw cursor at examine position
-			GridPosition cursorPos = _examineSystem.CursorPosition;
-			Vector2 cursorWorldPos = new Vector2(
-				cursorPos.X * TileSize - 2.0f,
-				cursorPos.Y * TileSize - TileSize + 4.0f
-			);
-			Vector2 cursorDrawPos = offset + cursorWorldPos;
-
-			// Check if there's an entity at cursor position
-			var examinedEntity = _entityManager?.GetEntityAtPosition(cursorPos);
-			bool hasEntity = examinedEntity != null;
-
-			// Draw a bright, thick border around the cursor position for high visibility
-			float borderPulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 150.0) * 0.3 + 0.7);
-			Color borderColor = hasEntity
-				? new Color(Palette.ExamineEntity.R, Palette.ExamineEntity.G, Palette.ExamineEntity.B, borderPulse)
-				: new Color(Palette.Alert.R, Palette.Alert.G, Palette.Alert.B, borderPulse);
-
-			// Draw thick border (3 pixels)
-			float borderWidth = 3.0f;
-			// Top
-			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, TileSize, borderWidth), borderColor, true);
-			// Bottom
-			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y + TileSize - borderWidth, TileSize, borderWidth), borderColor, true);
-			// Left
-			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true);
-			// Right
-			DrawRect(new Rect2(cursorDrawPos.X + TileSize - borderWidth, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true);
-
+			// Draw pulsing fill inside border only when there's an entity
 			if (hasEntity)
 			{
-				// Draw brighter pulsing fill for entities
-				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.2 + 0.35);
-				Color baseColor = Palette.ExamineEntity;
-				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
-				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
-			}
-			else
-			{
-				// Draw brighter pulsing fill for empty tiles
-				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.15 + 0.25);
-				Color baseColor = Palette.Alert;
-				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
-				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+				float fillPulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.2 + 0.25);
+				Color fillColor = Palette.TargetingValid; // Green for entities
+				Color fillHighlight = new Color(fillColor.R, fillColor.G, fillColor.B, fillPulse);
+				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), fillHighlight, true);
 			}
 		}
 	}

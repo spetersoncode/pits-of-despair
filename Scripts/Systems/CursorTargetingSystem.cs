@@ -1,0 +1,374 @@
+using Godot;
+using System.Collections.Generic;
+using System.Linq;
+using PitsOfDespair.Core;
+using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
+
+namespace PitsOfDespair.Systems;
+
+/// <summary>
+/// Unified cursor targeting system supporting both examine mode and action targeting.
+/// Handles cursor movement, target validation, creature cycling, and visual feedback.
+/// </summary>
+public partial class CursorTargetingSystem : Node
+{
+	/// <summary>
+	/// Targeting mode types
+	/// </summary>
+	public enum TargetingMode
+	{
+		/// <summary>Read-only examination of entities</summary>
+		Examine,
+		/// <summary>Ranged attack targeting</summary>
+		RangedAttack,
+		/// <summary>Reach attack targeting (melee with range > 1)</summary>
+		ReachAttack,
+		/// <summary>Targeted item usage (wands, scrolls, etc.)</summary>
+		TargetedItem
+	}
+
+	[Signal]
+	public delegate void CursorStartedEventHandler(int mode);
+
+	[Signal]
+	public delegate void CursorMovedEventHandler(BaseEntity entity);
+
+	[Signal]
+	public delegate void CursorCanceledEventHandler(int mode);
+
+	[Signal]
+	public delegate void TargetConfirmedEventHandler(Vector2I targetPosition);
+
+	private GridPosition _cursorPosition;
+	private GridPosition _originPosition;
+	private TargetingMode _currentMode;
+	private bool _isActive = false;
+
+	// Action mode state
+	private int _maxRange;
+	private HashSet<GridPosition> _validTiles;
+	private List<BaseEntity> _validCreatureTargets;
+	private int _currentCreatureIndex = -1;
+	private bool _requiresCreature = true;
+	private bool _useGridDistance = false;
+
+	// Dependencies
+	private PlayerVisionSystem _visionSystem;
+	private MapSystem _mapSystem;
+	private EntityManager _entityManager;
+
+	/// <summary>
+	/// Gets whether targeting is currently active.
+	/// </summary>
+	public bool IsActive => _isActive;
+
+	/// <summary>
+	/// Gets the current targeting mode.
+	/// </summary>
+	public TargetingMode CurrentMode => _currentMode;
+
+	/// <summary>
+	/// Gets the current cursor position.
+	/// </summary>
+	public GridPosition CursorPosition => _cursorPosition;
+
+	/// <summary>
+	/// Gets the origin position (for action modes).
+	/// </summary>
+	public GridPosition OriginPosition => _originPosition;
+
+	/// <summary>
+	/// Gets all valid tiles (for action modes). Null for examine mode.
+	/// </summary>
+	public HashSet<GridPosition> ValidTiles => _validTiles;
+
+	/// <summary>
+	/// Gets whether this targeting mode requires a creature target.
+	/// Only relevant for action modes.
+	/// </summary>
+	public bool RequiresCreature => _requiresCreature;
+
+	/// <summary>
+	/// Initializes the cursor targeting system with required dependencies.
+	/// </summary>
+	public void Initialize(PlayerVisionSystem visionSystem, MapSystem mapSystem, EntityManager entityManager)
+	{
+		_visionSystem = visionSystem;
+		_mapSystem = mapSystem;
+		_entityManager = entityManager;
+	}
+
+	/// <summary>
+	/// Starts examine mode at the player's position.
+	/// Uses vision-based validation with no range limits.
+	/// </summary>
+	/// <param name="playerPosition">The player's current position</param>
+	public void StartExamine(GridPosition playerPosition)
+	{
+		_currentMode = TargetingMode.Examine;
+		_isActive = true;
+		_cursorPosition = playerPosition;
+		_originPosition = playerPosition;
+
+		// Clear action mode state
+		_validTiles = null;
+		_validCreatureTargets = null;
+		_currentCreatureIndex = -1;
+		_requiresCreature = false;
+
+		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
+
+		// Emit initial position update
+		var entity = _entityManager.GetEntityAtPosition(_cursorPosition);
+		EmitSignal(SignalName.CursorMoved, entity);
+	}
+
+	/// <summary>
+	/// Starts action targeting mode (ranged attack, reach attack, or targeted item).
+	/// Uses FOV-based range calculation with creature filtering.
+	/// </summary>
+	/// <param name="mode">The targeting mode (RangedAttack, ReachAttack, or TargetedItem)</param>
+	/// <param name="origin">The position to target from (usually the player)</param>
+	/// <param name="range">Maximum targeting range</param>
+	/// <param name="requiresCreature">Whether targeting requires a creature (shows warning on empty tiles)</param>
+	/// <param name="useGridDistance">Use Chebyshev (grid) distance instead of Euclidean</param>
+	public void StartActionTargeting(TargetingMode mode, GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false)
+	{
+		if (mode == TargetingMode.Examine)
+		{
+			GD.PushError("Use StartExamine() for examine mode");
+			return;
+		}
+
+		_currentMode = mode;
+		_originPosition = origin;
+		_maxRange = range;
+		_requiresCreature = requiresCreature;
+		_useGridDistance = useGridDistance;
+		_isActive = true;
+
+		// Calculate valid tiles using FOV with appropriate distance metric
+		var distanceMetric = useGridDistance ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean;
+		_validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem, distanceMetric);
+
+		// Find all creatures in valid tiles
+		_validCreatureTargets = new List<BaseEntity>();
+		foreach (var tile in _validTiles)
+		{
+			// Skip the origin tile (don't target yourself)
+			if (tile == origin)
+				continue;
+
+			var entity = _entityManager.GetEntityAtPosition(tile);
+			if (entity != null)
+			{
+				// Only target entities with health (attackable creatures)
+				if (entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null)
+				{
+					_validCreatureTargets.Add(entity);
+				}
+			}
+		}
+
+		// Start with nearest creature if any exist
+		if (_validCreatureTargets.Count > 0)
+		{
+			// Sort by distance from origin
+			_validCreatureTargets = _validCreatureTargets
+				.OrderBy(e => DistanceHelper.ChebyshevDistance(origin, e.GridPosition))
+				.ToList();
+
+			_currentCreatureIndex = 0;
+			_cursorPosition = _validCreatureTargets[0].GridPosition;
+		}
+		else
+		{
+			// No creatures, start cursor at origin
+			_currentCreatureIndex = -1;
+			_cursorPosition = origin;
+		}
+
+		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
+	}
+
+	/// <summary>
+	/// Stops targeting mode and clears all state.
+	/// </summary>
+	public void Stop()
+	{
+		_isActive = false;
+		_validTiles = null;
+		_validCreatureTargets = null;
+		_currentCreatureIndex = -1;
+	}
+
+	/// <summary>
+	/// Moves the cursor in the specified direction.
+	/// Validation depends on current mode (vision for examine, range for actions).
+	/// </summary>
+	/// <param name="direction">Direction vector to move</param>
+	/// <returns>True if the cursor moved, false if blocked</returns>
+	public bool MoveCursor(Vector2I direction)
+	{
+		if (!_isActive)
+			return false;
+
+		var newPosition = _cursorPosition.Add(direction);
+
+		// Validate based on mode
+		bool isValid = _currentMode == TargetingMode.Examine
+			? _visionSystem.IsVisible(newPosition)
+			: _validTiles != null && _validTiles.Contains(newPosition);
+
+		if (isValid)
+		{
+			_cursorPosition = newPosition;
+
+			// Update creature index for action modes
+			if (_currentMode != TargetingMode.Examine)
+			{
+				UpdateCreatureIndexFromPosition();
+			}
+
+			// Emit cursor moved signal
+			var entity = _entityManager.GetEntityAtPosition(_cursorPosition);
+			EmitSignal(SignalName.CursorMoved, entity);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Cycles to the next valid creature target (action modes only).
+	/// </summary>
+	public void CycleNextTarget()
+	{
+		if (!_isActive || _currentMode == TargetingMode.Examine)
+			return;
+
+		if (_validCreatureTargets == null || _validCreatureTargets.Count == 0)
+			return;
+
+		_currentCreatureIndex = (_currentCreatureIndex + 1) % _validCreatureTargets.Count;
+		_cursorPosition = _validCreatureTargets[_currentCreatureIndex].GridPosition;
+
+		// Emit cursor moved signal
+		var entity = _validCreatureTargets[_currentCreatureIndex];
+		EmitSignal(SignalName.CursorMoved, entity);
+	}
+
+	/// <summary>
+	/// Cycles to the previous valid creature target (action modes only).
+	/// </summary>
+	public void CyclePreviousTarget()
+	{
+		if (!_isActive || _currentMode == TargetingMode.Examine)
+			return;
+
+		if (_validCreatureTargets == null || _validCreatureTargets.Count == 0)
+			return;
+
+		_currentCreatureIndex--;
+		if (_currentCreatureIndex < 0)
+			_currentCreatureIndex = _validCreatureTargets.Count - 1;
+
+		_cursorPosition = _validCreatureTargets[_currentCreatureIndex].GridPosition;
+
+		// Emit cursor moved signal
+		var entity = _validCreatureTargets[_currentCreatureIndex];
+		EmitSignal(SignalName.CursorMoved, entity);
+	}
+
+	/// <summary>
+	/// Confirms the current target (action modes only).
+	/// Emits TargetConfirmed signal and stops targeting.
+	/// </summary>
+	public void ConfirmTarget()
+	{
+		if (!_isActive || _currentMode == TargetingMode.Examine)
+			return;
+
+		GridPosition targetPosition = _cursorPosition;
+		Stop();
+		EmitSignal(SignalName.TargetConfirmed, targetPosition.ToVector2I());
+	}
+
+	/// <summary>
+	/// Cancels targeting and emits the CursorCanceled signal.
+	/// </summary>
+	public void Cancel()
+	{
+		if (!_isActive)
+			return;
+
+		var mode = _currentMode;
+		Stop();
+		EmitSignal(SignalName.CursorCanceled, (int)mode);
+	}
+
+	/// <summary>
+	/// Gets the entity at the cursor position, if any.
+	/// </summary>
+	public BaseEntity GetEntityAtCursor()
+	{
+		if (!_isActive)
+			return null;
+
+		return _entityManager.GetEntityAtPosition(_cursorPosition);
+	}
+
+	/// <summary>
+	/// Gets the creature at the cursor position (entity with HealthComponent), if any.
+	/// </summary>
+	public BaseEntity GetCreatureAtCursor()
+	{
+		if (!_isActive)
+			return null;
+
+		var entity = _entityManager.GetEntityAtPosition(_cursorPosition);
+		if (entity != null)
+		{
+			if (entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null)
+			{
+				return entity;
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Checks if the cursor is currently on a valid creature.
+	/// </summary>
+	public bool IsCursorOnCreature()
+	{
+		return GetCreatureAtCursor() != null;
+	}
+
+	/// <summary>
+	/// Updates the creature index when cursor is moved manually (action modes only).
+	/// </summary>
+	private void UpdateCreatureIndexFromPosition()
+	{
+		if (_validCreatureTargets == null || _validCreatureTargets.Count == 0)
+		{
+			_currentCreatureIndex = -1;
+			return;
+		}
+
+		for (int i = 0; i < _validCreatureTargets.Count; i++)
+		{
+			if (_validCreatureTargets[i].GridPosition == _cursorPosition)
+			{
+				_currentCreatureIndex = i;
+				return;
+			}
+		}
+
+		// Cursor is not on a creature
+		_currentCreatureIndex = -1;
+	}
+}
