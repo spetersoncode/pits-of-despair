@@ -82,13 +82,18 @@ public class KeybindingService
 
     /// <summary>
     /// Checks if the key event is a letter key (A-Z).
+    /// Returns lowercase (a-z) by default, uppercase (A-Z) when Shift is pressed.
     /// Used for item selection in modals.
     /// </summary>
     public bool IsLetterKey(InputEventKey keyEvent, out char letter)
     {
         if (keyEvent.Keycode >= Key.A && keyEvent.Keycode <= Key.Z)
         {
-            letter = (char)('A' + (keyEvent.Keycode - Key.A));
+            // Get the base uppercase letter
+            char baseLetter = (char)('A' + (keyEvent.Keycode - Key.A));
+
+            // Return uppercase if Shift is pressed, lowercase otherwise
+            letter = keyEvent.ShiftPressed ? baseLetter : char.ToLower(baseLetter);
             return true;
         }
 

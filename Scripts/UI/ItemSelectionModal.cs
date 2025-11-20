@@ -92,8 +92,8 @@ public abstract partial class ItemSelectionModal : PanelContainer
         // Check for letter key selection
         if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {
-            // Convert to lowercase for inventory slot lookup
-            selectedKey = char.ToLower(selectedKey);
+            // Key case is now handled correctly by KeybindingService:
+            // lowercase (a-z) when no Shift, uppercase (A-Z) with Shift
             EmitSignal(SignalName.ItemSelected, selectedKey);
             GetViewport().SetInputAsHandled();
         }
