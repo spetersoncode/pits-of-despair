@@ -61,7 +61,15 @@ public partial class Player : BaseEntity
         Glyph = "@";
         GlyphColor = Palette.Player;
 
-        _movementComponent = GetNode<MovementComponent>("MovementComponent");
+        // Create all components programmatically
+        _movementComponent = new MovementComponent { Name = "MovementComponent" };
+        AddChild(_movementComponent);
+
+        var visionComponent = new VisionComponent { Name = "VisionComponent" };
+        AddChild(visionComponent);
+
+        var attackComponent = new AttackComponent { Name = "AttackComponent" };
+        AddChild(attackComponent);
 
         var statsComponent = new StatsComponent
         {
@@ -87,6 +95,13 @@ public partial class Player : BaseEntity
 
         var equipComponent = new EquipComponent { Name = "EquipComponent" };
         AddChild(equipComponent);
+
+        var statusComponent = new StatusComponent
+        {
+            Name = "StatusComponent",
+            IsPlayerControlled = true
+        };
+        AddChild(statusComponent);
 
         Connect(SignalName.PositionChanged, Callable.From<int, int>(OnPositionChanged));
     }
