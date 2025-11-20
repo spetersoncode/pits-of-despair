@@ -71,6 +71,11 @@ public class GameplayInputProcessor
                 _player.ExecuteAction(pickupAction, _actionContext);
                 return true;
 
+            case InputAction.Descend:
+                var descendAction = new DescendAction();
+                _player.ExecuteAction(descendAction, _actionContext);
+                return true;
+
             case InputAction.FireRanged:
                 HandleFireRanged();
                 return true;

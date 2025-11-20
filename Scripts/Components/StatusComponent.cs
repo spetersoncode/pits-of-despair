@@ -64,12 +64,21 @@ public partial class StatusComponent : Node
             return;
         }
 
-        // Find TurnManager in GameLevel
-        _turnManager = GetTree().Root.GetNodeOrNull<TurnManager>("GameLevel/TurnManager");
+        // Find TurnManager by traversing up to GameLevel and searching for TurnManager
+        Node current = this;
+        while (current != null)
+        {
+            if (current.Name == "GameLevel")
+            {
+                _turnManager = current.GetNodeOrNull<TurnManager>("TurnManager");
+                break;
+            }
+            current = current.GetParent();
+        }
 
         if (_turnManager == null)
         {
-            GD.PrintErr("StatusComponent: TurnManager not found at GameLevel/TurnManager");
+            GD.PrintErr("StatusComponent: TurnManager not found. Unable to connect to turn signals.");
             return;
         }
 

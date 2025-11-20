@@ -6,7 +6,7 @@
 
 Pits of Despair is a classic-style tile-based dungeon crawler roguelike built with Godot 4.5.1 and C#. You are a prisoner condemned to die by exile into the Pits of Despair - a foreboding, ever-shifting dungeon complex filled with unspeakable horrors and deadly monsters.
 
-The only way to survive is to descend into the deepest depths of the Pits and take the Crown of Command from its current owner, whoever that may be. Battle creatures, discover treasures, and grow powerful enough to claim your destiny - or perish like countless others before you.
+The only way to survive is to descend into the deepest depths of the Pits and claim the Throne of Despair. Battle creatures, discover treasures, and grow powerful enough to reach the final floor - or perish like countless others before you.
 
 ## Getting Started
 

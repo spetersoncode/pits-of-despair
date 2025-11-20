@@ -26,6 +26,12 @@ public static class Palette
     /// <summary>Player character color</summary>
     public static readonly Color Player = new("#FFFF00");
 
+    /// <summary>Stairs descending to next floor</summary>
+    public static readonly Color Stairs = new("#CCAA66");
+
+    /// <summary>Throne of Despair (win condition)</summary>
+    public static readonly Color Throne = new("#FFAA33");
+
     /// <summary>Success message and positive action indicator</summary>
     public static readonly Color Success = new("#66DDAA");
 

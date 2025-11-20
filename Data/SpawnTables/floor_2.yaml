@@ -1,0 +1,127 @@
+# Floor 2 Spawn Table
+# Second dungeon level with increased difficulty.
+# Features the deadly goblin pack and tougher creature combinations.
+
+name: floor 2
+
+# Increased budgets for floor 2
+creatureBudget:
+  dice: "2d20+90" # 15% increase from floor 1
+itemBudget:
+  dice: "5d10+30" # Slightly more items
+goldBudget:
+  dice: "12d20+120" # More gold rewards
+
+# Creature Pools
+creaturePools:
+  # Common pool (65% weight) - Reduced slightly to increase dangerous encounters
+  - id: common
+    weight: 65
+    entries:
+      # Multiple goblins (more common on floor 2)
+      - type: multiple
+        creatureId: goblin
+        weight: 2
+        count:
+          dice: "1d2+1" # 2-3 goblins per spawn
+
+      # Goblin scouts
+      - type: single
+        creatureId: goblin_scout
+        weight: 2
+
+      # Rats still present but less common
+      - type: multiple
+        creatureId: rat
+        count:
+          dice: "1d3" # 1-3 rats
+
+      # Skeletons moving to common pool
+      - type: multiple
+        creatureId: skeleton
+        count:
+          dice: "1d2"
+
+  # Uncommon pool (30% weight) - Increased from floor 1
+  - id: uncommon
+    weight: 30
+    entries:
+      # Goblin pack - the deadly band that was removed from floor 1
+      - type: band
+        bandId: goblin_pack
+        weight: 2 # More likely to spawn
+
+      # Rat swarm
+      - type: band
+        band:
+          name: rat swarm
+          leader:
+            creatureId: elder_rat
+            placement: center
+          followers:
+            - creatureId: rat
+              count:
+                dice: "1d4+3" # 4-7 rats (increased from floor 1)
+              placement: surrounding
+              distance:
+                dice: "1d2"
+
+      # Multiple skeletons
+      - type: multiple
+        creatureId: skeleton
+        count:
+          dice: "1d3" # 1-3 skeletons
+
+  # Rare pool (5% weight) - Very dangerous encounters
+  - id: rare
+    weight: 5
+    entries:
+      # Ruffian with more followers
+      - type: band
+        band:
+          name: ruffian gang
+          leader:
+            creatureId: goblin_ruffian
+            placement: center
+          followers:
+            - creatureId: goblin
+              count:
+                dice: "1d3+1" # 2-4 goblins
+              placement: surrounding
+              distance:
+                dice: "1d2"
+
+# Item Pools
+itemPools:
+  # Common items (65% weight)
+  - id: common
+    weight: 65
+    entries:
+      # Healing potions
+      - itemId: potion_healing_8
+        weight: 2
+
+      # Stat buff potions
+      - itemId: potion_barkskin_2
+      - itemId: potion_bulls_strength_2
+      - itemId: potion_cats_grace_2
+      - itemId: potion_bears_endurance_2
+
+      # Utility scrolls
+      - itemId: scroll_blink
+      - itemId: scroll_confusion
+
+  # Uncommon items (30% weight) - Increased from floor 1
+  - id: uncommon
+    weight: 30
+    entries:
+      - itemId: scroll_teleport
+      - itemId: weapon_spear
+      - itemId: armor_leather
+        weight: 2 # Armor more common on floor 2
+
+  # Rare items (5% weight)
+  - id: rare
+    weight: 5
+    entries:
+      - itemId: armor_studded_leather

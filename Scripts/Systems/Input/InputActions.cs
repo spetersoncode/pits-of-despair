@@ -37,6 +37,7 @@ public enum InputAction
     // Basic Actions
     Wait,
     Pickup,
+    Descend,
 
     // Combat
     FireRanged,

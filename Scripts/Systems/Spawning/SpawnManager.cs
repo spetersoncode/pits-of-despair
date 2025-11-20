@@ -34,10 +34,20 @@ public partial class SpawnManager : Node
     private readonly Dictionary<string, ISpawnStrategy> _spawnStrategies = new();
 
     // Spawn table configuration
-    // For now, use floor_1 for all floors (will fallback to last table)
+    // Maps floor depth (1-10) to spawn table IDs
+    // Array is 0-indexed but represents floors 1-10
     private readonly string[] _spawnTableIdsByFloor = new[]
     {
-        "floor_1"
+        "floor_1",   // Floor 1
+        "floor_2",   // Floor 2
+        "floor_3",   // Floor 3
+        "floor_4",   // Floor 4
+        "floor_5",   // Floor 5
+        "floor_6",   // Floor 6
+        "floor_7",   // Floor 7
+        "floor_8",   // Floor 8
+        "floor_9",   // Floor 9
+        "floor_10"   // Floor 10
     };
 
     public void SetDependencies(
@@ -142,6 +152,8 @@ public partial class SpawnManager : Node
             goldBudget
         );
 
+        // Spawn stairs or throne depending on floor depth
+        SpawnStairsOrThrone(allWalkableTiles);
     }
 
     /// <summary>
@@ -481,8 +493,9 @@ public partial class SpawnManager : Node
     /// </summary>
     private SpawnTableData GetSpawnTableForFloor(int floorDepth)
     {
-        // Use floor depth as index, with fallback to last table
-        int index = Mathf.Clamp(floorDepth, 0, _spawnTableIdsByFloor.Length - 1);
+        // Convert floor depth (1-based) to array index (0-based)
+        // Clamp to valid range (floors 1-10 map to indices 0-9)
+        int index = Mathf.Clamp(floorDepth - 1, 0, _spawnTableIdsByFloor.Length - 1);
         string spawnTableId = _spawnTableIdsByFloor[index];
 
         return _dataLoader.GetSpawnTable(spawnTableId);
@@ -501,5 +514,60 @@ public partial class SpawnManager : Node
             SpawnEntryType.Unique => _spawnStrategies["unique"],
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Spawns stairs down (floors 1-9) or Throne of Despair (floor 10).
+    /// Placed in a random walkable tile far from other entities.
+    /// </summary>
+    private void SpawnStairsOrThrone(List<GridPosition> allWalkableTiles)
+    {
+        if (allWalkableTiles == null || allWalkableTiles.Count == 0)
+        {
+            GD.PushWarning("SpawnStairsOrThrone: No walkable tiles available");
+            return;
+        }
+
+        // Shuffle tiles to get random placement
+        var shuffledTiles = allWalkableTiles.OrderBy(_ => GD.Randi()).ToList();
+
+        // Find an unoccupied tile
+        GridPosition? spawnPosition = null;
+        foreach (var tile in shuffledTiles)
+        {
+            if (_entityManager.GetEntityAtPosition(tile) == null)
+            {
+                spawnPosition = tile;
+                break;
+            }
+        }
+
+        if (spawnPosition == null)
+        {
+            GD.PushWarning("SpawnStairsOrThrone: No available tiles for stairs/throne");
+            return;
+        }
+
+        // Spawn stairs or throne based on floor depth
+        if (_floorDepth < 10)
+        {
+            // Spawn stairs down
+            var stairs = new Entities.Stairs
+            {
+                Name = "StairsDown"
+            };
+            stairs.Initialize(spawnPosition.Value);
+            _entityManager.AddEntity(stairs);
+        }
+        else
+        {
+            // Floor 10: Spawn Throne of Despair
+            var throne = new Entities.ThroneOfDespair
+            {
+                Name = "ThroneOfDespair"
+            };
+            throne.Initialize(spawnPosition.Value);
+            _entityManager.AddEntity(throne);
+        }
     }
 }

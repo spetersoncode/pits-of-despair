@@ -1,0 +1,60 @@
+# Floor 10 Spawn Table (Final Floor)
+# The deepest level - home of the Throne of Despair
+# TODO: Add epic final floor encounters
+
+name: floor 10
+
+creatureBudget:
+  dice: "4d20+200"
+itemBudget:
+  dice: "8d10+60"
+goldBudget:
+  dice: "30d20+300"
+
+creaturePools:
+  - id: common
+    weight: 60
+    entries:
+      - type: multiple
+        creatureId: goblin
+        weight: 2
+        count:
+          dice: "1d3+1"
+      - type: single
+        creatureId: goblin_scout
+        weight: 2
+      - type: multiple
+        creatureId: skeleton
+        count:
+          dice: "1d3"
+  - id: uncommon
+    weight: 35
+    entries:
+      - type: band
+        bandId: goblin_pack
+        weight: 3
+  - id: rare
+    weight: 5
+    entries:
+      - type: band
+        bandId: goblin_pack
+        weight: 2
+
+itemPools:
+  - id: common
+    weight: 60
+    entries:
+      - itemId: potion_healing_8
+        weight: 2
+      - itemId: scroll_blink
+  - id: uncommon
+    weight: 35
+    entries:
+      - itemId: armor_leather
+        weight: 2
+      - itemId: weapon_spear
+  - id: rare
+    weight: 5
+    entries:
+      - itemId: armor_studded_leather
+        weight: 2

@@ -1,0 +1,54 @@
+# Floor 6 Spawn Table (Placeholder)
+# TODO: Customize with floor-specific encounters
+
+name: floor 6
+
+creatureBudget:
+  dice: "3d20+140"
+itemBudget:
+  dice: "6d10+45"
+goldBudget:
+  dice: "20d20+200"
+
+creaturePools:
+  - id: common
+    weight: 65
+    entries:
+      - type: multiple
+        creatureId: goblin
+        weight: 2
+        count:
+          dice: "1d2+1"
+      - type: single
+        creatureId: goblin_scout
+        weight: 2
+      - type: multiple
+        creatureId: skeleton
+        count:
+          dice: "1d2"
+  - id: uncommon
+    weight: 30
+    entries:
+      - type: band
+        bandId: goblin_pack
+        weight: 2
+  - id: rare
+    weight: 5
+    entries:
+      - type: band
+        bandId: goblin_pack
+
+itemPools:
+  - id: common
+    weight: 65
+    entries:
+      - itemId: potion_healing_8
+      - itemId: scroll_blink
+  - id: uncommon
+    weight: 30
+    entries:
+      - itemId: armor_leather
+  - id: rare
+    weight: 5
+    entries:
+      - itemId: armor_studded_leather

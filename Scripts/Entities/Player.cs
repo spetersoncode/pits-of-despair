@@ -169,8 +169,32 @@ public partial class Player : BaseEntity
         {
             _previousPosition = new GridPosition(x, y);
 
+            CheckForThroneVictory();
             TryAutoCollectItems();
             CheckForWalkableEntity();
+        }
+    }
+
+    /// <summary>
+    /// Checks if the player has stepped on the Throne of Despair (win condition).
+    /// Must be checked before auto-collect so throne message takes priority.
+    /// </summary>
+    private void CheckForThroneVictory()
+    {
+        if (_entityManager == null)
+        {
+            return;
+        }
+
+        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
+        if (entityAtPosition is ThroneOfDespair)
+        {
+            // Find GameManager and trigger victory
+            var gameManager = GetTree()?.Root.GetNodeOrNull<Systems.GameManager>("GameManager");
+            if (gameManager != null)
+            {
+                gameManager.OnThroneReached();
+            }
         }
     }
 

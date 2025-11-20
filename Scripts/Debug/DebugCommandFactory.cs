@@ -15,7 +15,8 @@ public static class DebugCommandFactory
     {
         { "give", () => new GiveCommand() },
         { "help", () => new HelpCommand() },
-        { "reveal", () => new RevealCommand() }
+        { "reveal", () => new RevealCommand() },
+        { "stairs", () => new StairsCommand() }
     };
 
     /// <summary>

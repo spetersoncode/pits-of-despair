@@ -63,8 +63,14 @@ public partial class GameLevel : Node
         _aiSystem = GetNode<AISystem>("AISystem");
         _gameHUD = GetNode<GameHUD>("HUD/GameHUD");
 
-        _goldManager = new GoldManager { Name = "GoldManager" };
-        AddChild(_goldManager);
+        // GoldManager is now provided by GameManager (if it exists)
+        // For standalone GameLevel (e.g., testing), create a local one
+        _goldManager = GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager")?.GetGoldManager();
+        if (_goldManager == null)
+        {
+            _goldManager = new GoldManager { Name = "GoldManager" };
+            AddChild(_goldManager);
+        }
 
         _cursorSystem = new CursorTargetingSystem { Name = "CursorTargetingSystem" };
         AddChild(_cursorSystem);

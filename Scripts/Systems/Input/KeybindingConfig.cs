@@ -44,6 +44,7 @@ public static class KeybindingConfig
         // Basic Actions
         { InputAction.Wait, new() { Key.Space, Key.Kp5 } },
         { InputAction.Pickup, new() { Key.G } },
+        // Descend handled via modifier keybinding (Shift+Period)
 
         // Combat
         { InputAction.FireRanged, new() { Key.F } },
@@ -83,6 +84,7 @@ public static class KeybindingConfig
     {
         (InputAction.ToggleDebug, Key.D, Ctrl: true, Shift: false, Alt: false),
         (InputAction.ToggleHelp, Key.Slash, Ctrl: false, Shift: true, Alt: false),
+        (InputAction.Descend, Key.Period, Ctrl: false, Shift: true, Alt: false),
     };
 
     /// <summary>
