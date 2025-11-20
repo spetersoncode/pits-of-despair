@@ -174,10 +174,10 @@ public partial class CursorTargetingSystem : Node
 		// Start with nearest creature if any exist
 		if (_validCreatureTargets.Count > 0)
 		{
-			// Sort by distance from origin
-			_validCreatureTargets = _validCreatureTargets
-				.OrderBy(e => DistanceHelper.ChebyshevDistance(origin, e.GridPosition))
-				.ToList();
+			// Sort by distance from origin using the appropriate metric
+			_validCreatureTargets = _useGridDistance
+				? _validCreatureTargets.OrderBy(e => DistanceHelper.ChebyshevDistance(origin, e.GridPosition)).ToList()
+				: _validCreatureTargets.OrderBy(e => DistanceHelper.EuclideanDistance(origin, e.GridPosition)).ToList();
 
 			_currentCreatureIndex = 0;
 			_cursorPosition = _validCreatureTargets[0].GridPosition;

@@ -97,7 +97,7 @@ public class GameplayInputProcessor
                 _player.GridPosition,
                 range,
                 requiresCreature: true,
-                useGridDistance: true
+                useGridDistance: false // Use Euclidean (circular) distance for ranged attacks
             );
             _gameHUD.EnterTargetingMode();
         }
@@ -123,7 +123,7 @@ public class GameplayInputProcessor
                 _player.GridPosition,
                 range,
                 requiresCreature: true,
-                useGridDistance: true
+                useGridDistance: false // Use Euclidean (circular) distance for targeted items
             );
         }
     }
@@ -148,7 +148,7 @@ public class GameplayInputProcessor
                 _player.GridPosition,
                 range,
                 requiresCreature: true,
-                useGridDistance: true
+                useGridDistance: true // Use Chebyshev (grid) distance for reach attacks
             );
         }
     }

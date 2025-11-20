@@ -45,9 +45,10 @@ public class RangedAttackAction : Action
             return false;
         }
 
-        // Validate range (use Chebyshev distance for ranged attacks)
-        int distance = DistanceHelper.ChebyshevDistance(actor.GridPosition, _targetPosition);
-        if (distance > attackData.Range || distance == 0)
+        // Validate range (use Euclidean distance for circular range, matching FOV)
+        int distanceSquared = DistanceHelper.EuclideanDistance(actor.GridPosition, _targetPosition);
+        int rangeSquared = attackData.Range * attackData.Range;
+        if (distanceSquared > rangeSquared || distanceSquared == 0)
         {
             return false;
         }
