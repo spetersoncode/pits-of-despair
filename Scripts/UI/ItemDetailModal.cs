@@ -116,13 +116,6 @@ public partial class ItemDetailModal : CenterContainer
 			return;
 		}
 
-		// Block 'I' key to prevent inventory toggle while in detail view
-		if (keyEvent.Keycode == Key.I)
-		{
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
 		// Enter rebind mode on '='
 		if (keyEvent.Keycode == Key.Equal)
 		{
@@ -131,6 +124,10 @@ public partial class ItemDetailModal : CenterContainer
 			GetViewport().SetInputAsHandled();
 			return;
 		}
+
+		// Block all other keys (a-z, etc.) to prevent cycling through items
+		// Only ESC and '=' are valid in viewing mode
+		GetViewport().SetInputAsHandled();
 	}
 
 	private void HandleRebindInput(InputEventKey keyEvent)

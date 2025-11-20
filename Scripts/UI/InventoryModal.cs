@@ -52,8 +52,8 @@ public partial class InventoryModal : ItemSelectionModal
 
     protected override void HandleKeyInput(InputEventKey keyEvent)
     {
-        // Close on 'I' or ESC
-        if (keyEvent.Keycode == Key.I || keyEvent.Keycode == Key.Escape)
+        // Close on ESC
+        if (keyEvent.Keycode == Key.Escape)
         {
             EmitSignal(SignalName.Cancelled);
             GetViewport().SetInputAsHandled();
