@@ -3,7 +3,7 @@ description: A scrawny goblin with wide, darting eyes. It looks ready to bolt at
 type: goblinoid
 level: 1
 color: Scout
-strength: -1
+strength: -2
 agility: 1
 endurance: -1
 maxHP: 6

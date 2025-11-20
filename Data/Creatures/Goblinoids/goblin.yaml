@@ -16,13 +16,13 @@ level: 1
 # Creature level (default: 1). Affects difficulty and XP rewards
 
 # --- Stats (optional, default to 0) ---
-# strength: 0    # Melee damage bonus: STR/2 (rounded down)
-# agility: 0     # Ranged to-hit and defense bonus
+strength: -1 # Melee damage bonus: STR/2 (rounded down)
+agility: -1 # Ranged to-hit and defense bonus
 # endurance: 0   # HP bonus: END × 2
 # will: 0        # Reserved for future mental resistance
 # Omit stats that are 0; only specify non-zero values
 
-maxHP: 8
+maxHP: 6
 # Base HP before Endurance modifier (actual HP = 8 + (0 × 2) = 8)
 
 # === OPTIONAL FIELDS (showing defaults) ===
@@ -48,10 +48,10 @@ color: Minion
 # === AI CONFIGURATION ===
 
 goals:
-# AI goal priorities (evaluated top to bottom)
-  - MeleeAttack        # Attack adjacent enemies
-  - SearchLastKnown    # Search area where enemy was last seen
-  - ReturnToSpawn      # Return to spawn point when no threats
+  # AI goal priorities (evaluated top to bottom)
+  - MeleeAttack # Attack adjacent enemies
+  - SearchLastKnown # Search area where enemy was last seen
+  - ReturnToSpawn # Return to spawn point when no threats
 
 # Available goals: MeleeAttack, SearchLastKnown, ReturnToSpawn, Wander,
 #                  FleeForHelp, Idle (auto-added as fallback)
