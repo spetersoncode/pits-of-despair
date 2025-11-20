@@ -21,7 +21,13 @@ Game data (creatures, items, bands, spawn tables) is defined in YAML files under
 
 **Palette Integration**: Custom PaletteColorConverter allows semantic color names ("Steel", "Coral") or hex values in YAML, automatically converting to hex strings for runtime use.
 
-**ID Generation**: DataLoader creates IDs from filenames. Standard types use filename only (`rat.yaml` → `rat`). Items prefix with type (`weapon_club.yaml` → `weapon_club`) for categorization.
+**ID Generation**: DataLoader creates IDs from filenames with intentionally different patterns by data category:
+- **Creatures**: Filename-only (`rat.yaml` → `"rat"`, `goblin_scout.yaml` → `"goblin_scout"`)
+- **Items**: Type-prefixed (`club.yaml` → `"weapon_club"`, `healing_8.yaml` → `"potion_healing_8"`)
+- **Bands**: Filename-only (`goblin_pack.yaml` → `"goblin_pack"`)
+- **Spawn Tables**: Filename-only (`floor_1.yaml` → `"floor_1"`)
+
+**ID Rationale**: Items use type prefixes because item type drives gameplay mechanics (inventory categorization, equipment slots, usage behavior). Creature type exists only for visual/behavior defaults, not gameplay categorization, so creature IDs remain simple. This split allows `/give weapon_club` to be unambiguous while keeping creature references concise.
 
 **Flexible Loading**: YamlDotNet configured with `IgnoreUnmatchedProperties()` allows schema evolution—new fields can be added without breaking existing files.
 
@@ -33,7 +39,7 @@ Game data (creatures, items, bands, spawn tables) is defined in YAML files under
 
 **Optional**: glyph (type default), color (type default), visionRange (default: 16), hasMovement (default: true), hasAI (default: true), strength (default: 0), agility (default: 0), endurance (default: 0), will (default: 0), goals (AI), attacks, equipment, immunities, resistances, vulnerabilities
 
-**Type Defaults**: Each creature type ("vermin", "goblinoid", etc.) defines default glyph and color applied if not specified.
+**Type Defaults**: Each creature type ("rodents", "goblinoid", "undead", etc.) defines default glyph and color applied if not specified.
 
 **Behavioral Defaults**: Most creatures are mobile with AI and 16-tile vision. Override when needed (e.g., `visionRange: 0` for blind creatures, `hasMovement: false` for stationary traps).
 

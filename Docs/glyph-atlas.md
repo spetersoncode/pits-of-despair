@@ -36,10 +36,10 @@ Complete catalog of all glyphs currently used in Pits of Despair. For design phi
 
 ## Creatures
 
-| Glyph | Character | Type | Color | Variants |
-|-------|-----------|------|-------|----------|
-| `g` | Letter G | Goblinoid | Default (base), Coral (scout), Rust (ruffian) | goblin, goblin_scout, goblin_ruffian |
-| `r` | Letter R | Vermin | Default (base), Fur (elder) | rat, elder_rat |
+| Glyph | Character | Type | Variants |
+|-------|-----------|------|----------|
+| `g` | Letter G | Goblinoid | goblin, goblin_scout, goblin_ruffian |
+| `r` | Letter R | Rodents | rat, elder_rat |
 
 **Variant Color Rule**: Creature variants within same type always use distinct colors for instant threat differentiation.
 
@@ -88,7 +88,7 @@ Colors group items by semantic meaning and material composition:
 **Metals**: Steel (#D3D3D3), Iron (#828282), Silver (#C0C0C0)
 **Woods**: Oak (#8B7355), AshWood (#B5A380), Mahogany (#C04000)
 **Leather**: SoftLeather (#C19A6B), Wool (#E4D4C8)
-**Creatures**: Default (white), Coral (#FF6F61), Rust (#B7410E), Fur (#8C7853)
+**Creatures**: Default (white), CommonCreature (#BBBBBB), Coral (#FF6F61), Rust (#B7410E), Fur (#8C7853)
 **Terrain**: Basalt (#3A4A4A)
 **Player**: Player (#FFFF00)
 **Currency**: Gold (#CCAA66)

@@ -223,6 +223,9 @@ public static class Palette
 
     #region Creatures & Organic
 
+    /// <summary>CommonCreature, light gray for basic/weak creatures</summary>
+    public static readonly Color CommonCreature = new("#BBBBBB");
+
     /// <summary>Coral, pink-orange creature color</summary>
     public static readonly Color Coral = new("#DD8866");
 

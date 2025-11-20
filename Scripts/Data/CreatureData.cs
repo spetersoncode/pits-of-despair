@@ -31,7 +31,7 @@ public class CreatureData
             DefaultGlyph = "g",
             DefaultColor = Palette.ToHex(Palette.Default)
         },
-        ["vermin"] = new CreatureTypeInfo
+        ["rodents"] = new CreatureTypeInfo
         {
             DefaultGlyph = "r",
             DefaultColor = Palette.ToHex(Palette.Default)
@@ -52,7 +52,7 @@ public class CreatureData
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Creature type for category-based defaults (e.g., "goblinoid", "vermin").
+    /// Creature type for category-based defaults (e.g., "goblinoid", "rodents").
     /// Optional - blank type means no inherited defaults.
     /// </summary>
     public string Type { get; set; } = string.Empty;
