@@ -8,5 +8,4 @@ followers:
       dice: "1d3+1"
     placement: surrounding
     distance:
-      min: 1
-      max: 2
+      dice: "1d2"

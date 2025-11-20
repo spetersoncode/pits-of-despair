@@ -62,31 +62,36 @@ creaturePools:
                 dice: "1d4+2" # Spawns 3-6 rats around the leader
               placement: surrounding # Places followers around leader
               distance:
-                min: 1 # Minimum tiles away from leader
-                max: 2 # Maximum tiles away from leader
+                dice: "1d2" # 1-2 tiles away from leader
 
   # Uncommon pool (25% weight) - Tougher encounters
   - id: uncommon
     weight: 25
     entries:
-      # Band example - EXTERNAL reference
-      # This demonstrates referencing a band defined in Data/Bands/
-      # Better for reusable bands used across multiple spawn tables
-      # - type: band
-      #  bandId: goblin_pack # References Data/Bands/goblin_pack.yaml
-
-      # Single skeleton - undead with damage resistances
-      - type: single
+      # Multiple skeletons - undead with damage resistances
+      - type: multiple
         creatureId: skeleton
+        count:
+          dice: "1d2" # Spawns 1-2 skeletons per occurrence
 
   # Rare pool (5% weight) - Dangerous encounters
   - id: rare
     weight: 5
     entries:
-      # Multiple goblin ruffians - tough enemies in small groups
-      # count defaults to "1" when not specified
-      - type: multiple
-        creatureId: goblin_ruffian
+      # Goblin band - ruffian leader with goblin followers
+      - type: band
+        band:
+          name: ruffian and lackeys
+          leader:
+            creatureId: goblin_ruffian
+            placement: center
+          followers:
+            - creatureId: goblin
+              count:
+                dice: "1d2" # Spawns 1-2 goblins with the ruffian
+              placement: surrounding
+              distance:
+                dice: "1d2" # 1-2 tiles away from leader
 
 # Item Pools
 # Similar structure to creature pools: weighted pools with entries

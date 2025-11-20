@@ -1,18 +1,43 @@
 using System.Collections.Generic;
+using PitsOfDespair.Helpers;
 using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Systems.Spawning.Data;
 
 /// <summary>
-/// Represents a distance range for follower placement around the leader.
+/// Represents a distance range for follower placement around the leader using dice notation.
+/// The dice notation's natural range becomes the placement range (e.g., "1d2" = 1-2 tiles away).
 /// </summary>
 public class DistanceRange
 {
-    [YamlMember(Alias = "min")]
-    public int Min { get; set; } = 1;
+    [YamlMember(Alias = "dice")]
+    public string DiceNotation { get; set; } = "1d2";
 
-    [YamlMember(Alias = "max")]
-    public int Max { get; set; } = 2;
+    /// <summary>
+    /// Gets the minimum possible distance from the dice notation.
+    /// </summary>
+    public int GetMin()
+    {
+        if (DiceRoller.TryParse(DiceNotation, out int count, out int sides, out int modifier))
+        {
+            // Minimum is: count + modifier (rolling all 1s)
+            return count + modifier;
+        }
+        return 1; // Default fallback
+    }
+
+    /// <summary>
+    /// Gets the maximum possible distance from the dice notation.
+    /// </summary>
+    public int GetMax()
+    {
+        if (DiceRoller.TryParse(DiceNotation, out int count, out int sides, out int modifier))
+        {
+            // Maximum is: (count * sides) + modifier (rolling all max)
+            return (count * sides) + modifier;
+        }
+        return 2; // Default fallback
+    }
 }
 
 /// <summary>
@@ -62,7 +87,7 @@ public class BandFollowerData
     /// Distance range from leader (for surrounding placement).
     /// </summary>
     [YamlMember(Alias = "distance")]
-    public DistanceRange Distance { get; set; } = new DistanceRange { Min = 1, Max = 2 };
+    public DistanceRange Distance { get; set; } = new DistanceRange { DiceNotation = "1d2" };
 
     public bool IsValid() => !string.IsNullOrEmpty(CreatureId);
 }

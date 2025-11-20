@@ -164,8 +164,8 @@ public class BandSpawnStrategy : ISpawnStrategy
         if (followerData.Placement.Equals("surrounding", StringComparison.OrdinalIgnoreCase))
         {
             placementStrategy = new SurroundingPlacement(
-                followerData.Distance.Min,
-                followerData.Distance.Max
+                followerData.Distance.GetMin(),
+                followerData.Distance.GetMax()
             );
         }
         else
