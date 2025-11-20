@@ -29,6 +29,13 @@ public partial class HealthComponent : Node
     public delegate void DamageTakenEventHandler(int amount);
 
     /// <summary>
+    /// Emitted when a damage modifier is applied (damageType, modifierType).
+    /// modifierType is "immune", "resisted", or "vulnerable"
+    /// </summary>
+    [Signal]
+    public delegate void DamageModifierAppliedEventHandler(int damageType, string modifierType);
+
+    /// <summary>
     /// Base maximum hit points (before Endurance modifiers).
     /// Actual MaxHP is: BaseMaxHP + (Endurance × 2)
     /// </summary>
@@ -127,16 +134,21 @@ public partial class HealthComponent : Node
 
         // Check immunity - immune entities take 0 damage
         if (Immunities.Contains(damageType))
+        {
+            EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "immune");
             return;
+        }
 
         // Apply vulnerability - double damage
         if (Vulnerabilities.Contains(damageType))
         {
+            EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "vulnerable");
             amount *= 2;
         }
         // Apply resistance - half damage (rounded down)
         else if (Resistances.Contains(damageType))
         {
+            EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "resisted");
             amount /= 2;
         }
 

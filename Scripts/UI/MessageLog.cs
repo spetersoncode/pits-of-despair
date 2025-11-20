@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
 using System.Collections.Generic;
@@ -16,6 +17,10 @@ public partial class MessageLog : PanelContainer
 	private static readonly string ColorCombatBlocked = Palette.ToHex(Palette.CombatBlocked);
 	private static readonly string ColorDeath = Palette.ToHex(Palette.HealthMedium);
 	private static readonly string ColorDefault = Palette.ToHex(Palette.Default);
+	private static readonly string ColorImmunity = Palette.ToHex(Palette.StatusBuff);
+	private static readonly string ColorResistance = Palette.ToHex(Palette.CombatBlocked);
+	private static readonly string ColorVulnerability = Palette.ToHex(Palette.StatusDebuff);
+	private static readonly string ColorDanger = Palette.ToHex(Palette.Danger);
 
 	private RichTextLabel _logLabel;
 	private readonly Queue<string> _messageHistory = new();
@@ -51,11 +56,12 @@ public partial class MessageLog : PanelContainer
 	}
 
 	/// <summary>
-	/// Connects to an entity's health component to receive death notifications.
+	/// Connects to an entity's health component to receive death notifications and damage modifier events.
 	/// </summary>
 	public void ConnectToHealthComponent(Components.HealthComponent healthComponent, Entities.BaseEntity entity)
 	{
 		healthComponent.Connect(Components.HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
+		healthComponent.Connect(Components.HealthComponent.SignalName.DamageModifierApplied, Callable.From<int, string>((damageType, modifierType) => OnDamageModifierApplied(entity, damageType, modifierType)));
 	}
 
 	/// <summary>
@@ -197,6 +203,48 @@ public partial class MessageLog : PanelContainer
 			// Fallback for unknown cause of death
 			AddMessage($"{entityName} dies!", ColorDeath);
 		}
+	}
+
+	/// <summary>
+	/// Handles damage modifier applications (immunity, resistance, vulnerability).
+	/// </summary>
+	private void OnDamageModifierApplied(Entities.BaseEntity target, int damageTypeInt, string modifierType)
+	{
+		DamageType damageType = (DamageType)damageTypeInt;
+		bool isPlayer = target.DisplayName == "Player";
+		string damageTypeName = damageType.ToString().ToLower();
+
+		string message;
+		string color;
+
+		switch (modifierType)
+		{
+			case "immune":
+				message = isPlayer
+					? $"You are immune to {damageTypeName} damage!"
+					: $"The {target.DisplayName} is immune to {damageTypeName} damage!";
+				color = ColorImmunity;
+				break;
+
+			case "resisted":
+				message = isPlayer
+					? $"You resist the {damageTypeName} damage!"
+					: $"The {target.DisplayName} resists the {damageTypeName} damage!";
+				color = ColorResistance;
+				break;
+
+			case "vulnerable":
+				message = isPlayer
+					? $"You are vulnerable to {damageTypeName} damage!"
+					: $"The {target.DisplayName} is vulnerable to {damageTypeName} damage!";
+				color = isPlayer ? ColorDanger : ColorVulnerability;
+				break;
+
+			default:
+				return;
+		}
+
+		AddMessage(message, color);
 	}
 
 	/// <summary>
