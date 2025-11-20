@@ -54,6 +54,11 @@ public partial class GameManager : Node
 	private GoldManager _goldManager;
 
 	/// <summary>
+	/// Persistent debug mode state across floors.
+	/// </summary>
+	private bool _debugModeActive = false;
+
+	/// <summary>
 	/// Saved player state for floor transitions.
 	/// </summary>
 	private PlayerState? _savedPlayerState = null;
@@ -176,6 +181,17 @@ public partial class GameManager : Node
 		// Extract player state
 		_savedPlayerState = PlayerState.ExtractFromPlayer(_currentGameLevel.Player);
 
+		// Extract debug mode state from GameHUD
+		var gameHUD = _currentGameLevel.GetNodeOrNull<UI.GameHUD>("HUD/GameHUD");
+		if (gameHUD != null)
+		{
+			var debugConsole = gameHUD.GetNodeOrNull<UI.DebugConsoleModal>("DebugConsoleModal");
+			if (debugConsole != null)
+			{
+				_debugModeActive = debugConsole.IsDebugModeActive;
+			}
+		}
+
 		// Save old floor for signal
 		int oldFloor = CurrentFloorDepth;
 		int newFloor = CurrentFloorDepth + 1;
@@ -258,6 +274,14 @@ public partial class GameManager : Node
 	public GameLevel? GetCurrentGameLevel()
 	{
 		return _currentGameLevel;
+	}
+
+	/// <summary>
+	/// Gets the persistent debug mode state.
+	/// </summary>
+	public bool GetDebugModeActive()
+	{
+		return _debugModeActive;
 	}
 
 	#endregion

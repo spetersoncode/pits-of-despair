@@ -180,6 +180,10 @@ public class PlayerState
 				statsComponent.AddArmorSource(kvp.Key, kvp.Value);
 			foreach (var kvp in EvasionPenaltySources)
 				statsComponent.AddEvasionPenaltySource(kvp.Key, kvp.Value);
+
+			// Emit signals to update UI
+			statsComponent.EmitSignal(StatsComponent.SignalName.StatsChanged);
+			statsComponent.EmitSignal(StatsComponent.SignalName.ExperienceGained, 0, CurrentExperience, statsComponent.ExperienceToNextLevel);
 		}
 
 		// Apply Health (must be done AFTER stats to get correct MaxHP calculation)
@@ -265,19 +269,38 @@ public class PlayerState
 	/// </summary>
 	private static void SetPrivateProperty(object obj, string propertyName, object value)
 	{
-		var property = obj.GetType().GetProperty(propertyName);
-		if (property != null && property.CanWrite)
+		// First try to get the property with all binding flags (public and non-public)
+		var property = obj.GetType().GetProperty(propertyName,
+			System.Reflection.BindingFlags.Public |
+			System.Reflection.BindingFlags.NonPublic |
+			System.Reflection.BindingFlags.Instance);
+
+		if (property != null)
 		{
-			property.SetValue(obj, value);
-		}
-		else
-		{
-			// Try as a field if property doesn't work
-			var field = obj.GetType().GetField(propertyName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-			if (field != null)
+			// For private setters, we need to get the setter method and invoke it with NonPublic flag
+			var setter = property.GetSetMethod(nonPublic: true);
+			if (setter != null)
 			{
-				field.SetValue(obj, value);
+				setter.Invoke(obj, new[] { value });
+				return;
 			}
+		}
+
+		// If property approach didn't work, try as a backing field
+		var field = obj.GetType().GetField($"<{propertyName}>k__BackingField",
+			System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+		if (field != null)
+		{
+			field.SetValue(obj, value);
+			return;
+		}
+
+		// Last resort: try as a regular private field
+		field = obj.GetType().GetField(propertyName,
+			System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+		if (field != null)
+		{
+			field.SetValue(obj, value);
 		}
 	}
 

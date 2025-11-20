@@ -32,10 +32,20 @@ public partial class DebugConsoleModal : CenterContainer
     /// <summary>
     /// Initialize the console with required dependencies.
     /// </summary>
-    public void Initialize(MessageLog messageLog, DebugContext debugContext)
+    /// <param name="messageLog">The message log for displaying command results.</param>
+    /// <param name="debugContext">The debug context for executing commands.</param>
+    /// <param name="initialDebugMode">Initial debug mode state (default: false).</param>
+    public void Initialize(MessageLog messageLog, DebugContext debugContext, bool initialDebugMode = false)
     {
         _messageLog = messageLog;
         _debugContext = debugContext;
+        _debugModeActive = initialDebugMode;
+
+        // Show initial debug mode state if it was active
+        if (initialDebugMode)
+        {
+            _messageLog?.AddMessage("Debug mode enabled.", Palette.ToHex(Palette.Success));
+        }
     }
 
     /// <summary>

@@ -181,7 +181,15 @@ public partial class GameLevel : Node
             _visionSystem
         );
 
-        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem, debugContext);
+        // Get persistent debug mode state from GameManager (if it exists)
+        bool debugModeActive = false;
+        var gameManager = GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager");
+        if (gameManager != null)
+        {
+            debugModeActive = gameManager.GetDebugModeActive();
+        }
+
+        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem, debugContext, debugModeActive);
         _gameHUD.ConnectToCursorTargetingSystem(_cursorSystem);
 
         _turnManager.StartFirstPlayerTurn();

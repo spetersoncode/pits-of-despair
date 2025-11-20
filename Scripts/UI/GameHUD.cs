@@ -74,7 +74,8 @@ public partial class GameHUD : Control
     /// <param name="goldManager">The gold manager for tracking player gold.</param>
     /// <param name="visionSystem">The player vision system for checking visible entities.</param>
     /// <param name="debugContext">The debug context for debug commands.</param>
-    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, GoldManager goldManager, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null)
+    /// <param name="debugModeActive">Initial debug mode state (default: false).</param>
+    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, GoldManager goldManager, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null, bool debugModeActive = false)
     {
         _player = player;
         _actionContext = actionContext;
@@ -124,7 +125,7 @@ public partial class GameHUD : Control
         // Initialize debug console if debug context provided
         if (debugContext != null)
         {
-            _debugConsoleModal.Initialize(_messageLog, debugContext);
+            _debugConsoleModal.Initialize(_messageLog, debugContext, debugModeActive);
             _debugConsoleModal.Connect(DebugConsoleModal.SignalName.Cancelled, Callable.From(OnDebugConsoleCancelled));
         }
 
