@@ -86,8 +86,10 @@ public class RangedAttackAction : Action
         // Spawn projectile - it will handle the combat on impact
         if (actor is Player player)
         {
+            // Use target entity's current position if available, otherwise use cursor position
+            var projectileTarget = target != null ? target.GridPosition : _targetPosition;
             player.EmitSignal(Player.SignalName.RangedAttackRequested,
-                actor.GridPosition.ToVector2I(), _targetPosition.ToVector2I(), target, _attackIndex);
+                actor.GridPosition.ToVector2I(), projectileTarget.ToVector2I(), target, _attackIndex);
         }
         else
         {
