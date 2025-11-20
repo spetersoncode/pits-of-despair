@@ -1,5 +1,7 @@
+using System.Linq;
 using Godot;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
@@ -59,6 +61,32 @@ public class DropItemAction : Action
 		var itemInstance = slot.Item.Clone();
 		string itemName = itemInstance.Template.GetDisplayName(1);
 
+		// Determine drop position BEFORE removing from inventory
+		GridPosition dropPosition = player.GridPosition;
+		bool droppedNearby = false;
+
+		// Check if there's already an item at the player's position
+		var entitiesAtPlayerPos = context.EntityManager.GetEntitiesAtPosition(player.GridPosition);
+		bool hasItemAtPosition = entitiesAtPlayerPos.Any(e => e.ItemData != null);
+
+		if (hasItemAtPosition)
+		{
+			// Find nearest empty tile
+			var emptyTile = FindNearestEmptyTile(player.GridPosition, context);
+			if (emptyTile.HasValue)
+			{
+				dropPosition = emptyTile.Value;
+				droppedNearby = true;
+			}
+			else
+			{
+				// No empty tiles available - fail without removing from inventory
+				string failureMessage = $"No room to drop {itemName}.";
+				player.EmitItemDropped(itemName, false, failureMessage);
+				return ActionResult.CreateFailure(failureMessage);
+			}
+		}
+
 		// If item is equipped, unequip it first
 		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
 		if (equipComponent != null && equipComponent.IsEquipped(_itemKey))
@@ -74,14 +102,63 @@ public class DropItemAction : Action
 		}
 
 		// Create item entity using factory (preserves ItemInstance state)
-		var itemEntity = context.EntityFactory.CreateItemFromInstance(itemInstance, player.GridPosition);
+		var itemEntity = context.EntityFactory.CreateItemFromInstance(itemInstance, dropPosition);
 
 		// Add to entity manager
 		context.EntityManager.AddEntity(itemEntity);
 
-		// Emit feedback signal for logging
-		player.EmitItemDropped(itemName);
+		// Determine success message
+		string successMessage = droppedNearby
+			? $"You drop {itemName} nearby."
+			: $"You drop {itemName}.";
 
-		return ActionResult.CreateSuccess($"You drop {itemName}.");
+		// Emit feedback signal for logging
+		player.EmitItemDropped(itemName, true, successMessage);
+
+		// Return success with appropriate message
+		return ActionResult.CreateSuccess(successMessage);
+	}
+
+	/// <summary>
+	/// Finds the nearest empty adjacent tile (no items, walkable).
+	/// Searches in 8 directions clockwise starting from north.
+	/// </summary>
+	private GridPosition? FindNearestEmptyTile(GridPosition origin, ActionContext context)
+	{
+		// Check adjacent tiles in clockwise order: N, NE, E, SE, S, SW, W, NW
+		var offsets = new[]
+		{
+			new GridPosition(0, -1),   // North
+			new GridPosition(1, -1),   // Northeast
+			new GridPosition(1, 0),    // East
+			new GridPosition(1, 1),    // Southeast
+			new GridPosition(0, 1),    // South
+			new GridPosition(-1, 1),   // Southwest
+			new GridPosition(-1, 0),   // West
+			new GridPosition(-1, -1)   // Northwest
+		};
+
+		foreach (var offset in offsets)
+		{
+			var checkPos = new GridPosition(origin.X + offset.X, origin.Y + offset.Y);
+
+			// Check if tile is walkable
+			if (!context.MapSystem.IsWalkable(checkPos))
+			{
+				continue;
+			}
+
+			// Check if tile already has an item
+			var entitiesAtPos = context.EntityManager.GetEntitiesAtPosition(checkPos);
+			bool hasItem = entitiesAtPos.Any(e => e.ItemData != null);
+
+			if (!hasItem)
+			{
+				return checkPos;
+			}
+		}
+
+		// No empty tile found
+		return null;
 	}
 }

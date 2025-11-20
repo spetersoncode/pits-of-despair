@@ -146,7 +146,7 @@ public partial class GameHUD : Control
 
         player.Connect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
         player.Connect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
-        player.Connect(Player.SignalName.ItemDropped, Callable.From<string>(OnItemDropped));
+        player.Connect(Player.SignalName.ItemDropped, Callable.From<string, bool, string>(OnItemDropped));
         player.Connect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
         player.Connect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
 
@@ -505,9 +505,16 @@ public partial class GameHUD : Control
         }
     }
 
-    private void OnItemDropped(string itemName)
+    private void OnItemDropped(string itemName, bool success, string message)
     {
-        _messageLog.AddMessage($"You drop {itemName}.", Palette.ToHex(Palette.Default));
+        if (success)
+        {
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Default));
+        }
+        else
+        {
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Disabled));
+        }
     }
 
     private void OnItemEquipped(string itemName)

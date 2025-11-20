@@ -28,7 +28,7 @@ public partial class Player : BaseEntity
     public delegate void ItemUsedEventHandler(string itemName, bool success, string message);
 
     [Signal]
-    public delegate void ItemDroppedEventHandler(string itemName);
+    public delegate void ItemDroppedEventHandler(string itemName, bool success, string message);
 
     [Signal]
     public delegate void ItemEquippedEventHandler(string itemName);
@@ -353,8 +353,8 @@ public partial class Player : BaseEntity
     /// Emits item dropped feedback signal.
     /// Used by DropItemAction to maintain consistent event signaling.
     /// </summary>
-    public void EmitItemDropped(string itemName)
+    public void EmitItemDropped(string itemName, bool success, string message)
     {
-        EmitSignal(SignalName.ItemDropped, itemName);
+        EmitSignal(SignalName.ItemDropped, itemName, success, message);
     }
 }

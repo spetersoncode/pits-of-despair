@@ -92,6 +92,18 @@ public partial class EntityManager : Node
     }
 
     /// <summary>
+    /// Get all entities at a specific grid position.
+    /// Iterates through all entities (O(n)) to find all matches.
+    /// Use when position cache may not reflect all entities (e.g., checking for items).
+    /// </summary>
+    /// <param name="position">The grid position to check.</param>
+    /// <returns>List of all entities at position.</returns>
+    public System.Collections.Generic.List<BaseEntity> GetEntitiesAtPosition(GridPosition position)
+    {
+        return _entities.Where(e => e.GridPosition == position).ToList();
+    }
+
+    /// <summary>
     /// Checks if a position is occupied by any entity (not including player).
     /// </summary>
     /// <param name="position">The grid position to check.</param>
