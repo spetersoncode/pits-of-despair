@@ -1,7 +1,7 @@
 name: goblin scout
 description: A scrawny goblin with wide, darting eyes. It looks ready to bolt at the first sign of real danger, shrieking for help.
 type: goblinoid
-color: Coral
+color: Scout
 strength: -1
 agility: 1
 endurance: -1

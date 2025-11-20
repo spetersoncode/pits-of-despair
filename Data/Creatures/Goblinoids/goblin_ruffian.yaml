@@ -1,7 +1,7 @@
 name: goblin ruffian
 description: A brutish specimen, larger and meaner than its kin. Scars criss-cross its hide, and its crude weapon has seen considerable use.
 type: goblinoid
-color: Rust
+color: Brute
 strength: 1
 endurance: 1
 maxHP: 11

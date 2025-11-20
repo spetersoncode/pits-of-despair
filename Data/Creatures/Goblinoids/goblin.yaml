@@ -39,9 +39,8 @@ maxHP: 8
 # glyph: "g"
 # Visual character. Omitted = uses type default ("g" for goblinoid)
 
-# color: Default
-# Visual color. Omitted = uses type default (Default for goblinoid)
-# Color names from Palette.cs
+color: Minion
+# Visual color from role-based palette (weak basic goblin)
 
 # === AI CONFIGURATION ===
 

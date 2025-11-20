@@ -54,7 +54,13 @@ The palette is organized into **semantic categories** that reflect the game's st
 - **Natural**: Earth tones for organic items and environments
 
 **Creatures & Effects**
-- Organic and biological colors for creatures
+- Organic and biological colors for legacy creature usage
+- **Role-Based Creature Identity**: Comprehensive 26-color system for creature archetypes
+  - Basic Tiers (5): Threat progression from Minion to Alpha
+  - Combat Specialists (8): Melee and ranged combat roles
+  - Magic Users (7): Diverse spellcaster archetypes
+  - Special Roles (2): Unique archetypes (Assassin, Construct)
+  - Beast Variants (4): Animal threat categories
 - Elemental effects (fire, ice, lightning, poison, acid)
 - Magical spell signatures
 - Special effect highlighting
@@ -122,6 +128,30 @@ Three visibility states: **Unexplored** (black), **Explored** (FogOfWar gray), *
 ### Alpha Transparency for Overlays
 
 Palette colors are opaque. Derive semi-transparent overlays (targeting, area effects) at runtime by applying alpha to base colors. Don't add palette entries for transparency variations.
+
+## Role-Based Creature Colors
+
+Creatures use **role-based colors** that encode tactical information: combat behavior, threat level, and capabilities. This enables instant threat assessment during encounters.
+
+### Design Philosophy
+
+**Color Communicates Role**: A creature's color reveals its behavior pattern (melee brute, ranged archer, support caster) independent of species. Goblin warriors and orc warriors may both use soldier colors despite different creature types.
+
+**Hierarchy Through Color**: Basic tier progression (minion → soldier → elite → champion → alpha) creates visual threat hierarchy recognizable across all creature types.
+
+**Tactical Information**: Magic user colors distinguish offensive casters from support casters from curse specialists. Combat colors separate defensive tanks from aggressive berserkers. Beast colors encode ecological niche.
+
+**Assign by Behavior**: Choose colors based on what creatures *do*, not what they *are*. A stealthy goblin assassin uses assassin colors; a brutish goblin warrior uses brute colors.
+
+### Usage Guidelines
+
+**Prioritize Gameplay Clarity**: When multiple roles apply, choose the color communicating most critical tactical information. Stealth threats use assassin colors even if they cast magic.
+
+**Maintain Threat Hierarchy**: Basic threats use tier colors (minion, soldier) even if specialized. Reserve champion/alpha for genuinely exceptional creatures.
+
+**Beast Exception**: Beast colors encode ecological niche rather than tactical role. Animal threat categories help distinguish vermin from predators from massive threats.
+
+**Cross-Type Consistency**: Role colors work across creature types (humanoid, undead, beast, construct). Skeletal soldiers and goblin soldiers both use soldier colors for consistent visual language.
 
 ## Guidelines for Adding Colors
 

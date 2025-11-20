@@ -4,7 +4,7 @@ namespace PitsOfDespair.Core;
 
 /// <summary>
 /// Centralized color palette for consistent game visuals.
-/// Focused collection of 61 intentional colors for roguelike rendering.
+/// Focused collection of intentional colors for roguelike rendering.
 /// All colors optimized for high contrast on black backgrounds.
 /// </summary>
 public static class Palette
@@ -237,6 +237,81 @@ public static class Palette
 
     /// <summary>Blood, dark red organic fluid</summary>
     public static readonly Color Blood = new("#AA3344");
+
+    #endregion
+
+    #region Creatures - Role-Based Combat Identity
+
+    // === Basic Tiers (Threat Progression) ===
+
+    /// <summary>Minion, weak subordinate creature (basic tier 1)</summary>
+    public static readonly Color Minion = new("#AAAAAA");
+
+    /// <summary>Soldier, reliable combatant (basic tier 2)</summary>
+    public static readonly Color Soldier = new("#88AA77");
+
+    /// <summary>Elite, above-average threat (basic tier 3)</summary>
+    public static readonly Color Elite = new("#DDAA55");
+
+    /// <summary>Champion, exceptional warrior (basic tier 4)</summary>
+    public static readonly Color Champion = new("#DD8844");
+
+    /// <summary>Alpha, pack/group dominant (basic tier 5)</summary>
+    public static readonly Color Alpha = new("#FFAA33");
+
+    // === Combat Specialists (Melee) ===
+
+    /// <summary>Scout, fast reconnaissance melee combatant</summary>
+    public static readonly Color Scout = new("#77CCAA");
+
+    /// <summary>Duelist, skilled one-on-one melee fighter</summary>
+    public static readonly Color Duelist = new("#CCBB66");
+
+    /// <summary>Assassin, stealth-based lethal striker</summary>
+    public static readonly Color Assassin = new("#776688");
+
+    /// <summary>Gladiator, arena-trained melee combatant</summary>
+    public static readonly Color Gladiator = new("#DD9944");
+
+    /// <summary>Berserker, frenzied aggressive melee attacker</summary>
+    public static readonly Color Berserker = new("#DD5533");
+
+    /// <summary>Brute, heavy devastating melee striker</summary>
+    public static readonly Color Brute = new("#AA4422");
+
+    /// <summary>Guardian, defensive protector melee role</summary>
+    public static readonly Color Guardian = new("#6699BB");
+
+    // === Combat Specialists (Ranged) ===
+
+    /// <summary>Archer, ranged bow/crossbow combatant</summary>
+    public static readonly Color Archer = new("#88CC55");
+
+    /// <summary>Skirmisher, mobile hit-and-run ranged attacker</summary>
+    public static readonly Color Skirmisher = new("#99DD66");
+
+    // === Magic Users ===
+
+    /// <summary>Shaman, tribal/nature magic caster</summary>
+    public static readonly Color Shaman = new("#AA77CC");
+
+    /// <summary>Wizard, arcane scholarly magic user</summary>
+    public static readonly Color Wizard = new("#5588DD");
+
+    /// <summary>Illusionist, deception-based magic caster</summary>
+    public static readonly Color Illusionist = new("#AA66DD");
+
+    /// <summary>Buffer, support enhancement magic caster</summary>
+    public static readonly Color Buffer = new("#66CCDD");
+
+    /// <summary>Hexer, curse/debuff magic caster</summary>
+    public static readonly Color Hexer = new("#995588");
+
+    /// <summary>Priest, divine/holy magic caster</summary>
+    public static readonly Color Priest = new("#DDCCAA");
+
+    /// <summary>Warlock, dark pact magic caster</summary>
+    public static readonly Color Warlock = new("#CC55AA");
 
     #endregion
 
