@@ -48,8 +48,18 @@ public class CursorInputProcessor
         // Confirm target in action modes
         if (!isExamineMode)
         {
-            if (keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.KpEnter ||
-                keyEvent.Keycode == Key.Space || keyEvent.Keycode == Key.F)
+            // Universal confirmation keys
+            bool isConfirmKey = keyEvent.Keycode == Key.Enter ||
+                                keyEvent.Keycode == Key.KpEnter ||
+                                keyEvent.Keycode == Key.Space;
+
+            // Add mode-specific confirmation keys
+            if (_cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.RangedAttack)
+                isConfirmKey |= keyEvent.Keycode == Key.F;
+            else if (_cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.ReachAttack)
+                isConfirmKey |= keyEvent.Keycode == Key.A;
+
+            if (isConfirmKey)
             {
                 _cursorSystem.ConfirmTarget();
                 return true;
