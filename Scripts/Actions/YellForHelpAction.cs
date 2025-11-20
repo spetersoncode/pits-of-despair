@@ -13,7 +13,7 @@ namespace PitsOfDespair.Actions;
 /// </summary>
 public class YellForHelpAction : Action
 {
-    private const int AlertRadius = 16;
+    private const int AlertRadius = 10;
     private const int AlertSearchTurns = 12;
 
     public override string Name => "Yell for Help";

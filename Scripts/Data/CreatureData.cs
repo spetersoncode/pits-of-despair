@@ -73,7 +73,7 @@ public class CreatureData
     /// </summary>
     public int MaxHP { get; set; } = 1;
 
-    public int VisionRange { get; set; } = 16;
+    public int VisionRange { get; set; } = 10;
 
     public bool HasMovement { get; set; } = true;
 

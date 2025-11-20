@@ -6,7 +6,7 @@ strength: -1
 agility: 1
 endurance: -1
 maxHP: 6
-visionRange: 12
+visionRange: 10
 goals:
   - FleeForHelp
 attacks:
