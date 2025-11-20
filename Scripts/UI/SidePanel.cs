@@ -231,7 +231,7 @@ public partial class SidePanel : PanelContainer
 		UpdateExperienceDisplay();
 
 		// Log level up message in success color
-		var messageLog = GetNode<UI.MessageLog>("/root/GameLevel/UILayer/MessageLog");
+		var messageLog = GetNode<UI.MessageLog>("/root/GameLevel/HUD/GameHUD/HBoxContainer/VBoxContainer/MessageLog");
 		if (messageLog != null)
 		{
 			messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));

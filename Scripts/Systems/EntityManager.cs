@@ -138,7 +138,7 @@ public partial class EntityManager : Node
                 playerStats.GainExperience(xpAwarded);
 
                 // Log XP gain message
-                var messageLog = GetNodeOrNull<UI.MessageLog>("/root/GameLevel/UILayer/MessageLog");
+                var messageLog = GetNodeOrNull<UI.MessageLog>("/root/GameLevel/HUD/GameHUD/HBoxContainer/VBoxContainer/MessageLog");
                 if (messageLog != null)
                 {
                     messageLog.AddMessage($"Defeated {entity.DisplayName} for {xpAwarded} XP.", Core.Palette.ToHex(Core.Palette.Default));
