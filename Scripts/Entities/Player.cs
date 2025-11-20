@@ -169,7 +169,7 @@ public partial class Player : BaseEntity
         {
             _previousPosition = new GridPosition(x, y);
 
-            TryAutoCollectGold();
+            TryAutoCollectItems();
             CheckForWalkableEntity();
         }
     }
@@ -193,35 +193,67 @@ public partial class Player : BaseEntity
     }
 
     /// <summary>
-    /// Automatically collects gold at the player's current position.
+    /// Automatically collects gold and autopickup items at the player's current position.
     /// Called when player moves to a new tile.
     /// </summary>
-    private void TryAutoCollectGold()
+    private void TryAutoCollectItems()
     {
-        if (_entityManager == null || _goldManager == null)
+        if (_entityManager == null || _goldManager == null || _inventoryComponent == null)
         {
             return;
         }
 
         var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
 
-        if (entityAtPosition is not Gold goldPile)
+        if (entityAtPosition == null)
         {
             return;
         }
 
-        int goldAmount = goldPile.Amount;
-        if (goldAmount <= 0)
+        // Handle gold (existing behavior)
+        if (entityAtPosition is Gold goldPile)
         {
-            goldAmount = 1;
+            int goldAmount = goldPile.Amount;
+            if (goldAmount <= 0)
+            {
+                goldAmount = 1;
+            }
+
+            _goldManager.AddGold(goldAmount);
+
+            _entityManager.RemoveEntity(entityAtPosition);
+            entityAtPosition.QueueFree();
+
+            EmitSignal(SignalName.GoldCollected, goldAmount, _goldManager.Gold);
+            return;
         }
 
-        _goldManager.AddGold(goldAmount);
+        // Handle items with autopickup enabled
+        if (entityAtPosition.ItemData != null && entityAtPosition.ItemData.Template.AutoPickup)
+        {
+            var itemInstance = entityAtPosition.ItemData;
+            if (itemInstance == null)
+            {
+                return;
+            }
 
-        _entityManager.RemoveEntity(entityAtPosition);
-        entityAtPosition.QueueFree();
+            // Try to add to inventory
+            char? slotKey = _inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
 
-        EmitSignal(SignalName.GoldCollected, goldAmount, _goldManager.Gold);
+            if (slotKey.HasValue)
+            {
+                // Successfully picked up
+                _entityManager.RemoveEntity(entityAtPosition);
+                entityAtPosition.QueueFree();
+
+                EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, true, $"You collect {itemInstance.Template.Name}.");
+            }
+            else
+            {
+                // Inventory full
+                EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, false, message);
+            }
+        }
     }
 
     /// <summary>
@@ -287,7 +319,7 @@ public partial class Player : BaseEntity
     /// <summary>
     /// Gets an inventory slot by its key binding.
     /// </summary>
-    /// <param name="key">The key to look up (a-z).</param>
+    /// <param name="key">The key to look up (a-z or A-Z).</param>
     /// <returns>The inventory slot, or null if not found.</returns>
     public InventorySlot? GetInventorySlot(char key)
     {
@@ -297,7 +329,7 @@ public partial class Player : BaseEntity
     /// <summary>
     /// Removes items from the player's inventory.
     /// </summary>
-    /// <param name="key">The inventory slot key (a-z).</param>
+    /// <param name="key">The inventory slot key (a-z or A-Z).</param>
     /// <param name="count">The number of items to remove.</param>
     /// <returns>True if items were removed successfully.</returns>
     public bool RemoveItemFromInventory(char key, int count = 1)

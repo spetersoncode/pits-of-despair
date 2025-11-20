@@ -101,6 +101,12 @@ public class ItemData
     public string DataFileId { get; set; } = string.Empty;
 
     /// <summary>
+    /// Whether this item should be automatically picked up when the player walks over it.
+    /// Defaults to false (manual pickup required).
+    /// </summary>
+    public bool AutoPickup { get; set; } = false;
+
+    /// <summary>
     /// Whether this item is consumable (one-time use, stackable).
     /// If null, will be set by ApplyDefaults based on Type.
     /// </summary>

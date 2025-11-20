@@ -64,8 +64,8 @@ public partial class InventoryModal : ItemSelectionModal
         // Check for letter key selection to open item details
         if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {
-            // Convert to lowercase for inventory slot lookup
-            selectedKey = char.ToLower(selectedKey);
+            // Keep the exact case (a-z or A-Z) for inventory slot lookup
+            // No conversion needed - inventory supports both cases
 
             // Check if this item exists in inventory
             var slot = _player.GetInventorySlot(selectedKey);
@@ -93,12 +93,12 @@ public partial class InventoryModal : ItemSelectionModal
 
         if (inventory.Count == 0)
         {
-            _itemsLabel.Text = $"[center][b]Inventory (a-z)[/b][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]Empty[/color][/center]";
+            _itemsLabel.Text = $"[center][b]Inventory (a-z, A-Z)[/b][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]Empty[/color][/center]";
             return;
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine("[center][b]Inventory (a-z)[/b][/center]\n");
+        sb.AppendLine("[center][b]Inventory (a-z, A-Z)[/b][/center]\n");
 
         var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
 

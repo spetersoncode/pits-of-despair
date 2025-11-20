@@ -87,6 +87,13 @@ public partial class EntityFactory : Node
     {
         var data = itemInstance.Template;
 
+        // Set autopickup for potions and scrolls
+        string itemType = data.Type?.ToLower() ?? string.Empty;
+        if (itemType == "potion" || itemType == "scroll")
+        {
+            data.AutoPickup = true;
+        }
+
         // Create base entity for the item
         var entity = new BaseEntity
         {

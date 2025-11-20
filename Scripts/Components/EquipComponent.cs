@@ -15,7 +15,7 @@ namespace PitsOfDespair.Scripts.Components;
 public partial class EquipComponent : Node
 {
     /// <summary>
-    /// Maps equipment slots to inventory keys (a-z).
+    /// Maps equipment slots to inventory keys (a-z or A-Z).
     /// If a slot is not in the dictionary, it's empty.
     /// </summary>
     private readonly Dictionary<EquipmentSlot, char> _equippedSlots = new();
@@ -35,7 +35,7 @@ public partial class EquipComponent : Node
     /// If the slot is already occupied, the old item is automatically unequipped.
     /// Updates attack component if this is a weapon.
     /// </summary>
-    /// <param name="inventoryKey">The inventory key (a-z) of the item to equip</param>
+    /// <param name="inventoryKey">The inventory key (a-z or A-Z) of the item to equip</param>
     /// <param name="slot">The equipment slot to equip into</param>
     /// <returns>True if successfully equipped, false otherwise</returns>
     public bool Equip(char inventoryKey, EquipmentSlot slot)

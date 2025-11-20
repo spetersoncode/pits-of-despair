@@ -22,9 +22,10 @@ public partial class InventoryComponent : Node
     /// <summary>
     /// Maximum number of unique items that can be stored in inventory.
     /// Consumables can stack, so actual item count may be higher.
+    /// Default is 52 slots (a-z + A-Z).
     /// </summary>
     [Export]
-    public int MaxInventorySlots { get; set; } = 26;
+    public int MaxInventorySlots { get; set; } = 52;
 
     private List<InventorySlot> _inventory = new();
 
@@ -46,7 +47,7 @@ public partial class InventoryComponent : Node
     /// <summary>
     /// Gets an inventory slot by its key binding.
     /// </summary>
-    /// <param name="key">The key to look up (a-z).</param>
+    /// <param name="key">The key to look up (a-z or A-Z).</param>
     /// <returns>The inventory slot, or null if not found.</returns>
     public InventorySlot? GetSlot(char key)
     {
@@ -124,7 +125,7 @@ public partial class InventoryComponent : Node
     /// <summary>
     /// Removes items from the inventory.
     /// </summary>
-    /// <param name="key">The inventory slot key (a-z).</param>
+    /// <param name="key">The inventory slot key (a-z or A-Z).</param>
     /// <param name="count">The number of items to remove.</param>
     /// <returns>True if items were removed successfully.</returns>
     public bool RemoveItem(char key, int count = 1)
@@ -150,10 +151,11 @@ public partial class InventoryComponent : Node
     }
 
     /// <summary>
-    /// Gets the next available inventory key (a-z).
+    /// Gets the next available inventory key (a-z, then A-Z).
     /// </summary>
     private char GetNextAvailableKey()
     {
+        // First check lowercase a-z
         for (char c = 'a'; c <= 'z'; c++)
         {
             if (!_inventory.Any(slot => slot.Key == c))
@@ -162,8 +164,17 @@ public partial class InventoryComponent : Node
             }
         }
 
+        // Then check uppercase A-Z
+        for (char c = 'A'; c <= 'Z'; c++)
+        {
+            if (!_inventory.Any(slot => slot.Key == c))
+            {
+                return c;
+            }
+        }
+
         // This shouldn't happen due to MaxInventorySlots check, but just in case
-        return 'z';
+        return 'Z';
     }
 
     /// <summary>
