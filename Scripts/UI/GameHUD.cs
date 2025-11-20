@@ -42,6 +42,7 @@ public partial class GameHUD : Control
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
+    private ExamineSystem _examineSystem;
 
     public override void _Ready()
     {
@@ -136,6 +137,21 @@ public partial class GameHUD : Control
         }
 
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
+    }
+
+    /// <summary>
+    /// Connects to the examine system to display entity descriptions.
+    /// </summary>
+    public void ConnectToExamineSystem(ExamineSystem examineSystem)
+    {
+        _examineSystem = examineSystem;
+
+        if (_examineSystem != null)
+        {
+            _examineSystem.Connect(ExamineSystem.SignalName.ExamineStarted, Callable.From(OnExamineStarted));
+            _examineSystem.Connect(ExamineSystem.SignalName.ExamineUpdated, Callable.From<BaseEntity>(OnExamineUpdated));
+            _examineSystem.Connect(ExamineSystem.SignalName.ExamineCanceled, Callable.From(OnExamineCanceled));
+        }
     }
 
     /// <summary>
@@ -429,7 +445,7 @@ public partial class GameHUD : Control
     /// <summary>
     /// Closes all open menus and resets menu state.
     /// </summary>
-    private void CloseAllMenus()
+    public void CloseAllMenus()
     {
         _inventoryPanel.Hide();
         _activateItemPanel.HideMenu();
@@ -504,5 +520,44 @@ public partial class GameHUD : Control
         {
             _messageLog.ConnectToHealthComponent(healthComponent, entity);
         }
+    }
+
+    /// <summary>
+    /// Called when examine mode starts.
+    /// </summary>
+    private void OnExamineStarted()
+    {
+        _messageLog.AddMessage("[EXAMINE MODE] Use arrow keys to look around. Press X or ESC to exit.", Palette.ToHex(Palette.Alert));
+    }
+
+    /// <summary>
+    /// Called when the examine cursor moves to a new position.
+    /// Displays the entity's description in the message log.
+    /// </summary>
+    private void OnExamineUpdated(BaseEntity entity)
+    {
+        // Only display message if there's an entity at the cursor position
+        if (entity != null)
+        {
+            // Format: "EntityName: Description"
+            string message = string.IsNullOrEmpty(entity.Description)
+                ? $"You see {entity.DisplayName}."
+                : $"{entity.DisplayName}: {entity.Description}";
+
+            // Convert entity color to hex string for colored display name
+            string colorHex = Palette.ToHex(entity.GlyphColor);
+            string coloredMessage = $"[color={colorHex}]{message}[/color]";
+
+            _messageLog.AddMessage(coloredMessage, null);
+        }
+        // Silent for empty tiles (as per user preference)
+    }
+
+    /// <summary>
+    /// Called when examine mode is canceled.
+    /// </summary>
+    private void OnExamineCanceled()
+    {
+        _messageLog.AddMessage("[EXAMINE MODE] Exited.", Palette.ToHex(Palette.Disabled));
     }
 }

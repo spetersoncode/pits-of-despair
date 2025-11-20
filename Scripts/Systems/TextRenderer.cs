@@ -18,11 +18,13 @@ public partial class TextRenderer : Control
 	private EntityManager? _entityManager;
 	private PlayerVisionSystem _visionSystem;
 	private TargetingSystem _targetingSystem;
+	private ExamineSystem _examineSystem;
 	private ProjectileSystem _projectileSystem;
 	private Font _font;
 	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 	private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
 	private bool _wasTargetingActive = false;
+	private bool _wasExamineActive = false;
 
 	public override void _Ready()
 	{
@@ -132,6 +134,14 @@ public partial class TextRenderer : Control
 	}
 
 	/// <summary>
+	/// Sets the examine system for rendering examine cursor overlay.
+	/// </summary>
+	public void SetExamineSystem(ExamineSystem examineSystem)
+	{
+		_examineSystem = examineSystem;
+	}
+
+	/// <summary>
 	/// Sets the projectile system for rendering active projectiles.
 	/// </summary>
 	public void SetProjectileSystem(ProjectileSystem projectileSystem)
@@ -175,7 +185,7 @@ public partial class TextRenderer : Control
 
 	public override void _Process(double delta)
 	{
-		// Continuously redraw during targeting mode or when projectiles are active
+		// Continuously redraw during targeting/examine mode or when projectiles are active
 		bool needsRedraw = false;
 
 		bool isTargetingActive = _targetingSystem != null && _targetingSystem.IsActive;
@@ -190,6 +200,19 @@ public partial class TextRenderer : Control
 			needsRedraw = true;
 		}
 		_wasTargetingActive = isTargetingActive;
+
+		bool isExamineActive = _examineSystem != null && _examineSystem.IsActive;
+		if (isExamineActive)
+		{
+			needsRedraw = true;
+		}
+
+		// If examine just stopped, queue one final redraw to clear the overlay
+		if (_wasExamineActive && !isExamineActive)
+		{
+			needsRedraw = true;
+		}
+		_wasExamineActive = isExamineActive;
 
 		if (_projectileSystem != null && _projectileSystem.ActiveProjectiles.Count > 0)
 		{
@@ -394,6 +417,56 @@ public partial class TextRenderer : Control
 				// Draw pulsing red tint for empty tile (only if targeting requires a creature)
 				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.1 + 0.15);
 				Color baseColor = Palette.TargetingInvalid;
+				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
+				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+			}
+		}
+
+		// Draw examine overlay (on top of everything else, but distinct from targeting)
+		if (_examineSystem != null && _examineSystem.IsActive)
+		{
+			// Draw cursor at examine position
+			GridPosition cursorPos = _examineSystem.CursorPosition;
+			Vector2 cursorWorldPos = new Vector2(
+				cursorPos.X * TileSize - 2.0f,
+				cursorPos.Y * TileSize - TileSize + 4.0f
+			);
+			Vector2 cursorDrawPos = offset + cursorWorldPos;
+
+			// Check if there's an entity at cursor position
+			var examinedEntity = _entityManager?.GetEntityAtPosition(cursorPos);
+			bool hasEntity = examinedEntity != null;
+
+			// Draw a bright, thick border around the cursor position for high visibility
+			float borderPulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 150.0) * 0.3 + 0.7);
+			Color borderColor = hasEntity
+				? new Color(Palette.ExamineEntity.R, Palette.ExamineEntity.G, Palette.ExamineEntity.B, borderPulse)
+				: new Color(Palette.Alert.R, Palette.Alert.G, Palette.Alert.B, borderPulse);
+
+			// Draw thick border (3 pixels)
+			float borderWidth = 3.0f;
+			// Top
+			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, TileSize, borderWidth), borderColor, true);
+			// Bottom
+			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y + TileSize - borderWidth, TileSize, borderWidth), borderColor, true);
+			// Left
+			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true);
+			// Right
+			DrawRect(new Rect2(cursorDrawPos.X + TileSize - borderWidth, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true);
+
+			if (hasEntity)
+			{
+				// Draw brighter pulsing fill for entities
+				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.2 + 0.35);
+				Color baseColor = Palette.ExamineEntity;
+				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
+				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+			}
+			else
+			{
+				// Draw brighter pulsing fill for empty tiles
+				float pulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.15 + 0.25);
+				Color baseColor = Palette.Alert;
 				Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, pulse);
 				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
 			}

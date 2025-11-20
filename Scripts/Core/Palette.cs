@@ -97,6 +97,19 @@ public static class Palette
 
     #endregion
 
+    #region UI - Examine System
+
+    /// <summary>Examine mode visible tiles overlay background</summary>
+    public static readonly Color ExamineRangeOverlay = new("#444444");
+
+    /// <summary>Examine cursor on entity (bright cyan/blue)</summary>
+    public static readonly Color ExamineEntity = new("#4DDDFF");
+
+    /// <summary>Examine cursor on empty tile (light gray)</summary>
+    public static readonly Color ExamineEmpty = new("#CCCCCC");
+
+    #endregion
+
     #region Materials - Metals
 
     /// <summary>Crude, unrefined iron (dark brown-gray)</summary>

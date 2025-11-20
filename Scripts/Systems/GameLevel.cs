@@ -41,6 +41,7 @@ public partial class GameLevel : Node
     private AISystem _aiSystem;
     private GameHUD _gameHUD;
     private TargetingSystem _targetingSystem;
+    private ExamineSystem _examineSystem;
     private ProjectileSystem _projectileSystem;
     private GoldManager _goldManager;
 
@@ -66,6 +67,9 @@ public partial class GameLevel : Node
 
         _targetingSystem = new TargetingSystem { Name = "TargetingSystem" };
         AddChild(_targetingSystem);
+
+        _examineSystem = new ExamineSystem { Name = "ExamineSystem" };
+        AddChild(_examineSystem);
 
         _projectileSystem = new ProjectileSystem { Name = "ProjectileSystem" };
         AddChild(_projectileSystem);
@@ -111,6 +115,9 @@ public partial class GameLevel : Node
         _targetingSystem.Initialize(_mapSystem, _entityManager);
         _renderer.SetTargetingSystem(_targetingSystem);
 
+        _examineSystem.Initialize(_visionSystem, _entityManager);
+        _renderer.SetExamineSystem(_examineSystem);
+
         _projectileSystem.Initialize(_combatSystem);
         _projectileSystem.ConnectToPlayer(_player);
         _projectileSystem.SetTextRenderer(_renderer);
@@ -124,6 +131,7 @@ public partial class GameLevel : Node
         _inputHandler.SetGameHUD(_gameHUD);
         _inputHandler.SetPlayerVisionSystem(_visionSystem);
         _inputHandler.SetTargetingSystem(_targetingSystem);
+        _inputHandler.SetExamineSystem(_examineSystem);
 
         _inputHandler.Connect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
         _inputHandler.Connect(InputHandler.SignalName.ActivateItemRequested, Callable.From(_gameHUD.ShowActivateMenu));
@@ -164,6 +172,7 @@ public partial class GameLevel : Node
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
         _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem);
+        _gameHUD.ConnectToExamineSystem(_examineSystem);
 
         _turnManager.StartFirstPlayerTurn();
     }

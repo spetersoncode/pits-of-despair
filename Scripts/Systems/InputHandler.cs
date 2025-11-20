@@ -37,6 +37,7 @@ public partial class InputHandler : Node
     private GameHUD _gameHUD;
     private PlayerVisionSystem _visionSystem;
     private TargetingSystem _targetingSystem;
+    private ExamineSystem _examineSystem;
     private char? _pendingItemKey = null;
     private bool _isReachAttack = false;
 
@@ -114,6 +115,20 @@ public partial class InputHandler : Node
         }
     }
 
+    /// <summary>
+    /// Sets the ExamineSystem reference for examining entities.
+    /// </summary>
+    public void SetExamineSystem(ExamineSystem examineSystem)
+    {
+        _examineSystem = examineSystem;
+
+        // Connect to examine signals
+        if (_examineSystem != null)
+        {
+            _examineSystem.Connect(ExamineSystem.SignalName.ExamineCanceled, Callable.From(OnExamineCanceled));
+        }
+    }
+
     public override void _ExitTree()
     {
         // Clean up signal connections
@@ -133,6 +148,14 @@ public partial class InputHandler : Node
         // Only process key presses, not key releases or repeats
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            // Handle examine mode input first (before targeting)
+            if (_examineSystem != null && _examineSystem.IsActive)
+            {
+                HandleExamineInput(keyEvent);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
             // Handle targeting mode input separately
             if (_targetingSystem != null && _targetingSystem.IsActive)
             {
@@ -187,6 +210,22 @@ public partial class InputHandler : Node
             if (keyEvent.Keycode == Key.E)
             {
                 EmitSignal(SignalName.EquipMenuRequested);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Examine mode (doesn't require player turn)
+            if (keyEvent.Keycode == Key.X)
+            {
+                if (_examineSystem != null && _player != null && _gameHUD != null)
+                {
+                    // Close any open menus before entering examine mode
+                    if (_gameHUD.IsAnyMenuOpen())
+                    {
+                        _gameHUD.CloseAllMenus();
+                    }
+                    _examineSystem.StartExamine(_player.GridPosition);
+                }
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -358,6 +397,29 @@ public partial class InputHandler : Node
     }
 
     /// <summary>
+    /// Handles input while in examine mode.
+    /// </summary>
+    private void HandleExamineInput(InputEventKey keyEvent)
+    {
+        if (_examineSystem == null)
+            return;
+
+        // ESC or X exits examine mode
+        if (keyEvent.Keycode == Key.Escape || keyEvent.Keycode == Key.X)
+        {
+            _examineSystem.CancelExamine();
+            return;
+        }
+
+        // Arrow keys and numpad move cursor
+        Vector2I direction = GetDirectionFromKey(keyEvent.Keycode);
+        if (direction != Vector2I.Zero)
+        {
+            _examineSystem.MoveCursor(direction);
+        }
+    }
+
+    /// <summary>
     /// Called when user requests to target an item.
     /// Starts targeting mode for the specified item.
     /// </summary>
@@ -493,6 +555,15 @@ public partial class InputHandler : Node
         _pendingItemKey = null;
         _isReachAttack = false;
 
+        // No turn consumed
+    }
+
+    /// <summary>
+    /// Called when examine mode is canceled. Returns to normal gameplay.
+    /// </summary>
+    private void OnExamineCanceled()
+    {
+        // No UI cleanup needed - examine mode doesn't change UI state
         // No turn consumed
     }
 
