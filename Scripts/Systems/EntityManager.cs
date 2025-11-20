@@ -136,17 +136,28 @@ public partial class EntityManager : Node
 
                 // Award XP to player
                 playerStats.GainExperience(xpAwarded);
-
-                // Log XP gain message
-                var messageLog = GetNodeOrNull<UI.MessageLog>("/root/GameLevel/HUD/GameHUD/HBoxContainer/VBoxContainer/MessageLog");
-                if (messageLog != null)
-                {
-                    messageLog.AddMessage($"Defeated {entity.DisplayName} for {xpAwarded} XP.", Core.Palette.ToHex(Core.Palette.Default));
-                }
             }
         }
 
         RemoveEntity(entity);
+    }
+
+    /// <summary>
+    /// Gets the XP reward that would be awarded for defeating the given entity.
+    /// Returns 0 if entity is the player, has no stats, or if player doesn't exist.
+    /// </summary>
+    public int GetXPReward(BaseEntity entity)
+    {
+        if (_player == null || entity == _player)
+            return 0;
+
+        var creatureStats = entity.GetNodeOrNull<StatsComponent>("StatsComponent");
+        var playerStats = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
+
+        if (creatureStats == null || playerStats == null)
+            return 0;
+
+        return CalculateXPReward(creatureStats.Level, playerStats.Level);
     }
 
     /// <summary>

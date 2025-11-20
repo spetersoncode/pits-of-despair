@@ -123,20 +123,48 @@ public partial class HealthComponent : Node
     }
 
     /// <summary>
+    /// Calculates what the actual damage would be after applying modifiers, without actually applying it.
+    /// Used to preview damage for UI/logging purposes before applying the damage.
+    /// </summary>
+    /// <param name="amount">Base amount of damage</param>
+    /// <param name="damageType">Type of damage being dealt</param>
+    /// <returns>The actual amount of damage after modifiers (0 if immune)</returns>
+    public int CalculateDamage(int amount, DamageType damageType = DamageType.Bludgeoning)
+    {
+        if (amount <= 0)
+            return 0;
+
+        // Check immunity - immune entities take 0 damage
+        if (Immunities.Contains(damageType))
+            return 0;
+
+        // Apply vulnerability - double damage
+        if (Vulnerabilities.Contains(damageType))
+            return amount * 2;
+
+        // Apply resistance - half damage (rounded down)
+        if (Resistances.Contains(damageType))
+            return amount / 2;
+
+        return amount;
+    }
+
+    /// <summary>
     /// Apply damage to this entity with damage type modifiers.
     /// </summary>
     /// <param name="amount">Base amount of damage to take</param>
     /// <param name="damageType">Type of damage being dealt</param>
-    public void TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning)
+    /// <returns>The actual amount of damage dealt after modifiers</returns>
+    public int TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning)
     {
         if (amount <= 0)
-            return;
+            return 0;
 
         // Check immunity - immune entities take 0 damage
         if (Immunities.Contains(damageType))
         {
             EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "immune");
-            return;
+            return 0;
         }
 
         // Apply vulnerability - double damage
@@ -163,6 +191,8 @@ public partial class HealthComponent : Node
         {
             EmitSignal(SignalName.Died);
         }
+
+        return amount;
     }
 
     /// <summary>

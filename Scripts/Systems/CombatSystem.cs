@@ -151,12 +151,18 @@ public partial class CombatSystem : Node
 
         GD.Print($"Combat: HIT - Damage: {baseDamage} ({attackData.DiceNotation}) + {damageBonus} bonus - {armor} armor = {finalDamage} final damage");
 
-        // PHASE 3: Apply Damage with Damage Type and Emit Feedback
+        // PHASE 3: Calculate Actual Damage, Emit Feedback, Then Apply Damage
         if (finalDamage > 0)
         {
+            // Calculate what the actual damage will be after resistances/vulnerabilities
+            int actualDamage = targetHealth.CalculateDamage(finalDamage, attackData.DamageType);
+
+            // Emit hit signal BEFORE applying damage (so "hit" message appears before "death" message)
+            EmitSignal(SignalName.AttackHit, attacker, target, actualDamage, attackData.Name);
+            EmitSignal(SignalName.AttackExecuted, attacker, target, actualDamage, attackData.Name); // Legacy support
+
+            // Now apply the damage (which may trigger death signals)
             targetHealth.TakeDamage(finalDamage, attackData.DamageType);
-            EmitSignal(SignalName.AttackHit, attacker, target, finalDamage, attackData.Name);
-            EmitSignal(SignalName.AttackExecuted, attacker, target, finalDamage, attackData.Name); // Legacy support
         }
         else
         {

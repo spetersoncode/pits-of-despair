@@ -25,6 +25,7 @@ public partial class MessageLog : PanelContainer
 	private RichTextLabel _logLabel;
 	private readonly Queue<string> _messageHistory = new();
 	private Entities.Player _player;
+	private Systems.EntityManager _entityManager;
 	private readonly Dictionary<Entities.BaseEntity, Entities.BaseEntity> _lastAttacker = new();
 
 	public override void _Ready()
@@ -53,6 +54,14 @@ public partial class MessageLog : PanelContainer
 	public void SetPlayer(Entities.Player player)
 	{
 		_player = player;
+	}
+
+	/// <summary>
+	/// Sets the EntityManager reference for XP reward lookups.
+	/// </summary>
+	public void SetEntityManager(Systems.EntityManager entityManager)
+	{
+		_entityManager = entityManager;
 	}
 
 	/// <summary>
@@ -183,6 +192,16 @@ public partial class MessageLog : PanelContainer
 			{
 				// Player killed someone
 				AddMessage($"You kill the {entityName}!", ColorDeath);
+
+				// Add XP message if applicable
+				if (_entityManager != null)
+				{
+					int xpReward = _entityManager.GetXPReward(victim);
+					if (xpReward > 0)
+					{
+						AddMessage($"Defeated {entityName} for {xpReward} XP.", ColorDefault);
+					}
+				}
 			}
 			else if (isPlayer)
 			{

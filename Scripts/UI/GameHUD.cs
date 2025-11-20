@@ -90,6 +90,7 @@ public partial class GameHUD : Control
 
         _messageLog.ConnectToCombatSystem(combatSystem);
         _messageLog.SetPlayer(player);
+        _messageLog.SetEntityManager(entityManager);
 
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
