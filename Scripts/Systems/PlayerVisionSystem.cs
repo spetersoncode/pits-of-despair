@@ -29,7 +29,7 @@ public partial class PlayerVisionSystem : Node
     private int _mapHeight;
 
     // Debug state
-    private bool _godModeEnabled = false;
+    private bool _revealModeEnabled = false;
 
     /// <summary>
     /// Initializes the vision system with required references.
@@ -110,7 +110,7 @@ public partial class PlayerVisionSystem : Node
 
     /// <summary>
     /// Checks if a tile is currently visible to the player.
-    /// In god mode, all tiles are visible.
+    /// In reveal mode, all tiles are visible.
     /// </summary>
     public bool IsVisible(GridPosition position)
     {
@@ -119,8 +119,8 @@ public partial class PlayerVisionSystem : Node
             return false;
         }
 
-        // God mode: see everything
-        if (_godModeEnabled)
+        // Reveal mode: see everything
+        if (_revealModeEnabled)
         {
             return true;
         }
@@ -131,7 +131,7 @@ public partial class PlayerVisionSystem : Node
     /// <summary>
     /// Checks if a tile has been explored (seen at least once).
     /// Explored tiles are shown dimly even when not currently visible.
-    /// In god mode, all tiles are explored.
+    /// In reveal mode, all tiles are explored.
     /// </summary>
     public bool IsExplored(GridPosition position)
     {
@@ -140,8 +140,8 @@ public partial class PlayerVisionSystem : Node
             return false;
         }
 
-        // God mode: everything is explored
-        if (_godModeEnabled)
+        // Reveal mode: everything is explored
+        if (_revealModeEnabled)
         {
             return true;
         }
@@ -150,30 +150,30 @@ public partial class PlayerVisionSystem : Node
     }
 
     /// <summary>
-    /// Toggles god mode debug feature.
+    /// Toggles reveal mode debug feature.
     /// When enabled, reveals the entire map.
     /// </summary>
-    public void ToggleGodMode()
+    public void ToggleRevealMode()
     {
-        _godModeEnabled = !_godModeEnabled;
+        _revealModeEnabled = !_revealModeEnabled;
 
-        if (_godModeEnabled)
+        if (_revealModeEnabled)
         {
             // Reveal entire map
             RevealEntireMap();
-            GD.Print("God Mode: ON");
+            GD.Print("Map Reveal: ON");
         }
         else
         {
             // Return to normal FOV
             CalculateVision();
-            GD.Print("God Mode: OFF");
+            GD.Print("Map Reveal: OFF");
         }
     }
 
     /// <summary>
     /// Reveals the entire map by marking all tiles as visible and explored.
-    /// Used by god mode debug feature.
+    /// Used by reveal mode debug feature.
     /// </summary>
     private void RevealEntireMap()
     {

@@ -14,18 +14,21 @@ public class DebugContext
     public MapSystem MapSystem { get; }
     public EntityFactory EntityFactory { get; }
     public TurnManager TurnManager { get; }
+    public PlayerVisionSystem VisionSystem { get; }
 
     public DebugContext(
         Player player,
         EntityManager entityManager,
         MapSystem mapSystem,
         EntityFactory entityFactory,
-        TurnManager turnManager)
+        TurnManager turnManager,
+        PlayerVisionSystem visionSystem)
     {
         Player = player;
         EntityManager = entityManager;
         MapSystem = mapSystem;
         EntityFactory = entityFactory;
         TurnManager = turnManager;
+        VisionSystem = visionSystem;
     }
 }

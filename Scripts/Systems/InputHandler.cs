@@ -41,7 +41,6 @@ public partial class InputHandler : Node
     private TurnManager _turnManager;
     private ActionContext _actionContext;
     private GameHUD _gameHUD;
-    private PlayerVisionSystem _visionSystem;
     private CursorTargetingSystem _cursorSystem;
     private char? _pendingItemKey = null;
     private bool _isReachAttack = false;
@@ -95,14 +94,6 @@ public partial class InputHandler : Node
             _gameHUD.Connect(GameHUD.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
             _gameHUD.Connect(GameHUD.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
         }
-    }
-
-    /// <summary>
-    /// Sets the PlayerVisionSystem reference for god mode toggling.
-    /// </summary>
-    public void SetPlayerVisionSystem(PlayerVisionSystem visionSystem)
-    {
-        _visionSystem = visionSystem;
     }
 
     /// <summary>
@@ -225,14 +216,6 @@ public partial class InputHandler : Node
                     }
                     _cursorSystem.StartExamine(_player.GridPosition);
                 }
-                GetViewport().SetInputAsHandled();
-                return;
-            }
-
-            // God mode toggle (Ctrl+G) - debug feature
-            if (keyEvent.Keycode == Key.G && keyEvent.CtrlPressed)
-            {
-                _visionSystem?.ToggleGodMode();
                 GetViewport().SetInputAsHandled();
                 return;
             }

@@ -123,7 +123,6 @@ public partial class GameLevel : Node
         _inputHandler.SetTurnManager(_turnManager);
         _inputHandler.SetActionContext(actionContext);
         _inputHandler.SetGameHUD(_gameHUD);
-        _inputHandler.SetPlayerVisionSystem(_visionSystem);
         _inputHandler.SetCursorTargetingSystem(_cursorSystem);
 
         _inputHandler.Connect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
@@ -172,7 +171,8 @@ public partial class GameLevel : Node
             _entityManager,
             _mapSystem,
             _entityFactory,
-            _turnManager
+            _turnManager,
+            _visionSystem
         );
 
         _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem, debugContext);

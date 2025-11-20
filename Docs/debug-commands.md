@@ -51,6 +51,23 @@ Lists all available debug commands with usage information.
 /help
 ```
 
+### `reveal`
+Toggles map reveal mode (bypasses fog-of-war to show entire dungeon).
+
+**Arguments:** None
+
+**Example:**
+```
+/reveal
+```
+
+**Notes:**
+- Each use toggles the state (on ↔ off)
+- When enabled, all tiles become visible and explored
+- When disabled, returns to normal field-of-view
+- Does NOT affect combat, health, or other gameplay mechanics
+- Only affects vision/rendering
+
 ## Architecture
 
 ### Base Classes
@@ -78,6 +95,7 @@ Provides access to game systems:
 - `MapSystem MapSystem`
 - `EntityFactory EntityFactory`
 - `TurnManager TurnManager`
+- `PlayerVisionSystem VisionSystem`
 
 ### Factory Pattern
 
@@ -90,7 +108,8 @@ Provides access to game systems:
 private static readonly Dictionary<string, Func<DebugCommand>> _commandRegistry = new()
 {
     { "give", () => new GiveCommand() },
-    { "help", () => new HelpCommand() }
+    { "help", () => new HelpCommand() },
+    { "reveal", () => new RevealCommand() }
 };
 ```
 
@@ -272,9 +291,9 @@ return DebugCommandResult.CreateSuccess(
 ## Future Extensions
 
 Potential commands to add:
-- **Player Manipulation**: `heal`, `damage`, `godmode`, `teleport [x] [y]`
+- **Player Manipulation**: `heal`, `damage`, `invincible`, `teleport [x] [y]`
 - **Spawn Control**: `spawn [creatureId]`, `clear_enemies`, `spawn_at [id] [x] [y]`
-- **Level Control**: `reveal_map`, `next_floor`, `regen_level`
+- **Level Control**: `next_floor`, `regen_level`
 - **Item Testing**: `identify_all`, `equip [slot]`, `drop_all`
 - **Stats**: `buff [stat] [amount]`, `set_level [level]`
 
