@@ -152,12 +152,12 @@ public partial class EntityManager : Node
     /// <summary>
     /// Calculates XP reward based on creature level vs player level.
     /// Formula: baseXP × (1.0 + (creatureLevel - playerLevel) × 0.3) with 20% minimum floor
-    /// Base XP: creatureLevel × 7
+    /// Base XP: creatureLevel × 8
     /// </summary>
     private int CalculateXPReward(int creatureLevel, int playerLevel)
     {
         // Base XP scales with creature level
-        int baseXP = creatureLevel * 7;
+        int baseXP = creatureLevel * 8;
 
         // Delta multiplier: +30% per level above player, -30% per level below
         float deltaMultiplier = 1.0f + (creatureLevel - playerLevel) * 0.3f;

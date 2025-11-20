@@ -228,14 +228,10 @@ public partial class SidePanel : PanelContainer
 
 	private void OnLevelUp(int newLevel)
 	{
+		// Update the XP display to reflect new level
 		UpdateExperienceDisplay();
 
-		// Log level up message in success color
-		var messageLog = GetNode<UI.MessageLog>("/root/GameLevel/HUD/GameHUD/HBoxContainer/VBoxContainer/MessageLog");
-		if (messageLog != null)
-		{
-			messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));
-		}
+		// Note: Level-up message is now handled by GameHUD which also shows the stat choice modal
 	}
 
 	private void UpdateExperienceDisplay()

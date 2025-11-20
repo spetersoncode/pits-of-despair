@@ -18,7 +18,8 @@ public enum MenuState
     Activate,
     Drop,
     Equip,
-    ItemDetail
+    ItemDetail,
+    LevelUpChoice
 }
 
 /// <summary>
@@ -41,6 +42,7 @@ public partial class GameHUD : Control
     private HelpModal _helpModal;
     private ItemDetailModal _itemDetailModal;
     private DebugConsoleModal _debugConsoleModal;
+    private LevelUpModal _levelUpModal;
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
@@ -57,6 +59,7 @@ public partial class GameHUD : Control
         _helpModal = GetNode<HelpModal>("HelpModal");
         _itemDetailModal = GetNode<ItemDetailModal>("ItemDetailModal");
         _debugConsoleModal = GetNode<DebugConsoleModal>("DebugConsoleModal");
+        _levelUpModal = GetNode<LevelUpModal>("LevelUpModal");
     }
 
     /// <summary>
@@ -107,6 +110,15 @@ public partial class GameHUD : Control
         _equipPanel.Connect(EquipModal.SignalName.ItemSelected, Callable.From<char>(OnEquipItemSelected));
         _equipPanel.Connect(EquipModal.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
         _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
+
+        _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
+
+        // Connect to player's StatsComponent for level-up notifications
+        var playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+        if (playerStats != null)
+        {
+            playerStats.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
+        }
 
         // Initialize debug console if debug context provided
         if (debugContext != null)
@@ -166,11 +178,11 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
-    /// Checks if any menu is currently open (including help modal and debug console).
+    /// Checks if any menu is currently open (including help modal, debug console, and level-up modal).
     /// </summary>
     public bool IsAnyMenuOpen()
     {
-        return _currentMenuState != MenuState.None || _helpModal.Visible || _debugConsoleModal.Visible;
+        return _currentMenuState != MenuState.None || _helpModal.Visible || _debugConsoleModal.Visible || _levelUpModal.Visible;
     }
 
     /// <summary>
@@ -617,5 +629,71 @@ public partial class GameHUD : Control
     private void OnDebugConsoleCancelled()
     {
         // Console handles its own hiding
+    }
+
+    /// <summary>
+    /// Called when the player levels up.
+    /// Increases HP permanently and shows the stat choice modal.
+    /// </summary>
+    private void OnLevelUp(int newLevel)
+    {
+        // Log level-up message
+        _messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));
+
+        // Increase player's BaseMaxHP by 4
+        var healthComponent = _player.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
+        var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+        if (healthComponent != null && statsComponent != null)
+        {
+            healthComponent.BaseMaxHP += 4;
+            // Trigger HP recalculation by emitting StatsChanged
+            statsComponent.EmitSignal(Components.StatsComponent.SignalName.StatsChanged);
+        }
+
+        // Show level-up modal for stat choice
+        _levelUpModal.ShowForLevel(newLevel);
+        _currentMenuState = MenuState.LevelUpChoice;
+    }
+
+    /// <summary>
+    /// Called when the player chooses a stat to increase.
+    /// </summary>
+    private void OnStatChosen(int statIndex)
+    {
+        var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+        if (statsComponent == null) return;
+
+        string statName = "";
+
+        // Increase the chosen stat
+        switch (statIndex)
+        {
+            case 0: // Strength
+                statsComponent.BaseStrength++;
+                statName = "Strength";
+                break;
+            case 1: // Agility
+                statsComponent.BaseAgility++;
+                statName = "Agility";
+                break;
+            case 2: // Endurance
+                statsComponent.BaseEndurance++;
+                statName = "Endurance";
+                break;
+            case 3: // Will
+                statsComponent.BaseWill++;
+                statName = "Will";
+                break;
+        }
+
+        // Emit StatsChanged to trigger recalculation
+        statsComponent.EmitSignal(Components.StatsComponent.SignalName.StatsChanged);
+
+        // Log stat choice
+        _messageLog.AddMessage($"You increased {statName}!", Palette.ToHex(Palette.Success));
+
+        // Hide modal and reset menu state
+        _levelUpModal.HideModal();
+        _currentMenuState = MenuState.None;
     }
 }

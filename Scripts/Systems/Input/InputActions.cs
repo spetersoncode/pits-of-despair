@@ -46,6 +46,12 @@ public enum InputAction
     // Modal Common
     ModalClose,
 
+    // Level-Up Stat Selection
+    SelectStrength,
+    SelectAgility,
+    SelectEndurance,
+    SelectWill,
+
     // Item Selection (A-Z)
     // Handled separately via letter key range checking
 }

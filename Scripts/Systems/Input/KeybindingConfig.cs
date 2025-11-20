@@ -51,6 +51,12 @@ public static class KeybindingConfig
 
         // Modal Common
         { InputAction.ModalClose, new() { Key.Escape } },
+
+        // Level-Up Stat Selection
+        { InputAction.SelectStrength, new() { Key.S } },
+        { InputAction.SelectAgility, new() { Key.A } },
+        { InputAction.SelectEndurance, new() { Key.E } },
+        { InputAction.SelectWill, new() { Key.W } },
     };
 
     /// <summary>
