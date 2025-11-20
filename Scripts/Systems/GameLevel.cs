@@ -141,7 +141,7 @@ public partial class GameLevel : Node
         _aiSystem.SetCombatSystem(_combatSystem);
         _aiSystem.SetEntityFactory(_entityFactory);
 
-        _spawnManager.PopulateDungeon();
+        _spawnManager.PopulateDungeon(playerSpawn);
 
         foreach (var entity in _entityManager.GetAllEntities())
         {

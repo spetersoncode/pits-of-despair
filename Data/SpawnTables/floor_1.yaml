@@ -7,7 +7,7 @@ name: floor 1
 # Budgets determine how many creatures/items spawn per level generation
 # Values are dice notation (e.g., "2d20+60" = roll 2 twenty-sided dice, add 60)
 creatureBudget:
-  dice: "2d20+60" # Total creature budget points for this floor
+  dice: "2d20+76" # Total creature budget points for this floor (20% increase from 2d20+60)
 itemBudget:
   dice: "5d10+25" # Total item budget points for this floor
 goldBudget:

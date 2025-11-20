@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Spawning.Data;
 using PitsOfDespair.Systems.Spawning.Placement;
 using PitsOfDespair.Systems.Spawning.Strategies;
@@ -90,7 +91,8 @@ public partial class SpawnManager : Node
     /// Main entry point: Populates the dungeon with creatures and items using budget-based spawning.
     /// Works with any map topology (rooms, caves, open areas).
     /// </summary>
-    public void PopulateDungeon()
+    /// <param name="playerPosition">Player's starting position to enforce exclusion zone</param>
+    public void PopulateDungeon(GridPosition playerPosition)
     {
 
         // Get spawn table for this floor
@@ -123,7 +125,8 @@ public partial class SpawnManager : Node
         int totalCreatures = PopulateCreatures(
             allWalkableTiles,
             spawnTable,
-            creatureBudget
+            creatureBudget,
+            playerPosition
         );
 
         // Populate items using budget-based approach
@@ -145,10 +148,12 @@ public partial class SpawnManager : Node
     /// Populates the dungeon with creatures using budget-based spawning.
     /// Finds suitable locations for each spawn based on space requirements.
     /// </summary>
+    /// <param name="playerPosition">Player's position to enforce exclusion zone</param>
     private int PopulateCreatures(
         List<GridPosition> allWalkableTiles,
         SpawnTableData spawnTable,
-        int totalBudget)
+        int totalBudget,
+        GridPosition playerPosition)
     {
         int totalSpawned = 0;
         int remainingBudget = totalBudget;
@@ -180,12 +185,14 @@ public partial class SpawnManager : Node
             // Calculate required space for this spawn
             int requiredSpace = CalculateRequiredSpace(entry);
 
-            // Find a suitable spawn location
+            // Find a suitable spawn location with variable spacing and player exclusion
+            int variableSpacing = GD.RandRange(5, 10);
             var spawnLocation = FindSpawnLocation(
                 allWalkableTiles,
                 spawnedPositions,
                 requiredSpace,
-                minSpacing: 3
+                variableSpacing,
+                playerPosition
             );
 
             if (spawnLocation == null)
@@ -267,13 +274,20 @@ public partial class SpawnManager : Node
 
     /// <summary>
     /// Finds a suitable spawn location with required space and spacing from other spawns.
+    /// Enforces minimum distance from player using Euclidean distance.
     /// </summary>
+    /// <param name="playerPosition">Player's position to enforce exclusion zone</param>
     private GridPosition? FindSpawnLocation(
         List<GridPosition> allWalkableTiles,
         List<GridPosition> existingSpawns,
         int requiredSpace,
-        int minSpacing)
+        int minSpacing,
+        GridPosition playerPosition)
     {
+        // Player exclusion zone (12-15 tiles, use 13 as middle value)
+        const int playerExclusionRadius = 13;
+        int playerExclusionRadiusSquared = playerExclusionRadius * playerExclusionRadius;
+
         // Shuffle walkable tiles for random distribution
         var shuffledTiles = allWalkableTiles.OrderBy(_ => GD.Randi()).ToList();
 
@@ -285,12 +299,20 @@ public partial class SpawnManager : Node
                 continue;
             }
 
-            // Check spacing from existing spawns
+            // Check distance from player (Euclidean distance for circular exclusion zone)
+            int distanceToPlayerSquared = DistanceHelper.EuclideanDistance(candidate, playerPosition);
+            if (distanceToPlayerSquared < playerExclusionRadiusSquared)
+            {
+                continue;
+            }
+
+            // Check spacing from existing spawns (Euclidean distance)
+            int minSpacingSquared = minSpacing * minSpacing;
             bool tooClose = false;
             foreach (var existing in existingSpawns)
             {
-                int distance = Mathf.Abs(existing.X - candidate.X) + Mathf.Abs(existing.Y - candidate.Y);
-                if (distance < minSpacing)
+                int distanceSquared = DistanceHelper.EuclideanDistance(existing, candidate);
+                if (distanceSquared < minSpacingSquared)
                 {
                     tooClose = true;
                     break;
