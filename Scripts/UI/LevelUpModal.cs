@@ -17,7 +17,7 @@ public partial class LevelUpModal : PanelContainer
 
 	private RichTextLabel _contentLabel;
 	private int _newLevel;
-	private readonly KeybindingService _keybindingService = new();
+	private readonly KeybindingService _keybindingService = KeybindingService.Instance;
 
 	public override void _Ready()
 	{
@@ -35,6 +35,10 @@ public partial class LevelUpModal : PanelContainer
 	{
 		_newLevel = level;
 		UpdateContent();
+
+		// Switch to Modal input context so stat selection keys take priority
+		_keybindingService.CurrentContext = InputContext.Modal;
+
 		Show();
 	}
 
@@ -43,6 +47,9 @@ public partial class LevelUpModal : PanelContainer
 	/// </summary>
 	public void HideModal()
 	{
+		// Restore Gameplay input context
+		_keybindingService.CurrentContext = InputContext.Gameplay;
+
 		Hide();
 	}
 

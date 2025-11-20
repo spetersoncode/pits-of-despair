@@ -10,6 +10,22 @@ namespace PitsOfDespair.Systems.Input;
 public static class KeybindingConfig
 {
     /// <summary>
+    /// Maps each action to its input context.
+    /// Actions not in this map default to Gameplay context.
+    /// </summary>
+    public static readonly Dictionary<InputAction, InputContext> ActionContexts = new()
+    {
+        // Modal-specific actions
+        { InputAction.SelectStrength, InputContext.Modal },
+        { InputAction.SelectAgility, InputContext.Modal },
+        { InputAction.SelectEndurance, InputContext.Modal },
+        { InputAction.SelectWill, InputContext.Modal },
+        { InputAction.ModalClose, InputContext.Modal },
+
+        // All other actions default to Gameplay context
+    };
+
+    /// <summary>
     /// Primary keybinding definitions. Each action can have multiple keys.
     /// First key in the list is the "primary" binding shown in help text.
     /// </summary>

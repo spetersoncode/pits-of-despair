@@ -9,7 +9,7 @@ namespace PitsOfDespair.Systems.Input.Processors;
 /// </summary>
 public static class MenuInputProcessor
 {
-    private static readonly KeybindingService _keybindingService = new();
+    private static readonly KeybindingService _keybindingService = KeybindingService.Instance;
 
     /// <summary>
     /// Checks if the key event is the modal close key (ESC).

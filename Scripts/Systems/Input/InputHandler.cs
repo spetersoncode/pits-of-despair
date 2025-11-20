@@ -44,13 +44,12 @@ public partial class InputHandler : Node
     private CursorTargetingSystem _cursorSystem;
 
     // Input processors
-    private readonly KeybindingService _keybindingService;
+    private readonly KeybindingService _keybindingService = KeybindingService.Instance;
     private readonly GameplayInputProcessor _gameplayProcessor;
     private readonly CursorInputProcessor _cursorProcessor;
 
     public InputHandler()
     {
-        _keybindingService = new KeybindingService();
         _gameplayProcessor = new GameplayInputProcessor(_keybindingService);
         _cursorProcessor = new CursorInputProcessor(_keybindingService);
     }

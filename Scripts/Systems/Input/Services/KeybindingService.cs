@@ -6,18 +6,77 @@ namespace PitsOfDespair.Systems.Input.Services;
 /// <summary>
 /// Service for querying keybindings and resolving input events to actions.
 /// Designed to support future runtime rebinding and persistence.
+/// Singleton to ensure consistent context state across the application.
 /// </summary>
 public class KeybindingService
 {
+    private static readonly KeybindingService _instance = new();
+
+    /// <summary>
+    /// Gets the singleton instance of the KeybindingService.
+    /// </summary>
+    public static KeybindingService Instance => _instance;
+
+    private InputContext _currentContext = InputContext.Gameplay;
+
+    // Private constructor to enforce singleton pattern
+    private KeybindingService() { }
+
+    /// <summary>
+    /// Gets or sets the current input context.
+    /// Determines which context-specific actions are prioritized.
+    /// </summary>
+    public InputContext CurrentContext
+    {
+        get => _currentContext;
+        set => _currentContext = value;
+    }
+
     /// <summary>
     /// Attempts to get the action bound to the given key event.
+    /// Context-aware: prioritizes actions matching the current context.
     /// </summary>
     /// <param name="keyEvent">The key event to check.</param>
     /// <param name="action">The action bound to this key, if any.</param>
     /// <returns>True if an action is bound to this key.</returns>
     public bool TryGetAction(InputEventKey keyEvent, out InputAction action)
     {
-        // Check modifier keybindings first (more specific)
+        // Strategy: Check context-specific bindings first, then fall back to any match
+
+        // Pass 1: Check modifier keybindings matching current context
+        foreach (var (Action, Key, Ctrl, Shift, Alt) in KeybindingConfig.ModifierKeybindings)
+        {
+            if (keyEvent.Keycode == Key &&
+                keyEvent.CtrlPressed == Ctrl &&
+                keyEvent.ShiftPressed == Shift &&
+                keyEvent.AltPressed == Alt)
+            {
+                var actionContext = GetActionContext(Action);
+                if (actionContext == _currentContext)
+                {
+                    action = Action;
+                    return true;
+                }
+            }
+        }
+
+        // Pass 2: Check standard keybindings matching current context
+        // Note: We don't check modifier state here to allow keys like Key.Question
+        // which may have shift state, and to be lenient with standard bindings
+        foreach (var (Action, Keys) in KeybindingConfig.Keybindings)
+        {
+            if (Keys.Contains(keyEvent.Keycode))
+            {
+                var actionContext = GetActionContext(Action);
+                if (actionContext == _currentContext)
+                {
+                    action = Action;
+                    return true;
+                }
+            }
+        }
+
+        // Pass 3: Check any modifier keybinding (fallback for context-agnostic actions)
         foreach (var (Action, Key, Ctrl, Shift, Alt) in KeybindingConfig.ModifierKeybindings)
         {
             if (keyEvent.Keycode == Key &&
@@ -30,9 +89,7 @@ public class KeybindingService
             }
         }
 
-        // Check standard keybindings
-        // Note: We don't check modifier state here to allow keys like Key.Question
-        // which may have shift state, and to be lenient with standard bindings
+        // Pass 4: Check any standard keybinding (fallback for context-agnostic actions)
         foreach (var (Action, Keys) in KeybindingConfig.Keybindings)
         {
             if (Keys.Contains(keyEvent.Keycode))
@@ -44,6 +101,17 @@ public class KeybindingService
 
         action = default;
         return false;
+    }
+
+    /// <summary>
+    /// Gets the input context for the given action.
+    /// Defaults to Gameplay if not specified in ActionContexts.
+    /// </summary>
+    private InputContext GetActionContext(InputAction action)
+    {
+        return KeybindingConfig.ActionContexts.TryGetValue(action, out var context)
+            ? context
+            : InputContext.Gameplay;
     }
 
     /// <summary>

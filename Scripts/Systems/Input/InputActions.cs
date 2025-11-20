@@ -1,6 +1,24 @@
 namespace PitsOfDespair.Systems.Input;
 
 /// <summary>
+/// Defines input contexts for context-aware keybinding resolution.
+/// Higher priority contexts take precedence over lower priority ones.
+/// </summary>
+public enum InputContext
+{
+    /// <summary>
+    /// Default gameplay context (movement, actions, menu toggles).
+    /// </summary>
+    Gameplay,
+
+    /// <summary>
+    /// Modal dialog context (level-up, inventory, etc.).
+    /// Takes priority over Gameplay context.
+    /// </summary>
+    Modal,
+}
+
+/// <summary>
 /// Defines all possible input actions in the game.
 /// Used to decouple key bindings from action execution.
 /// </summary>
