@@ -6,6 +6,8 @@
 name: goblin
 # Display name shown to player
 
+description: A wretched creature with yellowed eyes and jagged teeth. It clutches its weapon with malicious intent, eager for violence.
+
 type: goblinoid
 # Creature type determines default glyph ('g') and color
 # Available types: goblinoid, vermin, undead

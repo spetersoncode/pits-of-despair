@@ -46,6 +46,12 @@ public class CreatureData
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// Atmospheric description of the creature.
+    /// Used for examine command and creature details.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
     /// Creature type for category-based defaults (e.g., "goblinoid", "vermin").
     /// Optional - blank type means no inherited defaults.
     /// </summary>

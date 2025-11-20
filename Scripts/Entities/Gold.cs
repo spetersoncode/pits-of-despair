@@ -20,6 +20,7 @@ public partial class Gold : BaseEntity
         Glyph = "*";
         GlyphColor = Palette.Gold;
         IsWalkable = true; // Player can walk onto gold tiles to collect it
+        Description = "Gleaming coins scattered across the dungeon floor. Someone's fortune, now yours for the taking.";
 
         // Update display name to show amount
         UpdateDisplayName();

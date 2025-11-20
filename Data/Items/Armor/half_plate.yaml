@@ -1,5 +1,6 @@
 name: half-plate
 type: armor
 color: ForgedSteel
+description: Masterwork plates protecting chest, shoulders, and thighs, backed with mail. Moving in this is exhausting, but you feel nearly invincible.
 armorValue: 7
 evasionPenalty: -7

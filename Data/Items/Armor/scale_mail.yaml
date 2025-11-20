@@ -1,5 +1,6 @@
 name: scale mail
 type: armor
 color: Copper
+description: Overlapping copper plates sewn to leather backing, reminiscent of serpent scales. Heavy and cumbersome, but it catches blades effectively.
 armorValue: 4
 evasionPenalty: -4

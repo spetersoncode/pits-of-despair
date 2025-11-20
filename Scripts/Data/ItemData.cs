@@ -77,6 +77,12 @@ public class ItemData
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// Atmospheric description of the item.
+    /// Used for examine command and item detail modal.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
     /// Item type for category-based defaults (e.g., "potion", "scroll").
     /// Optional - blank type means no inherited defaults.
     /// </summary>

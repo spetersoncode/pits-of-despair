@@ -1,5 +1,6 @@
 name: banded mail
 type: armor
 color: Iron
+description: Horizontal iron bands fastened to chain and leather. Each band bears the hammer marks of its forging, and the scars of past battles.
 armorValue: 6
 evasionPenalty: -6

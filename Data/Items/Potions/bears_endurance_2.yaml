@@ -1,6 +1,7 @@
 name: bear's endurance (+2)
 type: potion
 color: Oak
+description: A dense, honey-colored brew that clings to the sides of its flask. Its sweet aroma carries the promise of tireless vigor.
 effects:
   - type: apply_status
     statusType: endurance_buff

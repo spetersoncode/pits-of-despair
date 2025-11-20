@@ -1,6 +1,7 @@
 name: club
 type: weapon
 color: AshWood
+description: Worn smooth by countless hands, this crude bludgeon has seen its share of violence. Simple, but effective against skulls and bones alike.
 attack:
   type: Melee
   dice: "1d3+1"

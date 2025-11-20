@@ -1,4 +1,5 @@
 name: rat
+description: A filthy dungeon rat with matted fur and gleaming eyes. Disease and desperation have made it bold enough to attack anything.
 type: vermin
 strength: -2
 endurance: -2

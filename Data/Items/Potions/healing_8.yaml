@@ -1,6 +1,7 @@
 name: healing (+8)
 type: potion
 color: HealthFull
+description: A shimmering crimson liquid that pulses with vitality. The glass grows warm to the touch, and drinking it fills your veins with soothing warmth.
 effects:
   - type: heal
     amount: 8

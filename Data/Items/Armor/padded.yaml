@@ -3,5 +3,6 @@ type: armor
 glyph: "["
 color: Wool
 equipSlot: Armor
+description: Layers of quilted cloth and wool that offer minimal protection. Better than nothing, but only just.
 armorValue: 1
 evasionPenalty: 0

@@ -1,6 +1,7 @@
 name: cat's grace (+2)
 type: potion
 color: Cyan
+description: An iridescent cyan fluid that seems to flow of its own accord. Watching it swirl in the vial makes you feel lighter already.
 effects:
   - type: apply_status
     statusType: agility_buff

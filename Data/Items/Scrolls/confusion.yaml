@@ -1,6 +1,7 @@
 name: confusion
 type: scroll
 color: Violet
+description: Twisted symbols that hurt to look at dance across the page. Even a glance makes your thoughts scatter like frightened birds.
 effects:
   - type: apply_status
     statusType: confusion

@@ -1,5 +1,6 @@
 name: leather armor
 type: armor
 color: SoftLeather
+description: Supple leather hardened with oils and wax. Light enough to move freely, tough enough to turn a glancing blow.
 armorValue: 2
 evasionPenalty: 0

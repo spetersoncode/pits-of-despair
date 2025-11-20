@@ -3,6 +3,7 @@ type: weapon
 glyph: "/"
 color: Steel
 equipSlot: MeleeWeapon
+description: An iron-tipped shaft of ash wood, balanced for both thrust and throw. Its reach keeps the dangers of the deep at arm's length.
 attack:
   type: Melee
   dice: "1d6"

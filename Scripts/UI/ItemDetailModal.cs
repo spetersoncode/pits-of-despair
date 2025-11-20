@@ -221,6 +221,13 @@ public partial class ItemDetailModal : CenterContainer
 			slotInfo = $"\n[color={Palette.ToHex(Palette.Disabled)}]Slot:[/color] [color={Palette.ToHex(Palette.AshGray)}]{slotName}[/color]";
 		}
 
+		// Description section
+		string descriptionSection = "";
+		if (!string.IsNullOrEmpty(itemTemplate.Description))
+		{
+			descriptionSection = $"\n\n[color={Palette.ToHex(Palette.AshGray)}]{itemTemplate.Description}[/color]";
+		}
+
 		// Commands section
 		string commands = $"\n\n[color={Palette.ToHex(Palette.Disabled)}]Commands:[/color]\n";
 		commands += $"[color={Palette.ToHex(Palette.Default)}]=[/color] Rebind hotkey\n";
@@ -229,6 +236,7 @@ public partial class ItemDetailModal : CenterContainer
 		return $"[center][b]Item Details[/b][/center]\n\n" +
 		       $"{glyph} {name}{countInfo}\n" +
 		       $"{keyInfo}{chargesInfo}{slotInfo}" +
+		       $"{descriptionSection}" +
 		       $"{commands}";
 	}
 

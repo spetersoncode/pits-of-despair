@@ -29,6 +29,12 @@ public partial class BaseEntity : Node2D
     /// </summary>
     public string DisplayName { get; set; } = "Unknown";
 
+    /// <summary>
+    /// Atmospheric description of this entity.
+    /// Used for examine command and entity details.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
     private string _glyph = "?";
 
     /// <summary>

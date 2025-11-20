@@ -1,6 +1,7 @@
 name: bull's strength (+2)
 type: potion
 color: Rust
+description: A thick, rust-colored concoction that smells of iron and sweat. Your muscles ache to unleash its primal power.
 effects:
   - type: apply_status
     statusType: strength_buff

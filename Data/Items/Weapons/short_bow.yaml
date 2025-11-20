@@ -3,6 +3,7 @@ type: weapon
 glyph: "}"
 color: Mahogany
 equipSlot: RangedWeapon
+description: Crafted from supple yew, this bow has ended lives from the shadows. The string hums with barely-contained tension when drawn.
 attack:
   type: Ranged
   dice: "1d6"

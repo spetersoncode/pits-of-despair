@@ -92,6 +92,7 @@ public partial class EntityFactory : Node
         {
             GridPosition = position,
             DisplayName = data.Name,
+            Description = data.Description,
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
             IsWalkable = true, // Items are walkable (entities can walk over them)
@@ -112,6 +113,7 @@ public partial class EntityFactory : Node
         {
             GridPosition = position,
             DisplayName = data.Name,
+            Description = data.Description,
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
             Name = data.Name // Set node name for debugging
