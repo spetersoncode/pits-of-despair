@@ -85,6 +85,8 @@ public partial class GameLevel : Node
         _player.SetEntityManager(_entityManager);
         _player.SetGoldManager(_goldManager);
 
+        _entityManager.SetPlayer(_player);
+
         _movementSystem.SetPlayer(_player);
 
         var playerMovement = _player.GetNode<MovementComponent>("MovementComponent");

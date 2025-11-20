@@ -35,6 +35,19 @@ show_percentage = false
 layout_mode = 2
 text = "HP: 20/20"
 
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Level: 1"
+
+[node name="ExperienceBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+show_percentage = false
+
+[node name="ExperienceLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "XP: 0/100"
+
 [node name="Separator1" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 

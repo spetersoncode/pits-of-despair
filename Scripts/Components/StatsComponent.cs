@@ -18,6 +18,20 @@ public partial class StatsComponent : Node
 	[Signal]
 	public delegate void StatsChangedEventHandler();
 
+	/// <summary>
+	/// Emitted when experience is gained.
+	/// Parameters: amount gained, current XP, XP needed for next level
+	/// </summary>
+	[Signal]
+	public delegate void ExperienceGainedEventHandler(int amount, int current, int toNext);
+
+	/// <summary>
+	/// Emitted when the entity levels up.
+	/// Parameter: new level
+	/// </summary>
+	[Signal]
+	public delegate void LevelUpEventHandler(int newLevel);
+
 	#endregion
 
 	#region Base Stats
@@ -51,6 +65,17 @@ public partial class StatsComponent : Node
 	/// HP bonus = Endurance × Level
 	/// </summary>
 	[Export] public int Level { get; set; } = 1;
+
+	/// <summary>
+	/// Current experience points.
+	/// </summary>
+	public int CurrentExperience { get; private set; } = 0;
+
+	/// <summary>
+	/// Experience points required to reach the next level from current level.
+	/// Since XP is subtracted on level-up, this shows the gap between levels.
+	/// </summary>
+	public int ExperienceToNextLevel => GetXPForLevel(Level + 1) - GetXPForLevel(Level);
 
 	#endregion
 
@@ -278,6 +303,53 @@ public partial class StatsComponent : Node
 	public int GetHPBonus()
 	{
 		return TotalEndurance * Level;
+	}
+
+	#endregion
+
+	#region Experience Management
+
+	/// <summary>
+	/// Calculates the total cumulative XP required to reach a given level from level 1.
+	/// Formula: 50 × (level - 1) × level
+	/// Level 1 = 0 XP (starting point)
+	/// Level 2 = 100 XP, Level 3 = 300 XP, Level 4 = 600 XP, Level 5 = 1000 XP...
+	/// </summary>
+	/// <param name="level">Target level</param>
+	/// <returns>Cumulative XP threshold for that level</returns>
+	public static int GetXPForLevel(int level)
+	{
+		return 50 * (level - 1) * level;
+	}
+
+	/// <summary>
+	/// Awards experience points and handles level-ups.
+	/// </summary>
+	/// <param name="amount">Amount of XP to gain</param>
+	public void GainExperience(int amount)
+	{
+		if (amount <= 0) return;
+
+		CurrentExperience += amount;
+
+		// Check for level-up(s) - handle overflow in case of large XP gains
+		bool leveledUp = false;
+		while (CurrentExperience >= ExperienceToNextLevel)
+		{
+			CurrentExperience -= ExperienceToNextLevel;
+			Level++;
+			leveledUp = true;
+			EmitSignal(SignalName.LevelUp, Level);
+		}
+
+		// Emit experience gained signal
+		EmitSignal(SignalName.ExperienceGained, amount, CurrentExperience, ExperienceToNextLevel);
+
+		// If we leveled up, stats changed (HP will recalculate)
+		if (leveledUp)
+		{
+			EmitSignal(SignalName.StatsChanged);
+		}
 	}
 
 	#endregion

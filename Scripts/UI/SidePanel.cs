@@ -19,9 +19,13 @@ public partial class SidePanel : PanelContainer
 	private static readonly Color HealthColorYellow = Palette.HealthMedium;
 	private static readonly Color HealthColorRed = Palette.HealthCritical;
 	private static readonly Color DefaultTextColor = Palette.Default;
+	private static readonly Color ExperienceBarColor = Palette.Gold;
 
 	private ProgressBar _healthBar;
 	private Label _healthLabel;
+	private Label _levelLabel;
+	private ProgressBar _experienceBar;
+	private Label _experienceLabel;
 	private Label _floorLabel;
 	private Label _goldLabel;
 	private Label _standingOnLabel;
@@ -39,6 +43,9 @@ public partial class SidePanel : PanelContainer
 	{
 		_healthBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/HealthBar");
 		_healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
+		_levelLabel = GetNode<Label>("MarginContainer/VBoxContainer/LevelLabel");
+		_experienceBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/ExperienceBar");
+		_experienceLabel = GetNode<Label>("MarginContainer/VBoxContainer/ExperienceLabel");
 		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
 		_goldLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/GoldLabel");
 		_standingOnLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StandingOnLabel");
@@ -69,6 +76,8 @@ public partial class SidePanel : PanelContainer
 		if (statsComponent != null)
 		{
 			statsComponent.Connect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
+			statsComponent.Connect(Components.StatsComponent.SignalName.ExperienceGained, Callable.From<int, int, int>(OnExperienceGained));
+			statsComponent.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
 		}
 
 		// Subscribe to player position changes
@@ -86,6 +95,7 @@ public partial class SidePanel : PanelContainer
 
 		// Initialize display with current values
 		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
+		UpdateExperienceDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
@@ -209,6 +219,54 @@ public partial class SidePanel : PanelContainer
 	private void OnStatsChanged()
 	{
 		UpdateStatsDisplay();
+	}
+
+	private void OnExperienceGained(int amount, int current, int toNext)
+	{
+		UpdateExperienceDisplay();
+	}
+
+	private void OnLevelUp(int newLevel)
+	{
+		UpdateExperienceDisplay();
+
+		// Log level up message in success color
+		var messageLog = GetNode<UI.MessageLog>("/root/GameLevel/UILayer/MessageLog");
+		if (messageLog != null)
+		{
+			messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));
+		}
+	}
+
+	private void UpdateExperienceDisplay()
+	{
+		if (_levelLabel == null || _experienceBar == null || _experienceLabel == null || _player == null)
+			return;
+
+		var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+		if (statsComponent == null)
+		{
+			_levelLabel.Text = "Level: ?";
+			_experienceLabel.Text = "XP: ?/?";
+			return;
+		}
+
+		// Update level label
+		_levelLabel.Text = $"Level: {statsComponent.Level}";
+		_levelLabel.AddThemeColorOverride("font_color", DefaultTextColor);
+
+		// Update experience bar
+		_experienceBar.MaxValue = statsComponent.ExperienceToNextLevel;
+		_experienceBar.Value = statsComponent.CurrentExperience;
+
+		// Create StyleBoxFlat for the experience bar fill with gold color
+		var styleBox = new StyleBoxFlat();
+		styleBox.BgColor = ExperienceBarColor;
+		_experienceBar.AddThemeStyleboxOverride("fill", styleBox);
+
+		// Update experience label
+		_experienceLabel.Text = $"XP: {statsComponent.CurrentExperience}/{statsComponent.ExperienceToNextLevel}";
+		_experienceLabel.AddThemeColorOverride("font_color", ExperienceBarColor);
 	}
 
 	private void UpdateEquipmentDisplay()

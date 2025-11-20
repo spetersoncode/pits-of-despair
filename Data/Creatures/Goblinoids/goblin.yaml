@@ -12,6 +12,9 @@ type: goblinoid
 # Creature type determines default glyph ('g') and color
 # Available types: goblinoid, vermin, undead
 
+level: 1
+# Creature level (default: 1). Affects difficulty and XP rewards
+
 # --- Stats (optional, default to 0) ---
 # strength: 0    # Melee damage bonus: STR/2 (rounded down)
 # agility: 0     # Ranged to-hit and defense bonus

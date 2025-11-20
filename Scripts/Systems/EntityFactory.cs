@@ -133,7 +133,8 @@ public partial class EntityFactory : Node
             BaseStrength = data.Strength,
             BaseAgility = data.Agility,
             BaseEndurance = data.Endurance,
-            BaseWill = data.Will
+            BaseWill = data.Will,
+            Level = data.Level
         };
         entity.AddChild(statsComponent);
 

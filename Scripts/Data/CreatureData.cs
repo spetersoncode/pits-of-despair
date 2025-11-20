@@ -68,8 +68,14 @@ public class CreatureData
     public int Will { get; set; } = 0;
 
     /// <summary>
+    /// Creature level (affects difficulty and XP rewards).
+    /// Default level 1.
+    /// </summary>
+    public int Level { get; set; } = 1;
+
+    /// <summary>
     /// Base MaxHP before Endurance modifiers.
-    /// Actual MaxHP will be: MaxHP + (Endurance × 2)
+    /// Actual MaxHP will be: MaxHP + (Endurance × Level)
     /// </summary>
     public int MaxHP { get; set; } = 1;
 

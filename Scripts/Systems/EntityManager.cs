@@ -29,6 +29,15 @@ public partial class EntityManager : Node
 
     private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
     private readonly System.Collections.Generic.Dictionary<GridPosition, BaseEntity> _positionCache = new();
+    private Player _player;
+
+    /// <summary>
+    /// Sets the player reference for XP awarding.
+    /// </summary>
+    public void SetPlayer(Player player)
+    {
+        _player = player;
+    }
 
     /// <summary>
     /// Register an entity with the manager.
@@ -110,10 +119,56 @@ public partial class EntityManager : Node
 
     /// <summary>
     /// Handle entity death by removing it from the game.
+    /// Awards XP to player if the dead entity is a creature.
     /// </summary>
     private void OnEntityDied(BaseEntity entity)
     {
+        // Award XP if player exists and this is a creature (not the player, has stats)
+        if (_player != null && entity != _player)
+        {
+            var creatureStats = entity.GetNodeOrNull<StatsComponent>("StatsComponent");
+            var playerStats = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
+
+            if (creatureStats != null && playerStats != null)
+            {
+                // Calculate XP reward using delta-based formula
+                int xpAwarded = CalculateXPReward(creatureStats.Level, playerStats.Level);
+
+                // Award XP to player
+                playerStats.GainExperience(xpAwarded);
+
+                // Log XP gain message
+                var messageLog = GetNodeOrNull<UI.MessageLog>("/root/GameLevel/UILayer/MessageLog");
+                if (messageLog != null)
+                {
+                    messageLog.AddMessage($"Defeated {entity.DisplayName} for {xpAwarded} XP.", Core.Palette.ToHex(Core.Palette.Default));
+                }
+            }
+        }
+
         RemoveEntity(entity);
+    }
+
+    /// <summary>
+    /// Calculates XP reward based on creature level vs player level.
+    /// Formula: baseXP × (1.0 + (creatureLevel - playerLevel) × 0.3) with 20% minimum floor
+    /// Base XP: creatureLevel × 7
+    /// </summary>
+    private int CalculateXPReward(int creatureLevel, int playerLevel)
+    {
+        // Base XP scales with creature level
+        int baseXP = creatureLevel * 7;
+
+        // Delta multiplier: +30% per level above player, -30% per level below
+        float deltaMultiplier = 1.0f + (creatureLevel - playerLevel) * 0.3f;
+
+        // Apply minimum floor of 20% (never less than 1 XP for level 1+ creatures)
+        float finalMultiplier = Mathf.Max(0.2f, deltaMultiplier);
+
+        // Calculate final XP (rounded)
+        int xp = Mathf.RoundToInt(baseXP * finalMultiplier);
+
+        return Mathf.Max(1, xp); // Always award at least 1 XP
     }
 
     /// <summary>
