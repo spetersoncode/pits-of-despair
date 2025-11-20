@@ -179,6 +179,7 @@ public partial class AISystem : Node
 
     /// <summary>
     /// Builds the AI context for goal evaluation and execution.
+    /// Reuses cached ActionContext and only rebuilds dynamic per-turn state.
     /// </summary>
     private AIContext BuildAIContext(AIComponent ai, BaseEntity entity)
     {
@@ -190,9 +191,6 @@ public partial class AISystem : Node
             Entity = entity,
             AIComponent = ai,
             ActionContext = _actionContext,
-            Player = _player,
-            MapSystem = _mapSystem,
-            EntityManager = _entityManager,
             IsPlayerVisible = playerVisible,
             DistanceToPlayer = distanceToPlayer,
             VisionComponent = entity.GetNodeOrNull<VisionComponent>("VisionComponent"),

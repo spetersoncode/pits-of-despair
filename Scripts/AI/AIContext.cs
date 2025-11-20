@@ -9,6 +9,12 @@ namespace PitsOfDespair.AI;
 /// <summary>
 /// Context data bundle provided to goals for evaluation and execution.
 /// Contains all information goals need to calculate scores and perform actions.
+///
+/// Core game systems (MapSystem, EntityManager, Player, etc.) are accessed via the
+/// ActionContext property to avoid duplication. For example:
+/// - context.ActionContext.MapSystem for terrain queries
+/// - context.ActionContext.EntityManager for entity lookups
+/// - context.ActionContext.Player for player reference
 /// </summary>
 public class AIContext
 {
@@ -23,24 +29,10 @@ public class AIContext
     public AIComponent AIComponent { get; set; }
 
     /// <summary>
-    /// Action context for executing actions.
+    /// Action context for executing actions and accessing core game systems.
+    /// Use this to access MapSystem, EntityManager, Player, CombatSystem, and EntityFactory.
     /// </summary>
     public ActionContext ActionContext { get; set; }
-
-    /// <summary>
-    /// The player entity.
-    /// </summary>
-    public Player Player { get; set; }
-
-    /// <summary>
-    /// Map system for terrain queries.
-    /// </summary>
-    public MapSystem MapSystem { get; set; }
-
-    /// <summary>
-    /// Entity manager for entity queries.
-    /// </summary>
-    public EntityManager EntityManager { get; set; }
 
     /// <summary>
     /// Whether the player is currently visible to this entity.

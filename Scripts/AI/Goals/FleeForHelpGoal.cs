@@ -43,7 +43,7 @@ public class FleeForHelpGoal : Goal
     public override ActionResult Execute(AIContext context)
     {
         var entity = context.Entity;
-        var player = context.Player;
+        var player = context.ActionContext.Player;
         var ai = context.AIComponent;
 
         // If player is visible, yell periodically
@@ -115,9 +115,9 @@ public class FleeForHelpGoal : Goal
     {
         const int MinSafeDistance = 3;
         var entity = context.Entity;
-        var player = context.Player;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
+        var player = context.ActionContext.Player;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
 
         // Find nearby allies
         var allies = FindNearbyAllies(context);
@@ -184,9 +184,9 @@ public class FleeForHelpGoal : Goal
     private ActionResult FleeFromPlayer(AIContext context)
     {
         var entity = context.Entity;
-        var player = context.Player;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
+        var player = context.ActionContext.Player;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
 
         GridPosition entityPos = entity.GridPosition;
         GridPosition playerPos = player.GridPosition;
@@ -316,8 +316,8 @@ public class FleeForHelpGoal : Goal
     private ActionResult FleeFromPosition(AIContext context, GridPosition threatPosition)
     {
         var entity = context.Entity;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
 
         GridPosition entityPos = entity.GridPosition;
 
@@ -433,7 +433,7 @@ public class FleeForHelpGoal : Goal
         var entity = context.Entity;
         var allies = new List<GridPosition>();
 
-        var allEntities = context.EntityManager.GetAllEntities();
+        var allEntities = context.ActionContext.EntityManager.GetAllEntities();
         foreach (var potentialAlly in allEntities)
         {
             // Skip self

@@ -49,9 +49,9 @@ public class ReturnToSpawnGoal : Goal
     {
         var entity = context.Entity;
         var ai = context.AIComponent;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
-        var player = context.Player;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
+        var player = context.ActionContext.Player;
 
         // Already at spawn - just wait
         if (entity.GridPosition.Equals(ai.SpawnPosition))

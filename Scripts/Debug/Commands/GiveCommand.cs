@@ -24,7 +24,7 @@ public class GiveCommand : DebugCommand
         }
 
         string itemId = args[0];
-        var player = context.Player;
+        var player = context.ActionContext.Player;
         var inventory = player.GetNodeOrNull<InventoryComponent>("InventoryComponent");
 
         if (inventory == null)
@@ -36,7 +36,7 @@ public class GiveCommand : DebugCommand
         }
 
         // Create item at player's position
-        var item = context.EntityFactory.CreateItem(itemId, player.GridPosition);
+        var item = context.ActionContext.EntityFactory.CreateItem(itemId, player.GridPosition);
 
         if (item == null)
         {
@@ -52,7 +52,7 @@ public class GiveCommand : DebugCommand
         if (key != null)
         {
             // Success - remove item from world
-            context.EntityManager.RemoveEntity(item);
+            context.ActionContext.EntityManager.RemoveEntity(item);
             item.QueueFree();
 
             string itemName = item.ItemData.Template.GetDisplayName(1);
@@ -64,7 +64,7 @@ public class GiveCommand : DebugCommand
         else
         {
             // Inventory full, clean up the item
-            context.EntityManager.RemoveEntity(item);
+            context.ActionContext.EntityManager.RemoveEntity(item);
             item.QueueFree();
 
             return DebugCommandResult.CreateFailure(

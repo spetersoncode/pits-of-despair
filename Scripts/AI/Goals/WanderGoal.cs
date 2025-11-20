@@ -24,8 +24,8 @@ public class WanderGoal : Goal
     public override ActionResult Execute(AIContext context)
     {
         var entity = context.Entity;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
 
         // Try all 8 directions and collect valid ones
         List<Vector2I> possibleDirections = new List<Vector2I>();

@@ -43,7 +43,7 @@ public class SearchLastKnownPositionGoal : Goal
     {
         var entity = context.Entity;
         var ai = context.AIComponent;
-        var mapSystem = context.MapSystem;
+        var mapSystem = context.ActionContext.MapSystem;
 
         if (ai.LastKnownPlayerPosition == null)
         {
@@ -85,9 +85,9 @@ public class SearchLastKnownPositionGoal : Goal
     {
         var entity = context.Entity;
         var ai = context.AIComponent;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
-        var player = context.Player;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
+        var player = context.ActionContext.Player;
 
         // If we don't have a path, calculate one
         if (ai.CurrentPath.Count == 0)
@@ -151,7 +151,7 @@ public class SearchLastKnownPositionGoal : Goal
     {
         var entity = context.Entity;
         var ai = context.AIComponent;
-        var mapSystem = context.MapSystem;
+        var mapSystem = context.ActionContext.MapSystem;
 
         List<Vector2I> possibleDirections = new List<Vector2I>();
 

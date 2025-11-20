@@ -168,12 +168,9 @@ public partial class GameLevel : Node
 
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
-        // Create debug context for debug commands
+        // Create debug context for debug commands (composes ActionContext for core systems)
         var debugContext = new DebugContext(
-            _player,
-            _entityManager,
-            _mapSystem,
-            _entityFactory,
+            actionContext,
             _turnManager,
             _visionSystem
         );

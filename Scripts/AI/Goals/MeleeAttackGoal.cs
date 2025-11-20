@@ -29,7 +29,7 @@ public class MeleeAttackGoal : Goal
     public override ActionResult Execute(AIContext context)
     {
         var entity = context.Entity;
-        var player = context.Player;
+        var player = context.ActionContext.Player;
         var ai = context.AIComponent;
 
         int distanceToPlayer = DistanceHelper.ChebyshevDistance(entity.GridPosition, player.GridPosition);
@@ -60,9 +60,9 @@ public class MeleeAttackGoal : Goal
     {
         var entity = context.Entity;
         var ai = context.AIComponent;
-        var mapSystem = context.MapSystem;
-        var entityManager = context.EntityManager;
-        var player = context.Player;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
+        var player = context.ActionContext.Player;
 
         // If we don't have a path or reached the end, calculate new path
         if (ai.CurrentPath.Count == 0)
