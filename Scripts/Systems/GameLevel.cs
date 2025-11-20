@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
+using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.Spawning;
 using PitsOfDespair.UI;
@@ -130,6 +131,8 @@ public partial class GameLevel : Node
         _inputHandler.Connect(InputHandler.SignalName.DropItemRequested, Callable.From(_gameHUD.ShowDropMenu));
         _inputHandler.Connect(InputHandler.SignalName.EquipMenuRequested, Callable.From(_gameHUD.ShowEquipMenu));
         _inputHandler.Connect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
+        _inputHandler.Connect(InputHandler.SignalName.DebugModeToggled, Callable.From(_gameHUD.ToggleDebugMode));
+        _inputHandler.Connect(InputHandler.SignalName.DebugConsoleRequested, Callable.From(_gameHUD.RequestDebugConsole));
 
         _aiSystem.SetMapSystem(_mapSystem);
         _aiSystem.SetPlayer(_player);
@@ -163,7 +166,16 @@ public partial class GameLevel : Node
 
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
-        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem);
+        // Create debug context for debug commands
+        var debugContext = new DebugContext(
+            _player,
+            _entityManager,
+            _mapSystem,
+            _entityFactory,
+            _turnManager
+        );
+
+        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem, debugContext);
         _gameHUD.ConnectToCursorTargetingSystem(_cursorSystem);
 
         _turnManager.StartFirstPlayerTurn();

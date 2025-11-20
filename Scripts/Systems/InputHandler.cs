@@ -31,6 +31,12 @@ public partial class InputHandler : Node
     [Signal]
     public delegate void EquipMenuRequestedEventHandler();
 
+    [Signal]
+    public delegate void DebugModeToggledEventHandler();
+
+    [Signal]
+    public delegate void DebugConsoleRequestedEventHandler();
+
     private Player _player;
     private TurnManager _turnManager;
     private ActionContext _actionContext;
@@ -137,6 +143,22 @@ public partial class InputHandler : Node
             if (_cursorSystem != null && _cursorSystem.IsActive)
             {
                 HandleCursorInput(keyEvent);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Debug mode toggle (Ctrl+D) - works anytime
+            if (keyEvent.Keycode == Key.D && keyEvent.CtrlPressed)
+            {
+                EmitSignal(SignalName.DebugModeToggled);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Debug console (/) - works when debug mode is enabled
+            if (keyEvent.Keycode == Key.Slash && !keyEvent.ShiftPressed)
+            {
+                EmitSignal(SignalName.DebugConsoleRequested);
                 GetViewport().SetInputAsHandled();
                 return;
             }

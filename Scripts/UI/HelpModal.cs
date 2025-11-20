@@ -78,10 +78,19 @@ public partial class HelpModal : PanelContainer
         content.AppendLine("  e - Equip/unequip item");
         content.AppendLine();
 
-        // Other
-        content.AppendLine($"[color={Palette.ToHex(Palette.Alert)}]OTHER[/color]");
+        // Exploration
+        content.AppendLine($"[color={Palette.ToHex(Palette.Alert)}]EXPLORATION[/color]");
+        content.AppendLine("  x - Examine mode (look around)");
+        content.AppendLine("    Arrow Keys / Numpad - Move cursor");
+        content.AppendLine("    x / Escape - Exit examine mode");
         content.AppendLine("  ? - Show this help screen");
         content.AppendLine("  Escape - Close menus");
+        content.AppendLine();
+
+        // Debug
+        content.AppendLine($"[color={Palette.ToHex(Palette.Caution)}]DEBUG[/color]");
+        content.AppendLine("  Ctrl+D - Toggle debug mode");
+        content.AppendLine("  / - Open debug console (type /help for commands)");
         content.AppendLine();
 
         // Stats

@@ -46,3 +46,6 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 **Visual Design**:
 - **[color.md](color.md)**: Color theming and visual feedback patterns
 - **[glyphs.md](glyphs.md)**: Glyph design philosophy and readability guidelines
+
+**Development Tools**:
+- **[debug-commands.md](debug-commands.md)**: Debug command system for runtime testing and inspection

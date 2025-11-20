@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 
@@ -39,6 +40,7 @@ public partial class GameHUD : Control
     private EquipModal _equipPanel;
     private HelpModal _helpModal;
     private ItemDetailModal _itemDetailModal;
+    private DebugConsoleModal _debugConsoleModal;
     private Player _player;
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
@@ -54,6 +56,7 @@ public partial class GameHUD : Control
         _equipPanel = GetNode<EquipModal>("EquipModal");
         _helpModal = GetNode<HelpModal>("HelpModal");
         _itemDetailModal = GetNode<ItemDetailModal>("ItemDetailModal");
+        _debugConsoleModal = GetNode<DebugConsoleModal>("DebugConsoleModal");
     }
 
     /// <summary>
@@ -67,7 +70,8 @@ public partial class GameHUD : Control
     /// <param name="actionContext">The action context for executing actions.</param>
     /// <param name="goldManager">The gold manager for tracking player gold.</param>
     /// <param name="visionSystem">The player vision system for checking visible entities.</param>
-    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, GoldManager goldManager, PlayerVisionSystem visionSystem = null)
+    /// <param name="debugContext">The debug context for debug commands.</param>
+    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, GoldManager goldManager, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null)
     {
         _player = player;
         _actionContext = actionContext;
@@ -103,6 +107,13 @@ public partial class GameHUD : Control
         _equipPanel.Connect(EquipModal.SignalName.ItemSelected, Callable.From<char>(OnEquipItemSelected));
         _equipPanel.Connect(EquipModal.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
         _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
+
+        // Initialize debug console if debug context provided
+        if (debugContext != null)
+        {
+            _debugConsoleModal.Initialize(_messageLog, debugContext);
+            _debugConsoleModal.Connect(DebugConsoleModal.SignalName.Cancelled, Callable.From(OnDebugConsoleCancelled));
+        }
 
         entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
 
@@ -155,11 +166,11 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
-    /// Checks if any menu is currently open (including help modal).
+    /// Checks if any menu is currently open (including help modal and debug console).
     /// </summary>
     public bool IsAnyMenuOpen()
     {
-        return _currentMenuState != MenuState.None || _helpModal.Visible;
+        return _currentMenuState != MenuState.None || _helpModal.Visible || _debugConsoleModal.Visible;
     }
 
     /// <summary>
@@ -573,5 +584,38 @@ public partial class GameHUD : Control
         {
             _messageLog.AddMessage("[EXAMINE MODE] Exited.", Palette.ToHex(Palette.Disabled));
         }
+    }
+
+    /// <summary>
+    /// Toggles debug mode on/off.
+    /// </summary>
+    public void ToggleDebugMode()
+    {
+        _debugConsoleModal.SetDebugMode(!_debugConsoleModal.IsDebugModeActive);
+    }
+
+    /// <summary>
+    /// Requests to open the debug console (if debug mode is enabled).
+    /// </summary>
+    public void RequestDebugConsole()
+    {
+        if (_debugConsoleModal.Visible)
+        {
+            _debugConsoleModal.HideConsole();
+        }
+        else
+        {
+            // Close any open menus first
+            if (_currentMenuState != MenuState.None)
+            {
+                CloseAllMenus();
+            }
+            _debugConsoleModal.ShowConsole();
+        }
+    }
+
+    private void OnDebugConsoleCancelled()
+    {
+        // Console handles its own hiding
     }
 }
