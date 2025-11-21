@@ -44,12 +44,15 @@ public partial class GameHUD : Control
     private DebugConsoleModal _debugConsoleModal;
     private LevelUpModal _levelUpModal;
     private Player _player;
-    private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
     private CursorTargetingSystem _cursorSystem;
     private Components.StatsComponent _playerStats;
     private Components.StatusComponent _statusComponent;
     private Systems.EntityManager _entityManager;
+
+    // New systems for decoupling
+    private Systems.LevelUpSystem _levelUpSystem;
+    private Systems.PlayerActionHandler _actionHandler;
 
     public override void _Ready()
     {
@@ -73,24 +76,19 @@ public partial class GameHUD : Control
     /// <param name="combatSystem">The combat system for attack events.</param>
     /// <param name="entityManager">The entity manager for death notifications.</param>
     /// <param name="floorDepth">The current floor depth.</param>
-    /// <param name="actionContext">The action context for executing actions.</param>
     /// <param name="goldManager">The gold manager for tracking player gold.</param>
+    /// <param name="levelUpSystem">The level-up system for stat rewards.</param>
+    /// <param name="actionHandler">The action handler for player actions.</param>
     /// <param name="visionSystem">The player vision system for checking visible entities.</param>
     /// <param name="debugContext">The debug context for debug commands.</param>
     /// <param name="debugModeActive">Initial debug mode state (default: false).</param>
-    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, ActionContext actionContext, GoldManager goldManager, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null, bool debugModeActive = false)
+    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, GoldManager goldManager, Systems.LevelUpSystem levelUpSystem, Systems.PlayerActionHandler actionHandler, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null, bool debugModeActive = false)
     {
         _player = player;
-        _actionContext = actionContext;
+        _levelUpSystem = levelUpSystem;
+        _actionHandler = actionHandler;
 
-        _sidePanel.ConnectToPlayer(player);
-        _sidePanel.ConnectToGoldManager(goldManager);
-        _sidePanel.SetFloorDepth(floorDepth);
-        _sidePanel.SetEntityManager(entityManager);
-        if (visionSystem != null)
-        {
-            _sidePanel.SetVisionSystem(visionSystem);
-        }
+        // Note: SidePanel is now initialized separately in GameLevel
 
         _messageLog.ConnectToCombatSystem(combatSystem);
         _messageLog.SetPlayer(player);
@@ -118,12 +116,17 @@ public partial class GameHUD : Control
 
         _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
 
-        // Connect to player's StatsComponent for level-up notifications
+        // Connect to LevelUpSystem for showing level-up modal
+        _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.ShowLevelUpModal, Callable.From<int>(OnShowLevelUpModal));
+        _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.StatIncreased, Callable.From<string, int>(OnStatIncreased));
+
+        // Connect to PlayerActionHandler for action results
+        _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
+        _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
+        _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
+
+        // Keep reference to player stats for other uses
         _playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-        if (_playerStats != null)
-        {
-            _playerStats.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
-        }
 
         // Initialize debug console if debug context provided
         if (debugContext != null)
@@ -348,39 +351,8 @@ public partial class GameHUD : Control
 
     private void OnItemKeyRebound(char oldKey, char newKey)
     {
-        // Get inventory component and perform rebind
-        var inventoryComponent = _player.GetNodeOrNull<Components.InventoryComponent>("InventoryComponent");
-        if (inventoryComponent != null)
-        {
-            bool success = inventoryComponent.RebindItemKey(oldKey, newKey);
-            if (success)
-            {
-                var slot = _player.GetInventorySlot(newKey);
-                if (slot != null)
-                {
-                    // Build message explaining what happened
-                    string message;
-                    if (oldKey == newKey)
-                    {
-                        message = $"{slot.Item.Template.Name} remains on '{newKey}'.";
-                    }
-                    else
-                    {
-                        // Check if there was a swap
-                        var oldSlot = _player.GetInventorySlot(oldKey);
-                        if (oldSlot != null)
-                        {
-                            message = $"{slot.Item.Template.Name} rebound to '{newKey}' (swapped with {oldSlot.Item.Template.Name} on '{oldKey}').";
-                        }
-                        else
-                        {
-                            message = $"{slot.Item.Template.Name} rebound to '{newKey}'.";
-                        }
-                    }
-                    _messageLog.AddMessage(message, Palette.ToHex(Palette.Success));
-                }
-            }
-        }
+        // Delegate to PlayerActionHandler
+        _actionHandler.RebindItemKey(oldKey, newKey);
 
         // Close all modals and return to game
         _itemDetailModal.HideMenu();
@@ -388,43 +360,40 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.None;
     }
 
+    /// <summary>
+    /// Called when PlayerActionHandler has rebound an item key.
+    /// Displays the result message.
+    /// </summary>
+    private void OnItemReboundMessage(string message)
+    {
+        _messageLog.AddMessage(message, Palette.ToHex(Palette.Success));
+    }
+
     private void OnActivateItemSelected(char key)
     {
         _activateItemPanel.HideMenu();
         _currentMenuState = MenuState.None;
 
-        // Get the item to check what type of activation it needs
-        var slot = _player.GetInventorySlot(key);
-        if (slot == null)
-        {
-            return;
-        }
+        // Delegate to PlayerActionHandler
+        _actionHandler.ActivateItem(key);
+    }
 
-        var equipComponent = _player.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
-        bool isEquipped = equipComponent != null && equipComponent.IsEquipped(key);
+    /// <summary>
+    /// Called when PlayerActionHandler signals that item targeting should start.
+    /// </summary>
+    private void OnStartItemTargeting(char key)
+    {
+        EmitSignal(SignalName.StartItemTargeting, key);
+        EnterTargetingMode();
+    }
 
-        // Check if this is a reach weapon (equipped melee weapon with range > 1)
-        if (isEquipped &&
-            slot.Item.Template.Attack != null &&
-            slot.Item.Template.Attack.Type == AttackType.Melee &&
-            slot.Item.Template.Attack.Range > 1)
-        {
-            // Reach weapon - signal InputHandler to start reach attack targeting
-            EmitSignal(SignalName.StartReachAttackTargeting, key);
-            EnterTargetingMode();
-        }
-        else if (slot.Item.Template.RequiresTargeting())
-        {
-            // Item requires targeting - signal InputHandler to start targeting
-            EmitSignal(SignalName.StartItemTargeting, key);
-            EnterTargetingMode();
-        }
-        else
-        {
-            // Regular activation (no targeting needed)
-            var action = new ActivateItemAction(key);
-            _player.ExecuteAction(action, _actionContext);
-        }
+    /// <summary>
+    /// Called when PlayerActionHandler signals that reach attack targeting should start.
+    /// </summary>
+    private void OnStartReachAttackTargeting(char key)
+    {
+        EmitSignal(SignalName.StartReachAttackTargeting, key);
+        EnterTargetingMode();
     }
 
     private void OnActivateItemCancelled()
@@ -438,9 +407,8 @@ public partial class GameHUD : Control
         _dropItemPanel.HideMenu();
         _currentMenuState = MenuState.None;
 
-        // Execute DropItemAction
-        var action = new DropItemAction(key);
-        _player.ExecuteAction(action, _actionContext);
+        // Delegate to PlayerActionHandler
+        _actionHandler.DropItem(key);
     }
 
     private void OnDropItemCancelled()
@@ -454,9 +422,8 @@ public partial class GameHUD : Control
         _equipPanel.HideMenu();
         _currentMenuState = MenuState.None;
 
-        // Execute EquipAction
-        var action = new EquipAction(key);
-        _player.ExecuteAction(action, _actionContext);
+        // Delegate to PlayerActionHandler
+        _actionHandler.EquipItem(key);
     }
 
     private void OnEquipItemCancelled()
@@ -645,23 +612,12 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
-    /// Called when the player levels up.
-    /// Increases HP permanently and shows the stat choice modal.
+    /// Called when LevelUpSystem requests to show the level-up modal.
     /// </summary>
-    private void OnLevelUp(int newLevel)
+    private void OnShowLevelUpModal(int newLevel)
     {
         // Log level-up message
         _messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));
-
-        // Increase player's BaseMaxHP by 4
-        var healthComponent = _player.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
-        var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-        if (healthComponent != null && statsComponent != null)
-        {
-            healthComponent.BaseMaxHP += 4;
-            // Trigger HP recalculation by emitting StatsChanged
-            statsComponent.EmitSignal(Components.StatsComponent.SignalName.StatsChanged);
-        }
 
         // Show level-up modal for stat choice
         _levelUpModal.ShowForLevel(newLevel);
@@ -669,45 +625,26 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
-    /// Called when the player chooses a stat to increase.
+    /// Called when the player chooses a stat to increase in the level-up modal.
+    /// Delegates to LevelUpSystem for applying the reward.
     /// </summary>
     private void OnStatChosen(int statIndex)
     {
-        var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-        if (statsComponent == null) return;
-
-        string statName = "";
-
-        // Increase the chosen stat
-        switch (statIndex)
-        {
-            case 0: // Strength
-                statsComponent.BaseStrength++;
-                statName = "Strength";
-                break;
-            case 1: // Agility
-                statsComponent.BaseAgility++;
-                statName = "Agility";
-                break;
-            case 2: // Endurance
-                statsComponent.BaseEndurance++;
-                statName = "Endurance";
-                break;
-            case 3: // Will
-                statsComponent.BaseWill++;
-                statName = "Will";
-                break;
-        }
-
-        // Emit StatsChanged to trigger recalculation
-        statsComponent.EmitSignal(Components.StatsComponent.SignalName.StatsChanged);
-
-        // Log stat choice
-        _messageLog.AddMessage($"You increased {statName}!", Palette.ToHex(Palette.Success));
+        // Delegate stat application to LevelUpSystem
+        _levelUpSystem.ApplyStatChoice(statIndex);
 
         // Hide modal and reset menu state
         _levelUpModal.HideModal();
         _currentMenuState = MenuState.None;
+    }
+
+    /// <summary>
+    /// Called when LevelUpSystem has increased a stat.
+    /// Logs the stat increase message.
+    /// </summary>
+    private void OnStatIncreased(string statName, int newLevel)
+    {
+        _messageLog.AddMessage($"You increased {statName}!", Palette.ToHex(Palette.Success));
     }
 
     public override void _ExitTree()
@@ -772,14 +709,23 @@ public partial class GameHUD : Control
         }
 
         // Disconnect from player components
-        if (_playerStats != null)
-        {
-            _playerStats.Disconnect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
-        }
-
         if (_statusComponent != null)
         {
             _statusComponent.Disconnect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
+        }
+
+        // Disconnect from new systems
+        if (_levelUpSystem != null)
+        {
+            _levelUpSystem.Disconnect(Systems.LevelUpSystem.SignalName.ShowLevelUpModal, Callable.From<int>(OnShowLevelUpModal));
+            _levelUpSystem.Disconnect(Systems.LevelUpSystem.SignalName.StatIncreased, Callable.From<string, int>(OnStatIncreased));
+        }
+
+        if (_actionHandler != null)
+        {
+            _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
+            _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
+            _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
         }
 
         // Disconnect from entity manager

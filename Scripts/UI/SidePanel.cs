@@ -33,14 +33,13 @@ public partial class SidePanel : PanelContainer
 	private RichTextLabel _statsLabel;
 	private RichTextLabel _visibleEntitiesLabel;
 
-	private int _currentFloorDepth = 1;
 	private Entities.Player _player;
-	private Systems.EntityManager _entityManager;
-	private Systems.PlayerVisionSystem _visionSystem;
-	private Systems.GoldManager _goldManager;
-	private Components.HealthComponent _playerHealth;
-	private Components.StatsComponent _playerStats;
-	private EquipComponent _playerEquip;
+	private Systems.EntityManager _entityManager; // Still needed for "standing on" display
+
+	// ViewModels for decoupled data access
+	private ViewModels.PlayerStatsViewModel _statsViewModel;
+	private ViewModels.EquipmentViewModel _equipmentViewModel;
+	private Systems.NearbyEntitiesTracker _nearbyEntitiesTracker;
 
 	public override void _Ready()
 	{
@@ -65,86 +64,102 @@ public partial class SidePanel : PanelContainer
 	}
 
 	/// <summary>
-	/// Connects to the player's health component to receive updates.
+	/// Initializes the side panel with ViewModels and systems.
 	/// </summary>
-	public void ConnectToPlayer(Entities.Player player)
+	public void Initialize(
+		Entities.Player player,
+		Systems.EntityManager entityManager,
+		ViewModels.PlayerStatsViewModel statsViewModel,
+		ViewModels.EquipmentViewModel equipmentViewModel,
+		Systems.NearbyEntitiesTracker nearbyEntitiesTracker)
 	{
 		_player = player;
+		_entityManager = entityManager;
+		_statsViewModel = statsViewModel;
+		_equipmentViewModel = equipmentViewModel;
+		_nearbyEntitiesTracker = nearbyEntitiesTracker;
 
-		_playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
-		_playerHealth.Connect(Components.HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
+		// Connect to ViewModel signals (single source for all stats updates)
+		_statsViewModel.Connect(
+			ViewModels.PlayerStatsViewModel.SignalName.StatsUpdated,
+			Callable.From(OnStatsUpdated)
+		);
 
-		// Subscribe to stats changes
-		_playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-		if (_playerStats != null)
-		{
-			_playerStats.Connect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
-			_playerStats.Connect(Components.StatsComponent.SignalName.ExperienceGained, Callable.From<int, int, int>(OnExperienceGained));
-			_playerStats.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
-		}
+		_equipmentViewModel.Connect(
+			ViewModels.EquipmentViewModel.SignalName.EquipmentDisplayUpdated,
+			Callable.From(OnEquipmentUpdated)
+		);
 
-		// Subscribe to player position changes
+		_nearbyEntitiesTracker.Connect(
+			Systems.NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
+			Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
+		);
+
+		// Subscribe to player position changes (for standing-on display)
 		player.Connect(Entities.Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerPositionChanged));
 
-		// Subscribe to inventory changes (for when items are picked up)
+		// Subscribe to inventory changes (for standing-on display)
 		player.Connect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
 
-		// Subscribe to equipment changes
-		_playerEquip = player.GetNodeOrNull<EquipComponent>("EquipComponent");
-		if (_playerEquip != null)
-		{
-			_playerEquip.Connect(EquipComponent.SignalName.EquipmentChanged, Callable.From<EquipmentSlot>(OnEquipmentChanged));
-		}
-
 		// Initialize display with current values
-		OnHealthChanged(_playerHealth.CurrentHP, _playerHealth.MaxHP);
-		UpdateExperienceDisplay();
-		UpdateStandingOnDisplay();
+		UpdateAllDisplays();
+	}
+
+	/// <summary>
+	/// Updates all display panels.
+	/// </summary>
+	private void UpdateAllDisplays()
+	{
+		UpdateHealthDisplay();
+		UpdateLevelAndXPDisplay();
+		UpdateFloorDisplay();
+		UpdateGoldDisplay();
+		UpdateStatsDisplay();
 		UpdateEquipmentDisplay();
+		UpdateStandingOnDisplay();
+		UpdateVisibleEntitiesDisplay();
+	}
+
+	/// <summary>
+	/// Called when PlayerStatsViewModel updates.
+	/// Refreshes all stat-related displays.
+	/// </summary>
+	private void OnStatsUpdated()
+	{
+		UpdateHealthDisplay();
+		UpdateLevelAndXPDisplay();
+		UpdateFloorDisplay();
+		UpdateGoldDisplay();
 		UpdateStatsDisplay();
 	}
 
 	/// <summary>
-	/// Connects to the gold manager to receive gold updates.
+	/// Called when EquipmentViewModel updates.
+	/// Refreshes equipment display.
 	/// </summary>
-	public void ConnectToGoldManager(Systems.GoldManager goldManager)
+	private void OnEquipmentUpdated()
 	{
-		_goldManager = goldManager;
-		_goldManager.Connect(Systems.GoldManager.SignalName.GoldChanged, Callable.From<int, int>(OnGoldChanged));
-		UpdateGoldDisplay();
+		UpdateEquipmentDisplay();
 	}
 
 	/// <summary>
-	/// Sets the entity manager reference for querying entities at player position.
+	/// Called when NearbyEntitiesTracker updates.
+	/// Refreshes visible entities display.
 	/// </summary>
-	public void SetEntityManager(Systems.EntityManager entityManager)
+	private void OnNearbyEntitiesChanged(Godot.Collections.Array nearbyEntities)
 	{
-		_entityManager = entityManager;
-		UpdateStandingOnDisplay();
 		UpdateVisibleEntitiesDisplay();
 	}
 
-	/// <summary>
-	/// Sets the vision system reference for querying visible tiles.
-	/// </summary>
-	public void SetVisionSystem(Systems.PlayerVisionSystem visionSystem)
+	private void UpdateHealthDisplay()
 	{
-		_visionSystem = visionSystem;
-		UpdateVisibleEntitiesDisplay();
-	}
+		if (_healthBar == null || _healthLabel == null || _statsViewModel == null)
+			return;
 
-	/// <summary>
-	/// Sets the current floor depth for display.
-	/// </summary>
-	public void SetFloorDepth(int depth)
-	{
-		_currentFloorDepth = depth;
-		UpdateFloorDisplay();
-	}
+		int current = _statsViewModel.CurrentHP;
+		int max = _statsViewModel.MaxHP;
 
-	private void OnHealthChanged(int current, int max)
-	{
-		float healthPercent = (float)current / max;
+		float healthPercent = max > 0 ? (float)current / max : 0f;
 		Color healthColor = GetHealthColor(healthPercent);
 
 		// Update progress bar
@@ -179,23 +194,18 @@ public partial class SidePanel : PanelContainer
 
 	private void UpdateFloorDisplay()
 	{
-		if (_floorLabel != null)
+		if (_floorLabel != null && _statsViewModel != null)
 		{
-			_floorLabel.Text = $"Floor: {_currentFloorDepth}";
+			_floorLabel.Text = $"Floor: {_statsViewModel.FloorDepth}";
 			_floorLabel.AddThemeColorOverride("font_color", DefaultTextColor);
 		}
 	}
 
-	private void OnGoldChanged(int amount, int totalGold)
-	{
-		UpdateGoldDisplay();
-	}
-
 	private void UpdateGoldDisplay()
 	{
-		if (_goldLabel != null && _goldManager != null)
+		if (_goldLabel != null && _statsViewModel != null)
 		{
-			_goldLabel.Text = $"Gold: {_goldManager.Gold}";
+			_goldLabel.Text = $"Gold: {_statsViewModel.Gold}";
 			_goldLabel.AddThemeColorOverride("font_color", Palette.Gold);
 		}
 	}
@@ -203,38 +213,39 @@ public partial class SidePanel : PanelContainer
 	private void OnPlayerPositionChanged(int x, int y)
 	{
 		UpdateStandingOnDisplay();
-		UpdateVisibleEntitiesDisplay();
 	}
 
 	private void OnInventoryChanged()
 	{
 		// Update display when items are picked up
 		UpdateStandingOnDisplay();
-		UpdateEquipmentDisplay();
 	}
 
-	private void OnEquipmentChanged(EquipmentSlot slot)
+	private void UpdateLevelAndXPDisplay()
 	{
-		UpdateEquipmentDisplay();
-		UpdateStatsDisplay(); // Stats may change when equipment changes
+		if (_levelLabel == null || _experienceBar == null || _experienceLabel == null || _statsViewModel == null)
+			return;
+
+		int level = _statsViewModel.Level;
+		int currentXP = _statsViewModel.CurrentXP;
+		int xpToNext = _statsViewModel.XPToNextLevel;
+
+		_levelLabel.Text = $"Level: {level}";
+		_levelLabel.AddThemeColorOverride("font_color", DefaultTextColor);
+
+		_experienceBar.MaxValue = xpToNext;
+		_experienceBar.Value = currentXP;
+		_experienceBar.AddThemeStyleboxOverride("fill", CreateExperienceBarStyle());
+
+		_experienceLabel.Text = $"XP: {currentXP}/{xpToNext}";
+		_experienceLabel.AddThemeColorOverride("font_color", ExperienceBarColor);
 	}
 
-	private void OnStatsChanged()
+	private StyleBoxFlat CreateExperienceBarStyle()
 	{
-		UpdateStatsDisplay();
-	}
-
-	private void OnExperienceGained(int amount, int current, int toNext)
-	{
-		UpdateExperienceDisplay();
-	}
-
-	private void OnLevelUp(int newLevel)
-	{
-		// Update the XP display to reflect new level
-		UpdateExperienceDisplay();
-
-		// Note: Level-up message is now handled by GameHUD which also shows the stat choice modal
+		var styleBox = new StyleBoxFlat();
+		styleBox.BgColor = ExperienceBarColor;
+		return styleBox;
 	}
 
 	private void UpdateExperienceDisplay()
@@ -270,128 +281,25 @@ public partial class SidePanel : PanelContainer
 
 	private void UpdateEquipmentDisplay()
 	{
-		if (_equipmentLabel == null || _player == null)
-		{
+		if (_equipmentLabel == null || _equipmentViewModel == null)
 			return;
-		}
-
-		var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
-		if (equipComponent == null)
-		{
-			_equipmentLabel.Text = "(No equipment system)";
-			return;
-		}
 
 		var sb = new StringBuilder();
 
-		// Melee weapon
-		sb.Append("Melee: ");
-		var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
-		if (meleeKey.HasValue)
+		// Use EquipmentViewModel for all equipment data
+		foreach (var slot in _equipmentViewModel.AllSlots)
 		{
-			var slot = _player.GetInventorySlot(meleeKey.Value);
-			if (slot != null)
-			{
-				var color = slot.Item.Template.GetColor();
-				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
-			}
-			else
-			{
-				sb.AppendLine("(error)");
-			}
-		}
-		else
-		{
-			sb.AppendLine("(none)");
-		}
+			sb.Append($"{slot.SlotName}: ");
 
-		// Ranged weapon
-		sb.Append("Ranged: ");
-		var rangedKey = equipComponent.GetEquippedKey(EquipmentSlot.RangedWeapon);
-		if (rangedKey.HasValue)
-		{
-			var slot = _player.GetInventorySlot(rangedKey.Value);
-			if (slot != null)
+			if (slot.IsEquipped)
 			{
-				var color = slot.Item.Template.GetColor();
-				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
+				string colorHex = $"#{(int)(slot.ItemColor.R * 255):X2}{(int)(slot.ItemColor.G * 255):X2}{(int)(slot.ItemColor.B * 255):X2}";
+				sb.AppendLine($"[color={colorHex}]{slot.ItemGlyph} {slot.ItemName}[/color]");
 			}
 			else
 			{
-				sb.AppendLine("(error)");
+				sb.AppendLine(slot.ItemName); // "(none)" or "(error)"
 			}
-		}
-		else
-		{
-			sb.AppendLine("(none)");
-		}
-
-		// Armor
-		sb.Append("Armor: ");
-		var armorKey = equipComponent.GetEquippedKey(EquipmentSlot.Armor);
-		if (armorKey.HasValue)
-		{
-			var slot = _player.GetInventorySlot(armorKey.Value);
-			if (slot != null)
-			{
-				var color = slot.Item.Template.GetColor();
-				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
-			}
-			else
-			{
-				sb.AppendLine("(error)");
-			}
-		}
-		else
-		{
-			sb.AppendLine("(none)");
-		}
-
-		// Ring 1
-		sb.Append("Ring: ");
-		var ring1Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring1);
-		if (ring1Key.HasValue)
-		{
-			var slot = _player.GetInventorySlot(ring1Key.Value);
-			if (slot != null)
-			{
-				var color = slot.Item.Template.GetColor();
-				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
-			}
-			else
-			{
-				sb.AppendLine("(error)");
-			}
-		}
-		else
-		{
-			sb.AppendLine("(none)");
-		}
-
-		// Ring 2
-		sb.Append("Ring: ");
-		var ring2Key = equipComponent.GetEquippedKey(EquipmentSlot.Ring2);
-		if (ring2Key.HasValue)
-		{
-			var slot = _player.GetInventorySlot(ring2Key.Value);
-			if (slot != null)
-			{
-				var color = slot.Item.Template.GetColor();
-				string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]");
-			}
-			else
-			{
-				sb.AppendLine("(error)");
-			}
-		}
-		else
-		{
-			sb.AppendLine("(none)");
 		}
 
 		_equipmentLabel.Text = sb.ToString();
@@ -429,33 +337,26 @@ public partial class SidePanel : PanelContainer
 
 	private void UpdateStatsDisplay()
 	{
-		if (_statsLabel == null || _player == null)
+		if (_statsLabel == null || _statsViewModel == null || _player == null)
 			return;
-
-		var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-		if (statsComponent == null)
-		{
-			_statsLabel.Text = "(No stats system)";
-			return;
-		}
 
 		var sb = new StringBuilder();
 
-		// Base stats - full names, one per line
-		sb.AppendLine($"Strength: {statsComponent.TotalStrength}");
-		sb.AppendLine($"Agility: {statsComponent.TotalAgility}");
-		sb.AppendLine($"Endurance: {statsComponent.TotalEndurance}");
-		sb.AppendLine($"Will: {statsComponent.TotalWill}");
+		// Base stats - full names, one per line (from ViewModel)
+		sb.AppendLine($"Strength: {_statsViewModel.TotalStrength}");
+		sb.AppendLine($"Agility: {_statsViewModel.TotalAgility}");
+		sb.AppendLine($"Endurance: {_statsViewModel.TotalEndurance}");
+		sb.AppendLine($"Will: {_statsViewModel.TotalWill}");
 
 		sb.AppendLine(); // Blank line for spacing
 
-		// Derived combat values
-		int meleeAttack = statsComponent.TotalStrength;
-		int rangedAttack = statsComponent.TotalAgility;
-		int evasion = statsComponent.TotalAgility + statsComponent.TotalEvasionPenalty;
-		int armor = statsComponent.TotalArmor;
+		// Derived combat values (from ViewModel)
+		int meleeAttack = _statsViewModel.MeleeAttack;
+		int rangedAttack = _statsViewModel.RangedAttack;
+		int armor = _statsViewModel.TotalArmor;
+		int evasion = _statsViewModel.TotalEvasion;
 
-		// Get attack component for damage dice
+		// Get attack component for damage dice (still needs direct access)
 		var attackComponent = _player.GetNodeOrNull<Components.AttackComponent>("AttackComponent");
 		string meleeDamage = "?";
 		string rangedDamage = "?";
@@ -467,7 +368,7 @@ public partial class SidePanel : PanelContainer
 			{
 				if (attack.Type == Data.AttackType.Melee)
 				{
-					int damageBonus = statsComponent.TotalStrength;
+					int damageBonus = _statsViewModel.TotalStrength;
 					meleeDamage = damageBonus > 0 ? $"{attack.DiceNotation}+{damageBonus}" : attack.DiceNotation;
 				}
 				else if (attack.Type == Data.AttackType.Ranged)
@@ -489,44 +390,16 @@ public partial class SidePanel : PanelContainer
 
 	private void UpdateVisibleEntitiesDisplay()
 	{
-		if (_visibleEntitiesLabel == null)
+		if (_visibleEntitiesLabel == null || _nearbyEntitiesTracker == null)
 			return;
 
-		// Need all systems to be available
-		if (_player == null || _entityManager == null || _visionSystem == null)
-		{
-			_visibleEntitiesLabel.Text = "(not initialized)";
-			return;
-		}
-
-		var visibleEntities = new System.Collections.Generic.List<(Entities.BaseEntity entity, int distance)>();
-		var playerPos = _player.GridPosition;
-
-		// Get all entities and filter by visibility
-		foreach (var entity in _entityManager.GetAllEntities())
-		{
-			// Skip if not visible
-			if (!_visionSystem.IsVisible(entity.GridPosition))
-				continue;
-
-			// Calculate Chebyshev distance (grid-based)
-			int distance = Helpers.DistanceHelper.ChebyshevDistance(playerPos, entity.GridPosition);
-
-			// Skip if at player position (already shown in "Standing on")
-			if (distance == 0)
-				continue;
-
-			visibleEntities.Add((entity, distance));
-		}
-
-		// Sort by distance and take top 5
-		visibleEntities.Sort((a, b) => a.distance.CompareTo(b.distance));
-		var nearbyEntities = visibleEntities.Take(5);
+		// Get nearby entities from tracker
+		var nearbyEntities = _nearbyEntitiesTracker.GetNearbyEntities();
 
 		// Build display text with colors and glyphs
 		var sb = new StringBuilder();
 
-		if (!nearbyEntities.Any())
+		if (nearbyEntities.Count == 0)
 		{
 			sb.Append("(nothing visible)");
 		}
@@ -545,18 +418,29 @@ public partial class SidePanel : PanelContainer
 
 	public override void _ExitTree()
 	{
-		// Disconnect from player health component
-		if (_playerHealth != null)
+		// Disconnect from ViewModels
+		if (_statsViewModel != null)
 		{
-			_playerHealth.Disconnect(Components.HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
+			_statsViewModel.Disconnect(
+				ViewModels.PlayerStatsViewModel.SignalName.StatsUpdated,
+				Callable.From(OnStatsUpdated)
+			);
 		}
 
-		// Disconnect from player stats component
-		if (_playerStats != null)
+		if (_equipmentViewModel != null)
 		{
-			_playerStats.Disconnect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
-			_playerStats.Disconnect(Components.StatsComponent.SignalName.ExperienceGained, Callable.From<int, int, int>(OnExperienceGained));
-			_playerStats.Disconnect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
+			_equipmentViewModel.Disconnect(
+				ViewModels.EquipmentViewModel.SignalName.EquipmentDisplayUpdated,
+				Callable.From(OnEquipmentUpdated)
+			);
+		}
+
+		if (_nearbyEntitiesTracker != null)
+		{
+			_nearbyEntitiesTracker.Disconnect(
+				Systems.NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
+				Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
+			);
 		}
 
 		// Disconnect from player signals
@@ -564,18 +448,6 @@ public partial class SidePanel : PanelContainer
 		{
 			_player.Disconnect(Entities.Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerPositionChanged));
 			_player.Disconnect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
-		}
-
-		// Disconnect from equipment component
-		if (_playerEquip != null)
-		{
-			_playerEquip.Disconnect(EquipComponent.SignalName.EquipmentChanged, Callable.From<EquipmentSlot>(OnEquipmentChanged));
-		}
-
-		// Disconnect from gold manager
-		if (_goldManager != null)
-		{
-			_goldManager.Disconnect(Systems.GoldManager.SignalName.GoldChanged, Callable.From<int, int>(OnGoldChanged));
 		}
 	}
 }

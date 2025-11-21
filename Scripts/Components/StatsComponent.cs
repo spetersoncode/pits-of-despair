@@ -129,6 +129,24 @@ public partial class StatsComponent : Node
 	/// </summary>
 	public int TotalEvasionPenalty => _evasionPenaltySources.Values.Sum();
 
+	/// <summary>
+	/// Melee attack modifier for attack rolls.
+	/// Based on total Strength.
+	/// </summary>
+	public int MeleeAttack => TotalStrength;
+
+	/// <summary>
+	/// Ranged attack modifier for attack rolls.
+	/// Based on total Agility.
+	/// </summary>
+	public int RangedAttack => TotalAgility;
+
+	/// <summary>
+	/// Total evasion value for defense rolls.
+	/// Combines Agility with evasion penalties from armor.
+	/// </summary>
+	public int TotalEvasion => TotalAgility + TotalEvasionPenalty;
+
 	#endregion
 
 	#region Stat Modifier Management

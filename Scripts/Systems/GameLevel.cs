@@ -46,6 +46,13 @@ public partial class GameLevel : Node
     private ProjectileSystem _projectileSystem;
     private GoldManager _goldManager;
 
+    // New systems for decoupling
+    private LevelUpSystem _levelUpSystem;
+    private PlayerActionHandler _actionHandler;
+    private ViewModels.PlayerStatsViewModel _playerStatsViewModel;
+    private ViewModels.EquipmentViewModel _equipmentViewModel;
+    private NearbyEntitiesTracker _nearbyEntitiesTracker;
+
     public override void _Ready()
     {
         _mapSystem = GetNode<MapSystem>("MapSystem");
@@ -77,6 +84,23 @@ public partial class GameLevel : Node
 
         _projectileSystem = new ProjectileSystem { Name = "ProjectileSystem" };
         AddChild(_projectileSystem);
+
+        // Create new systems for decoupling
+        _levelUpSystem = new LevelUpSystem { Name = "LevelUpSystem" };
+        AddChild(_levelUpSystem);
+
+        _actionHandler = new PlayerActionHandler { Name = "PlayerActionHandler" };
+        AddChild(_actionHandler);
+
+        _playerStatsViewModel = new ViewModels.PlayerStatsViewModel { Name = "PlayerStatsViewModel" };
+        AddChild(_playerStatsViewModel);
+
+        _equipmentViewModel = new ViewModels.EquipmentViewModel();
+        _equipmentViewModel.Name = "EquipmentViewModel";
+        AddChild(_equipmentViewModel);
+
+        _nearbyEntitiesTracker = new NearbyEntitiesTracker { Name = "NearbyEntitiesTracker" };
+        AddChild(_nearbyEntitiesTracker);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -174,6 +198,13 @@ public partial class GameLevel : Node
 
         _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
 
+        // Initialize new systems for decoupling
+        _levelUpSystem.Initialize(_player);
+        _actionHandler.Initialize(_player, actionContext);
+        _playerStatsViewModel.Initialize(_player, _goldManager, FloorDepth);
+        _equipmentViewModel.Initialize(_player);
+        _nearbyEntitiesTracker.Initialize(_player, _entityManager, _visionSystem);
+
         // Create debug context for debug commands (composes ActionContext for core systems)
         var debugContext = new DebugContext(
             actionContext,
@@ -189,8 +220,24 @@ public partial class GameLevel : Node
             debugModeActive = gameManager.GetDebugModeActive();
         }
 
-        _gameHUD.Initialize(_player, _combatSystem, _entityManager, FloorDepth, actionContext, _goldManager, _visionSystem, debugContext, debugModeActive);
+        // Initialize GameHUD with new systems
+        _gameHUD.Initialize(
+            _player,
+            _combatSystem,
+            _entityManager,
+            FloorDepth,
+            _goldManager,
+            _levelUpSystem,
+            _actionHandler,
+            _visionSystem,
+            debugContext,
+            debugModeActive
+        );
         _gameHUD.ConnectToCursorTargetingSystem(_cursorSystem);
+
+        // Initialize SidePanel with ViewModels
+        var sidePanel = _gameHUD.GetNode<UI.SidePanel>("HBoxContainer/SidePanel");
+        sidePanel.Initialize(_player, _entityManager, _playerStatsViewModel, _equipmentViewModel, _nearbyEntitiesTracker);
 
         _turnManager.StartFirstPlayerTurn();
     }
