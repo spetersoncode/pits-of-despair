@@ -4,8 +4,9 @@ type: goblinoid
 level: 2
 color: Brute
 strength: 1
+agility: -1
 endurance: 1
-maxHP: 11
+maxHP: 12
 goals:
   - MeleeAttack
   - SearchLastKnown

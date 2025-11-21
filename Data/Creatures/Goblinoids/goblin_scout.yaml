@@ -4,10 +4,10 @@ type: goblinoid
 level: 1
 color: Scout
 strength: -2
-agility: 1
-endurance: -1
-maxHP: 6
-visionRange: 10
+agility: 2
+endurance: -2
+maxHP: 5
+visionRange: 12
 goals:
   - FleeForHelp
 attacks:

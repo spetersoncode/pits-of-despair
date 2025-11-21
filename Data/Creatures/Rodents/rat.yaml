@@ -3,13 +3,14 @@ description: A filthy dungeon rat with matted fur and gleaming eyes. Disease and
 type: rodents
 level: 1
 strength: -2
+agility: 1
 endurance: -2
-maxHP: 5
+maxHP: 4
 goals:
   - MeleeAttack
   - Wander
 attacks:
   - name: bite
     type: Melee
-    dice: "1d3"
+    dice: "1d2"
     damageType: Piercing

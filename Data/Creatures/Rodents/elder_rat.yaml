@@ -3,13 +3,15 @@ description: A massive rat, bloated on dungeon refuse and grown cunning with age
 type: rodents
 level: 2
 color: Fur
-strength: -1
-maxHP: 7
+strength: 0
+agility: 1
+endurance: -1
+maxHP: 8
 goals:
   - MeleeAttack
   - Wander
 attacks:
   - name: bite
     type: Melee
-    dice: "1d3+1"
+    dice: "1d4"
     damageType: Piercing

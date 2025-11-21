@@ -1,84 +1,15 @@
-# Goblin - Basic goblinoid enemy
-# Standard melee combatant with club, uses patrol and search behaviors
-
-# === REQUIRED FIELDS ===
-
 name: goblin
-# Display name shown to player
-
 description: A wretched creature with yellowed eyes and jagged teeth. It clutches its weapon with malicious intent, eager for violence.
-
 type: goblinoid
-# Creature type determines default glyph ('g') and color
-# Available types: goblinoid, vermin, undead
-
-level: 1
-# Creature level (default: 1). Affects difficulty and XP rewards
-
-# --- Stats (optional, default to 0) ---
-strength: -1 # Melee damage bonus: STR/2 (rounded down)
-agility: -1 # Ranged to-hit and defense bonus
-# endurance: 0   # HP bonus: END × 2
-# will: 0        # Reserved for future mental resistance
-# Omit stats that are 0; only specify non-zero values
-
-maxHP: 6
-# Base HP before Endurance modifier (actual HP = 8 + (0 × 2) = 8)
-
-# === OPTIONAL FIELDS (showing defaults) ===
-
-# visionRange: 16
-# How far creature can see in tiles. Omitted = uses default (16)
-# Set to 0 to create blind creatures
-
-# hasMovement: true
-# Whether creature can move. Omitted = true
-# Set to false for stationary creatures (traps, turrets)
-
-# hasAI: true
-# Whether creature has AI behavior. Omitted = true
-# Set to false for player-controlled or inactive entities
-
-# glyph: "g"
-# Visual character. Omitted = uses type default ("g" for goblinoid)
-
 color: Minion
-# Visual color from role-based palette (weak basic goblin)
-
-# === AI CONFIGURATION ===
-
+level: 1
+strength: 0
+agility: 0
+endurance: -1
+maxHP: 6
 goals:
-  # AI goal priorities (evaluated top to bottom)
-  - MeleeAttack # Attack adjacent enemies
-  - SearchLastKnown # Search area where enemy was last seen
-  - ReturnToSpawn # Return to spawn point when no threats
-
-# Available goals: MeleeAttack, SearchLastKnown, ReturnToSpawn, Wander,
-#                  FleeForHelp, Idle (auto-added as fallback)
-
-# === EQUIPMENT & ATTACKS ===
-
+  - MeleeAttack
+  - SearchLastKnown
+  - ReturnToSpawn
 equipment:
   - weapon_club
-# Items creature starts equipped with (requires matching item YAML files)
-# Creates InventoryComponent and EquipComponent automatically
-# Items are added to inventory and auto-equipped to appropriate slots
-
-# attacks:
-# Natural attacks (if no equipment). Omitted = defaults to 1d2 punch
-# Example:
-#   - name: bite
-#     type: Melee        # Melee or Ranged
-#     dice: "1d4"        # Damage dice notation
-#     damageType: Piercing  # Bludgeoning (default), Slashing, Piercing, Poison
-
-# === DAMAGE MODIFIERS (optional) ===
-
-# immunities:
-#   - Poison           # Takes 0 damage from these types
-
-# resistances:
-#   - Piercing         # Takes half damage (rounded down)
-
-# vulnerabilities:
-#   - Bludgeoning      # Takes double damage
