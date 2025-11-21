@@ -91,6 +91,12 @@ public partial class NearbyEntitiesTracker : Node
 			Callable.From<BaseEntity>(OnEntityRemoved)
 		);
 
+		// Listen to vision changes (FOV recalculation)
+		_visionSystem.Connect(
+			PlayerVisionSystem.SignalName.VisionChanged,
+			Callable.From(OnVisionChanged)
+		);
+
 		// Perform initial query
 		UpdateNearbyEntities();
 	}
@@ -235,6 +241,15 @@ public partial class NearbyEntitiesTracker : Node
 		UpdateNearbyEntities();
 	}
 
+	/// <summary>
+	/// Called when the player's vision changes (FOV recalculation).
+	/// </summary>
+	private void OnVisionChanged()
+	{
+		// Vision changes affect which entities are visible, update the list
+		UpdateNearbyEntities();
+	}
+
 	#endregion
 
 	#region Cleanup
@@ -260,6 +275,15 @@ public partial class NearbyEntitiesTracker : Node
 			_entityManager.Disconnect(
 				EntityManager.SignalName.EntityRemoved,
 				Callable.From<BaseEntity>(OnEntityRemoved)
+			);
+		}
+
+		// Disconnect from vision system signal
+		if (_visionSystem != null)
+		{
+			_visionSystem.Disconnect(
+				PlayerVisionSystem.SignalName.VisionChanged,
+				Callable.From(OnVisionChanged)
 			);
 		}
 	}
