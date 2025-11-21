@@ -99,7 +99,8 @@ public class ItemData
             DefaultGlyph = "|",
             DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
-            IsConsumable = false
+            IsConsumable = false,
+            UsesOfPattern = true
         }
     };
 
