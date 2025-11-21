@@ -11,18 +11,17 @@ namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Type information for item categories.
-/// Defines default properties and display name prefixes.
+/// Defines default properties for item types.
 /// </summary>
 public class ItemTypeInfo
 {
-    public string Prefix { get; set; } = string.Empty;
-    public string? PluralType { get; set; } = null;
     public string DefaultGlyph { get; set; } = DataDefaults.UnknownGlyph;
     public string DefaultColor { get; set; } = DataDefaults.DefaultColor;
     public bool IsEquippable { get; set; } = false;
     public bool IsConsumable { get; set; } = false;
     public string? EquipSlot { get; set; } = null;
     public bool AutoPickup { get; set; } = false;
+    public bool UsesOfPattern { get; set; } = false;  // Does this type use "X of Y" naming?
 }
 
 /// <summary>
@@ -39,50 +38,68 @@ public class ItemData
     {
         ["potion"] = new ItemTypeInfo
         {
-            Prefix = "potion of ",
-            PluralType = "potions",
             DefaultGlyph = "!",
             DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
-            IsConsumable = true
+            IsConsumable = true,
+            UsesOfPattern = true
         },
         ["scroll"] = new ItemTypeInfo
         {
-            Prefix = "scroll of ",
-            PluralType = "scrolls",
             DefaultGlyph = "♪",
             DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = false,
-            IsConsumable = true
+            IsConsumable = true,
+            UsesOfPattern = true
         },
         ["weapon"] = new ItemTypeInfo
         {
-            Prefix = "",
             DefaultGlyph = "/",
-            DefaultColor = Palette.ToHex(Palette.Silver),
+            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
             IsConsumable = false,
             EquipSlot = "MeleeWeapon"
         },
         ["armor"] = new ItemTypeInfo
         {
-            Prefix = "",
             DefaultGlyph = "[",
-            DefaultColor = Palette.ToHex(Palette.Iron),
+            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
             IsConsumable = false,
             EquipSlot = "Armor"
         },
         ["ammo"] = new ItemTypeInfo
         {
-            Prefix = "",
-            PluralType = "ammo", // Triggers plural handling; actual name used instead
-            DefaultGlyph = "|",
-            DefaultColor = Palette.ToHex(Palette.Mahogany),
+            DefaultGlyph = "↑",
+            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
             IsConsumable = true,
             EquipSlot = "Ammo",
             AutoPickup = true
+        },
+        ["ring"] = new ItemTypeInfo
+        {
+            DefaultGlyph = "=",
+            DefaultColor = Palette.ToHex(Palette.Default),
+            IsEquippable = true,
+            IsConsumable = false,
+            EquipSlot = "Ring",
+            UsesOfPattern = true
+        },
+        ["wand"] = new ItemTypeInfo
+        {
+            DefaultGlyph = "~",
+            DefaultColor = Palette.ToHex(Palette.Default),
+            IsEquippable = false,
+            IsConsumable = false,  // Not consumed immediately, but removed when charges depleted
+            UsesOfPattern = true
+        },
+        ["staff"] = new ItemTypeInfo
+        {
+            DefaultGlyph = "|",
+            DefaultColor = Palette.ToHex(Palette.Default),
+            IsEquippable = false,
+            IsConsumable = false
         }
     };
 
@@ -197,7 +214,6 @@ public class ItemData
 
     /// <summary>
     /// Applies type-based defaults for properties not explicitly set in YAML.
-    /// Generates display name with prefix (e.g., "potion of cure light wounds").
     /// Should be called after deserialization.
     /// </summary>
     public void ApplyDefaults()
@@ -210,14 +226,35 @@ public class ItemData
         var typeKey = Type.ToLower();
         if (TypeInfo.TryGetValue(typeKey, out var info))
         {
-            // Apply prefix to name if one exists and hasn't been applied yet
-            if (!string.IsNullOrEmpty(info.Prefix) && !Name.StartsWith(info.Prefix))
-            {
-                Name = info.Prefix + Name;
-            }
-
             // Apply defaults for properties not explicitly set
-            Glyph ??= info.DefaultGlyph;
+            // Special handling for weapons: assign glyph based on attack type and damage type
+            if (Glyph == null)
+            {
+                if (typeKey == "weapon" && Attack != null)
+                {
+                    // Ranged weapons use } glyph
+                    if (Attack.Type == AttackType.Ranged)
+                    {
+                        Glyph = "}";
+                    }
+                    // Melee weapons use glyph based on damage type
+                    else
+                    {
+                        Glyph = Attack.DamageType switch
+                        {
+                            DamageType.Piercing => "†",
+                            DamageType.Slashing => "/",
+                            DamageType.Bludgeoning => "¶",
+                            _ => "/" // Fallback to forward slash
+                        };
+                    }
+                }
+                else
+                {
+                    // Non-weapon items use type default
+                    Glyph = info.DefaultGlyph;
+                }
+            }
 
             // Only set color if it's still the default white
             if (Color == DataDefaults.DefaultColor)
@@ -230,10 +267,10 @@ public class ItemData
             EquipSlot ??= info.EquipSlot;
         }
 
-        // Set weapon attack name to the full display name (including prefix)
+        // Set weapon attack name to the display name
         if (typeKey == "weapon" && Attack != null)
         {
-            Attack.Name = Name;
+            Attack.Name = GetDisplayName();
         }
     }
 
@@ -320,44 +357,62 @@ public class ItemData
 
     /// <summary>
     /// Gets the display name for this item with proper pluralization based on count.
-    /// For count=1: returns "potion of healing"
-    /// For count>1 with plural type: returns "3 potions of healing"
-    /// For count>1 without plural type: returns "sword (3)"
+    /// For count=1: returns "potion of healing" or "short sword"
+    /// For count>1: returns "3 potions of healing" or "short sword (3)"
     /// </summary>
     public string GetDisplayName(int count = 1)
     {
-        // Single item - just return the name
-        if (count == 1)
+        if (string.IsNullOrEmpty(Type))
         {
-            return Name;
+            return count == 1 ? Name : $"{Name} ({count})";
         }
 
-        // Multiple items - check if we have a plural type
-        if (!string.IsNullOrEmpty(Type))
+        var typeKey = Type.ToLower();
+        if (!TypeInfo.TryGetValue(typeKey, out var info))
         {
-            var typeKey = Type.ToLower();
-            if (TypeInfo.TryGetValue(typeKey, out var info) && !string.IsNullOrEmpty(info.PluralType))
+            return count == 1 ? Name : $"{Name} ({count})";
+        }
+
+        // Items that use "X of Y" pattern (potion, scroll, ring, wand)
+        if (info.UsesOfPattern)
+        {
+            if (count == 1)
             {
-                // Special case for ammo: name is already plural, just prepend count
-                if (typeKey == "ammo")
-                {
-                    return $"{count} {Name}";
-                }
-
-                // Extract the base name (everything after the prefix)
-                string baseName = Name;
-                if (!string.IsNullOrEmpty(info.Prefix) && Name.StartsWith(info.Prefix))
-                {
-                    baseName = Name.Substring(info.Prefix.Length);
-                }
-
-                // Construct plural form: "3 potions of healing"
-                return $"{count} {info.PluralType} of {baseName}";
+                // Single item: "potion of healing"
+                return $"{typeKey} of {Name}";
+            }
+            else
+            {
+                // Multiple items: "3 potions of healing"
+                string pluralType = GetPluralType(typeKey);
+                return $"{count} {pluralType} of {Name}";
             }
         }
 
-        // Fallback for items without plural type (weapons, armor, etc.)
-        return $"{Name} ({count})";
+        // Special case for ammo: name is already plural, just prepend count
+        if (typeKey == "ammo")
+        {
+            return count == 1 ? Name : $"{count} {Name}";
+        }
+
+        // Other items (weapon, armor, staff): just append count in parens
+        return count == 1 ? Name : $"{Name} ({count})";
+    }
+
+    /// <summary>
+    /// Gets the plural form of an item type for display names.
+    /// </summary>
+    private string GetPluralType(string typeKey)
+    {
+        return typeKey switch
+        {
+            "potion" => "potions",
+            "scroll" => "scrolls",
+            "ring" => "rings",
+            "wand" => "wands",
+            "staff" => "staves",
+            _ => typeKey + "s"
+        };
     }
 
     /// <summary>

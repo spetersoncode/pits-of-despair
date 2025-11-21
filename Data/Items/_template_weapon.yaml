@@ -1,0 +1,31 @@
+# Weapon Item Template
+# Glyph assigned automatically based on attack damageType:
+#   Piercing → †  |  Slashing → /  |  Bludgeoning → ¶  |  Ranged → }
+
+# === REQUIRED FIELDS ===
+name: weapon name
+type: weapon
+color: Steel              # Palette.cs color name
+equipSlot: MeleeWeapon    # MeleeWeapon or RangedWeapon
+description: Weapon description text for examine window.
+
+attack:
+  type: Melee             # Melee or Ranged
+  dice: "1d6"             # Damage dice notation
+  range: 1                # Attack range in tiles
+  damageType: Slashing    # Slashing, Piercing, Bludgeoning, Poison (determines glyph)
+  # ammoType: arrow       # Required for ranged weapons
+
+# === OPTIONAL FIELDS ===
+# glyph: "/"              # Override automatic glyph assignment
+# strengthBonus: 0
+# agilityBonus: 0
+# enduranceBonus: 0
+# willBonus: 0
+# isConsumable: false
+# charges: "1d3"          # Dice notation for charges
+# rechargeTurns: 10       # Turns to recharge 1 charge
+# effects:
+#   - type: apply_status
+#     statusType: poison
+#     durationDice: "2d3"

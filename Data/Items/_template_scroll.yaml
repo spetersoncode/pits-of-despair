@@ -1,0 +1,24 @@
+# Scroll Item Template
+# Glyph: ♪ (musical note)
+# Display name: "scroll of {name}"
+
+# === REQUIRED FIELDS ===
+name: scroll name         # "scroll of " prefix added automatically
+type: scroll
+color: Cyan               # Palette.cs color name
+description: Scroll description text for examine window.
+
+effects:
+  - type: blink
+    range: 5
+
+# === OPTIONAL FIELDS ===
+# effects can have multiple entries:
+#   - type: heal / damage / apply_status / blink / teleport / summon / identify
+#     amount: 8
+#     duration: 40
+#     durationDice: "2d3"
+#     statusType: confusion
+#     range: 8
+#     damageType: fire
+# isConsumable: true      # Always true for scrolls (default)

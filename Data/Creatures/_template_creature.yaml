@@ -1,0 +1,56 @@
+# Creature Template
+# Default glyphs by type: goblinoid='g', rodents='r', undead='s'
+
+# === REQUIRED FIELDS ===
+name: creature name
+description: Creature description for examine window.
+type: goblinoid           # goblinoid, rodents, undead
+level: 1                  # Affects difficulty, XP, HP scaling
+maxHP: 8                  # Base HP before endurance modifier (actual HP = maxHP + endurance × level)
+
+# === STATS (Optional, default to 0) ===
+# Only specify non-zero stats
+# strength: 0             # Melee damage bonus = STR/2 (rounded down)
+# agility: 0              # Ranged attack and defense bonus
+# endurance: 0            # HP bonus = END × level
+# will: 0                 # Reserved for future mental resistance
+
+# === OPTIONAL BEHAVIOR ===
+# visionRange: 10         # Tiles creature can see
+# hasMovement: true       # Can this creature move?
+# hasAI: true             # Does this creature have AI?
+
+# === VISUAL ===
+# glyph: "g"              # Override type default
+# color: Minion           # Palette.cs color name
+
+# === AI GOALS ===
+goals:
+  - MeleeAttack           # Attack adjacent enemies
+  - SearchLastKnown       # Search where enemy was last seen
+  - ReturnToSpawn         # Return to spawn when idle
+
+# Available goals: MeleeAttack, RangedAttack, SearchLastKnown, ReturnToSpawn, Wander, FleeForHelp, Idle
+
+# === EQUIPMENT ===
+# equipment:
+#   - weapon_club         # Item IDs from Data/Items/
+#   - armor_leather
+#   - ammo_arrow
+
+# === NATURAL ATTACKS ===
+# If no equipment, specify natural attacks (defaults to 1d2 punch if omitted)
+# attacks:
+#   - name: bite
+#     type: Melee         # Melee or Ranged
+#     dice: "1d4"
+#     range: 1
+#     damageType: Piercing  # Bludgeoning, Slashing, Piercing, Poison
+
+# === DAMAGE MODIFIERS ===
+# immunities:             # Takes 0 damage from these types
+#   - Poison
+# resistances:            # Takes half damage (rounded down)
+#   - Piercing
+# vulnerabilities:        # Takes double damage
+#   - Fire
