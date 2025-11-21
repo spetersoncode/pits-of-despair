@@ -1,54 +1,14 @@
-# Floor 8 Spawn Table (Placeholder)
-# TODO: Customize with floor-specific encounters
+# Floor 8 Spawn Table
+# NOT YET IMPLEMENTED - placeholder only
 
 name: floor 8
 
 creatureBudget:
-  dice: "4d20+160"
+  dice: "0"
 itemBudget:
-  dice: "7d10+50"
+  dice: "0"
 goldBudget:
-  dice: "24d20+240"
+  dice: "0"
 
-creaturePools:
-  - id: common
-    weight: 65
-    entries:
-      - type: multiple
-        creatureId: goblin
-        weight: 2
-        count:
-          dice: "1d2+1"
-      - type: single
-        creatureId: goblin_scout
-        weight: 2
-      - type: multiple
-        creatureId: skeleton
-        count:
-          dice: "1d2"
-  - id: uncommon
-    weight: 30
-    entries:
-      - type: band
-        bandId: goblin_pack
-        weight: 2
-  - id: rare
-    weight: 5
-    entries:
-      - type: band
-        bandId: goblin_pack
-
-itemPools:
-  - id: common
-    weight: 65
-    entries:
-      - itemId: potion_healing_8
-      - itemId: scroll_blink
-  - id: uncommon
-    weight: 30
-    entries:
-      - itemId: armor_leather
-  - id: rare
-    weight: 5
-    entries:
-      - itemId: armor_studded_leather
+creaturePools: []
+itemPools: []
