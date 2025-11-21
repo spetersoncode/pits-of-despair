@@ -6,10 +6,10 @@ namespace PitsOfDespair.Systems;
 
 /// <summary>
 /// Manages level-up rewards and stat increases for the player.
-/// Listens to StatsComponent.LevelUp signal and applies rewards:
-/// - Increases BaseMaxHP by 4
+/// Listens to StatsComponent.LevelUp signal and:
 /// - Coordinates stat choice UI
 /// - Applies chosen stat increases
+/// Note: HP gains come purely from Endurance stat investment (no automatic HP per level).
 /// </summary>
 public partial class LevelUpSystem : Node
 {
@@ -31,19 +31,9 @@ public partial class LevelUpSystem : Node
 
 	#endregion
 
-	#region Constants
-
-	/// <summary>
-	/// Amount of HP gained per level-up.
-	/// </summary>
-	private const int HP_GAIN_PER_LEVEL = 4;
-
-	#endregion
-
 	#region State
 
 	private Player _player;
-	private HealthComponent _healthComponent;
 	private StatsComponent _statsComponent;
 	private int _pendingLevel; // Level waiting for stat choice
 
@@ -64,14 +54,7 @@ public partial class LevelUpSystem : Node
 		}
 
 		_player = player;
-		_healthComponent = _player.GetNodeOrNull<HealthComponent>("HealthComponent");
 		_statsComponent = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
-
-		if (_healthComponent == null)
-		{
-			GD.PushError("LevelUpSystem: Player missing HealthComponent.");
-			return;
-		}
 
 		if (_statsComponent == null)
 		{
@@ -92,29 +75,16 @@ public partial class LevelUpSystem : Node
 
 	/// <summary>
 	/// Called when the player levels up.
-	/// Applies HP increase and requests stat choice from UI.
+	/// Requests stat choice from UI. HP gains now come purely from END stat investment.
 	/// </summary>
 	/// <param name="newLevel">The new level reached</param>
 	private void OnPlayerLevelUp(int newLevel)
 	{
 		_pendingLevel = newLevel;
 
-		// Apply HP increase
-		ApplyHealthIncrease();
-
 		// Request UI to show stat choice modal
+		// Note: No automatic HP increase - all HP gains come from END stat choices
 		EmitSignal(SignalName.ShowLevelUpModal, newLevel);
-	}
-
-	/// <summary>
-	/// Increases the player's BaseMaxHP by the configured amount.
-	/// </summary>
-	private void ApplyHealthIncrease()
-	{
-		_healthComponent.BaseMaxHP += HP_GAIN_PER_LEVEL;
-
-		// Trigger HP recalculation
-		_statsComponent.EmitSignal(StatsComponent.SignalName.StatsChanged);
 	}
 
 	#endregion

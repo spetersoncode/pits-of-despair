@@ -88,11 +88,17 @@ public partial class HealthComponent : Node
 
     /// <summary>
     /// Recalculates MaxHP based on BaseMaxHP and Endurance bonus.
+    /// MaxHP is floored at BaseMaxHP (negative END can't reduce HP below base).
     /// </summary>
     private void RecalculateMaxHP()
     {
         int enduranceBonus = _stats?.GetHPBonus() ?? 0;
         int newMaxHP = BaseMaxHP + enduranceBonus;
+
+        // Enforce floor: MaxHP can never go below BaseMaxHP
+        // This handles negative Endurance (debuffs, weak creatures)
+        if (newMaxHP < BaseMaxHP)
+            newMaxHP = BaseMaxHP;
 
         // If MaxHP increases, add the difference to CurrentHP
         // If MaxHP decreases, reduce CurrentHP if it exceeds new max
@@ -101,7 +107,7 @@ public partial class HealthComponent : Node
 
         if (hpDifference > 0)
         {
-            // MaxHP increased - gain the additional HP
+            // MaxHP increased - gain the additional HP (healing mechanic for END buffs)
             CurrentHP += hpDifference;
         }
         else if (CurrentHP > MaxHP)

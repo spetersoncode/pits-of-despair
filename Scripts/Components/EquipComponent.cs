@@ -258,7 +258,11 @@ public partial class EquipComponent : Node
 
         if (itemData.EnduranceBonus != 0)
         {
-            _stats.AddEnduranceModifier(source, itemData.EnduranceBonus);
+            // WARNING: Endurance bonuses on equipment are prohibited to prevent healing exploits
+            // (equip/unequip cycling provides infinite healing due to MaxHP increase → CurrentHP increase)
+            // Only consumable potions should provide temporary END buffs
+            GD.PushWarning($"EquipComponent: Item '{itemData.Name}' has EnduranceBonus={itemData.EnduranceBonus} which is not allowed on equippable items. Ignoring.");
+            // Do NOT apply: _stats.AddEnduranceModifier(source, itemData.EnduranceBonus);
         }
 
         if (itemData.WillBonus != 0)

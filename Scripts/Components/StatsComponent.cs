@@ -315,12 +315,24 @@ public partial class StatsComponent : Node
 	}
 
 	/// <summary>
-	/// Gets the HP bonus from Endurance.
+	/// Gets the HP bonus from Endurance using quadratic scaling.
+	/// Formula: (END² + 9×END) / 2
+	/// This provides marginal gains of (4 + END value) per point.
+	/// Negative END returns 0 (HP floors at base in HealthComponent).
 	/// </summary>
-	/// <returns>Endurance × Level</returns>
+	/// <returns>HP bonus from Endurance stat</returns>
 	public int GetHPBonus()
 	{
-		return TotalEndurance * Level;
+		int endurance = TotalEndurance;
+
+		// Negative endurance doesn't reduce HP below base (floor handled in HealthComponent)
+		if (endurance <= 0)
+			return 0;
+
+		// Quadratic scaling: (END² + 9×END) / 2
+		// This gives marginal gains of (4 + new END value) per point
+		// END 1: +5, END 2: +6, END 3: +7, etc.
+		return (endurance * endurance + 9 * endurance) / 2;
 	}
 
 	#endregion

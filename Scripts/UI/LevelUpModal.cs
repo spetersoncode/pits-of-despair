@@ -62,14 +62,13 @@ public partial class LevelUpModal : PanelContainer
 ║         LEVEL UP!            ║
 ╚══════════════════════════════╝[/color][/center]
 
-[center][color={Palette.ToHex(Palette.Success)}]You reached level {_newLevel}![/color]
-[color={Palette.ToHex(Palette.Success)}]+4 HP gained permanently[/color][/center]
+[center][color={Palette.ToHex(Palette.Success)}]You reached level {_newLevel}![/color][/center]
 
 [center][color={Palette.ToHex(Palette.Alert)}]Choose a stat to increase:[/color][/center]
 
   [color={Palette.ToHex(Palette.Default)}][S] Strength[/color]  - Melee damage and accuracy
   [color={Palette.ToHex(Palette.Default)}][A] Agility[/color]   - Ranged damage and accuracy
-  [color={Palette.ToHex(Palette.Default)}][E] Endurance[/color] - Maximum hit points
+  [color={Palette.ToHex(Palette.Default)}][E] Endurance[/color] - Hit points (quadratic scaling: +5, +6, +7...)
   [color={Palette.ToHex(Palette.Default)}][W] Will[/color]      - Reserved for future magic";
 	}
 

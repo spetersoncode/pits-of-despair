@@ -272,6 +272,14 @@ public class ItemData
         {
             Attack.Name = GetDisplayName();
         }
+
+        // Validation: Warn if equippable item has Endurance bonus (design violation)
+        if (GetIsEquippable() && EnduranceBonus != 0)
+        {
+            GD.PushWarning($"ItemData: '{Name}' is equippable but has EnduranceBonus={EnduranceBonus}. " +
+                "Endurance bonuses on equippable items create healing exploits (equip/unequip cycling) and are prohibited. " +
+                "Use consumable potions with 'apply_status' effects for temporary END buffs instead.");
+        }
     }
 
     /// <summary>
