@@ -1,3 +1,23 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# C# / .NET
+.mono/
+mono_crash.*.json
+.vs/
+*.user
+*.suo
+obj/
+bin/
+
+# Export builds
+builds/
+exports/
+*.exe
+*.pck
+*.x86_64
+*.dmg
+*.app
+*.zip
+*.tar.gz
