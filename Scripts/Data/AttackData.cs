@@ -46,4 +46,12 @@ public partial class AttackData : Resource
 	public DamageType DamageType { get; set; } = DamageType.Bludgeoning;
 
 	public int Range { get; set; } = 1;
+
+	/// <summary>
+	/// Type of ammo required for this attack (e.g., "arrow", "bolt").
+	/// If set, the attack requires ammunition to be consumed.
+	/// Only applicable for ranged attacks.
+	/// </summary>
+	[YamlMember(Alias = "ammoType")]
+	public string? AmmoType { get; set; } = null;
 }

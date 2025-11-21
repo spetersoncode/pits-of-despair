@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.Core;
+using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.Spawning.Data;
 using PitsOfDespair.Systems.Spawning.Placement;
 
@@ -59,9 +60,17 @@ public class SingleSpawnStrategy : ISpawnStrategy
             var gridPosition = new GridPosition(position.X, position.Y);
 
             // Spawn creature or item based on entry type
-            var entity = !string.IsNullOrEmpty(entry.CreatureId)
-                ? _entityFactory.CreateCreature(entry.CreatureId, gridPosition)
-                : _entityFactory.CreateItem(entry.ItemId, gridPosition);
+            BaseEntity entity;
+            if (!string.IsNullOrEmpty(entry.CreatureId))
+            {
+                entity = _entityFactory.CreateCreature(entry.CreatureId, gridPosition);
+            }
+            else
+            {
+                // For items, use quantity if specified, otherwise default to 1
+                int quantity = entry.Quantity?.GetRandom() ?? 1;
+                entity = _entityFactory.CreateItem(entry.ItemId, gridPosition, quantity);
+            }
 
             if (entity != null)
             {

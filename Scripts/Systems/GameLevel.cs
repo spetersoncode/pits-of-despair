@@ -150,7 +150,7 @@ public partial class GameLevel : Node
         _projectileSystem.SetTextRenderer(_renderer);
         _renderer.SetProjectileSystem(_projectileSystem);
 
-        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory);
+        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem);
 
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);
@@ -172,6 +172,7 @@ public partial class GameLevel : Node
         _aiSystem.SetTurnManager(_turnManager);
         _aiSystem.SetCombatSystem(_combatSystem);
         _aiSystem.SetEntityFactory(_entityFactory);
+        _aiSystem.SetProjectileSystem(_projectileSystem);
 
         _spawnManager.PopulateDungeon(playerSpawn);
 

@@ -4,6 +4,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using System.Linq;
 
 namespace PitsOfDespair.Actions;
 
@@ -59,7 +60,22 @@ public class RangedAttackAction : Action
             attackData.Range,
             context.MapSystem);
 
-        return visibleTiles.Contains(_targetPosition);
+        if (!visibleTiles.Contains(_targetPosition))
+        {
+            return false;
+        }
+
+        // Check ammunition requirement (player only)
+        if (actor is Player && !string.IsNullOrEmpty(attackData.AmmoType))
+        {
+            var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+            if (inventory == null || !HasRequiredAmmo(inventory, attackData.AmmoType))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public override ActionResult Execute(BaseEntity actor, ActionContext context)
@@ -71,6 +87,16 @@ public class RangedAttackAction : Action
 
         var attackComponent = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
         var attackData = attackComponent!.GetAttack(_attackIndex);
+
+        // Consume ammunition if required (player only)
+        if (actor is Player && !string.IsNullOrEmpty(attackData.AmmoType))
+        {
+            var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+            if (inventory != null && !ConsumeAmmo(inventory, attackData.AmmoType))
+            {
+                return ActionResult.CreateFailure($"Out of {attackData.AmmoType}s!");
+            }
+        }
 
         // Find target entity at position (may be null if shooting at empty tile)
         BaseEntity target = null;
@@ -84,24 +110,53 @@ public class RangedAttackAction : Action
             }
         }
 
-        // Spawn projectile - it will handle the combat on impact
+        // Spawn projectile for all entities (player and NPCs) - it will handle the combat on impact
         if (actor is Player player)
         {
-            // Use target entity's current position if available, otherwise use cursor position
+            // Player uses signal-based approach for consistency with existing system
             var projectileTarget = target != null ? target.GridPosition : _targetPosition;
             player.EmitSignal(Player.SignalName.RangedAttackRequested,
                 actor.GridPosition.ToVector2I(), projectileTarget.ToVector2I(), target, _attackIndex);
         }
         else
         {
-            // For non-player entities, we could add a similar signal
-            // For now, just do immediate hit (no projectile animation for enemies)
-            if (target != null)
-            {
-                attackComponent.RequestAttack(target, _attackIndex);
-            }
+            // NPCs use direct projectile spawning
+            var projectileTarget = target != null ? target.GridPosition : _targetPosition;
+            context.ProjectileSystem.SpawnProjectile(actor.GridPosition, projectileTarget, target, actor, _attackIndex);
         }
 
         return ActionResult.CreateSuccess();
+    }
+
+    /// <summary>
+    /// Checks if the inventory contains the required ammunition type.
+    /// </summary>
+    private bool HasRequiredAmmo(InventoryComponent inventory, string ammoType)
+    {
+        return inventory.Inventory.Any(slot =>
+            slot.Item.Template.Type?.ToLower() == "ammo" &&
+            slot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
+            slot.Item.Quantity > 0);
+    }
+
+    /// <summary>
+    /// Consumes one unit of the required ammunition from inventory.
+    /// </summary>
+    /// <returns>True if ammo was consumed successfully, false if no ammo available.</returns>
+    private bool ConsumeAmmo(InventoryComponent inventory, string ammoType)
+    {
+        var ammoSlot = inventory.Inventory.FirstOrDefault(slot =>
+            slot.Item.Template.Type?.ToLower() == "ammo" &&
+            slot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
+            slot.Item.Quantity > 0);
+
+        if (ammoSlot == null)
+        {
+            return false;
+        }
+
+        // Remove one ammo from the stack
+        inventory.RemoveItem(ammoSlot.Key, 1);
+        return true;
     }
 }

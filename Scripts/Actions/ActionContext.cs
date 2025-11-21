@@ -34,17 +34,24 @@ public class ActionContext
     /// </summary>
     public EntityFactory EntityFactory { get; }
 
+    /// <summary>
+    /// The projectile system for spawning ranged attack projectiles.
+    /// </summary>
+    public ProjectileSystem ProjectileSystem { get; }
+
     public ActionContext(
         MapSystem mapSystem,
         EntityManager entityManager,
         Player player,
         CombatSystem combatSystem,
-        EntityFactory entityFactory)
+        EntityFactory entityFactory,
+        ProjectileSystem projectileSystem)
     {
         MapSystem = mapSystem;
         EntityManager = entityManager;
         Player = player;
         CombatSystem = combatSystem;
         EntityFactory = entityFactory;
+        ProjectileSystem = projectileSystem;
     }
 }

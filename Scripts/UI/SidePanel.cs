@@ -321,9 +321,9 @@ public partial class SidePanel : PanelContainer
 
 		if (entityAtPosition != null && entityAtPosition.IsWalkable)
 		{
-			// Display the item with its glyph
+			// Display the item with its glyph and quantity
 			string displayName = entityAtPosition.ItemData != null
-				? entityAtPosition.ItemData.Template.GetDisplayName(1)
+				? entityAtPosition.ItemData.Template.GetDisplayName(entityAtPosition.ItemData.Quantity)
 				: entityAtPosition.DisplayName;
 			_standingOnLabel.Text = $"{entityAtPosition.Glyph} {displayName}";
 			_standingOnLabel.AddThemeColorOverride("font_color", entityAtPosition.GlyphColor);
@@ -409,7 +409,13 @@ public partial class SidePanel : PanelContainer
 			{
 				// Convert entity color to hex for BBCode
 				string colorHex = $"#{(int)(entity.GlyphColor.R * 255):X2}{(int)(entity.GlyphColor.G * 255):X2}{(int)(entity.GlyphColor.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{entity.Glyph} {entity.DisplayName}[/color]");
+
+				// Use item's display name with quantity for items, otherwise use entity DisplayName
+				string displayName = entity.ItemData != null
+					? entity.ItemData.Template.GetDisplayName(entity.ItemData.Quantity)
+					: entity.DisplayName;
+
+				sb.AppendLine($"[color={colorHex}]{entity.Glyph} {displayName}[/color]");
 			}
 		}
 

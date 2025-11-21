@@ -111,12 +111,18 @@ itemPools:
       - itemId: scroll_blink
       - itemId: scroll_confusion
 
+      # Ammunition
+      - itemId: ammo_arrow
+        quantity:
+          dice: "3d6+10" # Spawns 13-28 arrows per stack (more than floor 1)
+
   # Uncommon items (30% weight) - Increased from floor 1
   - id: uncommon
     weight: 30
     entries:
       - itemId: scroll_teleport
       - itemId: weapon_spear
+      - itemId: weapon_short_bow
       - itemId: armor_leather
         weight: 2 # Armor more common on floor 2
 

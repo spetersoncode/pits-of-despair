@@ -22,6 +22,7 @@ public partial class AISystem : Node
     private TurnManager _turnManager;
     private CombatSystem _combatSystem;
     private EntityFactory _entityFactory;
+    private ProjectileSystem _projectileSystem;
     private ActionContext _actionContext;
     private List<AIComponent> _aiComponents = new List<AIComponent>();
 
@@ -68,14 +69,23 @@ public partial class AISystem : Node
     }
 
     /// <summary>
+    /// Sets the projectile system dependency.
+    /// </summary>
+    public void SetProjectileSystem(ProjectileSystem projectileSystem)
+    {
+        _projectileSystem = projectileSystem;
+        UpdateActionContext();
+    }
+
+    /// <summary>
     /// Updates the cached action context when dependencies change.
     /// </summary>
     private void UpdateActionContext()
     {
         // Only create context if all dependencies are set
-        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null && _entityFactory != null)
+        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null && _entityFactory != null && _projectileSystem != null)
         {
-            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory);
+            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem);
         }
     }
 

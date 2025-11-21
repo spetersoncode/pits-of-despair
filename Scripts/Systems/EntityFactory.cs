@@ -46,8 +46,9 @@ public partial class EntityFactory : Node
     /// </summary>
     /// <param name="itemId">The item ID (YAML filename without extension).</param>
     /// <param name="position">The grid position to place the item.</param>
+    /// <param name="quantity">Optional quantity for stackable items. Defaults to 1.</param>
     /// <returns>The created and configured BaseEntity with ItemData, or null if item not found.</returns>
-    public BaseEntity CreateItem(string itemId, GridPosition position)
+    public BaseEntity CreateItem(string itemId, GridPosition position, int quantity = 1)
     {
         var data = _dataLoader.GetItem(itemId);
         if (data == null)
@@ -56,8 +57,11 @@ public partial class EntityFactory : Node
             return null;
         }
 
-        // Create ItemInstance with randomized/specified charges
-        var itemInstance = new ItemInstance(data);
+        // Create ItemInstance with randomized/specified charges and quantity
+        var itemInstance = new ItemInstance(data)
+        {
+            Quantity = quantity
+        };
 
         // Delegate to builder for consistent entity construction
         return BuildItemEntity(itemInstance, position);
@@ -87,9 +91,9 @@ public partial class EntityFactory : Node
     {
         var data = itemInstance.Template;
 
-        // Set autopickup for potions and scrolls
+        // Set autopickup for consumables and ammo
         string itemType = data.Type?.ToLower() ?? string.Empty;
-        if (itemType == "potion" || itemType == "scroll")
+        if (itemType == "potion" || itemType == "scroll" || itemType == "ammo")
         {
             data.AutoPickup = true;
         }
@@ -336,8 +340,7 @@ public partial class EntityFactory : Node
         string[] startingItems = new string[]
         {
             "weapon_short_sword",
-            "armor_padded",
-            "weapon_short_bow"
+            "armor_padded"
         };
 
         // Add and equip each item

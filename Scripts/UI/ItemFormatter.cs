@@ -65,7 +65,7 @@ public static class ItemFormatter
         string displayName = itemTemplate.Name;
         if (options.HasFlag(ItemDisplayOptions.ShowCount))
         {
-            displayName = itemTemplate.GetDisplayName(slot.Count);
+            displayName = itemTemplate.GetDisplayName(slot.Item.Quantity);
         }
         string name = $"[color={itemColor}]{displayName}[/color]";
 

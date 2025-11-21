@@ -200,9 +200,9 @@ public partial class ItemDetailModal : CenterContainer
 
 		// Stack count for consumables
 		string countInfo = "";
-		if (_currentSlot.Count > 1)
+		if (_currentSlot.Item.Quantity > 1)
 		{
-			countInfo = $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Count})[/color]";
+			countInfo = $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Item.Quantity})[/color]";
 		}
 
 		// Charges for charged items

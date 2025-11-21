@@ -124,7 +124,7 @@ public class PlayerState
 				{
 					Key = slot.Key,
 					ItemDataFileId = slot.Item.Template.DataFileId,
-					Count = slot.Count,
+					Quantity = slot.Item.Quantity,
 					CurrentCharges = slot.Item.CurrentCharges
 				});
 			}
@@ -213,11 +213,12 @@ public class PlayerState
 				{
 					var itemInstance = new ItemInstance(itemTemplate)
 					{
-						CurrentCharges = slot.CurrentCharges
+						CurrentCharges = slot.CurrentCharges,
+						Quantity = slot.Quantity
 					};
 
 					// Manually add to inventory at specific key
-					AddItemAtKey(inventoryComponent, slot.Key, itemInstance, slot.Count);
+					AddItemAtKey(inventoryComponent, slot.Key, itemInstance);
 				}
 			}
 		}
@@ -307,7 +308,7 @@ public class PlayerState
 	/// <summary>
 	/// Adds an item to inventory at a specific key (bypasses normal key assignment).
 	/// </summary>
-	private static void AddItemAtKey(InventoryComponent inventory, char key, ItemInstance item, int count)
+	private static void AddItemAtKey(InventoryComponent inventory, char key, ItemInstance item)
 	{
 		// Access private _inventory list using reflection
 		var field = inventory.GetType().GetField("_inventory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -316,7 +317,7 @@ public class PlayerState
 			var list = field.GetValue(inventory) as List<InventorySlot>;
 			if (list != null)
 			{
-				list.Add(new InventorySlot(key, item, count));
+				list.Add(new InventorySlot(key, item));
 			}
 		}
 	}
@@ -331,6 +332,6 @@ public class SerializableInventorySlot
 {
 	public char Key { get; set; }
 	public string ItemDataFileId { get; set; } = "";
-	public int Count { get; set; }
+	public int Quantity { get; set; }
 	public int CurrentCharges { get; set; }
 }

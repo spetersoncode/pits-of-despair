@@ -61,7 +61,7 @@ public class PickupAction : Action
         context.EntityManager.RemoveEntity(entityAtPosition);
         entityAtPosition.QueueFree();
 
-        string itemName = entityAtPosition.ItemData.Template.GetDisplayName(1);
+        string itemName = entityAtPosition.ItemData.Template.GetDisplayName(entityAtPosition.ItemData.Quantity);
         string successMessage = $"Picked up {itemName}.";
 
         // Note: Core logic is generic (works with any InventoryComponent),

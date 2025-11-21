@@ -25,10 +25,17 @@ public class ItemInstance
     /// </summary>
     public int RechargeTurnCounter { get; set; }
 
+    /// <summary>
+    /// The quantity/count of this item. Used for stackable items (consumables, ammo).
+    /// Defaults to 1 for non-stacking items.
+    /// </summary>
+    public int Quantity { get; set; }
+
     public ItemInstance(ItemData template)
     {
         Template = template;
         RechargeTurnCounter = 0;
+        Quantity = 1; // Default quantity for all items
 
         // Initialize charges based on template configuration
         if (!string.IsNullOrEmpty(template.ChargesDice))
@@ -100,7 +107,8 @@ public class ItemInstance
         return new ItemInstance(Template)
         {
             CurrentCharges = this.CurrentCharges,
-            RechargeTurnCounter = this.RechargeTurnCounter
+            RechargeTurnCounter = this.RechargeTurnCounter,
+            Quantity = this.Quantity
         };
     }
 }

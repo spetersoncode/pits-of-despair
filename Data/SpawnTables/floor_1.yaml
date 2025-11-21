@@ -121,6 +121,11 @@ itemPools:
 
       - itemId: scroll_confusion
 
+      # Ammunition
+      - itemId: ammo_arrow
+        quantity:
+          dice: "2d6+8" # Spawns 10-20 arrows per stack
+
   # Uncommon items (25% weight) - Better equipment
   - id: uncommon
     weight: 25
@@ -128,6 +133,8 @@ itemPools:
       - itemId: scroll_teleport
 
       - itemId: weapon_spear
+
+      - itemId: weapon_short_bow
 
   # Rare items (5% weight)
   - id: rare

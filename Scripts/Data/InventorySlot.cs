@@ -4,8 +4,8 @@ namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Represents a single slot in an entity's inventory.
-/// Each slot is assigned a letter key (a-z or A-Z) and can hold multiple items of the same type.
-/// For consumables, Count can be > 1. For charged items, Count is always 1.
+/// Each slot is assigned a letter key (a-z or A-Z) and holds a single ItemInstance.
+/// For stackable items, the quantity is tracked in ItemInstance.Quantity.
 /// </summary>
 public class InventorySlot
 {
@@ -16,37 +16,13 @@ public class InventorySlot
 
     /// <summary>
     /// The item instance in this slot, which wraps the template data and per-instance state.
+    /// For stackable items, Item.Quantity indicates how many are in this stack.
     /// </summary>
     public ItemInstance Item { get; set; }
 
-    /// <summary>
-    /// The number of items stacked in this slot.
-    /// Only > 1 for consumable items. Charged items always have Count = 1.
-    /// </summary>
-    public int Count { get; set; }
-
-    public InventorySlot(char key, ItemInstance item, int count = 1)
+    public InventorySlot(char key, ItemInstance item)
     {
         Key = key;
         Item = item;
-        Count = count;
-    }
-
-    /// <summary>
-    /// Adds items to this slot.
-    /// </summary>
-    public void Add(int amount = 1)
-    {
-        Count += amount;
-    }
-
-    /// <summary>
-    /// Removes items from this slot.
-    /// Returns true if slot is now empty.
-    /// </summary>
-    public bool Remove(int amount = 1)
-    {
-        Count -= amount;
-        return Count <= 0;
     }
 }

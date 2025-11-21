@@ -113,6 +113,13 @@ public class SpawnEntryData
     public CountRange Count { get; set; } = new CountRange();
 
     /// <summary>
+    /// Quantity for stackable items (ammo, consumables).
+    /// If specified, the item will spawn with this quantity.
+    /// </summary>
+    [YamlMember(Alias = "quantity")]
+    public CountRange Quantity { get; set; } = null;
+
+    /// <summary>
     /// Placement strategy to use (random, center, surrounding, formation).
     /// </summary>
     [YamlMember(Alias = "placement")]

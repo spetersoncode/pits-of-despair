@@ -22,6 +22,7 @@ public class ItemTypeInfo
     public bool IsEquippable { get; set; } = false;
     public bool IsConsumable { get; set; } = false;
     public string? EquipSlot { get; set; } = null;
+    public bool AutoPickup { get; set; } = false;
 }
 
 /// <summary>
@@ -71,6 +72,16 @@ public class ItemData
             IsEquippable = true,
             IsConsumable = false,
             EquipSlot = "Armor"
+        },
+        ["ammo"] = new ItemTypeInfo
+        {
+            Prefix = "",
+            PluralType = "ammo", // Triggers plural handling; actual name used instead
+            DefaultGlyph = "|",
+            DefaultColor = Palette.ToHex(Palette.Mahogany),
+            IsEquippable = false,
+            IsConsumable = true,
+            AutoPickup = true
         }
     };
 
@@ -326,6 +337,12 @@ public class ItemData
             var typeKey = Type.ToLower();
             if (TypeInfo.TryGetValue(typeKey, out var info) && !string.IsNullOrEmpty(info.PluralType))
             {
+                // Special case for ammo: name is already plural, just prepend count
+                if (typeKey == "ammo")
+                {
+                    return $"{count} {Name}";
+                }
+
                 // Extract the base name (everything after the prefix)
                 string baseName = Name;
                 if (!string.IsNullOrEmpty(info.Prefix) && Name.StartsWith(info.Prefix))

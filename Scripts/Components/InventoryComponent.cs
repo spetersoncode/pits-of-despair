@@ -95,9 +95,9 @@ public partial class InventoryComponent : Node
                 return null;
             }
 
-            // Stack with existing item
-            existingSlot.Add(1);
-            message = $"Added to existing stack ({existingSlot.Count} total).";
+            // Stack with existing item (add quantity from picked up item)
+            existingSlot.Item.Quantity += itemInstance.Quantity;
+            message = $"Added to existing stack ({existingSlot.Item.Quantity} total).";
             EmitSignal(SignalName.InventoryChanged);
             return existingSlot.Key;
         }
@@ -105,16 +105,16 @@ public partial class InventoryComponent : Node
         // Try to find existing slot for stacking
         if (existingSlot != null)
         {
-            // Stack with existing item
-            existingSlot.Add(1);
-            message = $"Added to existing stack ({existingSlot.Count} total).";
+            // Stack with existing item (add quantity from picked up item)
+            existingSlot.Item.Quantity += itemInstance.Quantity;
+            message = $"Added to existing stack ({existingSlot.Item.Quantity} total).";
             EmitSignal(SignalName.InventoryChanged);
             return existingSlot.Key;
         }
 
         // Add new slot with next available key
         char nextKey = GetNextAvailableKey();
-        var newSlot = new InventorySlot(nextKey, itemInstance, 1);
+        var newSlot = new InventorySlot(nextKey, itemInstance);
         _inventory.Add(newSlot);
 
         message = $"Added to inventory slot '{nextKey}'.";
@@ -136,11 +136,11 @@ public partial class InventoryComponent : Node
             return false;
         }
 
-        // Remove the specified count
-        slot.Remove(count);
+        // Decrement the quantity
+        slot.Item.Quantity -= count;
 
         // If slot is empty, remove it from inventory
-        if (slot.Count <= 0)
+        if (slot.Item.Quantity <= 0)
         {
             _inventory.Remove(slot);
         }
