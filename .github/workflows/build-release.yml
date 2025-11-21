@@ -3,9 +3,7 @@ name: Build and Release
 on:
   release:
     types: [created]
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
 
 env:
   GODOT_VERSION: 4.5.1
