@@ -62,7 +62,7 @@ Damage modification occurs in `HealthComponent.TakeDamage()` after armor reducti
 
 ## Combat Components
 
-**HealthComponent**: Manages hit points and damage application. `MaxHP` calculated as `BaseMaxHP + (Endurance × Level)`. Stores damage modifiers (immunities, resistances, vulnerabilities). `TakeDamage(amount, damageType)` applies modifiers, reduces CurrentHP, and emits signals. Emits `Died` when HP reaches 0, triggering entity removal.
+**HealthComponent**: Manages hit points and damage application. `MaxHP` calculated using quadratic END scaling: `BaseMaxHP + (END² + 9×END) / 2`. Negative END floors at BaseMaxHP. Stores damage modifiers (immunities, resistances, vulnerabilities). `TakeDamage(amount, damageType)` applies modifiers, reduces CurrentHP, and emits signals. Emits `Died` when HP reaches 0, triggering entity removal.
 
 **AttackComponent**: Interface between actions and combat resolution. Holds `Attacks` array (weapon or natural attacks). `RequestAttack(target, attackIndex)` emits signal to CombatSystem for processing. Updated automatically when equipment changes.
 
@@ -94,7 +94,7 @@ This enables independent UI updates, AI evaluation, and system testing without c
 
 **Agility (AGI)**: Added to all defense rolls and ranged attack rolls. Reduced by armor evasion penalties.
 
-**Endurance (END)**: Multiplied by level and added to BaseMaxHP.
+**Endurance (END)**: Quadratic scaling adds to BaseMaxHP. See [statistics.md](statistics.md) for formula.
 
 **Armor**: Flat damage reduction from all sources.
 
@@ -232,6 +232,9 @@ To create new attack mechanics beyond melee/reach/ranged:
 
 Most attacks should use existing pipeline via `RequestAttack()` for consistency.
 
----
+## See Also
 
-*See also: [actions.md](actions.md) for action system integration, [statistics.md](statistics.md) for combat formula details, [targeting.md](targeting.md) for ranged/reach targeting UI, [components.md](components.md) for component patterns*
+- [actions.md](actions.md) - Action system integration
+- [statistics.md](statistics.md) - Combat formula details
+- [targeting.md](targeting.md) - Ranged/reach targeting UI
+- [components.md](components.md) - Component patterns

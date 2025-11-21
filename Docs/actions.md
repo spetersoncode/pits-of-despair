@@ -149,12 +149,8 @@ Actions are highly testable due to explicit dependencies. Mock ActionContext wit
 
 **Reach Attack Action**: Melee weapon attack with extended range (e.g., spears). Validation checks weapon is melee type with range > 1, target within weapon range using Chebyshev distance, line-of-sight to target (unlike basic melee), and target has health component. Execution uses standard melee mechanics (STR modifier for attack/damage) via AttackComponent.RequestAttack. Demonstrates hybrid combat mechanics—melee damage model with ranged targeting requirements. Activated via activate menu (A key) for equipped reach weapons, entering targeting mode.
 
-## Related Documentation
+## See Also
 
-- **[Components](components.md)** - Component architecture that actions interact with
-- **[Entities](entities.md)** - Entity composition model that supports action execution
-- **[Effects](effects.md)** - Effect system often triggered by actions
-
----
-
-*The actions system represents the core interaction layer between player intent, AI decision-making, and game world state changes. Its unified interface enables consistent, testable, and extensible gameplay mechanics.*
+- [components.md](components.md) - Component architecture that actions interact with
+- [entities.md](entities.md) - Entity composition model that supports action execution
+- [effects.md](effects.md) - Effect system often triggered by actions

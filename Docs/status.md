@@ -166,6 +166,7 @@ Current implementations demonstrate patterns for common effect types.
 
 **Instantaneous vs Duration Split**: Status effects separate from instantaneous effects. Delayed one-time effects (damage in N turns) awkward—requires Status with OnTurnProcessed checking counter. Workaround exists but inelegant.
 
----
+## See Also
 
-*See [effects.md](effects.md) for effect system integration and instantaneous effects. See [components.md](components.md) for component architecture patterns.*
+- [effects.md](effects.md) - Effect system and instantaneous effects
+- [components.md](components.md) - Component architecture patterns

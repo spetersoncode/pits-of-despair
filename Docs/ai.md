@@ -123,6 +123,8 @@ Create class inheriting from `Goal` base class. Implement required methods:
 
 Register in `GoalFactory._goalRegistry` dictionary with string key. Add goal ID to creature YAML files in `CreatureData.Goals` list. Goals with score > 0 compete for execution priority—highest score wins.
 
----
+## See Also
 
-*See also: **[Actions](actions.md)** for action system integration, **[Components](components.md)** for component architecture, **[Turn System](turn-based.md)** for turn coordination.*
+- [actions.md](actions.md) - Action system integration
+- [components.md](components.md) - Component architecture
+- [turn-based.md](turn-based.md) - Turn coordination

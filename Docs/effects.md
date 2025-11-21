@@ -114,6 +114,8 @@ Status effects extend instantaneous effects with turn-based lifecycle requiring 
 
 **Centralized Factories**: Single point of creation enables validation and logging but requires all effect types known to factory. Easy to extend with new cases. Clear error messages guide implementation.
 
----
+## See Also
 
-*See [status.md](status.md) for status system architecture. See [components.md](components.md) for component architecture and composition patterns. See [actions.md](actions.md) for action system integration and turn consumption.*
+- [status.md](status.md) - Status system architecture
+- [components.md](components.md) - Component architecture and composition
+- [actions.md](actions.md) - Action system integration

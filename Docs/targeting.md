@@ -164,10 +164,6 @@ A + Scroll    ──→  Auto-Select Cursor     ActivateTargetedItemAction
 
 ## Related Documentation
 
-- **[Actions](actions.md)** - Action system that consumes targeting results
-- **[Effects](effects.md)** - Item effects that may require targeting
-- **[Text Renderer](text-renderer.md)** - Visual rendering of cursor overlays
-
----
-
-*The cursor targeting system provides unified tile selection for both inspection and action through mode-based validation and consistent visual feedback.*
+- [actions.md](actions.md) - Action system that consumes targeting results
+- [effects.md](effects.md) - Item effects that may require targeting
+- [text-renderer.md](text-renderer.md) - Visual rendering of cursor overlays

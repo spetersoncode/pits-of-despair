@@ -116,6 +116,6 @@ Complete algorithm integration requires interface implementation, factory regist
 
 **Candidate Algorithms**: Cellular automata for organic caves. Drunkard walk for flowing caverns. Voronoi diagrams for natural room distributions. Recursive room division as BSP alternative. Prefab assembly for hand-crafted sections. Hybrid approaches combining algorithms.
 
----
+## See Also
 
-*The dungeon generator uses Binary Space Partitioning to create procedurally generated dungeons with extensible architecture supporting multiple generation algorithms through clean abstraction and factory patterns.*
+- [spawning.md](spawning.md) - Entity placement after generation

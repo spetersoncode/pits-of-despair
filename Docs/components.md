@@ -88,6 +88,6 @@ Entities combine components for capabilities: combat (Health, Stats, Attack), au
 
 **Overhead**: Each component has node lifecycle overhead. Acceptable given Godot optimization. Use entity properties for trivial data.
 
----
+## See Also
 
-*For entity composition patterns using these components, see **[entities.md](entities.md)**.*
+- [entities.md](entities.md) - Entity composition patterns

@@ -36,6 +36,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 **Supporting Systems**:
 - **[ai.md](ai.md)**: AI architecture and goal-based decision making
 - **[effects.md](effects.md)**: Instantaneous and time-based effect application
+- **[progression.md](progression.md)**: Experience points, leveling, and stat growth
 - **[statistics.md](statistics.md)**: Multi-source stat tracking and combat value calculations
 - **[status.md](status.md)**: Status effect system with turn-based lifecycle
 - **[targeting.md](targeting.md)**: Unified targeting system for ranged attacks, reach weapons, and targeted items

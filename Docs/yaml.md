@@ -113,6 +113,7 @@ YAML comments (`#`) document complex structures, explain design decisions, and c
 
 **Type Discovery**: No registration required for individual creatures/items—only for new type categories. Files are auto-discovered via recursive directory scanning.
 
----
+## See Also
 
-*For implementation details, see DataLoader.cs, CreatureData.cs, ItemData.cs, BandData.cs, SpawnTableData.cs. For example data structures, see files in `Data/` subdirectories.*
+- [spawning.md](spawning.md) - Spawn table YAML format
+- [glyphs.md](glyphs.md) - Glyph and color assignment patterns

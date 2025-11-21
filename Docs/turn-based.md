@@ -74,6 +74,7 @@ Actions query for components rather than entity types. MoveAction requires posit
 
 **Action-goal composition**: Goals select appropriate actions based on state. Same action instances used by player input and AI. Enables behavior extension through new goals without modifying actions.
 
----
+## See Also
 
-*See [actions.md](actions.md) for action system details and [ai.md](ai.md) for goal-based decision architecture.*
+- [actions.md](actions.md) - Action system details
+- [ai.md](ai.md) - Goal-based decision architecture

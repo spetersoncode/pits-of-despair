@@ -34,6 +34,3 @@ This document captures conscious design choices that shape gameplay philosophy a
 
 **Removing Mechanics**: Is it busywork disguised as depth? Does it require external knowledge or meta-gaming? Could spawning/pacing systems achieve the same goal?
 
----
-
-*These decisions guide feature development and scope management. New entries added as significant design choices emerge.*

@@ -16,7 +16,7 @@ The statistics system manages creature attributes and combat modifiers through m
 
 **Agility (AGI)**: Ranged combat and defense. Adds to ranged attack rolls and all defense rolls (2d6+AGI). Higher AGI increases hit chance with ranged weapons and ability to evade incoming attacks.
 
-**Endurance (END)**: Hit point capacity. Formula: `MaxHP = BaseMaxHP + (END × Level)`. Each point of Endurance grants additional HP per character level.
+**Endurance (END)**: Hit point capacity. Quadratic scaling formula: `MaxHP = BaseMaxHP + (END² + 9×END) / 2`. Provides increasing marginal returns (each END point grants more HP than the last). Negative END floors at BaseMaxHP. Level no longer affects HP scaling.
 
 **Will (WIL)**: Reserved for future magic/ability systems. Currently tracked but unused in game mechanics.
 
@@ -52,8 +52,9 @@ Each stat type maintains dictionary of modifiers keyed by source string. Sources
 
 **Status Effects**: Temporary buffs/debuffs (StrengthBuffStatus, AgilityBuffStatus, etc.). Applied on status activation, removed on expiration via GUID-based source tracking.
 
-**Level-Based**: Character level multiplies Endurance for HP scaling. Level increases trigger recalculation via `StatsChanged`.
+**Level-Based**: Level increases trigger `StatsChanged` for dependent recalculations. Note: Level no longer affects HP directly (see quadratic END formula above).
 
----
+## See Also
 
-*See combat resolution in CombatSystem and HP mechanics in HealthComponent.*
+- [progression.md](progression.md) - XP and leveling system
+- [combat.md](combat.md) - Combat resolution

@@ -173,6 +173,7 @@ Important information doesn't rely on color alone: health shows numeric percenta
 
 Centralized system provides global access to semantic colors, supports YAML color references by name, converts between formats (native objects vs hex strings), and organizes colors using code regions. Explore codebase for implementation details.
 
----
+## See Also
 
-*This color system creates visual consistency, semantic clarity, and aesthetic coherence across the entire game. When in doubt, favor existing colors over creating new ones, and always prioritize meaning over appearance.*
+- [glyphs.md](glyphs.md) - Glyph design and color usage
+- [text-renderer.md](text-renderer.md) - Color rendering implementation

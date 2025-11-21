@@ -104,6 +104,6 @@ Hybrid approach balances visual editing convenience with data-driven flexibility
 
 Items are minimal entities without components: walkable, carry `ItemInstance` reference (charges, type, properties), auto-collected on player movement, droppable to create new entities. Passive items don't need components—keeps them lightweight.
 
----
+## See Also
 
-*For component design patterns, see **[components.md](components.md)**.*
+- [components.md](components.md) - Component design patterns

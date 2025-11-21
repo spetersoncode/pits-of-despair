@@ -38,7 +38,7 @@ The renderer draws in strict depth order during `_Draw()`:
 
 **Layer 5 - Player**: Always drawn at viewport center with full color, regardless of fog state. Visual anchor point.
 
-**Layer 6 - Projectiles**: Active projectiles mid-flight, using directional glyphs (`→`, `←`, `↓`, `↑`) interpolated between origin and target.
+**Layer 6 - Projectiles**: Active projectiles mid-flight, rendered as animated line segments interpolated between origin and target.
 
 **Layer 7 - Targeting Overlay**: Semi-transparent range highlights, trace lines, and cursor position indicators. Only drawn when targeting mode active.
 
@@ -100,11 +100,11 @@ When targeting mode activates, the renderer draws additional overlay elements:
 
 ## Projectile Animation
 
-Projectiles are rendered as interpolated glyphs between origin and target positions:
+Projectiles are rendered as animated line segments between origin and target:
 
-**Animation Model**: Progress value from 0.0 (origin) to 1.0 (target). Godot tweens provide smooth transitions. Duration calculated as `distance / ProjectileSpeed` (30 tiles/second).
+**Animation Model**: Progress value from 0.0 (origin) to 1.0 (target). Godot tweens provide smooth transitions. Duration calculated as `distance / ProjectileSpeed`.
 
-**Rendering**: Grid position calculated via linear interpolation. Directional glyph selected based on flight direction. Projectile drawn on top of all static elements but below targeting overlay.
+**Line-Based Rendering**: Projectiles render as short line segments oriented along flight direction. Current position interpolated from origin to target. Line segment centered at current position extends in flight direction. Uses `DrawLine()` with configurable color and width (3px default, 80% alpha).
 
 **Continuous Redraw**: Renderer checks for active projectiles during `_Process()` and forces redraw while any projectiles exist. Ensures smooth animation frames.
 
@@ -166,6 +166,8 @@ While the TextRenderer handles map/entity display, UI panels use Godot's built-i
 
 **Signal-Based Updates**: Decoupling per project principles. Systems evolve independently. Renderer subscribes to relevant changes without tight coupling.
 
----
+## See Also
 
-*For entity composition patterns, see [entities.md](entities.md). For fog-of-war AI integration, see [ai.md](ai.md). For color palette details, see [color.md](color.md).*
+- [entities.md](entities.md) - Entity composition patterns
+- [ai.md](ai.md) - Fog-of-war AI integration
+- [color.md](color.md) - Color palette details

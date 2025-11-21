@@ -34,28 +34,19 @@ Glyphs are data properties, not components. No entity-level renderers—centrali
 
 ### Items
 
-**Type-Based Defaults**: ItemTypeInfo dictionary provides fallback glyph/color. Individual items override via YAML.
+**Type-Based Defaults**: ItemTypeInfo dictionary provides fallback glyph/color. Individual items override via YAML. Weapons auto-assign glyph based on damage type. See [glyph-atlas.md](glyph-atlas.md) for complete registry.
 
-- **Potions**: `!` (exclamation) in white, overridable (HealthFull for healing potions)
-- **Scrolls**: `♪` (music note) in white, often Cyan for magical association
-- **Weapons**: `/` (slash) in material colors (Steel, Bronze, Iron, Oak, AshWood)
-- **Armor**: `[` (left bracket) in material colors (Wool, SoftLeather, Silver)
-
-**Material Progression Example**: Short sword (Iron), longsword (Steel), bastard sword (ForgedSteel)—same glyph, escalating color quality.
+**Material Progression**: Same glyph + escalating color indicates quality tiers (Iron → Steel → ForgedSteel).
 
 ### Creatures
 
-**Type-Based Defaults**: CreatureTypeInfo dictionary provides species glyph/color. Variants override for visual distinction.
+**Type-Based Defaults**: CreatureTypeInfo dictionary provides species glyph/color. Variants override for visual distinction. See [glyph-atlas.md](glyph-atlas.md) for complete registry.
 
-- **Goblinoid**: `g` in white (base), Rust (ruffian variant)
-- **Vermin**: `r` in white (base), Fur (elder rat variant)
-
-**Distinct Variant Rule**: Creature variants within type NEVER share colors. Goblin, goblin scout, goblin ruffian each receive unique colors for instant threat differentiation.
+**Distinct Variant Rule**: Creature variants within type NEVER share colors—enables instant threat differentiation.
 
 ### Projectiles
-- **Directional Glyphs**: `→` `←` `↓` `↑` based on flight trajectory
-- **Color**: White—neutral, no elemental association (yet)
-- **Dynamic Update**: Glyph recalculates during motion for accurate visual trace
+
+Projectiles use line-based rendering rather than glyphs. See [text-renderer.md](text-renderer.md) for details.
 
 ## Data-Driven Configuration
 
@@ -107,7 +98,7 @@ Glyphs use semantic colors from centralized Palette. See **[color.md](color.md)*
 3. Items (persistent visibility, dimmed in fog)
 4. Creatures (current FOV only)
 5. Player (viewport center, full color)
-6. Projectiles (animated directional glyphs)
+6. Projectiles (animated line segments)
 7. Targeting Overlay (semi-transparent highlights)
 
 **Grid-to-Pixel Mapping**: TileSize 18px matches FontSize 18px (Fira Mono Medium). DrawChar() for map tiles, DrawString() for entity glyphs (Unicode support). Player-centered viewport with camera offset calculation.
@@ -138,6 +129,9 @@ When adding entity categories with shared glyphs:
 2. Plan variant color palette in advance (ensure sufficient visual separation)
 3. Document color assignments to prevent variant conflicts
 
----
+## See Also
 
-*Glyph design balances tradition (roguelike conventions like `@` player, `.` floor) with clarity (semantic color coding, strict single-character constraint). Visual language prioritizes player comprehension over decorative variety—every glyph choice serves tactical readability.*
+- [glyph-atlas.md](glyph-atlas.md) - Complete glyph catalog and type registries
+- [color.md](color.md) - Color palette and semantic naming
+- [text-renderer.md](text-renderer.md) - Glyph rendering implementation
+- [yaml.md](yaml.md) - YAML glyph/color configuration
