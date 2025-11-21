@@ -28,13 +28,11 @@ public partial class SidePanel : PanelContainer
 	private Label _experienceLabel;
 	private Label _floorLabel;
 	private Label _goldLabel;
-	private Label _standingOnLabel;
 	private RichTextLabel _equipmentLabel;
 	private RichTextLabel _statsLabel;
 	private RichTextLabel _visibleEntitiesLabel;
 
 	private Entities.Player _player;
-	private Systems.EntityManager _entityManager; // Still needed for "standing on" display
 
 	// ViewModels for decoupled data access
 	private ViewModels.PlayerStatsViewModel _statsViewModel;
@@ -50,14 +48,12 @@ public partial class SidePanel : PanelContainer
 		_experienceLabel = GetNode<Label>("MarginContainer/VBoxContainer/ExperienceLabel");
 		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
 		_goldLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/GoldLabel");
-		_standingOnLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StandingOnLabel");
 		_equipmentLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/EquipmentLabel");
 		_statsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/StatsLabel");
 		_visibleEntitiesLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/ScrollContainer/VisibleEntitiesLabel");
 
 		UpdateFloorDisplay();
 		UpdateGoldDisplay();
-		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
 		UpdateVisibleEntitiesDisplay();
@@ -68,13 +64,11 @@ public partial class SidePanel : PanelContainer
 	/// </summary>
 	public void Initialize(
 		Entities.Player player,
-		Systems.EntityManager entityManager,
 		ViewModels.PlayerStatsViewModel statsViewModel,
 		ViewModels.EquipmentViewModel equipmentViewModel,
 		Systems.NearbyEntitiesTracker nearbyEntitiesTracker)
 	{
 		_player = player;
-		_entityManager = entityManager;
 		_statsViewModel = statsViewModel;
 		_equipmentViewModel = equipmentViewModel;
 		_nearbyEntitiesTracker = nearbyEntitiesTracker;
@@ -95,12 +89,6 @@ public partial class SidePanel : PanelContainer
 			Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
 		);
 
-		// Subscribe to player position changes (for standing-on display)
-		player.Connect(Entities.Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerPositionChanged));
-
-		// Subscribe to inventory changes (for standing-on display)
-		player.Connect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
-
 		// Initialize display with current values
 		UpdateAllDisplays();
 	}
@@ -116,7 +104,6 @@ public partial class SidePanel : PanelContainer
 		UpdateGoldDisplay();
 		UpdateStatsDisplay();
 		UpdateEquipmentDisplay();
-		UpdateStandingOnDisplay();
 		UpdateVisibleEntitiesDisplay();
 	}
 
@@ -210,17 +197,6 @@ public partial class SidePanel : PanelContainer
 		}
 	}
 
-	private void OnPlayerPositionChanged(int x, int y)
-	{
-		UpdateStandingOnDisplay();
-	}
-
-	private void OnInventoryChanged()
-	{
-		// Update display when items are picked up
-		UpdateStandingOnDisplay();
-	}
-
 	private void UpdateLevelAndXPDisplay()
 	{
 		if (_levelLabel == null || _experienceBar == null || _experienceLabel == null || _statsViewModel == null)
@@ -303,36 +279,6 @@ public partial class SidePanel : PanelContainer
 		}
 
 		_equipmentLabel.Text = sb.ToString();
-	}
-
-	private void UpdateStandingOnDisplay()
-	{
-		if (_standingOnLabel == null)
-			return;
-
-		if (_player == null || _entityManager == null)
-		{
-			_standingOnLabel.Text = "";
-			return;
-		}
-
-		// Check for walkable entities at player position
-		var entityAtPosition = _entityManager.GetEntityAtPosition(_player.GridPosition);
-
-		if (entityAtPosition != null && entityAtPosition.IsWalkable)
-		{
-			// Display the item with its glyph and quantity
-			string displayName = entityAtPosition.ItemData != null
-				? entityAtPosition.ItemData.Template.GetDisplayName(entityAtPosition.ItemData.Quantity)
-				: entityAtPosition.DisplayName;
-			_standingOnLabel.Text = $"{entityAtPosition.Glyph} {displayName}";
-			_standingOnLabel.AddThemeColorOverride("font_color", entityAtPosition.GlyphColor);
-		}
-		else
-		{
-			// Nothing walkable at this position
-			_standingOnLabel.Text = "";
-		}
 	}
 
 	private void UpdateStatsDisplay()
@@ -447,13 +393,6 @@ public partial class SidePanel : PanelContainer
 				Systems.NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
 				Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
 			);
-		}
-
-		// Disconnect from player signals
-		if (_player != null)
-		{
-			_player.Disconnect(Entities.Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerPositionChanged));
-			_player.Disconnect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
 		}
 	}
 }

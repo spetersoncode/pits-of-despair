@@ -85,6 +85,12 @@ public partial class NearbyEntitiesTracker : Node
 			Callable.From<BaseEntity>(OnEntityAdded)
 		);
 
+		// Listen to entity removals (entities disappearing)
+		_entityManager.Connect(
+			EntityManager.SignalName.EntityRemoved,
+			Callable.From<BaseEntity>(OnEntityRemoved)
+		);
+
 		// Perform initial query
 		UpdateNearbyEntities();
 	}
@@ -119,6 +125,12 @@ public partial class NearbyEntitiesTracker : Node
 		// Query all entities and filter by visibility
 		foreach (var entity in _entityManager.GetAllEntities())
 		{
+			// Skip if entity is no longer valid
+			if (!GodotObject.IsInstanceValid(entity))
+			{
+				continue;
+			}
+
 			// Skip if not visible
 			if (!_visionSystem.IsVisible(entity.GridPosition))
 			{
@@ -214,6 +226,15 @@ public partial class NearbyEntitiesTracker : Node
 		UpdateNearbyEntities();
 	}
 
+	/// <summary>
+	/// Called when an entity is removed from the world.
+	/// </summary>
+	private void OnEntityRemoved(BaseEntity entity)
+	{
+		// Removed entity might have been in the nearby list, update it
+		UpdateNearbyEntities();
+	}
+
 	#endregion
 
 	#region Cleanup
@@ -229,12 +250,16 @@ public partial class NearbyEntitiesTracker : Node
 			);
 		}
 
-		// Disconnect from entity manager signal
+		// Disconnect from entity manager signals
 		if (_entityManager != null)
 		{
 			_entityManager.Disconnect(
 				EntityManager.SignalName.EntityAdded,
 				Callable.From<BaseEntity>(OnEntityAdded)
+			);
+			_entityManager.Disconnect(
+				EntityManager.SignalName.EntityRemoved,
+				Callable.From<BaseEntity>(OnEntityRemoved)
 			);
 		}
 	}

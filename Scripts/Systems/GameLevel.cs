@@ -238,7 +238,7 @@ public partial class GameLevel : Node
 
         // Initialize SidePanel with ViewModels
         var sidePanel = _gameHUD.GetNode<UI.SidePanel>("HBoxContainer/SidePanel");
-        sidePanel.Initialize(_player, _entityManager, _playerStatsViewModel, _equipmentViewModel, _nearbyEntitiesTracker);
+        sidePanel.Initialize(_player, _playerStatsViewModel, _equipmentViewModel, _nearbyEntitiesTracker);
 
         _turnManager.StartFirstPlayerTurn();
     }
