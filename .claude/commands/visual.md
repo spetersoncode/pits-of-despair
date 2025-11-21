@@ -31,7 +31,7 @@ Determine:
 
 **Glyph Selection Strategy:**
 - Prefer **unique glyphs for distinct entity types** when possible
-- Use **selective Unicode for clarity** (e.g., `↑` for weapons is more intuitive than `)`)
+- Use **selective Unicode for clarity** (e.g., ↑ for weapons is more intuitive than ) )
 - Prioritize immediate visual recognition and semantic appropriateness
 - Aim for glyphs to be recognizable without relying solely on color
 - Balance intuitive symbolism with roguelike tradition
@@ -39,21 +39,21 @@ Determine:
 **Color Coding Strategy:**
 - Support **large bestiary through categorical color grouping**
 - Same glyph can represent multiple creatures differentiated by color
-- Group related creatures under shared glyphs (e.g., all dragons use `D`, differentiated by color)
+- Group related creatures under shared glyphs (e.g., all dragons use D, differentiated by color)
 - Color is primary differentiator within creature families
 - Ensure sufficient color contrast between variants
 
 **Traditional Conventions to Preserve:**
-- `@` for player (universal)
-- `.` for floor, `#` for walls, `<`/`>` for stairs, `+` for doors
-- Common creatures: `r` (rat), `b` (bat), `D` (dragon), `L` (lich), `V` (vampire), `Z` (zombie)
-- Common items: `!` (potion), `[` (armor)
+- @ for player (universal)
+- . for floor, # for walls, < / > for stairs, + for doors
+- Common creatures: r (rat), b (bat), D (dragon), L (lich), V (vampire), Z (zombie)
+- Common items: ! (potion), [ (armor)
 
 **Intuitive Variations to Consider:**
-- Weapon glyph: `↑` (intuitive upward-pointing) vs `)` (traditional curved blade)
-- Scroll glyph: `♪` (distinctive musical note) vs `?` (traditional mystery)
-- Floor glyph: `·` (middle dot, cleaner) vs `.` (period)
-- Trap glyph: `◇` (distinctive diamond) vs `^` (traditional caret)
+- Weapon glyph: ↑ (intuitive upward-pointing) vs ) (traditional curved blade)
+- Scroll glyph: ♪ (distinctive musical note) vs ? (traditional mystery)
+- Floor glyph: · (middle dot, cleaner) vs . (period)
+- Trap glyph: ◇ (distinctive diamond) vs ^ (traditional caret)
 
 ### 4. Evaluate Glyph Choices
 
@@ -93,9 +93,9 @@ Determine:
 - Palette coherence: [How this fits existing system]
 
 **Implementation:**
-- Glyph: `"X"` (if applicable)
-- Color: `Palette.ColorName` (reference constant name)
-- YAML: `color: ColorName` (for data files)
+- Glyph: "X" (if applicable)
+- Color: Palette.ColorName (reference constant name)
+- YAML: color: ColorName (for data files)
 
 **Alternatives Considered:** [Other options and why not chosen]
 
@@ -122,7 +122,7 @@ When glyphs repeat, color enables instant recognition. Multiple swords use same 
 Same-glyph items must differ. Creature variants never share colors. Clarity over realism.
 
 ### Categorical Color Grouping for Creatures
-Creature families share glyphs and differentiate through color. This supports large bestiaries while maintaining clear visual categories. Players learn "all dragons are `D`" and use color to identify specific variants.
+Creature families share glyphs and differentiate through color. This supports large bestiaries while maintaining clear visual categories. Players learn "all dragons are D" and use color to identify specific variants.
 
 ## Common Scenarios
 
