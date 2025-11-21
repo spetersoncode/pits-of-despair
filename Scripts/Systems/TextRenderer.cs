@@ -334,18 +334,12 @@ public partial class TextRenderer : Control
 		// Draw the player last (should be at viewport center, on top of everything)
 		DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
 
-		// Draw projectiles (on top of player)
+		// Draw projectiles as animated lines (on top of player)
 		if (_projectileSystem != null)
 		{
 			foreach (var projectile in _projectileSystem.ActiveProjectiles)
 			{
-				Vector2 projectileWorldPos = new Vector2(
-					projectile.GridPosition.X * TileSize,
-					projectile.GridPosition.Y * TileSize
-				);
-				Vector2 projectileDrawPos = offset + projectileWorldPos;
-
-				DrawString(_font, projectileDrawPos, projectile.Glyph, HorizontalAlignment.Left, -1, FontSize, projectile.GlyphColor);
+				DrawProjectileLine(projectile, offset);
 			}
 		}
 
@@ -436,6 +430,40 @@ public partial class TextRenderer : Control
 		Color baseColor = Palette.TargetingLine;
 		Color lineColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.5f);
 		DrawLine(originDrawPos, targetDrawPos, lineColor, 2.0f);
+	}
+
+	/// <summary>
+	/// Draws an animated projectile line/beam.
+	/// </summary>
+	private void DrawProjectileLine(ProjectileData projectile, Vector2 offset)
+	{
+		// Get current position based on animation progress
+		Vector2 currentPos = projectile.GetCurrentPosition();
+
+		// Calculate current draw position (center of tile)
+		Vector2 currentWorldPos = new Vector2(
+			currentPos.X * TileSize + TileSize / 2.0f - 2.0f,
+			currentPos.Y * TileSize - TileSize / 2.0f + 2.0f
+		);
+		Vector2 currentDrawPos = offset + currentWorldPos;
+
+		// Calculate direction vector from origin to target
+		Vector2 direction = new Vector2(
+			projectile.Target.X - projectile.Origin.X,
+			projectile.Target.Y - projectile.Origin.Y
+		).Normalized();
+
+		// Create a line segment centered at current position
+		// Length of 1.5 tiles
+		float segmentLength = TileSize * 1.5f;
+		Vector2 halfSegment = direction * (segmentLength / 2.0f);
+
+		Vector2 lineStart = currentDrawPos - halfSegment;
+		Vector2 lineEnd = currentDrawPos + halfSegment;
+
+		// Draw moving line segment
+		Color lineColor = new Color(projectile.Color.R, projectile.Color.G, projectile.Color.B, 0.8f);
+		DrawLine(lineStart, lineEnd, lineColor, 3.0f);
 	}
 
 	public override void _ExitTree()

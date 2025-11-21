@@ -10,11 +10,15 @@ namespace PitsOfDespair.Systems;
 /// <summary>
 /// Manages projectiles (arrows, bolts, etc.) in flight.
 /// Handles spawning, animation, and impact resolution.
+/// Projectiles are rendered as animated lines/beams, not entities.
 /// </summary>
 public partial class ProjectileSystem : Node
 {
+    [Signal]
+    public delegate void AllProjectilesCompletedEventHandler();
+
     private const float ProjectileSpeed = 30.0f; // Tiles per second
-    private List<Projectile> _activeProjectiles = new();
+    private List<ProjectileData> _activeProjectiles = new();
     private CombatSystem _combatSystem;
     private Player _player;
     private TextRenderer _renderer;
@@ -22,7 +26,12 @@ public partial class ProjectileSystem : Node
     /// <summary>
     /// Gets all currently active projectiles for rendering.
     /// </summary>
-    public IReadOnlyList<Projectile> ActiveProjectiles => _activeProjectiles.AsReadOnly();
+    public IReadOnlyList<ProjectileData> ActiveProjectiles => _activeProjectiles.AsReadOnly();
+
+    /// <summary>
+    /// Returns true if there are any projectiles currently in flight.
+    /// </summary>
+    public bool HasActiveProjectiles => _activeProjectiles.Count > 0;
 
     /// <summary>
     /// Initializes the projectile system.
@@ -76,17 +85,11 @@ public partial class ProjectileSystem : Node
     /// <param name="attackIndex">Index of the attack</param>
     public void SpawnProjectile(GridPosition origin, GridPosition target, BaseEntity targetEntity, BaseEntity attacker, int attackIndex)
     {
-        // Create projectile
-        var projectile = new Projectile(origin, target, targetEntity, attacker, attackIndex);
-
-        // Add to scene tree so it can use tweens
-        AddChild(projectile);
+        // Create projectile data
+        var projectile = new ProjectileData(origin, target, targetEntity, attacker, attackIndex, Palette.ProjectileBeam);
 
         // Add to active list
         _activeProjectiles.Add(projectile);
-
-        // Connect impact signal
-        projectile.Connect(Projectile.SignalName.ImpactReached, Callable.From(() => OnProjectileImpact(projectile)));
 
         // Start animation
         AnimateProjectile(projectile);
@@ -95,7 +98,7 @@ public partial class ProjectileSystem : Node
     /// <summary>
     /// Animates a projectile from origin to target.
     /// </summary>
-    private void AnimateProjectile(Projectile projectile)
+    private void AnimateProjectile(ProjectileData projectile)
     {
         // Calculate distance for animation duration
         int distance = DistanceHelper.ChebyshevDistance(projectile.Origin, projectile.Target);
@@ -104,19 +107,22 @@ public partial class ProjectileSystem : Node
         // Create tween for smooth animation
         var tween = CreateTween();
         tween.TweenMethod(
-            Callable.From<float>(projectile.UpdateProgress),
+            Callable.From<float>(progress => projectile.Progress = progress),
             0.0f,
             1.0f,
             duration
         );
         tween.SetTrans(Tween.TransitionType.Linear);
         tween.SetEase(Tween.EaseType.InOut);
+
+        // When tween finishes, handle impact
+        tween.TweenCallback(Callable.From(() => OnProjectileImpact(projectile)));
     }
 
     /// <summary>
     /// Handles projectile impact - applies damage and cleans up.
     /// </summary>
-    private void OnProjectileImpact(Projectile projectile)
+    private void OnProjectileImpact(ProjectileData projectile)
     {
         // Apply damage if there's a target entity
         if (projectile.TargetEntity != null && projectile.Attacker != null)
@@ -134,16 +140,21 @@ public partial class ProjectileSystem : Node
     }
 
     /// <summary>
-    /// Removes a projectile from the active list and scene tree.
+    /// Removes a projectile from the active list.
     /// Forces a visual refresh to immediately clear the projectile from display.
     /// </summary>
-    private void RemoveProjectile(Projectile projectile)
+    private void RemoveProjectile(ProjectileData projectile)
     {
         _activeProjectiles.Remove(projectile);
-        projectile.QueueFree();
 
         // Force immediate visual update to prevent projectile from appearing stuck
         _renderer?.QueueRedraw();
+
+        // If this was the last projectile, emit completion signal
+        if (_activeProjectiles.Count == 0)
+        {
+            EmitSignal(SignalName.AllProjectilesCompleted);
+        }
     }
 
     /// <summary>
@@ -151,11 +162,8 @@ public partial class ProjectileSystem : Node
     /// </summary>
     public void ClearAllProjectiles()
     {
-        foreach (var projectile in _activeProjectiles.ToArray())
-        {
-            projectile.QueueFree();
-        }
         _activeProjectiles.Clear();
+        _renderer?.QueueRedraw();
     }
 
     public override void _ExitTree()
@@ -164,15 +172,6 @@ public partial class ProjectileSystem : Node
         if (_player != null)
         {
             _player.Disconnect(Player.SignalName.RangedAttackRequested, Callable.From<Vector2I, Vector2I, BaseEntity, int>(OnRangedAttackRequested));
-        }
-
-        // Disconnect from all active projectiles
-        foreach (var projectile in _activeProjectiles.ToArray())
-        {
-            if (projectile != null && GodotObject.IsInstanceValid(projectile))
-            {
-                projectile.Disconnect(Projectile.SignalName.ImpactReached, Callable.From(() => OnProjectileImpact(projectile)));
-            }
         }
 
         // Clear projectiles

@@ -150,6 +150,9 @@ public partial class GameLevel : Node
         _projectileSystem.SetTextRenderer(_renderer);
         _renderer.SetProjectileSystem(_projectileSystem);
 
+        // Connect turn manager to projectile system for turn coordination
+        _turnManager.SetProjectileSystem(_projectileSystem);
+
         var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem);
 
         _inputHandler.SetPlayer(_player);

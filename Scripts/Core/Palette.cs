@@ -103,6 +103,13 @@ public static class Palette
 
     #endregion
 
+    #region UI - Projectile System
+
+    /// <summary>Projectile beam/line color (wood-brown arrow)</summary>
+    public static readonly Color ProjectileBeam = new("#9B7653");
+
+    #endregion
+
     #region UI - Examine System
 
     /// <summary>Examine mode visible tiles overlay background</summary>
