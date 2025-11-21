@@ -293,6 +293,15 @@ public static class Palette
     /// <summary>Skirmisher, mobile hit-and-run ranged attacker</summary>
     public static readonly Color Skirmisher = new("#99DD66");
 
+    /// <summary>Hunter, wilderness-trained ranged tracker</summary>
+    public static readonly Color Hunter = new("#77AA55");
+
+    /// <summary>Bandit, opportunistic ranged ambusher</summary>
+    public static readonly Color Bandit = new("#CCAA55");
+
+    /// <summary>Sniper, precision long-range specialist</summary>
+    public static readonly Color Sniper = new("#5599AA");
+
     // === Magic Users ===
 
     /// <summary>Shaman, tribal/nature magic caster</summary>
@@ -315,6 +324,9 @@ public static class Palette
 
     /// <summary>Warlock, dark pact magic caster</summary>
     public static readonly Color Warlock = new("#CC55AA");
+
+    /// <summary>Healer, restorative support magic caster</summary>
+    public static readonly Color Healer = new("#AADDAA");
 
     // === Non-Combatants ===
 
