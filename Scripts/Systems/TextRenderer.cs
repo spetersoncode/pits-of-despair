@@ -23,6 +23,7 @@ public partial class TextRenderer : Control
 	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 	private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
 	private bool _wasCursorActive = false;
+	private readonly System.Collections.Generic.HashSet<BaseEntity> _trackedEntities = new();
 
 	public override void _Ready()
 	{
@@ -98,6 +99,7 @@ public partial class TextRenderer : Control
 			foreach (var entity in _entities)
 			{
 				entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
+				_trackedEntities.Add(entity);
 			}
 
 			QueueRedraw();
@@ -153,6 +155,7 @@ public partial class TextRenderer : Control
 	{
 		_entities.Add(entity);
 		entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
+		_trackedEntities.Add(entity);
 		QueueRedraw();
 	}
 
@@ -160,6 +163,7 @@ public partial class TextRenderer : Control
 	{
 		entity.Disconnect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
 		_entities.Remove(entity);
+		_trackedEntities.Remove(entity);
 		QueueRedraw();
 	}
 
@@ -432,5 +436,43 @@ public partial class TextRenderer : Control
 		Color baseColor = Palette.TargetingLine;
 		Color lineColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.5f);
 		DrawLine(originDrawPos, targetDrawPos, lineColor, 2.0f);
+	}
+
+	public override void _ExitTree()
+	{
+		// Disconnect from map system
+		if (_mapSystem != null)
+		{
+			_mapSystem.Disconnect(MapSystem.SignalName.MapChanged, Callable.From(OnMapChanged));
+		}
+
+		// Disconnect from player
+		if (_player != null)
+		{
+			_player.Disconnect(Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerMoved));
+		}
+
+		// Disconnect from entity manager
+		if (_entityManager != null)
+		{
+			_entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+			_entityManager.Disconnect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));
+		}
+
+		// Disconnect from all tracked entities
+		foreach (var entity in _trackedEntities)
+		{
+			if (entity != null && GodotObject.IsInstanceValid(entity))
+			{
+				entity.Disconnect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>(OnEntityMoved));
+			}
+		}
+		_trackedEntities.Clear();
+
+		// Disconnect from vision system
+		if (_visionSystem != null)
+		{
+			_visionSystem.Disconnect(PlayerVisionSystem.SignalName.VisionChanged, Callable.From(OnVisionChanged));
+		}
 	}
 }

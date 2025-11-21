@@ -38,6 +38,9 @@ public partial class SidePanel : PanelContainer
 	private Systems.EntityManager _entityManager;
 	private Systems.PlayerVisionSystem _visionSystem;
 	private Systems.GoldManager _goldManager;
+	private Components.HealthComponent _playerHealth;
+	private Components.StatsComponent _playerStats;
+	private EquipComponent _playerEquip;
 
 	public override void _Ready()
 	{
@@ -68,16 +71,16 @@ public partial class SidePanel : PanelContainer
 	{
 		_player = player;
 
-		var healthComponent = player.GetNode<Components.HealthComponent>("HealthComponent");
-		healthComponent.Connect(Components.HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
+		_playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
+		_playerHealth.Connect(Components.HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
 
 		// Subscribe to stats changes
-		var statsComponent = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-		if (statsComponent != null)
+		_playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+		if (_playerStats != null)
 		{
-			statsComponent.Connect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
-			statsComponent.Connect(Components.StatsComponent.SignalName.ExperienceGained, Callable.From<int, int, int>(OnExperienceGained));
-			statsComponent.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
+			_playerStats.Connect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
+			_playerStats.Connect(Components.StatsComponent.SignalName.ExperienceGained, Callable.From<int, int, int>(OnExperienceGained));
+			_playerStats.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
 		}
 
 		// Subscribe to player position changes
@@ -87,14 +90,14 @@ public partial class SidePanel : PanelContainer
 		player.Connect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
 
 		// Subscribe to equipment changes
-		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
-		if (equipComponent != null)
+		_playerEquip = player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		if (_playerEquip != null)
 		{
-			equipComponent.Connect(EquipComponent.SignalName.EquipmentChanged, Callable.From<EquipmentSlot>(OnEquipmentChanged));
+			_playerEquip.Connect(EquipComponent.SignalName.EquipmentChanged, Callable.From<EquipmentSlot>(OnEquipmentChanged));
 		}
 
 		// Initialize display with current values
-		OnHealthChanged(healthComponent.CurrentHP, healthComponent.MaxHP);
+		OnHealthChanged(_playerHealth.CurrentHP, _playerHealth.MaxHP);
 		UpdateExperienceDisplay();
 		UpdateStandingOnDisplay();
 		UpdateEquipmentDisplay();
@@ -538,5 +541,41 @@ public partial class SidePanel : PanelContainer
 		}
 
 		_visibleEntitiesLabel.Text = sb.ToString().TrimEnd();
+	}
+
+	public override void _ExitTree()
+	{
+		// Disconnect from player health component
+		if (_playerHealth != null)
+		{
+			_playerHealth.Disconnect(Components.HealthComponent.SignalName.HealthChanged, Callable.From<int, int>(OnHealthChanged));
+		}
+
+		// Disconnect from player stats component
+		if (_playerStats != null)
+		{
+			_playerStats.Disconnect(Components.StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
+			_playerStats.Disconnect(Components.StatsComponent.SignalName.ExperienceGained, Callable.From<int, int, int>(OnExperienceGained));
+			_playerStats.Disconnect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
+		}
+
+		// Disconnect from player signals
+		if (_player != null)
+		{
+			_player.Disconnect(Entities.Player.SignalName.PositionChanged, Callable.From<int, int>(OnPlayerPositionChanged));
+			_player.Disconnect(Entities.Player.SignalName.InventoryChanged, Callable.From(OnInventoryChanged));
+		}
+
+		// Disconnect from equipment component
+		if (_playerEquip != null)
+		{
+			_playerEquip.Disconnect(EquipComponent.SignalName.EquipmentChanged, Callable.From<EquipmentSlot>(OnEquipmentChanged));
+		}
+
+		// Disconnect from gold manager
+		if (_goldManager != null)
+		{
+			_goldManager.Disconnect(Systems.GoldManager.SignalName.GoldChanged, Callable.From<int, int>(OnGoldChanged));
+		}
 	}
 }

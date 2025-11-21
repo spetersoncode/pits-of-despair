@@ -194,4 +194,19 @@ public partial class GameLevel : Node
 
         _turnManager.StartFirstPlayerTurn();
     }
+
+    public override void _ExitTree()
+    {
+        // Disconnect from input handler signals
+        if (_inputHandler != null)
+        {
+            _inputHandler.Disconnect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
+            _inputHandler.Disconnect(InputHandler.SignalName.ActivateItemRequested, Callable.From(_gameHUD.ShowActivateMenu));
+            _inputHandler.Disconnect(InputHandler.SignalName.DropItemRequested, Callable.From(_gameHUD.ShowDropMenu));
+            _inputHandler.Disconnect(InputHandler.SignalName.EquipMenuRequested, Callable.From(_gameHUD.ShowEquipMenu));
+            _inputHandler.Disconnect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
+            _inputHandler.Disconnect(InputHandler.SignalName.DebugModeToggled, Callable.From(_gameHUD.ToggleDebugMode));
+            _inputHandler.Disconnect(InputHandler.SignalName.DebugConsoleRequested, Callable.From(_gameHUD.RequestDebugConsole));
+        }
+    }
 }

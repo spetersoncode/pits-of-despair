@@ -157,4 +157,25 @@ public partial class ProjectileSystem : Node
         }
         _activeProjectiles.Clear();
     }
+
+    public override void _ExitTree()
+    {
+        // Disconnect from player
+        if (_player != null)
+        {
+            _player.Disconnect(Player.SignalName.RangedAttackRequested, Callable.From<Vector2I, Vector2I, BaseEntity, int>(OnRangedAttackRequested));
+        }
+
+        // Disconnect from all active projectiles
+        foreach (var projectile in _activeProjectiles.ToArray())
+        {
+            if (projectile != null && GodotObject.IsInstanceValid(projectile))
+            {
+                projectile.Disconnect(Projectile.SignalName.ImpactReached, Callable.From(() => OnProjectileImpact(projectile)));
+            }
+        }
+
+        // Clear projectiles
+        ClearAllProjectiles();
+    }
 }

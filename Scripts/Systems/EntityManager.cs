@@ -29,6 +29,7 @@ public partial class EntityManager : Node
 
     private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
     private readonly System.Collections.Generic.Dictionary<GridPosition, BaseEntity> _positionCache = new();
+    private readonly System.Collections.Generic.List<(BaseEntity entity, HealthComponent health)> _healthConnections = new();
     private Player _player;
 
     /// <summary>
@@ -62,6 +63,7 @@ public partial class EntityManager : Node
         {
             // Use lambda to capture entity reference
             healthComponent.Connect(HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
+            _healthConnections.Add((entity, healthComponent));
         }
 
         EmitSignal(SignalName.EntityAdded, entity);
@@ -206,5 +208,27 @@ public partial class EntityManager : Node
         }
 
         _positionCache[newPosition] = entity;
+    }
+
+    public override void _ExitTree()
+    {
+        // Disconnect from all entities
+        foreach (var entity in _entities.ToArray())
+        {
+            if (entity != null && GodotObject.IsInstanceValid(entity))
+            {
+                entity.Disconnect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>((x, y) => OnEntityPositionChanged(entity, new GridPosition(x, y))));
+            }
+        }
+
+        // Disconnect from all health components
+        foreach (var (entity, healthComponent) in _healthConnections)
+        {
+            if (healthComponent != null && GodotObject.IsInstanceValid(healthComponent))
+            {
+                healthComponent.Disconnect(HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
+            }
+        }
+        _healthConnections.Clear();
     }
 }

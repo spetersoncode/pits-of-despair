@@ -26,7 +26,9 @@ public partial class MessageLog : PanelContainer
 	private readonly Queue<string> _messageHistory = new();
 	private Entities.Player _player;
 	private Systems.EntityManager _entityManager;
+	private Systems.CombatSystem _combatSystem;
 	private readonly Dictionary<Entities.BaseEntity, Entities.BaseEntity> _lastAttacker = new();
+	private readonly System.Collections.Generic.List<(Components.HealthComponent healthComponent, Entities.BaseEntity entity)> _healthConnections = new();
 
 	public override void _Ready()
 	{
@@ -40,12 +42,14 @@ public partial class MessageLog : PanelContainer
 	/// </summary>
 	public void ConnectToCombatSystem(Systems.CombatSystem combatSystem)
 	{
-		// Connect to detailed combat signals
-		combatSystem.Connect(Systems.CombatSystem.SignalName.AttackHit, Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnAttackHit));
-		combatSystem.Connect(Systems.CombatSystem.SignalName.AttackBlocked, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackBlocked));
-		combatSystem.Connect(Systems.CombatSystem.SignalName.AttackMissed, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackMissed));
+		_combatSystem = combatSystem;
 
-		combatSystem.Connect(Systems.CombatSystem.SignalName.ActionMessage, Callable.From<Entities.BaseEntity, string, string>(OnActionMessage));
+		// Connect to detailed combat signals
+		_combatSystem.Connect(Systems.CombatSystem.SignalName.AttackHit, Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnAttackHit));
+		_combatSystem.Connect(Systems.CombatSystem.SignalName.AttackBlocked, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackBlocked));
+		_combatSystem.Connect(Systems.CombatSystem.SignalName.AttackMissed, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackMissed));
+
+		_combatSystem.Connect(Systems.CombatSystem.SignalName.ActionMessage, Callable.From<Entities.BaseEntity, string, string>(OnActionMessage));
 	}
 
 	/// <summary>
@@ -71,6 +75,9 @@ public partial class MessageLog : PanelContainer
 	{
 		healthComponent.Connect(Components.HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
 		healthComponent.Connect(Components.HealthComponent.SignalName.DamageModifierApplied, Callable.From<int, string>((damageType, modifierType) => OnDamageModifierApplied(entity, damageType, modifierType)));
+
+		// Track this connection for cleanup
+		_healthConnections.Add((healthComponent, entity));
 	}
 
 	/// <summary>
@@ -322,5 +329,28 @@ public partial class MessageLog : PanelContainer
 		{
 			_logLabel.AppendText(message + "\n");
 		}
+	}
+
+	public override void _ExitTree()
+	{
+		// Disconnect from combat system
+		if (_combatSystem != null)
+		{
+			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackHit, Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnAttackHit));
+			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackBlocked, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackBlocked));
+			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackMissed, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackMissed));
+			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.ActionMessage, Callable.From<Entities.BaseEntity, string, string>(OnActionMessage));
+		}
+
+		// Disconnect from all health components
+		foreach (var (healthComponent, entity) in _healthConnections)
+		{
+			if (healthComponent != null && GodotObject.IsInstanceValid(healthComponent))
+			{
+				healthComponent.Disconnect(Components.HealthComponent.SignalName.Died, Callable.From(() => OnEntityDied(entity)));
+				healthComponent.Disconnect(Components.HealthComponent.SignalName.DamageModifierApplied, Callable.From<int, string>((damageType, modifierType) => OnDamageModifierApplied(entity, damageType, modifierType)));
+			}
+		}
+		_healthConnections.Clear();
 	}
 }

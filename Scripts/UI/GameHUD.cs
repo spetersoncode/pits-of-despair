@@ -47,6 +47,9 @@ public partial class GameHUD : Control
     private ActionContext _actionContext;
     private MenuState _currentMenuState = MenuState.None;
     private CursorTargetingSystem _cursorSystem;
+    private Components.StatsComponent _playerStats;
+    private Components.StatusComponent _statusComponent;
+    private Systems.EntityManager _entityManager;
 
     public override void _Ready()
     {
@@ -116,10 +119,10 @@ public partial class GameHUD : Control
         _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
 
         // Connect to player's StatsComponent for level-up notifications
-        var playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-        if (playerStats != null)
+        _playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+        if (_playerStats != null)
         {
-            playerStats.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
+            _playerStats.Connect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
         }
 
         // Initialize debug console if debug context provided
@@ -129,7 +132,8 @@ public partial class GameHUD : Control
             _debugConsoleModal.Connect(DebugConsoleModal.SignalName.Cancelled, Callable.From(OnDebugConsoleCancelled));
         }
 
-        entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+        _entityManager = entityManager;
+        _entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
 
         foreach (var entity in entityManager.GetAllEntities())
         {
@@ -155,10 +159,10 @@ public partial class GameHUD : Control
 
         player.Connect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
 
-        var statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
-        if (statusComponent != null)
+        _statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
+        if (_statusComponent != null)
         {
-            statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
+            _statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
@@ -704,5 +708,92 @@ public partial class GameHUD : Control
         // Hide modal and reset menu state
         _levelUpModal.HideModal();
         _currentMenuState = MenuState.None;
+    }
+
+    public override void _ExitTree()
+    {
+        // Disconnect from modal signals
+        if (_inventoryPanel != null)
+        {
+            _inventoryPanel.Disconnect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
+            _inventoryPanel.Disconnect(InventoryModal.SignalName.ItemSelected, Callable.From<char>(OnInventoryItemSelected));
+        }
+
+        if (_itemDetailModal != null)
+        {
+            _itemDetailModal.Disconnect(ItemDetailModal.SignalName.KeyRebound, Callable.From<char, char>(OnItemKeyRebound));
+            _itemDetailModal.Disconnect(ItemDetailModal.SignalName.Cancelled, Callable.From(OnItemDetailCancelled));
+        }
+
+        if (_activateItemPanel != null)
+        {
+            _activateItemPanel.Disconnect(ActivateItemModal.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
+            _activateItemPanel.Disconnect(ActivateItemModal.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
+        }
+
+        if (_dropItemPanel != null)
+        {
+            _dropItemPanel.Disconnect(DropItemModal.SignalName.ItemSelected, Callable.From<char>(OnDropItemSelected));
+            _dropItemPanel.Disconnect(DropItemModal.SignalName.Cancelled, Callable.From(OnDropItemCancelled));
+        }
+
+        if (_equipPanel != null)
+        {
+            _equipPanel.Disconnect(EquipModal.SignalName.ItemSelected, Callable.From<char>(OnEquipItemSelected));
+            _equipPanel.Disconnect(EquipModal.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
+        }
+
+        if (_helpModal != null)
+        {
+            _helpModal.Disconnect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
+        }
+
+        if (_levelUpModal != null)
+        {
+            _levelUpModal.Disconnect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
+        }
+
+        if (_debugConsoleModal != null)
+        {
+            _debugConsoleModal.Disconnect(DebugConsoleModal.SignalName.Cancelled, Callable.From(OnDebugConsoleCancelled));
+        }
+
+        // Disconnect from player signals
+        if (_player != null)
+        {
+            _player.Disconnect(Player.SignalName.Waited, Callable.From(() => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success))));
+            _player.Disconnect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
+            _player.Disconnect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
+            _player.Disconnect(Player.SignalName.ItemDropped, Callable.From<string, bool, string>(OnItemDropped));
+            _player.Disconnect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
+            _player.Disconnect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
+            _player.Disconnect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
+            _player.Disconnect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
+        }
+
+        // Disconnect from player components
+        if (_playerStats != null)
+        {
+            _playerStats.Disconnect(Components.StatsComponent.SignalName.LevelUp, Callable.From<int>(OnLevelUp));
+        }
+
+        if (_statusComponent != null)
+        {
+            _statusComponent.Disconnect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
+        }
+
+        // Disconnect from entity manager
+        if (_entityManager != null)
+        {
+            _entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+        }
+
+        // Disconnect from cursor system
+        if (_cursorSystem != null)
+        {
+            _cursorSystem.Disconnect(CursorTargetingSystem.SignalName.CursorStarted, Callable.From<int>(OnCursorStarted));
+            _cursorSystem.Disconnect(CursorTargetingSystem.SignalName.CursorMoved, Callable.From<BaseEntity>(OnCursorMoved));
+            _cursorSystem.Disconnect(CursorTargetingSystem.SignalName.CursorCanceled, Callable.From<int>(OnCursorCanceled));
+        }
     }
 }

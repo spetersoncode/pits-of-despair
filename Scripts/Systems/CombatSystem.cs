@@ -13,6 +13,8 @@ namespace PitsOfDespair.Systems;
 /// </summary>
 public partial class CombatSystem : Node
 {
+    private readonly System.Collections.Generic.List<AttackComponent> _registeredComponents = new();
+
     /// <summary>
     /// Emitted when an attack hits and deals damage (attacker, target, damage, attackName)
     /// </summary>
@@ -53,6 +55,7 @@ public partial class CombatSystem : Node
     {
         // Use lambda to capture the component reference in a closure
         component.Connect(AttackComponent.SignalName.AttackRequested, Callable.From<BaseEntity, int>((target, attackIndex) => OnAttackRequested(component, target, attackIndex)));
+        _registeredComponents.Add(component);
     }
 
     /// <summary>
@@ -189,5 +192,18 @@ public partial class CombatSystem : Node
     {
         color ??= Palette.ToHex(Palette.Default);
         EmitSignal(SignalName.ActionMessage, actor, message, color);
+    }
+
+    public override void _ExitTree()
+    {
+        // Disconnect from all registered attack components
+        foreach (var component in _registeredComponents)
+        {
+            if (component != null && GodotObject.IsInstanceValid(component))
+            {
+                component.Disconnect(AttackComponent.SignalName.AttackRequested, Callable.From<BaseEntity, int>((target, attackIndex) => OnAttackRequested(component, target, attackIndex)));
+            }
+        }
+        _registeredComponents.Clear();
     }
 }
