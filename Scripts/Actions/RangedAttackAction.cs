@@ -4,6 +4,8 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Data;
 using System.Linq;
 
 namespace PitsOfDespair.Actions;
@@ -65,11 +67,11 @@ public class RangedAttackAction : Action
             return false;
         }
 
-        // Check ammunition requirement (player only)
-        if (actor is Player && !string.IsNullOrEmpty(attackData.AmmoType))
+        // Check ammunition requirement (all entities that require ammo)
+        if (!string.IsNullOrEmpty(attackData.AmmoType))
         {
-            var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-            if (inventory == null || !HasRequiredAmmo(inventory, attackData.AmmoType))
+            var equipComponent = actor.GetNodeOrNull<EquipComponent>("EquipComponent");
+            if (equipComponent == null || !HasRequiredAmmo(equipComponent, attackData.AmmoType))
             {
                 return false;
             }
@@ -88,11 +90,13 @@ public class RangedAttackAction : Action
         var attackComponent = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
         var attackData = attackComponent!.GetAttack(_attackIndex);
 
-        // Consume ammunition if required (player only)
-        if (actor is Player && !string.IsNullOrEmpty(attackData.AmmoType))
+        // Consume ammunition if required (all entities that require ammo)
+        if (!string.IsNullOrEmpty(attackData.AmmoType))
         {
+            var equipComponent = actor.GetNodeOrNull<EquipComponent>("EquipComponent");
             var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-            if (inventory != null && !ConsumeAmmo(inventory, attackData.AmmoType))
+
+            if (equipComponent == null || inventory == null || !ConsumeAmmo(equipComponent, inventory, attackData.AmmoType))
             {
                 return ActionResult.CreateFailure($"Out of {attackData.AmmoType}s!");
             }
@@ -129,34 +133,94 @@ public class RangedAttackAction : Action
     }
 
     /// <summary>
-    /// Checks if the inventory contains the required ammunition type.
+    /// Checks if the equipped ammunition matches the required type and has quantity available.
     /// </summary>
-    private bool HasRequiredAmmo(InventoryComponent inventory, string ammoType)
+    private bool HasRequiredAmmo(EquipComponent equipComponent, string ammoType)
     {
-        return inventory.Inventory.Any(slot =>
-            slot.Item.Template.Type?.ToLower() == "ammo" &&
-            slot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
-            slot.Item.Quantity > 0);
-    }
+        var equippedAmmoKey = equipComponent.GetEquippedKey(EquipmentSlot.Ammo);
+        if (!equippedAmmoKey.HasValue)
+        {
+            return false;
+        }
 
-    /// <summary>
-    /// Consumes one unit of the required ammunition from inventory.
-    /// </summary>
-    /// <returns>True if ammo was consumed successfully, false if no ammo available.</returns>
-    private bool ConsumeAmmo(InventoryComponent inventory, string ammoType)
-    {
-        var ammoSlot = inventory.Inventory.FirstOrDefault(slot =>
-            slot.Item.Template.Type?.ToLower() == "ammo" &&
-            slot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
-            slot.Item.Quantity > 0);
+        var inventory = equipComponent.GetParent<BaseEntity>()?.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
+        {
+            return false;
+        }
 
+        var ammoSlot = inventory.GetSlot(equippedAmmoKey.Value);
         if (ammoSlot == null)
         {
             return false;
         }
 
+        // Validate ammo type matches (substring matching)
+        return ammoSlot.Item.Template.Type?.ToLower() == "ammo" &&
+               ammoSlot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
+               ammoSlot.Item.Quantity > 0;
+    }
+
+    /// <summary>
+    /// Consumes one unit of equipped ammunition.
+    /// If ammo depleted, attempts to auto-equip next matching ammo from inventory.
+    /// </summary>
+    /// <returns>True if ammo was consumed successfully, false if no ammo available.</returns>
+    private bool ConsumeAmmo(EquipComponent equipComponent, InventoryComponent inventory, string ammoType)
+    {
+        var equippedAmmoKey = equipComponent.GetEquippedKey(EquipmentSlot.Ammo);
+        if (!equippedAmmoKey.HasValue)
+        {
+            return false;
+        }
+
+        var ammoSlot = inventory.GetSlot(equippedAmmoKey.Value);
+        if (ammoSlot == null || ammoSlot.Item.Quantity <= 0)
+        {
+            return false;
+        }
+
+        // Validate ammo type matches
+        if (ammoSlot.Item.Template.Type?.ToLower() != "ammo" ||
+            !ammoSlot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         // Remove one ammo from the stack
-        inventory.RemoveItem(ammoSlot.Key, 1);
+        inventory.RemoveItem(equippedAmmoKey.Value, 1);
+
+        // If ammo depleted, attempt to auto-equip next matching ammo
+        var updatedAmmo = inventory.GetSlot(equippedAmmoKey.Value);
+        if (updatedAmmo == null || updatedAmmo.Item.Quantity <= 0)
+        {
+            TryAutoEquipNextAmmo(equipComponent, inventory, ammoType);
+        }
+
         return true;
+    }
+
+    /// <summary>
+    /// Attempts to auto-equip the next available matching ammo from inventory.
+    /// If no matching ammo found, unequips the ammo slot.
+    /// </summary>
+    private void TryAutoEquipNextAmmo(EquipComponent equipComponent, InventoryComponent inventory, string ammoType)
+    {
+        // Search inventory for next matching ammo
+        var nextAmmoSlot = inventory.Inventory.FirstOrDefault(slot =>
+            slot.Item.Template.Type?.ToLower() == "ammo" &&
+            slot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
+            slot.Item.Quantity > 0);
+
+        if (nextAmmoSlot != null)
+        {
+            // Auto-equip next matching ammo
+            equipComponent.Equip(nextAmmoSlot.Key, EquipmentSlot.Ammo);
+        }
+        else
+        {
+            // No matching ammo found, unequip empty slot
+            equipComponent.Unequip(EquipmentSlot.Ammo);
+        }
     }
 }

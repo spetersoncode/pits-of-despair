@@ -267,9 +267,6 @@ public static class Palette
 
     // === Combat Specialists (Melee) ===
 
-    /// <summary>Scout, fast reconnaissance melee combatant</summary>
-    public static readonly Color Scout = new("#77CCAA");
-
     /// <summary>Duelist, skilled one-on-one melee fighter</summary>
     public static readonly Color Duelist = new("#CCBB66");
 
@@ -318,6 +315,11 @@ public static class Palette
 
     /// <summary>Warlock, dark pact magic caster</summary>
     public static readonly Color Warlock = new("#CC55AA");
+
+    // === Non-Combatants ===
+
+    /// <summary>Scout, fast reconnaissance unit</summary>
+    public static readonly Color Scout = new("#77CCAA");
 
     #endregion
 

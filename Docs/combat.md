@@ -108,6 +108,40 @@ Ranged attacks spawn animated projectiles for visual feedback. `RangedAttackActi
 
 Projectiles are visual only—combat resolution happens on impact, not during flight.
 
+## Ammunition System
+
+Ranged weapons require ammunition managed through the equipment system. Ammunition uses the standard equipment slot pattern for clarity and consistency.
+
+**Equipment Slot**: Ammunition occupies the `Ammo` equipment slot. Entities with ranged weapons must have compatible ammo equipped to attack. Equipment screen always displays active ammunition.
+
+**Ammo Validation**: `RangedAttackAction.CanExecute()` validates:
+1. Entity has `EquipComponent` with ammo in `Ammo` slot
+2. Equipped ammo type matches weapon's `AmmoType` requirement (substring matching)
+3. Equipped ammo has quantity > 0
+
+**Type Matching**: Weapon defines `AmmoType` (e.g., "arrow"). Validation uses substring matching—ammunition with "arrow" in name matches weapons requiring "arrow" type. This allows flexible naming (arrows, arrow, fire arrow) without exact ID matching.
+
+**Ammo Consumption**: Each ranged attack consumes 1 ammunition from equipped stack. `RangedAttackAction.Execute()` removes 1 quantity from equipped item in `Ammo` slot. Consumption occurs before attack resolution (committed action).
+
+**Auto-Equip**: When equipped ammunition depletes (quantity reaches 0), system automatically searches inventory for next matching ammo and equips it to `Ammo` slot. If no matching ammo found in inventory, slot remains empty and future ranged attacks fail validation until ammo equipped.
+
+**NPC Ammunition**: NPCs use same ammunition system as player. Ranged NPCs spawn with ammo equipped (defined in creature YAML `equipment` list). NPCs can run out of ammo and become unable to use ranged attacks.
+
+**Item Properties**: Ammunition items configured as:
+- `IsEquippable = true` (can be equipped)
+- `IsConsumable = true` (stackable, uses quantity)
+- `EquipSlot = "Ammo"` (targets Ammo slot)
+- `AutoPickup = true` (convenience—walk over to pick up)
+
+**Example Creature Equipment**:
+```yaml
+equipment:
+  - weapon_short_bow  # Ranged weapon
+  - ammo_arrow        # Matching ammunition
+```
+
+Ammunition management follows equipment patterns rather than inventory search for UI clarity and predictability.
+
 ## Distance Calculation
 
 All combat targeting uses **Chebyshev distance** (max of absolute coordinate differences). Provides square-shaped ranges matching grid-based movement. Range checks: `distance <= weapon.Range`.

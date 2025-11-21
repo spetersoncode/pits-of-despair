@@ -26,8 +26,6 @@ This document captures conscious design choices that shape gameplay philosophy a
 
 **UI Complexity Budget**: Each new mechanic evaluated against UI cost. Features requiring dedicated panels, mode switching, or resource sub-types must provide proportional strategic depth.
 
-**Example - Arrow Types**: Different arrow types (fire, ice, piercing) require inventory slots, equipment switching UI, and mental tracking during combat. Rejected unless combat system demands that level of tactical granularity. Prefer unified ammo with weapon-based variety.
-
 **Principle**: Players should think about tactics and positioning, not inventory management and mode switching.
 
 ## Decision Criteria

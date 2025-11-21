@@ -79,8 +79,9 @@ public class ItemData
             PluralType = "ammo", // Triggers plural handling; actual name used instead
             DefaultGlyph = "|",
             DefaultColor = Palette.ToHex(Palette.Mahogany),
-            IsEquippable = false,
+            IsEquippable = true,
             IsConsumable = true,
+            EquipSlot = "Ammo",
             AutoPickup = true
         }
     };

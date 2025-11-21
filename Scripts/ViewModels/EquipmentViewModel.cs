@@ -60,6 +60,7 @@ public partial class EquipmentViewModel : Node
 
 	public EquipmentSlotData MeleeWeapon { get; private set; }
 	public EquipmentSlotData RangedWeapon { get; private set; }
+	public EquipmentSlotData Ammo { get; private set; }
 	public EquipmentSlotData Armor { get; private set; }
 	public EquipmentSlotData Ring1 { get; private set; }
 	public EquipmentSlotData Ring2 { get; private set; }
@@ -73,6 +74,7 @@ public partial class EquipmentViewModel : Node
 		{
 			yield return MeleeWeapon;
 			yield return RangedWeapon;
+			yield return Ammo;
 			yield return Armor;
 			yield return Ring1;
 			yield return Ring2;
@@ -88,6 +90,7 @@ public partial class EquipmentViewModel : Node
 		// Initialize slot data
 		MeleeWeapon = new EquipmentSlotData("Melee");
 		RangedWeapon = new EquipmentSlotData("Ranged");
+		Ammo = new EquipmentSlotData("Ammo");
 		Armor = new EquipmentSlotData("Armor");
 		Ring1 = new EquipmentSlotData("Ring");
 		Ring2 = new EquipmentSlotData("Ring");
@@ -151,6 +154,7 @@ public partial class EquipmentViewModel : Node
 	{
 		UpdateSlot(EquipmentSlot.MeleeWeapon, MeleeWeapon);
 		UpdateSlot(EquipmentSlot.RangedWeapon, RangedWeapon);
+		UpdateSlot(EquipmentSlot.Ammo, Ammo);
 		UpdateSlot(EquipmentSlot.Armor, Armor);
 		UpdateSlot(EquipmentSlot.Ring1, Ring1);
 		UpdateSlot(EquipmentSlot.Ring2, Ring2);
@@ -203,6 +207,7 @@ public partial class EquipmentViewModel : Node
 		{
 			EquipmentSlot.MeleeWeapon => MeleeWeapon,
 			EquipmentSlot.RangedWeapon => RangedWeapon,
+			EquipmentSlot.Ammo => Ammo,
 			EquipmentSlot.Armor => Armor,
 			EquipmentSlot.Ring1 => Ring1,
 			EquipmentSlot.Ring2 => Ring2,

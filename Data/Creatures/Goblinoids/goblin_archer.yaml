@@ -1,0 +1,28 @@
+# Goblin Archer - Ranged goblinoid enemy
+# Uses short bow and arrows, prefers to fight from distance
+
+name: goblin archer
+description: A goblin armed with a crude bow. It keeps its distance, raining arrows on intruders from afar.
+
+type: goblinoid
+level: 2
+
+# Stats
+strength: -2  # Weak in melee
+agility: 1    # Better at ranged combat
+endurance: -1 # Fragile
+
+maxHP: 7
+visionRange: 10
+
+# AI Configuration
+goals:
+  - RangedAttack    # Prioritize ranged attacks
+  - MeleeAttack     # Fall back to melee if cornered
+  - SearchLastKnown # Search for enemies
+  - ReturnToSpawn   # Return when no threats
+
+# Equipment - includes both weapon and ammunition
+equipment:
+  - weapon_short_bow
+  - ammo_arrow

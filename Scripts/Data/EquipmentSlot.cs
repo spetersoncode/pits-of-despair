@@ -8,6 +8,7 @@ public enum EquipmentSlot
     None,
     MeleeWeapon,
     RangedWeapon,
+    Ammo,
     Armor,
     Ring1,
     Ring2
