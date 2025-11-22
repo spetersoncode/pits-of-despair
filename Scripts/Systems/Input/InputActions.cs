@@ -38,6 +38,7 @@ public enum InputAction
     Wait,
     Pickup,
     Descend,
+    AutoExplore,
 
     // Combat
     FireRanged,

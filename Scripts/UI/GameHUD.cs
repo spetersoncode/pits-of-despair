@@ -46,6 +46,7 @@ public partial class GameHUD : Control
     private Player _player;
     private MenuState _currentMenuState = MenuState.None;
     private CursorTargetingSystem _cursorSystem;
+    private AutoExploreSystem _autoExploreSystem;
     private Components.StatsComponent _playerStats;
     private Components.StatusComponent _statusComponent;
     private Systems.EntityManager _entityManager;
@@ -184,6 +185,30 @@ public partial class GameHUD : Control
             _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorMoved, Callable.From<BaseEntity>(OnCursorMoved));
             _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorCanceled, Callable.From<int>(OnCursorCanceled));
         }
+    }
+
+    /// <summary>
+    /// Connects to the autoexplore system to display status messages.
+    /// </summary>
+    public void ConnectToAutoExploreSystem(AutoExploreSystem autoExploreSystem)
+    {
+        _autoExploreSystem = autoExploreSystem;
+
+        if (_autoExploreSystem != null)
+        {
+            _autoExploreSystem.Connect(AutoExploreSystem.SignalName.AutoExploreStarted, Callable.From(OnAutoExploreStarted));
+            _autoExploreSystem.Connect(AutoExploreSystem.SignalName.ExplorationComplete, Callable.From(OnExplorationComplete));
+        }
+    }
+
+    private void OnAutoExploreStarted()
+    {
+        _messageLog.AddMessage("Exploring...", Palette.ToHex(Palette.Default));
+    }
+
+    private void OnExplorationComplete()
+    {
+        _messageLog.AddMessage("Nothing left to explore.", Palette.ToHex(Palette.Default));
     }
 
     /// <summary>
@@ -726,6 +751,12 @@ public partial class GameHUD : Control
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
+        }
+
+        if (_autoExploreSystem != null)
+        {
+            _autoExploreSystem.Disconnect(AutoExploreSystem.SignalName.AutoExploreStarted, Callable.From(OnAutoExploreStarted));
+            _autoExploreSystem.Disconnect(AutoExploreSystem.SignalName.ExplorationComplete, Callable.From(OnExplorationComplete));
         }
 
         // Disconnect from entity manager

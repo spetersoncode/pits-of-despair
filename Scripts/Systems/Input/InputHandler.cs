@@ -42,6 +42,7 @@ public partial class InputHandler : Node
     private ActionContext _actionContext;
     private GameHUD _gameHUD;
     private CursorTargetingSystem _cursorSystem;
+    private AutoExploreSystem _autoExploreSystem;
 
     // Input processors
     private readonly KeybindingService _keybindingService = KeybindingService.Instance;
@@ -110,6 +111,11 @@ public partial class InputHandler : Node
         }
     }
 
+    public void SetAutoExploreSystem(AutoExploreSystem autoExploreSystem)
+    {
+        _autoExploreSystem = autoExploreSystem;
+    }
+
     public override void _ExitTree()
     {
         if (_player != null)
@@ -126,6 +132,23 @@ public partial class InputHandler : Node
         // Only process key presses, not releases or repeats
         if (@event is not InputEventKey keyEvent || !keyEvent.Pressed || keyEvent.Echo)
             return;
+
+        // If autoexplore is active, any keypress cancels it (except the one that starts a new autoexplore)
+        if (_autoExploreSystem != null && _autoExploreSystem.IsActive)
+        {
+            // Check if this is the autoexplore key - if so, let it toggle off naturally
+            if (_keybindingService.TryGetAction(keyEvent, out var action) && action == InputAction.AutoExplore)
+            {
+                _autoExploreSystem.Stop();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Any other key cancels autoexplore
+            _autoExploreSystem.OnAnyKeyPressed();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         // Route input to appropriate processor based on game state
         if (ProcessCursorInput(keyEvent)) return;
@@ -246,6 +269,17 @@ public partial class InputHandler : Node
         // Only process gameplay actions during player turn
         if (!_turnManager.IsPlayerTurn)
             return false;
+
+        // Check for autoexplore action
+        if (_keybindingService.TryGetAction(keyEvent, out var action) && action == InputAction.AutoExplore)
+        {
+            if (_autoExploreSystem != null)
+            {
+                _autoExploreSystem.Start();
+                GetViewport().SetInputAsHandled();
+                return true;
+            }
+        }
 
         if (_gameplayProcessor.ProcessInput(keyEvent))
         {

@@ -45,6 +45,7 @@ public static class KeybindingConfig
         { InputAction.Wait, new() { Key.Space, Key.Kp5 } },
         { InputAction.Pickup, new() { Key.G } },
         // Descend handled via modifier keybinding (Shift+Period)
+        { InputAction.AutoExplore, new() { Key.O, Key.Kp0 } },
 
         // Combat
         { InputAction.FireRanged, new() { Key.F } },

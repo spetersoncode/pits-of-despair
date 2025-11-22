@@ -56,6 +56,7 @@ public partial class GameLevel : Node
     private ViewModels.PlayerStatsViewModel _playerStatsViewModel;
     private ViewModels.EquipmentViewModel _equipmentViewModel;
     private NearbyEntitiesTracker _nearbyEntitiesTracker;
+    private AutoExploreSystem _autoExploreSystem;
 
     public override void _Ready()
     {
@@ -105,6 +106,9 @@ public partial class GameLevel : Node
 
         _nearbyEntitiesTracker = new NearbyEntitiesTracker { Name = "NearbyEntitiesTracker" };
         AddChild(_nearbyEntitiesTracker);
+
+        _autoExploreSystem = new AutoExploreSystem { Name = "AutoExploreSystem" };
+        AddChild(_autoExploreSystem);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -189,6 +193,10 @@ public partial class GameLevel : Node
         _inputHandler.SetGameHUD(_gameHUD);
         _inputHandler.SetCursorTargetingSystem(_cursorSystem);
 
+        // Initialize autoexplore system
+        _autoExploreSystem.Initialize(_player, _mapSystem, _entityManager, _visionSystem, _turnManager, actionContext);
+        _inputHandler.SetAutoExploreSystem(_autoExploreSystem);
+
         _inputHandler.Connect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
         _inputHandler.Connect(InputHandler.SignalName.ActivateItemRequested, Callable.From(_gameHUD.ShowActivateMenu));
         _inputHandler.Connect(InputHandler.SignalName.DropItemRequested, Callable.From(_gameHUD.ShowDropMenu));
@@ -261,6 +269,7 @@ public partial class GameLevel : Node
             debugModeActive
         );
         _gameHUD.ConnectToCursorTargetingSystem(_cursorSystem);
+        _gameHUD.ConnectToAutoExploreSystem(_autoExploreSystem);
 
         // Initialize SidePanel with ViewModels
         var sidePanel = _gameHUD.GetNode<UI.SidePanel>("HBoxContainer/SidePanel");

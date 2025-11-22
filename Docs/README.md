@@ -35,6 +35,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 
 **Supporting Systems**:
 - **[ai.md](ai.md)**: AI architecture and goal-based decision making
+- **[autoexplore.md](autoexplore.md)**: Automated dungeon exploration with safety interrupts
 - **[effects.md](effects.md)**: Instantaneous and time-based effect application
 - **[progression.md](progression.md)**: Experience points, leveling, and stat growth
 - **[statistics.md](statistics.md)**: Multi-source stat tracking and combat value calculations

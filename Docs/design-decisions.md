@@ -28,6 +28,8 @@ This document captures conscious design choices that shape gameplay philosophy a
 
 **Principle**: Players should think about tactics and positioning, not inventory management and mode switching.
 
+**Keyboard Ergonomics**: Assume two-handed play with left hand near the action keys (A/E/X/F region for activate, equip, examine, fire) and right hand on numpad (movement, wait, autoexplore). Keybindings should be both accessible (reachable without moving hand position) and sensible (mnemonic or logical for the action). When possible, provide numpad alternatives for common actions (e.g., numpad 0 for autoexplore mirrors 'O'). Perfect ergonomics isn't always achievable, but minimize hand movement for frequently-used actions.
+
 ## Decision Criteria
 
 **Adding Mechanics**: Does it create interesting decisions? Can existing systems handle it? What's the UI cost? Does it align with streamlined philosophy?
