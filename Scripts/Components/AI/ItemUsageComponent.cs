@@ -3,6 +3,7 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Components;
 
 namespace PitsOfDespair.Components.AI;
@@ -23,6 +24,16 @@ public partial class ItemUsageComponent : Node, IAIEventHandler
     /// Base weight for healing item usage. Increases as HP decreases.
     /// </summary>
     [Export] public int BaseHealingWeight { get; set; } = 10;
+
+    /// <summary>
+    /// Base weight for offensive item usage (scrolls of confusion, etc.).
+    /// </summary>
+    [Export] public int BaseOffensiveItemWeight { get; set; } = 15;
+
+    /// <summary>
+    /// Whether this AI should use offensive items (scrolls, wands targeting enemies).
+    /// </summary>
+    [Export] public bool UseOffensiveItems { get; set; } = true;
 
     private BaseEntity? _entity;
     private InventoryComponent? _inventory;
@@ -130,14 +141,77 @@ public partial class ItemUsageComponent : Node, IAIEventHandler
     }
 
     /// <summary>
-    /// Handle general item action requests - adds non-healing consumable usage.
+    /// Handle general item action requests - adds offensive consumable usage.
+    /// Finds targeted items (scrolls of confusion, etc.) and adds actions for them.
     /// </summary>
     private void HandleItemActions(GetActionsEventArgs args)
     {
-        // For now, this is a placeholder for non-healing consumables.
-        // Items like scrolls of confusion (offensive) would require targeting
-        // and should be handled differently.
-        // Future implementation could add tactical item usage here.
+        if (!UseOffensiveItems)
+        {
+            return;
+        }
+
+        // Need a target to use offensive items on
+        var target = args.Target;
+        if (target == null)
+        {
+            // Try to find a visible enemy
+            var enemies = args.Context.GetVisibleEnemies();
+            target = args.Context.GetClosestEnemy(enemies);
+        }
+
+        if (target == null)
+        {
+            return;
+        }
+
+        // Find offensive items in inventory (items that require targeting)
+        foreach (var slot in _inventory!.Inventory)
+        {
+            // Skip equipped items
+            if (_equipComponent != null && _equipComponent.IsEquipped(slot.Key))
+            {
+                continue;
+            }
+
+            var template = slot.Item.Template;
+
+            // Skip non-activatable items
+            if (!template.IsActivatable())
+            {
+                continue;
+            }
+
+            // Check for charged items with no charges
+            if (template.GetMaxCharges() > 0 && slot.Item.CurrentCharges <= 0)
+            {
+                continue;
+            }
+
+            // Only use items that require targeting (offensive items)
+            if (!template.RequiresTargeting())
+            {
+                continue;
+            }
+
+            // Check if target is within item range
+            int distanceToTarget = DistanceHelper.ChebyshevDistance(_entity!.GridPosition, target.GridPosition);
+            int itemRange = template.GetTargetingRange();
+
+            if (distanceToTarget > itemRange)
+            {
+                continue;
+            }
+
+            // Create targeted item action
+            var useTargetedItemAction = new UseTargetedItemAction(slot.Key, target.GridPosition);
+            var aiAction = new AIAction(
+                action: useTargetedItemAction,
+                weight: BaseOffensiveItemWeight,
+                debugName: $"Use {template.GetDisplayName(1)} on {target.Name}"
+            );
+            args.ActionList.Add(aiAction);
+        }
     }
 
     /// <summary>

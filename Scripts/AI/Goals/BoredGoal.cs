@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
@@ -12,12 +13,14 @@ namespace PitsOfDespair.AI.Goals;
 /// 1. Fire OnIAmBored event - let components inject behavior (flee, defend, etc.)
 /// 2. If has protection target: follow/defend VIP
 /// 3. Find visible enemies and push combat goal
-/// 4. Random chance to wander
-/// 5. Do nothing (wait)
+/// 4. Check for nearby items to pick up (opportunistic)
+/// 5. Random chance to wander
+/// 6. Do nothing (wait)
 /// </summary>
 public class BoredGoal : Goal
 {
     private const float WanderChance = 0.3f;
+    private const float ItemPickupChance = 0.5f;
 
     public override bool IsFinished(AIContext context)
     {
@@ -49,6 +52,10 @@ public class BoredGoal : Goal
                 return;
             }
         }
+
+        // Opportunistic item pickup (only if entity has inventory)
+        if (TryItemPickupBehavior(context))
+            return;
 
         // Fallback: random chance to wander
         if (GD.Randf() < WanderChance)
@@ -103,6 +110,58 @@ public class BoredGoal : Goal
     {
         var killGoal = new KillTargetGoal(target, originalIntent: this);
         context.AIComponent.GoalStack.Push(killGoal);
+    }
+
+    /// <summary>
+    /// Checks for nearby items and opportunistically picks them up.
+    /// Only activates if entity has an inventory and with a random chance.
+    /// Uses ItemEvaluator to prioritize valuable items.
+    /// </summary>
+    private bool TryItemPickupBehavior(AIContext context)
+    {
+        // Check if entity has inventory
+        var inventory = context.Entity.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
+            return false;
+
+        // Random chance to attempt pickup (not every turn)
+        if (GD.Randf() > ItemPickupChance)
+            return false;
+
+        // Find visible items
+        var visibleItems = context.GetVisibleItems();
+        if (visibleItems.Count == 0)
+            return false;
+
+        // Find the best item (highest score that's worth picking)
+        BaseEntity? bestItem = null;
+        int bestScore = 0;
+
+        foreach (var itemEntity in visibleItems)
+        {
+            var itemData = itemEntity.ItemData?.Template;
+            if (itemData == null)
+                continue;
+
+            // Skip items not worth picking up
+            if (!ItemEvaluator.IsItemWorthPicking(itemData, context.Entity))
+                continue;
+
+            int score = ItemEvaluator.EvaluateItem(itemData, context.Entity);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestItem = itemEntity;
+            }
+        }
+
+        if (bestItem == null)
+            return false;
+
+        // Push seek item goal
+        var seekGoal = new SeekItemGoal(bestItem, originalIntent: this);
+        context.AIComponent.GoalStack.Push(seekGoal);
+        return true;
     }
 
     public override string GetName() => "Bored";

@@ -6,8 +6,9 @@ using System.Text;
 namespace PitsOfDespair.Actions;
 
 /// <summary>
-/// Action for creatures (non-players) to use items from their inventory.
+/// Action for any entity to use (activate) items from their inventory.
 /// Applies the item's effects and handles consumption/charges.
+/// Works for both players and creatures.
 /// </summary>
 public class UseItemAction : Action
 {
@@ -138,6 +139,14 @@ public class UseItemAction : Action
             slot.Item.UseCharge();
         }
 
-        return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
+        string resultMessage = messages.ToString().TrimEnd();
+
+        // Emit player-specific feedback for UI logging
+        if (actor is Player player)
+        {
+            player.EmitItemUsed(itemName, true, resultMessage);
+        }
+
+        return ActionResult.CreateSuccess(resultMessage);
     }
 }

@@ -197,6 +197,69 @@ public class AIContext
     }
 
     /// <summary>
+    /// Gets all visible items on the ground within vision range.
+    /// Returns entities that have ItemData (ground items, not creatures).
+    /// </summary>
+    public List<BaseEntity> GetVisibleItems()
+    {
+        var items = new List<BaseEntity>();
+        var entityManager = ActionContext?.EntityManager;
+        var mapSystem = ActionContext?.MapSystem;
+
+        if (entityManager == null || mapSystem == null || VisionComponent == null)
+            return items;
+
+        int visionRange = VisionComponent.VisionRange;
+
+        // Calculate visible tiles once for efficiency
+        var visibleTiles = FOVCalculator.CalculateVisibleTiles(Entity.GridPosition, visionRange, mapSystem);
+
+        // Check all entities for items
+        foreach (var entity in entityManager.GetAllEntities())
+        {
+            // Skip self
+            if (entity == Entity)
+                continue;
+
+            // Only include entities with ItemData (ground items)
+            if (entity.ItemData == null)
+                continue;
+
+            // Check if visible
+            if (visibleTiles.Contains(entity.GridPosition))
+            {
+                items.Add(entity);
+            }
+        }
+
+        return items;
+    }
+
+    /// <summary>
+    /// Gets the closest item from a list of item entities.
+    /// </summary>
+    public BaseEntity? GetClosestItem(List<BaseEntity> items)
+    {
+        if (items == null || items.Count == 0)
+            return null;
+
+        BaseEntity? closest = null;
+        int closestDistance = int.MaxValue;
+
+        foreach (var item in items)
+        {
+            int distance = DistanceHelper.ChebyshevDistance(Entity.GridPosition, item.GridPosition);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closest = item;
+            }
+        }
+
+        return closest;
+    }
+
+    /// <summary>
     /// Gets enemies visible to a specific entity (using that entity's vision).
     /// Used by defenders to see what threats their VIP can see.
     /// The hostility check is from THIS entity's perspective (the protector).

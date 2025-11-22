@@ -14,7 +14,7 @@ The AI system uses a **hierarchical goal stack** for decision-making. Goals pers
 - `Fail(AIContext)`: Handles failure by popping back to `OriginalIntent` for replanning
 - `OriginalIntent`: Reference to parent goal for failure recovery chain
 
-**AIContext**: Per-turn perception bundle containing entity references, system access (via `ActionContext`), visibility state, and component caches. Provides helper methods: `GetVisibleEnemies()`, `GetClosestEnemy()`, `CanSee()`, `GetEnemiesNearProtectionTarget()`.
+**AIContext**: Per-turn perception bundle containing entity references, system access (via `ActionContext`), visibility state, and component caches. Provides helper methods: `GetVisibleEnemies()`, `GetClosestEnemy()`, `CanSee()`, `GetEnemiesNearProtectionTarget()`, `GetVisibleItems()`, `GetClosestItem()`.
 
 **AIComponent**: Data and state management. Stores `GoalStack`, protection target, follow distance, spawn position. Designer-tweakable exports for behavior tuning.
 
@@ -56,7 +56,7 @@ Components inject behavior without coupling to goals via the event system:
 
 ## Available Goals
 
-**BoredGoal**: Permanent fallback at stack bottom, never finishes. Decision hub that fires `OnIAmBored` event, checks for protection target (follow/defend), finds visible enemies (push `KillTargetGoal`), or random wander. All creature behavior flows through BoredGoal when no other goals active.
+**BoredGoal**: Permanent fallback at stack bottom, never finishes. Decision hub that fires `OnIAmBored` event, checks for protection target (follow/defend), finds visible enemies (push `KillTargetGoal`), opportunistically picks up nearby items (push `SeekItemGoal`), or random wander. All creature behavior flows through BoredGoal when no other goals active.
 
 **KillTargetGoal**: Pursues and kills a target entity. Priority-ordered action attempts:
 1. Melee attack (if adjacent) via `OnGetMeleeActions` event
@@ -78,6 +78,8 @@ Finished when target is dead or invalid.
 **WanderGoal**: Single random step in a valid direction. Optional radius constraint around a center point for search behavior. Pushes `MoveDirectionGoal`. Completes after one move attempt.
 
 **MoveDirectionGoal**: Atomic single-tile movement. Executes `MoveAction` directly. Marks `_completed` or `_failed` based on result. Calls `Fail()` if blocked, allowing parent goal to replan.
+
+**SeekItemGoal**: Moves to and picks up a specific ground item. Pushes `ApproachGoal` with `desiredDistance: 0` to stand on item tile, then executes `PickupAction`. Finished when item is picked up or no longer exists. Used by `BoredGoal` for opportunistic item collection.
 
 ## Navigation System
 
@@ -140,6 +142,8 @@ Personalities emerge from component configuration and faction rather than goal l
 
 **Ranged Tactical**: Component provides ranged attacks via `OnGetRangedActions`, listens to `OnRangedAttackSuccess` to push retreat behavior (shoot-and-scoot).
 
+**Item User**: `ItemUsageComponent` responds to `OnGetDefensiveActions` (healing items when HP low) and `OnGetItemActions` (offensive items like confusion scrolls targeting enemies). Configurable thresholds and weights.
+
 ## Design Patterns
 
 **Goal Stack Over Utility Scoring**: Goals persist until complete rather than re-evaluating every turn. Enables multi-step behaviors and stateful execution. Sub-goals handle tactical details while intent goals track objectives.
@@ -172,6 +176,14 @@ Goals can be pushed by other goals or by components via events. Most goals deleg
 
 Event names follow pattern `On[Situation]` (e.g., `OnGetMeleeActions`, `OnIAmBored`).
 
+## Item Integration
+
+**ItemEvaluator**: Utility class for AI item prioritization. Scores items by type (healing, offensive, equipment) and entity needs (damaged → healing items more valuable, has ranged weapon → ammo more valuable). `IsItemWorthPicking()` filters items the AI has no use for.
+
+**Item Pickup Flow**: `BoredGoal` checks for visible items when idle → `ItemEvaluator` scores and filters candidates → highest-scoring item becomes target → `SeekItemGoal` pushed → `ApproachGoal` moves to item → `PickupAction` collects item.
+
+**Item Usage Flow**: `KillTargetGoal` fires `OnGetItemActions` during combat → `ItemUsageComponent` finds offensive items → checks range to target → creates `UseTargetedItemAction` wrapped in `AIAction` → weighted selection may choose item over attack.
+
 ---
 
-*See [actions.md](actions.md) for action system, [components.md](components.md) for component architecture, [turn-based.md](turn-based.md) for turn coordination, [factions.md](factions.md) for faction system.*
+*See [actions.md](actions.md) for action system, [components.md](components.md) for component architecture, [turn-based.md](turn-based.md) for turn coordination, [factions.md](factions.md) for faction system, [items.md](items.md) for item system.*

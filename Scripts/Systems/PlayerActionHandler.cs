@@ -126,7 +126,7 @@ public partial class PlayerActionHandler : Node
 		}
 
 		// Regular activation (no targeting needed)
-		var action = new ActivateItemAction(key);
+		var action = new UseItemAction(key);
 		_player.ExecuteAction(action, _actionContext);
 	}
 

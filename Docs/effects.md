@@ -46,17 +46,17 @@ Current instantaneous effect types demonstrate the system's flexibility and comp
 
 ## System Integration
 
-**Item Integration**: ActivateItemAction is unified entry point for effect triggering. Works with consumables (destroyed on use) and charged items (multiple uses, recharge over turns). Effect success determines consumption—at least one effect must succeed to use charge or destroy consumable.
+**Item Integration**: UseItemAction is unified entry point for effect triggering. Works with consumables (destroyed on use) and charged items (multiple uses, recharge over turns). Effect success determines consumption—at least one effect must succeed to use charge or destroy consumable.
 
 **Component Integration**: Effects work with composition-based entity architecture. Query for capabilities rather than checking types. Any entity with HealthComponent can be healed. Any entity with StatusComponent can receive statuses. Player-specific and creature-specific code paths eliminated.
 
-**Turn System Integration**: Status effects process automatically each turn via signal subscription. No manual update loops or iteration. Turn consumption happens at action level (ActivateItemAction costs turn), not effect level. Consistent with action system philosophy.
+**Turn System Integration**: Status effects process automatically each turn via signal subscription. No manual update loops or iteration. Turn consumption happens at action level (UseItemAction costs turn), not effect level. Consistent with action system philosophy.
 
 **Combat Separation**: Effects currently separate from combat resolution. Combat uses attack components and dice rolls; effects are targeted modifications. Clear architectural boundary enables independent development. Future potential for combat-triggered effects (poison on hit, life steal).
 
 ## Design Patterns
 
-**Strategy Pattern**: Effect is abstract strategy defining Apply interface. Concrete effects (Heal, Blink, Teleport) are strategies. ActivateItemAction is context executing strategies. Runtime selection based on item data enables data-driven effect composition.
+**Strategy Pattern**: Effect is abstract strategy defining Apply interface. Concrete effects (Heal, Blink, Teleport) are strategies. UseItemAction is context executing strategies. Runtime selection based on item data enables data-driven effect composition.
 
 **Template Method**: Status base class defines lifecycle hooks. Concrete statuses override OnApplied, OnTurnProcessed, OnRemoved for specific behavior. StatusComponent orchestrates lifecycle timing. Guarantees consistent execution, prevents lifecycle bugs.
 

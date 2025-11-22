@@ -110,7 +110,7 @@ FOV's dual distance metric support allows action targeting to use Chebyshev whil
 
 **Ranged Weapons**: F key checks equipped ranged weapon, retrieves range, starts RangedAttack mode. Confirmation creates `RangedAttackAction`.
 
-**Targeted Items**: Items marked `RequiresTargeting()` (e.g., Scroll of Confusion) enter TargetedItem mode on activation. Confirmation creates `ActivateTargetedItemAction`.
+**Targeted Items**: Items marked `RequiresTargeting()` (e.g., Scroll of Confusion) enter TargetedItem mode on activation. Confirmation creates `UseTargetedItemAction`.
 
 Actions validate independently—targeting provides position, actions ensure legality.
 
@@ -155,7 +155,7 @@ X (Examine)   ──→  Vision-Based      ──→  Entity Descriptions
 
 F (Ranged)    ──→  FOV + Chebyshev   ──→  RangedAttackAction
 A + Spear     ──→  Pre-calc Range         ReachAttackAction
-A + Scroll    ──→  Auto-Select Cursor     ActivateTargetedItemAction
+A + Scroll    ──→  Auto-Select Cursor     UseTargetedItemAction
                    Range Overlay
                    Trace Line
                    Confirm Target    ──→  Validate Range/LOS

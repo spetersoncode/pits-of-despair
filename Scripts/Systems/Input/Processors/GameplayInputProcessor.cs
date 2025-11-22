@@ -207,7 +207,7 @@ public class GameplayInputProcessor
 
     private void ExecuteTargetedItem(Vector2I targetPosition)
     {
-        var itemAction = new ActivateTargetedItemAction(_pendingItemKey.Value, GridPosition.FromVector2I(targetPosition));
+        var itemAction = new UseTargetedItemAction(_pendingItemKey.Value, GridPosition.FromVector2I(targetPosition));
         _player.ExecuteAction(itemAction, _actionContext);
     }
 

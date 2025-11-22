@@ -100,13 +100,13 @@ Current implementations demonstrate patterns for common effect types.
 
 **Effects System**: Status application is specialized effect type. ApplyStatusEffect bridges instantaneous effect architecture to duration-based status system. See **[effects.md](effects.md)** for effect system details.
 
-**Turn System**: StatusComponent subscribes to turn signals, processes automatically. Turn consumption happens at action level (ActivateItemAction costs turn), not status level. Status processing free—doesn't consume additional turns.
+**Turn System**: StatusComponent subscribes to turn signals, processes automatically. Turn consumption happens at action level (UseItemAction costs turn), not status level. Status processing free—doesn't consume additional turns.
 
 **Stats System**: Statuses modify stats through multi-source modifier system. Clean registration and removal via source IDs. Equipment, buffs, debuffs coexist without conflicts. See stats component documentation for modifier details.
 
 **Combat System**: Currently separate from combat resolution. Attacks use AttackComponent and dice rolls, not effects. Future potential for combat-triggered statuses (poison on hit, life steal). Statuses can modify combat through stat modifiers (armor affects defense).
 
-**Action System**: ActivateItemAction triggers status application through effect chain. Two-phase validation—action validates item usability, effect validates target has StatusComponent. Failure at either phase prevents resource consumption. See **[actions.md](actions.md)** for action details.
+**Action System**: UseItemAction triggers status application through effect chain. Two-phase validation—action validates item usability, effect validates target has StatusComponent. Failure at either phase prevents resource consumption. See **[actions.md](actions.md)** for action details.
 
 **UI System**: GameHUD connects to player's StatusComponent signals. StatusMessage signal feeds message log with color-coded feedback. StatusAdded/Removed signals enable future status icon display. UI decoupled from status processing.
 
