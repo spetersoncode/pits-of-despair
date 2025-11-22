@@ -152,8 +152,8 @@ public partial class SpawnManager : Node
             goldBudget
         );
 
-        // Spawn stairs or throne depending on floor depth
-        SpawnStairsOrThrone(allWalkableTiles);
+        // Spawn stairs or throne depending on floor depth (far from player)
+        SpawnStairsOrThrone(allWalkableTiles, playerPosition);
     }
 
     /// <summary>
@@ -518,9 +518,9 @@ public partial class SpawnManager : Node
 
     /// <summary>
     /// Spawns stairs down (floors 1-9) or Throne of Despair (floor 10).
-    /// Placed in a random walkable tile far from other entities.
+    /// Placed far from the player to encourage exploration.
     /// </summary>
-    private void SpawnStairsOrThrone(List<GridPosition> allWalkableTiles)
+    private void SpawnStairsOrThrone(List<GridPosition> allWalkableTiles, GridPosition playerPosition)
     {
         if (allWalkableTiles == null || allWalkableTiles.Count == 0)
         {
@@ -528,24 +528,38 @@ public partial class SpawnManager : Node
             return;
         }
 
-        // Shuffle tiles to get random placement
-        var shuffledTiles = allWalkableTiles.OrderBy(_ => GD.Randi()).ToList();
+        // Minimum distance from player (squared for Euclidean comparison)
+        const int stairsMinDistanceFromPlayer = 25;
+        int minDistanceSquared = stairsMinDistanceFromPlayer * stairsMinDistanceFromPlayer;
 
-        // Find an unoccupied tile
-        GridPosition? spawnPosition = null;
-        foreach (var tile in shuffledTiles)
+        // Get unoccupied tiles that meet minimum distance
+        var farTiles = allWalkableTiles
+            .Where(tile => _entityManager.GetEntityAtPosition(tile) == null)
+            .Where(tile => DistanceHelper.EuclideanDistance(tile, playerPosition) >= minDistanceSquared)
+            .ToList();
+
+        GridPosition spawnPosition;
+        if (farTiles.Count > 0)
         {
-            if (_entityManager.GetEntityAtPosition(tile) == null)
-            {
-                spawnPosition = tile;
-                break;
-            }
+            // Pick any random tile that meets minimum distance
+            spawnPosition = farTiles[(int)(GD.Randi() % farTiles.Count)];
         }
-
-        if (spawnPosition == null)
+        else
         {
-            GD.PushWarning("SpawnStairsOrThrone: No available tiles for stairs/throne");
-            return;
+            // Fallback: no tiles meet minimum distance, use the farthest available
+            var allCandidates = allWalkableTiles
+                .Where(tile => _entityManager.GetEntityAtPosition(tile) == null)
+                .ToList();
+
+            if (allCandidates.Count == 0)
+            {
+                GD.PushWarning("SpawnStairsOrThrone: No available tiles for stairs/throne");
+                return;
+            }
+
+            spawnPosition = allCandidates
+                .OrderByDescending(tile => DistanceHelper.EuclideanDistance(tile, playerPosition))
+                .First();
         }
 
         // Spawn stairs or throne based on floor depth
@@ -556,7 +570,7 @@ public partial class SpawnManager : Node
             {
                 Name = "StairsDown"
             };
-            stairs.Initialize(spawnPosition.Value);
+            stairs.Initialize(spawnPosition);
             _entityManager.AddEntity(stairs);
         }
         else
@@ -566,7 +580,7 @@ public partial class SpawnManager : Node
             {
                 Name = "ThroneOfDespair"
             };
-            throne.Initialize(spawnPosition.Value);
+            throne.Initialize(spawnPosition);
             _entityManager.AddEntity(throne);
         }
     }
