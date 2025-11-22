@@ -1,6 +1,6 @@
 name: blink
 type: scroll
-color: Cyan
+color: ScrollBlink
 description: Ancient words of translocation writhe across yellowed parchment. Reading them tears reality asunder for the briefest moment.
 effects:
   - type: blink

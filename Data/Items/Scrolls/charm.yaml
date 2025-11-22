@@ -1,0 +1,6 @@
+name: charm
+type: scroll
+color: ScrollCharm
+description: Soothing whispers emanate from the parchment, promising friendship and loyalty to any creature that hears them read aloud.
+effects:
+  - type: charm

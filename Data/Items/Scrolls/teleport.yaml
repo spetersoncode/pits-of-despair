@@ -1,6 +1,6 @@
 name: teleport
 type: scroll
-color: Magenta
+color: ScrollTeleport
 description: Glowing runes pulse with unstable energy, their power barely contained by arcane bindings. Speaking them unmakes you and remakes you elsewhere.
 effects:
   - type: teleport

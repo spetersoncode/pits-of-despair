@@ -86,7 +86,7 @@ public class BlinkEffect : Effect
         return new EffectResult(
             true,
             $"{name} blinks to a new location!",
-            Palette.ToHex(Palette.Cyan)
+            Palette.ToHex(Palette.ScrollBlink)
         );
     }
 }

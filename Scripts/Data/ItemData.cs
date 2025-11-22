@@ -430,10 +430,18 @@ public class ItemData
     /// </summary>
     public bool RequiresTargeting()
     {
-        // Check if any effect is an apply_status effect with confusion type
         foreach (var effectDef in Effects)
         {
-            if (effectDef.Type?.ToLower() == "apply_status" &&
+            var effectType = effectDef.Type?.ToLower();
+
+            // Charm effects require targeting
+            if (effectType == "charm")
+            {
+                return true;
+            }
+
+            // apply_status with confusion requires targeting
+            if (effectType == "apply_status" &&
                 effectDef.StatusType?.ToLower() == "confusion")
             {
                 return true;
@@ -506,6 +514,9 @@ public class ItemData
 
             case "teleport":
                 return new TeleportEffect();
+
+            case "charm":
+                return new CharmEffect();
 
             default:
                 GD.PrintErr($"ItemData: Unknown effect type '{definition.Type}' in item '{Name}'");

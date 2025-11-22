@@ -52,7 +52,7 @@ public class TeleportEffect : Effect
         return new EffectResult(
             true,
             $"{target.DisplayName} teleports to a distant location!",
-            Palette.ToHex(Palette.Magenta)
+            Palette.ToHex(Palette.ScrollTeleport)
         );
     }
 }

@@ -404,10 +404,23 @@ public static class Palette
 
     #endregion
 
-    #region Scrolls
+    #region Scrolls - Translocation
 
-    /// <summary>Violet scroll color (mind-affecting magic)</summary>
-    public static readonly Color Violet = new("#9966DD");
+    /// <summary>Short-range spatial magic (blink, phase step)</summary>
+    public static readonly Color ScrollBlink = new("#55DDEE");
+
+    /// <summary>Long-range spatial magic (teleport, dimension door)</summary>
+    public static readonly Color ScrollTeleport = new("#228877");
+
+    #endregion
+
+    #region Scrolls - Mind-Affecting
+
+    /// <summary>Mental debuffs (confusion, fear, madness)</summary>
+    public static readonly Color ScrollConfusion = new("#9966DD");
+
+    /// <summary>Mental control (charm, dominate, compulsion)</summary>
+    public static readonly Color ScrollCharm = new("#BB66AA");
 
     #endregion
 
