@@ -40,9 +40,15 @@ public class MoveAction : Action
                 return context.MapSystem.IsWalkable(targetPos);
             }
 
-            // If target is not walkable and actor is player, check for bump-to-attack
+            // If target is not walkable and actor is player, check for interactions
             if (actor == context.Player)
             {
+                // Can swap positions with friendly creatures
+                if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
+                {
+                    return true;
+                }
+
                 var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
                 var actorAttack = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
 
@@ -72,9 +78,17 @@ public class MoveAction : Action
         var targetPos = currentPos.Add(_direction);
         var targetEntity = GetEntityAtPosition(targetPos, context);
 
-        // Check for bump-to-attack (player only)
+        // Check for bump interactions (player only)
         if (targetEntity != null && !targetEntity.IsWalkable && actor == context.Player)
         {
+            // Swap positions with friendly creatures
+            if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
+            {
+                targetEntity.SetGridPosition(currentPos);
+                actor.SetGridPosition(targetPos);
+                return ActionResult.CreateSuccess();
+            }
+
             var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
             var actorAttack = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
 
