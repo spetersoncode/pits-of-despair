@@ -285,7 +285,8 @@ public partial class Player : BaseEntity
                 _entityManager.RemoveEntity(entityAtPosition);
                 entityAtPosition.QueueFree();
 
-                EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, true, $"You collect {itemInstance.Template.Name}.");
+                string displayName = itemInstance.Template.GetDisplayName(itemInstance.Quantity);
+                EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, true, $"You collect {displayName}.");
             }
             else
             {
