@@ -61,6 +61,7 @@ public class DropItemAction : Action
 		// Clone the item instance before removing from inventory
 		// This ensures the dropped entity doesn't share state with inventory items
 		var itemInstance = slot.Item.Clone();
+		itemInstance.AutoPickup = false; // Disable autopickup for dropped items
 		string itemName = itemInstance.Template.GetDisplayName(1);
 
 		// Determine drop position BEFORE removing from inventory

@@ -31,11 +31,18 @@ public class ItemInstance
     /// </summary>
     public int Quantity { get; set; }
 
+    /// <summary>
+    /// Whether this specific item instance should be automatically picked up.
+    /// Initialized from the template, but can be toggled (e.g. when dropped).
+    /// </summary>
+    public bool AutoPickup { get; set; }
+
     public ItemInstance(ItemData template)
     {
         Template = template;
         RechargeTurnCounter = 0;
         Quantity = 1; // Default quantity for all items
+        AutoPickup = template.AutoPickup; // Initialize from template default
 
         // Initialize charges based on template configuration
         if (!string.IsNullOrEmpty(template.ChargesDice))
@@ -108,7 +115,8 @@ public class ItemInstance
         {
             CurrentCharges = this.CurrentCharges,
             RechargeTurnCounter = this.RechargeTurnCounter,
-            Quantity = this.Quantity
+            Quantity = this.Quantity,
+            AutoPickup = this.AutoPickup
         };
     }
 }

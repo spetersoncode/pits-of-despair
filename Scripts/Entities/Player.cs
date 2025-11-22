@@ -273,7 +273,7 @@ public partial class Player : BaseEntity
             }
 
             // Handle items with autopickup enabled
-            if (entity.ItemData != null && entity.ItemData.Template.AutoPickup)
+            if (entity.ItemData != null && entity.ItemData.AutoPickup)
             {
                 var itemInstance = entity.ItemData;
                 if (itemInstance == null)

@@ -63,6 +63,13 @@ public partial class EntityFactory : Node
             Quantity = quantity
         };
 
+        // Set autopickup for consumables and ammo (default for new items)
+        string itemType = data.Type?.ToLower() ?? string.Empty;
+        if (itemType == "potion" || itemType == "scroll" || itemType == "ammo")
+        {
+            itemInstance.AutoPickup = true;
+        }
+
         // Delegate to builder for consistent entity construction
         return BuildItemEntity(itemInstance, position);
     }
@@ -90,13 +97,6 @@ public partial class EntityFactory : Node
     private BaseEntity BuildItemEntity(ItemInstance itemInstance, GridPosition position)
     {
         var data = itemInstance.Template;
-
-        // Set autopickup for consumables and ammo
-        string itemType = data.Type?.ToLower() ?? string.Empty;
-        if (itemType == "potion" || itemType == "scroll" || itemType == "ammo")
-        {
-            data.AutoPickup = true;
-        }
 
         // Create base entity for the item
         var entity = new BaseEntity

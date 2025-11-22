@@ -348,7 +348,7 @@ public partial class AutoExploreSystem : Node
             }
 
             // Autopickup items (potions, scrolls, ammo)
-            if (entity.ItemData != null && entity.ItemData.Template.AutoPickup)
+            if (entity.ItemData != null && entity.ItemData.AutoPickup)
             {
                 return true;
             }
