@@ -19,6 +19,7 @@ maxHP: 8                  # Base HP before endurance modifier (actual HP = maxHP
 # visionRange: 10         # Tiles creature can see
 # hasMovement: true       # Can this creature move?
 # hasAI: true             # Does this creature have AI?
+# faction: Hostile        # Hostile (default), Friendly, or Neutral
 
 # === VISUAL ===
 # glyph: "g"              # Override type default
@@ -30,7 +31,16 @@ goals:
   - SearchLastKnown       # Search where enemy was last seen
   - ReturnToSpawn         # Return to spawn when idle
 
-# Available goals: MeleeAttack, RangedAttack, SearchLastKnown, ReturnToSpawn, Wander, FleeForHelp, Idle
+# Available goals:
+#   Hostile: MeleeAttack, RangedAttack, SearchLastKnown, ReturnToSpawn, Wander, FleeForHelp, Idle
+#   Friendly: DefendTarget, FollowTarget, Wander, Idle
+#
+# Friendly creature example:
+# faction: Friendly
+# goals:
+#   - DefendTarget        # Attack enemies near protection target
+#   - FollowTarget        # Follow protection target (usually player)
+#   - Idle
 
 # === EQUIPMENT ===
 # equipment:

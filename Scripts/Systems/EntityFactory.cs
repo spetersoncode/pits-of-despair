@@ -127,6 +127,7 @@ public partial class EntityFactory : Node
             Description = data.Description,
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
+            Faction = data.GetFaction(),
             Name = data.Name // Set node name for debugging
         };
 
@@ -304,6 +305,23 @@ public partial class EntityFactory : Node
         }
 
         return entity;
+    }
+
+    /// <summary>
+    /// Configures an entity as a friendly companion that follows and protects a target.
+    /// Sets the entity's faction to Friendly and assigns the protection target.
+    /// </summary>
+    /// <param name="entity">The entity to configure as friendly.</param>
+    /// <param name="protectionTarget">The entity to follow and protect (typically the player).</param>
+    public void SetupAsFriendlyCompanion(BaseEntity entity, BaseEntity protectionTarget)
+    {
+        entity.Faction = Faction.Friendly;
+
+        var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+        if (aiComponent != null)
+        {
+            aiComponent.ProtectionTarget = protectionTarget;
+        }
     }
 
     /// <summary>

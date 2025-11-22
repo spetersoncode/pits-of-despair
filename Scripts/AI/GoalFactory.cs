@@ -13,12 +13,16 @@ public static class GoalFactory
 {
     private static readonly Dictionary<string, Func<Goal>> _goalRegistry = new()
     {
+        // Hostile AI goals
         { "MeleeAttack", () => new MeleeAttackGoal() },
         { "SearchLastKnown", () => new SearchLastKnownPositionGoal() },
         { "ReturnToSpawn", () => new ReturnToSpawnGoal() },
         { "Wander", () => new WanderGoal() },
         { "FleeForHelp", () => new FleeForHelpGoal() },
-        { "Idle", () => new IdleGoal() }
+        { "Idle", () => new IdleGoal() },
+        // Friendly AI goals
+        { "FollowTarget", () => new FollowTargetGoal() },
+        { "DefendTarget", () => new DefendTargetGoal() }
     };
 
     /// <summary>

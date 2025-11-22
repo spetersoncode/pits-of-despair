@@ -112,6 +112,17 @@ public partial class GameLevel : Node
 
         _entityFactory.InitializePlayerInventory(_player);
 
+        // Spawn a friendly cat companion for testing
+        var catSpawn = new Core.GridPosition(playerSpawn.X + 1, playerSpawn.Y);
+        if (!_mapSystem.IsWalkable(catSpawn))
+            catSpawn = new Core.GridPosition(playerSpawn.X - 1, playerSpawn.Y);
+        var cat = _entityFactory.CreateCreature("cat", catSpawn);
+        if (cat != null)
+        {
+            _entityFactory.SetupAsFriendlyCompanion(cat, _player);
+            _entityManager.AddEntity(cat);
+        }
+
         _player.SetEntityManager(_entityManager);
         _player.SetGoldManager(_goldManager);
 

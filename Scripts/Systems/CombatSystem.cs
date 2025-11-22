@@ -5,6 +5,8 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
+// Using FactionExtensions from BaseEntity.cs
+
 namespace PitsOfDespair.Systems;
 
 /// <summary>
@@ -85,6 +87,15 @@ public partial class CombatSystem : Node
         // Check if target is already dead
         if (!targetHealth.IsAlive())
         {
+            return;
+        }
+
+        // Prevent friendly fire - don't allow attacks between entities on the same side
+        // Friendly faction (player + allies) cannot attack each other
+        // Hostile faction cannot attack each other
+        if (attacker.Faction.IsFriendlyTo(target.Faction))
+        {
+            GD.Print($"CombatSystem: Friendly fire prevented - {attacker.DisplayName} ({attacker.Faction}) cannot attack {target.DisplayName} ({target.Faction})");
             return;
         }
 

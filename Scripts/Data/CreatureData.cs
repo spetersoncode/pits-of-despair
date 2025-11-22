@@ -85,6 +85,13 @@ public class CreatureData
 
     public bool HasAI { get; set; } = true;
 
+    /// <summary>
+    /// Faction allegiance of this creature.
+    /// Defaults to "Hostile". Can be "Friendly" or "Neutral".
+    /// Friendly creatures won't attack the player and can be given goals like FollowTarget and DefendTarget.
+    /// </summary>
+    public string Faction { get; set; } = "Hostile";
+
     public List<AttackData> Attacks { get; set; } = new();
 
     /// <summary>
@@ -129,6 +136,19 @@ public class CreatureData
     public Color GetColor()
     {
         return new Color(Color);
+    }
+
+    /// <summary>
+    /// Gets the faction as an enum value.
+    /// Parses the Faction string, defaulting to Hostile if invalid.
+    /// </summary>
+    public Core.Faction GetFaction()
+    {
+        if (System.Enum.TryParse<Core.Faction>(Faction, true, out var result))
+        {
+            return result;
+        }
+        return Core.Faction.Hostile;
     }
 
     /// <summary>

@@ -91,6 +91,13 @@ public partial class BaseEntity : Node2D
     public ItemInstance? ItemData { get; set; } = null;
 
     /// <summary>
+    /// Faction allegiance of this entity.
+    /// Determines combat targeting and AI behavior.
+    /// Player is always Friendly faction.
+    /// </summary>
+    public Faction Faction { get; set; } = Faction.Hostile;
+
+    /// <summary>
     /// Updates the entity's grid position and emits PositionChanged signal.
     /// </summary>
     /// <param name="newPosition">The new grid position.</param>

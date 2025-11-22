@@ -46,6 +46,10 @@ All goals inherit from abstract `Goal` base class:
 
 **FleeForHelpGoal**: Score 85f (when player visible), 75f base (decays when fleeing). Multi-level fleeing: attempts to flee toward nearby allies using Dijkstra pathfinding, falls back to fleeing directly away from player, falls back to fleeing from last known position. Yells for help every 4 turns. Ally detection finds creatures with SearchLastKnown goal within 20-tile radius.
 
+**DefendTargetGoal**: Score 80f when hostile enemies near protection target (within 5 tiles). Attacks closest enemy threatening the protection target. Pathfinds toward enemies out of melee range. Used by friendly creatures. See [factions.md](factions.md).
+
+**FollowTargetGoal**: Score 50f+ when too far from protection target. Score increases with distance. Maintains `AIComponent.FollowDistance` (default 3 tiles) from target. Lower priority than DefendTarget. Used by friendly creatures. See [factions.md](factions.md).
+
 ## Perception and Pathfinding
 
 **FOVCalculator**: Recursive shadowcasting algorithm providing symmetric, efficient line-of-sight. Casts light through 8 octants from origin position within vision range, respecting walls as blockers. Returns HashSet of visible grid positions. Completes in O(vision_range²).
@@ -75,6 +79,8 @@ All goals inherit from abstract `Goal` base class:
 - "Wander" → WanderGoal
 - "FleeForHelp" → FleeForHelpGoal
 - "Idle" → IdleGoal
+- "DefendTarget" → DefendTargetGoal (friendly AI)
+- "FollowTarget" → FollowTargetGoal (friendly AI)
 
 **Creature Data**: YAML files in `Data/Creatures/` specify goal lists, vision range, and AI flags. Example:
 
@@ -98,6 +104,8 @@ Idle goal automatically added if not specified. Goal order doesn't affect execut
 **Cowardly** (Goblin Scouts): Goals [FleeForHelp]. Flee when player visible, call allies, maintain safe distance, eventually stop fleeing when flee turns expire.
 
 **Passive Roamers** (Rats): Goals [MeleeAttack, Wander]. Only attack if player adjacent, otherwise wander randomly. No searching or returning.
+
+**Friendly Bodyguard**: Goals [DefendTarget, FollowTarget, Idle]. Faction Friendly. Attacks enemies near protection target, follows when no threats, idles when close. See [factions.md](factions.md) for setup.
 
 ## Design Patterns
 
@@ -128,3 +136,4 @@ Register in `GoalFactory._goalRegistry` dictionary with string key. Add goal ID 
 - [actions.md](actions.md) - Action system integration
 - [components.md](components.md) - Component architecture
 - [turn-based.md](turn-based.md) - Turn coordination
+- [factions.md](factions.md) - Faction system and friendly creatures
