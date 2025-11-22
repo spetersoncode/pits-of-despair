@@ -34,12 +34,17 @@ public class CreatureData
         ["rodents"] = new CreatureTypeInfo
         {
             DefaultGlyph = "r",
-            DefaultColor = Palette.ToHex(Palette.Default)
+            DefaultColor = Palette.ToHex(Palette.Minion)
         },
         ["undead"] = new CreatureTypeInfo
         {
             DefaultGlyph = "z",
             DefaultColor = Palette.ToHex(Palette.Default)
+        },
+        ["allies"] = new CreatureTypeInfo
+        {
+            DefaultGlyph = "a",
+            DefaultColor = Palette.ToHex(Palette.Player)
         }
     };
 
@@ -87,8 +92,8 @@ public class CreatureData
 
     /// <summary>
     /// Faction allegiance of this creature.
-    /// Defaults to "Hostile". Can be "Friendly" or "Neutral".
-    /// Friendly creatures won't attack the player and can be given goals like FollowTarget and DefendTarget.
+    /// Defaults to "Hostile". Can be "Player" or "Neutral".
+    /// Player faction creatures are allies that follow and defend the player.
     /// </summary>
     public string Faction { get; set; } = "Hostile";
 

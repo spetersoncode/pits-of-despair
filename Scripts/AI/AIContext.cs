@@ -117,9 +117,9 @@ public class AIContext
             if (!myFaction.IsHostileTo(entity.Faction))
                 continue;
 
-            // Skip dead entities
+            // Skip entities without health (items, decorations, etc.) or dead entities
             var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
-            if (health != null && !health.IsAlive())
+            if (health == null || !health.IsAlive())
                 continue;
 
             // Check if visible
@@ -194,5 +194,70 @@ public class AIContext
         }
 
         return closest;
+    }
+
+    /// <summary>
+    /// Gets enemies visible to a specific entity (using that entity's vision).
+    /// Used by defenders to see what threats their VIP can see.
+    /// The hostility check is from THIS entity's perspective (the protector).
+    /// </summary>
+    public List<BaseEntity> GetEnemiesVisibleToEntity(BaseEntity observer)
+    {
+        var enemies = new List<BaseEntity>();
+        var entityManager = ActionContext?.EntityManager;
+        var mapSystem = ActionContext?.MapSystem;
+
+        if (entityManager == null || mapSystem == null || observer == null)
+            return enemies;
+
+        // Get observer's vision component
+        var observerVision = observer.GetNodeOrNull<VisionComponent>("VisionComponent");
+        if (observerVision == null)
+            return enemies;
+
+        var myFaction = Entity.Faction; // Hostility from protector's perspective
+        int visionRange = observerVision.VisionRange;
+
+        // Calculate visible tiles from observer's position
+        var visibleTiles = FOVCalculator.CalculateVisibleTiles(observer.GridPosition, visionRange, mapSystem);
+
+        // Check all entities
+        foreach (var entity in entityManager.GetAllEntities())
+        {
+            // Skip self and the observer
+            if (entity == Entity || entity == observer)
+                continue;
+
+            // Skip non-hostile entities (from protector's perspective)
+            if (!myFaction.IsHostileTo(entity.Faction))
+                continue;
+
+            // Skip entities without health (items, decorations, etc.) or dead entities
+            var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
+            if (health == null || !health.IsAlive())
+                continue;
+
+            // Check if visible to observer
+            if (visibleTiles.Contains(entity.GridPosition))
+            {
+                enemies.Add(entity);
+            }
+        }
+
+        // Also check the player if hostile
+        var player = ActionContext?.Player;
+        if (player != null && player != observer && myFaction.IsHostileTo(player.Faction))
+        {
+            var playerHealth = player.GetNodeOrNull<HealthComponent>("HealthComponent");
+            if (playerHealth != null && playerHealth.IsAlive())
+            {
+                if (visibleTiles.Contains(player.GridPosition))
+                {
+                    enemies.Add(player);
+                }
+            }
+        }
+
+        return enemies;
     }
 }

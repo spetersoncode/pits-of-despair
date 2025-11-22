@@ -7,16 +7,16 @@ namespace PitsOfDespair.Core;
 public enum Faction
 {
     /// <summary>
-    /// Hostile to the player and friendly entities.
+    /// Hostile to the player and player-allied entities.
     /// Default faction for enemies.
     /// </summary>
     Hostile,
 
     /// <summary>
-    /// Allied with the player. Will not attack player or other friendlies.
-    /// Used for summoned creatures, rescued prisoners, etc.
+    /// The player and player-allied entities.
+    /// Used for the player, companions, summoned creatures, etc.
     /// </summary>
-    Friendly,
+    Player,
 
     /// <summary>
     /// Neutral entities that don't participate in combat.
@@ -37,8 +37,8 @@ public static class FactionExtensions
     {
         return self switch
         {
-            Faction.Hostile => other == Faction.Friendly,
-            Faction.Friendly => other == Faction.Hostile,
+            Faction.Hostile => other == Faction.Player,
+            Faction.Player => other == Faction.Hostile,
             Faction.Neutral => false,
             _ => false
         };
@@ -52,7 +52,7 @@ public static class FactionExtensions
         return self switch
         {
             Faction.Hostile => other == Faction.Hostile,
-            Faction.Friendly => other == Faction.Friendly,
+            Faction.Player => other == Faction.Player,
             Faction.Neutral => false,
             _ => false
         };

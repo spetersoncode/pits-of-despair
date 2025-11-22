@@ -60,7 +60,7 @@ public partial class Player : BaseEntity
         Description = "A brave soul who dared descend into the Pits of Despair. Your reflection in your blade shows determination etched by hardship.";
         Glyph = "@";
         GlyphColor = Palette.Player;
-        Faction = Faction.Friendly;
+        Faction = Faction.Player;
 
         // Create all components programmatically
         _movementComponent = new MovementComponent { Name = "MovementComponent" };

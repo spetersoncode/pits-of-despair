@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.AI.Goals;
 
@@ -9,9 +10,10 @@ namespace PitsOfDespair.AI.Goals;
 ///
 /// Behavior priority:
 /// 1. Fire OnIAmBored event - let components inject behavior (flee, defend, etc.)
-/// 2. Find visible enemies and push combat goal
-/// 3. Random chance to wander
-/// 4. Do nothing (wait)
+/// 2. If has protection target: follow/defend VIP
+/// 3. Find visible enemies and push combat goal
+/// 4. Random chance to wander
+/// 5. Do nothing (wait)
 /// </summary>
 public class BoredGoal : Goal
 {
@@ -31,6 +33,12 @@ public class BoredGoal : Goal
 
         // If a component handled it (pushed a goal), we're done
         if (args.Handled) return;
+
+        // Check for protection target (friendly bodyguard behavior)
+        bool hasProtectionTarget = context.ProtectionTarget != null;
+        GD.Print($"[{context.Entity.DisplayName}] BoredGoal.TakeAction - HasProtectionTarget: {hasProtectionTarget}");
+        if (TryProtectionBehavior(context))
+            return;
 
         // Default: try to find an enemy to attack
         var enemies = context.GetVisibleEnemies();
@@ -53,6 +61,46 @@ public class BoredGoal : Goal
         }
 
         // Otherwise: do nothing (wait in place)
+    }
+
+    /// <summary>
+    /// Handles protection target behavior for friendly creatures.
+    /// Priority: 1) Stay near VIP, 2) Defend against threats (VIP or self can see)
+    /// </summary>
+    private bool TryProtectionBehavior(AIContext context)
+    {
+        var target = context.ProtectionTarget;
+        if (target == null || !GodotObject.IsInstanceValid(target))
+            return false;
+
+        int distance = DistanceHelper.ChebyshevDistance(
+            context.Entity.GridPosition,
+            target.GridPosition);
+
+        int followDistance = context.AIComponent.FollowDistance;
+        GD.Print($"[{context.Entity.DisplayName}] Distance to VIP: {distance}, FollowDistance: {followDistance}");
+
+        // Priority 1: If too far from VIP, follow them
+        if (distance > followDistance)
+        {
+            GD.Print($"[{context.Entity.DisplayName}] Too far, pushing FollowTargetGoal");
+            var followGoal = new FollowTargetGoal(originalIntent: this);
+            context.AIComponent.GoalStack.Push(followGoal);
+            return true;
+        }
+
+        // Priority 2: If VIP or protector can see enemies, defend
+        var vipThreats = context.GetEnemiesVisibleToEntity(target);
+        var protectorThreats = context.GetVisibleEnemies();
+        if (vipThreats.Count > 0 || protectorThreats.Count > 0)
+        {
+            var defendGoal = new DefendTargetGoal(originalIntent: this);
+            context.AIComponent.GoalStack.Push(defendGoal);
+            return true;
+        }
+
+        // Near VIP with no threats - don't handle, fall through to normal behavior
+        return false;
     }
 
     private void PushCombatGoal(AIContext context, BaseEntity target)

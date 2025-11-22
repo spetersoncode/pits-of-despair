@@ -1,10 +1,10 @@
 # Creature Template
-# Default glyphs by type: goblinoid='g', rodents='r', undead='s'
+# Default glyphs by type: goblinoid='g', rodents='r', undead='z', allies='a'
 
 # === REQUIRED FIELDS ===
 name: creature name
 description: Creature description for examine window.
-type: goblinoid           # goblinoid, rodents, undead
+type: goblinoid           # goblinoid, rodents, undead, allies
 level: 1                  # Affects difficulty, XP, HP scaling
 maxHP: 8                  # Base HP before endurance modifier (actual HP = maxHP + endurance × level)
 
@@ -19,7 +19,7 @@ maxHP: 8                  # Base HP before endurance modifier (actual HP = maxHP
 # visionRange: 10         # Tiles creature can see
 # hasMovement: true       # Can this creature move?
 # hasAI: true             # Does this creature have AI?
-# faction: Hostile        # Hostile (default), Friendly, or Neutral
+# faction: Hostile        # Hostile (default), Player, or Neutral
 
 # === VISUAL ===
 # glyph: "g"              # Override type default
@@ -35,8 +35,8 @@ goals:
 #   Hostile: MeleeAttack, RangedAttack, SearchLastKnown, ReturnToSpawn, Wander, FleeForHelp, Idle
 #   Friendly: DefendTarget, FollowTarget, Wander, Idle
 #
-# Friendly creature example:
-# faction: Friendly
+# Player-allied creature example:
+# faction: Player
 # goals:
 #   - DefendTarget        # Attack enemies near protection target
 #   - FollowTarget        # Follow protection target (usually player)

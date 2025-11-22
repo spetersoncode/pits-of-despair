@@ -297,13 +297,13 @@ public partial class EntityFactory : Node
 
     /// <summary>
     /// Configures an entity as a friendly companion that follows and protects a target.
-    /// Sets the entity's faction to Friendly and assigns the protection target.
+    /// Sets the entity's faction to Player and assigns the protection target.
     /// </summary>
     /// <param name="entity">The entity to configure as friendly.</param>
     /// <param name="protectionTarget">The entity to follow and protect (typically the player).</param>
     public void SetupAsFriendlyCompanion(BaseEntity entity, BaseEntity protectionTarget)
     {
-        entity.Faction = Faction.Friendly;
+        entity.Faction = Faction.Player;
 
         var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
         if (aiComponent != null)

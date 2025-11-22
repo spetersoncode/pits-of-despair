@@ -2,6 +2,7 @@ name: rat
 description: A filthy dungeon rat with matted fur and gleaming eyes. Disease and desperation have made it bold enough to attack anything.
 type: rodents
 level: 1
+color: Minion
 strength: -2
 agility: 1
 endurance: -2
