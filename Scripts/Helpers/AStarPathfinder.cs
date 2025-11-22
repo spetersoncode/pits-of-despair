@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PitsOfDespair.AI;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
@@ -33,8 +34,15 @@ public static class AStarPathfinder
     /// <param name="mapSystem">Map system for walkability checks</param>
     /// <param name="entityManager">Entity manager for checking creature occupancy</param>
     /// <param name="player">Player reference for checking player occupancy</param>
+    /// <param name="weights">Optional navigation weight map for weighted pathfinding. If null, uses uniform cost of 1.</param>
     /// <returns>Queue of positions to follow (not including start), or null if no path found</returns>
-    public static Queue<GridPosition>? FindPath(GridPosition start, GridPosition goal, MapSystem mapSystem, EntityManager entityManager, Player player)
+    public static Queue<GridPosition>? FindPath(
+        GridPosition start,
+        GridPosition goal,
+        MapSystem mapSystem,
+        EntityManager entityManager,
+        Player player,
+        NavigationWeightMap? weights = null)
     {
         // Early exit if goal is not walkable
         if (!mapSystem.IsWalkable(goal))
@@ -48,13 +56,13 @@ public static class AStarPathfinder
             return new Queue<GridPosition>();
         }
 
-        var openSet = new PriorityQueue<GridPosition, int>();
+        var openSet = new PriorityQueue<GridPosition, float>();
         var cameFrom = new Dictionary<GridPosition, GridPosition>();
-        var gScore = new Dictionary<GridPosition, int>();
-        var fScore = new Dictionary<GridPosition, int>();
+        var gScore = new Dictionary<GridPosition, float>();
+        var fScore = new Dictionary<GridPosition, float>();
 
         // Initialize start node
-        gScore[start] = 0;
+        gScore[start] = 0f;
         fScore[start] = Heuristic(start, goal);
         openSet.Enqueue(start, fScore[start]);
 
@@ -82,17 +90,26 @@ public static class AStarPathfinder
                     continue;
                 }
 
-                // Skip if occupied by creature or player (unless it's the goal)
-                if (!neighbor.Equals(goal) && IsPositionOccupied(neighbor, entityManager, player))
+                // When using weights, let the weight map handle occupancy costs
+                // When not using weights, skip occupied tiles (except goal)
+                if (weights == null && !neighbor.Equals(goal) && IsPositionOccupied(neighbor, entityManager, player))
                 {
                     continue;
                 }
 
-                // Calculate tentative g score (all moves cost 1 for Chebyshev)
-                int tentativeGScore = gScore[current] + 1;
+                // Calculate movement cost - use weight map if provided, otherwise uniform cost of 1
+                float moveCost = weights?.GetWeight(neighbor) ?? 1f;
+
+                // Skip truly impassable cells (cost >= 999)
+                if (moveCost >= NavigationWeightMap.Impassable)
+                {
+                    continue;
+                }
+
+                float tentativeGScore = gScore[current] + moveCost;
 
                 // If this path to neighbor is better than any previous one
-                if (!gScore.TryGetValue(neighbor, out int currentGScore) || tentativeGScore < currentGScore)
+                if (!gScore.TryGetValue(neighbor, out float currentGScore) || tentativeGScore < currentGScore)
                 {
                     // Record this path
                     cameFrom[neighbor] = current;

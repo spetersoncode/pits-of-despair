@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.AI;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using System.Collections.Generic;
@@ -6,10 +7,17 @@ using System.Collections.Generic;
 namespace PitsOfDespair.Components;
 
 /// <summary>
-/// Component managing entity hit points and death
+/// Component managing entity hit points and death.
+/// Implements IAIEventHandler to respond to OnGetDefensiveActions for healing.
 /// </summary>
-public partial class HealthComponent : Node
+public partial class HealthComponent : Node, IAIEventHandler
 {
+    /// <summary>
+    /// HP percentage threshold below which AI will consider healing.
+    /// Default is 30% (0.3f).
+    /// </summary>
+    [Export] public float HealingThreshold { get; set; } = 0.3f;
+
     /// <summary>
     /// Emitted when health changes (current, max)
     /// </summary>
@@ -236,5 +244,30 @@ public partial class HealthComponent : Node
     private void EmitHealthChangedSignal(int current, int max)
     {
         EmitSignal(SignalName.HealthChanged, current, max);
+    }
+
+    /// <summary>
+    /// Handle AI events - responds to OnGetDefensiveActions when health is low.
+    /// Note: This is a placeholder for creatures that can self-heal.
+    /// Actual healing items would be handled by inventory/item components.
+    /// </summary>
+    public void HandleAIEvent(string eventName, GetActionsEventArgs args)
+    {
+        if (eventName != AIEvents.OnGetDefensiveActions)
+        {
+            return;
+        }
+
+        // Check if health is below threshold
+        float hpRatio = (float)CurrentHP / MaxHP;
+        if (hpRatio >= HealingThreshold)
+        {
+            return;
+        }
+
+        // Note: HealthComponent itself doesn't provide healing actions.
+        // This is here as a hook for future natural regeneration abilities.
+        // Item-based healing would be handled by inventory components.
+        // Creature natural healing abilities would be separate components.
     }
 }

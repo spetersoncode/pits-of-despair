@@ -3,6 +3,20 @@ using PitsOfDespair.Entities;
 namespace PitsOfDespair.AI;
 
 /// <summary>
+/// Interface for components that can respond to AI events.
+/// Implement this interface to have your component respond to action requests.
+/// </summary>
+public interface IAIEventHandler
+{
+    /// <summary>
+    /// Handle an AI event fired by the owning entity.
+    /// </summary>
+    /// <param name="eventName">The event name (from AIEvents constants).</param>
+    /// <param name="args">Event arguments containing ActionList and context.</param>
+    void HandleAIEvent(string eventName, GetActionsEventArgs args);
+}
+
+/// <summary>
 /// Event data for AI action gathering requests.
 /// Components add their available actions to the ActionList.
 /// </summary>

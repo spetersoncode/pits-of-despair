@@ -285,23 +285,12 @@ public partial class EntityFactory : Node
             };
             entity.AddChild(aiComponent);
 
+            // Initialize sets up spawn position and initializes GoalStack with BoredGoal
             aiComponent.Initialize(position);
 
-            // Instantiate goals from creature data
-            var goalsList = new List<string>();
-            if (data.Goals != null && data.Goals.Count > 0)
-            {
-                goalsList.AddRange(data.Goals);
-            }
-
-            // Always add IdleGoal as the default fallback (unless explicitly included)
-            if (!goalsList.Contains("Idle"))
-            {
-                goalsList.Add("Idle");
-            }
-
-            var goals = GoalFactory.CreateGoals(goalsList);
-            aiComponent.SetGoals(goals);
+            // Note: The new stack-based AI system uses BoredGoal as the entry point,
+            // which discovers targets and pushes appropriate goals (KillTargetGoal, etc.)
+            // Legacy goal lists from creature data are no longer used.
         }
 
         return entity;

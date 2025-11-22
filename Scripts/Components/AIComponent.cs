@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.AI;
+using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
@@ -61,6 +62,19 @@ public partial class AIComponent : Node
         FleeturnsRemaining = 0;
         TurnsSinceLastYell = 0;
         CurrentGoal = null;
+
+        // Initialize goal stack with BoredGoal at the bottom
+        InitializeGoalStack();
+    }
+
+    /// <summary>
+    /// Initializes the goal stack with BoredGoal at the bottom.
+    /// Called automatically by Initialize(), but can be called manually if needed.
+    /// </summary>
+    public void InitializeGoalStack()
+    {
+        GoalStack.Clear();
+        GoalStack.Push(new BoredGoal());
     }
 
     /// <summary>

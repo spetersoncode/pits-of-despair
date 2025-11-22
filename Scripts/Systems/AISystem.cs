@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.Actions;
 using PitsOfDespair.AI;
+using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
@@ -143,7 +144,7 @@ public partial class AISystem : Node
     }
 
     /// <summary>
-    /// Processes a single creature's turn using goal-based AI.
+    /// Processes a single creature's turn using goal stack-based AI.
     /// </summary>
     private void ProcessCreatureTurn(AIComponent ai)
     {
@@ -153,38 +154,59 @@ public partial class AISystem : Node
             return;
         }
 
-        // Check if no goals available
-        if (ai.AvailableGoals == null || ai.AvailableGoals.Count == 0)
-        {
-            GD.PrintErr($"Entity {entity.DisplayName} has no goals available!");
-            return;
-        }
-
         // Build AI context
         var context = BuildAIContext(ai, entity);
 
-        // Update state tracking
+        // Update state tracking (player visibility, etc.)
         UpdateStateTracking(ai, context);
 
-        // Evaluate all goals and select the best one
-        Goal bestGoal = GoalEvaluator.EvaluateBestGoal(ai.AvailableGoals, context);
+        // Process the goal stack
+        ProcessGoalStack(ai, context);
+    }
 
-        if (bestGoal == null)
+    /// <summary>
+    /// Processes the goal stack for a creature's turn.
+    /// Removes finished goals, ensures stack is never empty, and executes the top goal.
+    /// Goals that only push sub-goals don't consume a turn - we continue executing
+    /// until a goal performs an actual action (movement, attack, etc.) or we hit a safety limit.
+    /// </summary>
+    private void ProcessGoalStack(AIComponent ai, AIContext context)
+    {
+        var stack = ai.GoalStack;
+        const int maxIterations = 10; // Safety limit to prevent infinite loops
+        int iterations = 0;
+
+        while (iterations < maxIterations)
         {
-            GD.PrintErr($"No valid goals for entity {entity.DisplayName}");
-            return;
-        }
+            iterations++;
 
-        // Handle goal transitions
-        if (ai.CurrentGoal != bestGoal)
-        {
-            ai.CurrentGoal?.OnDeactivated(context);
-            bestGoal.OnActivated(context);
-            ai.CurrentGoal = bestGoal;
-        }
+            // Remove any finished goals from the stack
+            stack.RemoveFinished(context);
 
-        // Execute the selected goal
-        bestGoal.Execute(context);
+            // Ensure stack is never empty - BoredGoal is the default fallback
+            if (stack.IsEmpty)
+            {
+                stack.Push(new BoredGoal());
+            }
+
+            // Remember stack state before execution
+            int stackCountBefore = stack.Count;
+            Goal currentGoal = stack.Peek();
+
+            // Execute the top goal
+            currentGoal.TakeAction(context);
+
+            // If the stack grew (goal pushed a sub-goal), continue to let sub-goal execute
+            // If the stack stayed same or shrunk, the goal either:
+            // - Did nothing (waiting) - stop
+            // - Performed an action and finished - stop
+            // - Failed and popped goals - stop
+            if (stack.Count <= stackCountBefore)
+            {
+                break;
+            }
+            // Stack grew - a sub-goal was pushed, loop to execute it immediately
+        }
     }
 
     /// <summary>

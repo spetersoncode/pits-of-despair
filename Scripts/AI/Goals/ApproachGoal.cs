@@ -1,8 +1,6 @@
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Helpers;
-using System;
-using System.Linq;
 
 namespace PitsOfDespair.AI.Goals;
 
@@ -58,14 +56,17 @@ public class ApproachGoal : Goal
         var entityManager = context.ActionContext.EntityManager;
         var player = context.ActionContext.Player;
 
-        // Find path using existing A* pathfinder
-        // TODO: Phase 3 will add NavigationWeightMap support
+        // Build navigation weight map for this creature
+        var weights = NavigationWeightMap.Build(context.Entity, mapSystem, entityManager);
+
+        // Find path using weighted A* pathfinder
         var path = AStarPathfinder.FindPath(
             context.Entity.GridPosition,
             TargetPosition,
             mapSystem,
             entityManager,
-            player);
+            player,
+            weights);
 
         if (path == null || path.Count == 0)
         {
@@ -73,22 +74,15 @@ public class ApproachGoal : Goal
             return;
         }
 
-        // Push up to 4 movement goals (in reverse so first executes first)
-        int movesToPush = Math.Min(4, path.Count);
-        var positions = path.Take(movesToPush).Reverse().ToList();
+        // Get the first step in the path
+        var nextPos = path.Peek();
+        var direction = new Vector2I(
+            nextPos.X - context.Entity.GridPosition.X,
+            nextPos.Y - context.Entity.GridPosition.Y);
 
-        GridPosition current = context.Entity.GridPosition;
-        foreach (var nextPos in positions)
-        {
-            var direction = new Vector2I(
-                nextPos.X - current.X,
-                nextPos.Y - current.Y);
-
-            var moveGoal = new MoveDirectionGoal(direction, originalIntent: this);
-            context.AIComponent.GoalStack.Push(moveGoal);
-
-            current = nextPos;
-        }
+        // Push a single move goal - ApproachGoal will push another next turn if needed
+        var moveGoal = new MoveDirectionGoal(direction, originalIntent: this);
+        context.AIComponent.GoalStack.Push(moveGoal);
     }
 
     public override string GetName() => $"Approach {TargetPosition}";

@@ -1,5 +1,7 @@
 using Godot;
 using PitsOfDespair.Actions;
+using PitsOfDespair.AI;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using System.Globalization;
@@ -98,6 +100,19 @@ public partial class BaseEntity : Node2D
     public Faction Faction { get; set; } = Faction.Hostile;
 
     /// <summary>
+    /// Whether this entity is dead.
+    /// Checks HealthComponent if present, otherwise returns false.
+    /// </summary>
+    public bool IsDead
+    {
+        get
+        {
+            var health = GetNodeOrNull<HealthComponent>("HealthComponent");
+            return health != null && !health.IsAlive();
+        }
+    }
+
+    /// <summary>
     /// Updates the entity's grid position and emits PositionChanged signal.
     /// </summary>
     /// <param name="newPosition">The new grid position.</param>
@@ -117,5 +132,26 @@ public partial class BaseEntity : Node2D
     public virtual ActionResult ExecuteAction(Action action, ActionContext context)
     {
         return action.Execute(this, context);
+    }
+
+    /// <summary>
+    /// Fires an AI event to all child components that implement IAIEventHandler.
+    /// Components can respond by adding actions to the event args or setting Handled = true.
+    /// </summary>
+    /// <param name="eventName">The event name from AIEvents constants.</param>
+    /// <param name="args">The event arguments containing ActionList and context.</param>
+    public void FireEvent(string eventName, GetActionsEventArgs args)
+    {
+        foreach (var child in GetChildren())
+        {
+            if (child is IAIEventHandler handler)
+            {
+                handler.HandleAIEvent(eventName, args);
+                if (args.Handled)
+                {
+                    break;
+                }
+            }
+        }
     }
 }

@@ -25,11 +25,9 @@ public class BoredGoal : Goal
 
     public override void TakeAction(AIContext context)
     {
-        // Fire event to let components inject behavior
-        // TODO: Phase 4+ will implement FireEvent on BaseEntity
-        // For now, components can't inject behavior yet
+        // Fire event to let components inject behavior (flee, defend, etc.)
         var args = new GetActionsEventArgs { Context = context };
-        // context.Entity.FireEvent(AIEvents.OnIAmBored, args);
+        context.Entity.FireEvent(AIEvents.OnIAmBored, args);
 
         // If a component handled it (pushed a goal), we're done
         if (args.Handled) return;
@@ -41,8 +39,6 @@ public class BoredGoal : Goal
             var target = context.GetClosestEnemy(enemies);
             if (target != null)
             {
-                // TODO: Phase 4 will implement KillTargetGoal
-                // For now, just approach the enemy
                 PushCombatGoal(context, target);
                 return;
             }
@@ -61,13 +57,8 @@ public class BoredGoal : Goal
 
     private void PushCombatGoal(AIContext context, BaseEntity target)
     {
-        // TODO: Phase 4 will replace this with KillTargetGoal
-        // For now, approach the target to get in melee range
-        var approachGoal = new ApproachGoal(
-            target.GridPosition,
-            desiredDistance: 1,
-            originalIntent: this);
-        context.AIComponent.GoalStack.Push(approachGoal);
+        var killGoal = new KillTargetGoal(target, originalIntent: this);
+        context.AIComponent.GoalStack.Push(killGoal);
     }
 
     public override string GetName() => "Bored";

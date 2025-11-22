@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
@@ -11,12 +10,10 @@ namespace PitsOfDespair.Status;
 /// <summary>
 /// Status that causes an entity to wander randomly for a duration.
 /// Confused entities lose their current goal and move randomly like rats.
-/// Uses the new goal stack system - clears the stack and only allows wandering.
+/// Uses the goal stack system - clears the stack and only allows wandering.
 /// </summary>
 public class ConfusionStatus : Status
 {
-	private List<Goal> _savedGoals;
-
 	public override string Name => "Confused";
 
 	public override string TypeId => "confusion";
@@ -47,10 +44,6 @@ public class ConfusionStatus : Status
 			return StatusMessage.Empty;
 		}
 
-		// Save current legacy goals
-		_savedGoals = aiComponent.AvailableGoals;
-		aiComponent.AvailableGoals = new List<Goal>();
-		aiComponent.CurrentGoal = null;
 		aiComponent.ClearPath();
 
 		// Clear goal stack and push a wander-only goal
@@ -78,13 +71,6 @@ public class ConfusionStatus : Status
 			return StatusMessage.Empty;
 		}
 
-		// Restore original legacy goals
-		if (_savedGoals != null)
-		{
-			aiComponent.AvailableGoals = _savedGoals;
-		}
-
-		aiComponent.CurrentGoal = null; // Force re-evaluation with restored goals
 		aiComponent.ClearPath();
 
 		// Reset goal stack to normal behavior (BoredGoal at bottom)
