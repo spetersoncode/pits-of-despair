@@ -202,14 +202,19 @@ public partial class Player : BaseEntity
             return;
         }
 
-        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
-        if (entityAtPosition is ThroneOfDespair)
+        // Check all entities at position since cache may only contain one
+        var entitiesAtPosition = _entityManager.GetEntitiesAtPosition(GridPosition);
+        foreach (var entity in entitiesAtPosition)
         {
-            // Find GameManager and trigger victory
-            var gameManager = GetTree()?.Root.GetNodeOrNull<Systems.GameManager>("GameManager");
-            if (gameManager != null)
+            if (entity is ThroneOfDespair)
             {
-                gameManager.OnThroneReached();
+                // Find GameManager and trigger victory
+                var gameManager = GetTree()?.Root.GetNodeOrNull<Systems.GameManager>("GameManager");
+                if (gameManager != null)
+                {
+                    gameManager.OnThroneReached();
+                }
+                return;
             }
         }
     }
@@ -225,10 +230,11 @@ public partial class Player : BaseEntity
             return;
         }
 
-        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
-        if (entityAtPosition != null && entityAtPosition.IsWalkable)
+        // Use GetItemAtPosition since items are walkable and cache may contain a creature instead
+        var itemEntity = _entityManager.GetItemAtPosition(GridPosition);
+        if (itemEntity != null && itemEntity.IsWalkable)
         {
-            EmitSignal(SignalName.StandingOnEntity, entityAtPosition.DisplayName, entityAtPosition.Glyph, entityAtPosition.GlyphColor);
+            EmitSignal(SignalName.StandingOnEntity, itemEntity.DisplayName, itemEntity.Glyph, itemEntity.GlyphColor);
         }
     }
 
@@ -243,56 +249,54 @@ public partial class Player : BaseEntity
             return;
         }
 
-        var entityAtPosition = _entityManager.GetEntityAtPosition(GridPosition);
+        // Check all entities at position since cache may only contain one
+        var entitiesAtPosition = _entityManager.GetEntitiesAtPosition(GridPosition);
 
-        if (entityAtPosition == null)
+        foreach (var entity in entitiesAtPosition)
         {
-            return;
-        }
-
-        // Handle gold (existing behavior)
-        if (entityAtPosition is Gold goldPile)
-        {
-            int goldAmount = goldPile.Amount;
-            if (goldAmount <= 0)
+            // Handle gold (existing behavior)
+            if (entity is Gold goldPile)
             {
-                goldAmount = 1;
+                int goldAmount = goldPile.Amount;
+                if (goldAmount <= 0)
+                {
+                    goldAmount = 1;
+                }
+
+                _goldManager.AddGold(goldAmount);
+
+                // RemoveEntity already calls QueueFree
+                _entityManager.RemoveEntity(entity);
+
+                EmitSignal(SignalName.GoldCollected, goldAmount, _goldManager.Gold);
+                continue;
             }
 
-            _goldManager.AddGold(goldAmount);
-
-            _entityManager.RemoveEntity(entityAtPosition);
-            entityAtPosition.QueueFree();
-
-            EmitSignal(SignalName.GoldCollected, goldAmount, _goldManager.Gold);
-            return;
-        }
-
-        // Handle items with autopickup enabled
-        if (entityAtPosition.ItemData != null && entityAtPosition.ItemData.Template.AutoPickup)
-        {
-            var itemInstance = entityAtPosition.ItemData;
-            if (itemInstance == null)
+            // Handle items with autopickup enabled
+            if (entity.ItemData != null && entity.ItemData.Template.AutoPickup)
             {
-                return;
-            }
+                var itemInstance = entity.ItemData;
+                if (itemInstance == null)
+                {
+                    continue;
+                }
 
-            // Try to add to inventory
-            char? slotKey = _inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
+                // Try to add to inventory
+                char? slotKey = _inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
 
-            if (slotKey.HasValue)
-            {
-                // Successfully picked up
-                _entityManager.RemoveEntity(entityAtPosition);
-                entityAtPosition.QueueFree();
+                if (slotKey.HasValue)
+                {
+                    // Successfully picked up (RemoveEntity already calls QueueFree)
+                    _entityManager.RemoveEntity(entity);
 
-                string displayName = itemInstance.Template.GetDisplayName(itemInstance.Quantity);
-                EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, true, $"You collect {displayName}.");
-            }
-            else
-            {
-                // Inventory full
-                EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, false, message);
+                    string displayName = itemInstance.Template.GetDisplayName(itemInstance.Quantity);
+                    EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, true, $"You collect {displayName}.");
+                }
+                else
+                {
+                    // Inventory full
+                    EmitSignal(SignalName.ItemPickedUp, itemInstance.Template.Name, false, message);
+                }
             }
         }
     }

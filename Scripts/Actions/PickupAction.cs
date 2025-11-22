@@ -26,9 +26,9 @@ public class PickupAction : Action
         }
 
         // Check if there's an item at the actor's position
-        var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
+        var itemEntity = context.EntityManager.GetItemAtPosition(actor.GridPosition);
 
-        return entityAtPosition?.ItemData != null;
+        return itemEntity != null;
     }
 
     public override ActionResult Execute(BaseEntity actor, ActionContext context)
@@ -41,15 +41,15 @@ public class PickupAction : Action
         }
 
         // Check for item at actor's current position
-        var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
+        var itemEntity = context.EntityManager.GetItemAtPosition(actor.GridPosition);
 
-        if (entityAtPosition?.ItemData == null)
+        if (itemEntity?.ItemData == null)
         {
             return ActionResult.CreateFailure("Nothing to pick up.");
         }
 
         // Try to add to inventory
-        var key = inventory.AddItem(entityAtPosition.ItemData, out string message, excludeEquipped: true);
+        var key = inventory.AddItem(itemEntity.ItemData, out string message, excludeEquipped: true);
 
         if (key == null)
         {
@@ -57,11 +57,10 @@ public class PickupAction : Action
             return ActionResult.CreateFailure(message);
         }
 
-        // Remove item from world
-        context.EntityManager.RemoveEntity(entityAtPosition);
-        entityAtPosition.QueueFree();
+        // Remove item from world (RemoveEntity already calls QueueFree)
+        context.EntityManager.RemoveEntity(itemEntity);
 
-        string itemName = entityAtPosition.ItemData.Template.GetDisplayName(entityAtPosition.ItemData.Quantity);
+        string itemName = itemEntity.ItemData.Template.GetDisplayName(itemEntity.ItemData.Quantity);
         string successMessage = $"Picked up {itemName}.";
 
         // Note: Core logic is generic (works with any InventoryComponent),

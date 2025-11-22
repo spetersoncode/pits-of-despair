@@ -106,6 +106,17 @@ public partial class EntityManager : Node
     }
 
     /// <summary>
+    /// Get item entity at a specific grid position.
+    /// Searches all entities (O(n)) since position cache may contain a creature instead.
+    /// </summary>
+    /// <param name="position">The grid position to check.</param>
+    /// <returns>Item entity at position, or null if no item found.</returns>
+    public BaseEntity? GetItemAtPosition(GridPosition position)
+    {
+        return _entities.FirstOrDefault(e => e.GridPosition == position && e.ItemData != null);
+    }
+
+    /// <summary>
     /// Checks if a position is occupied by any entity (not including player).
     /// </summary>
     /// <param name="position">The grid position to check.</param>
