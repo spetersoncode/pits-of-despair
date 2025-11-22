@@ -120,14 +120,15 @@ public partial class EntityFactory : Node
     private BaseEntity CreateEntityFromCreatureData(CreatureData data, GridPosition position)
     {
         // Create base entity
+        var faction = data.GetFaction();
         var entity = new BaseEntity
         {
             GridPosition = position,
             DisplayName = data.Name,
             Description = data.Description,
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
-            GlyphColor = data.GetColor(),
-            Faction = data.GetFaction(),
+            GlyphColor = faction == Faction.Player ? Palette.Player : data.GetColor(),
+            Faction = faction,
             Name = data.Name // Set node name for debugging
         };
 
@@ -304,6 +305,7 @@ public partial class EntityFactory : Node
     public void SetupAsFriendlyCompanion(BaseEntity entity, BaseEntity protectionTarget)
     {
         entity.Faction = Faction.Player;
+        entity.GlyphColor = Palette.Player;
 
         var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
         if (aiComponent != null)
