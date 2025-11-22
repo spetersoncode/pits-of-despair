@@ -284,6 +284,9 @@ public static class Palette
     /// <summary>Blood, dark red organic fluid</summary>
     public static readonly Color Blood = new("#AA3344");
 
+    /// <summary>Crimson, deep red for critical status</summary>
+    public static readonly Color Crimson = new("#DC143C");
+
     #endregion
 
     #region Creatures - Role-Based Combat Identity

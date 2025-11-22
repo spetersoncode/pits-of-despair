@@ -108,6 +108,7 @@ public partial class InputHandler : Node
         {
             _cursorSystem.Connect(CursorTargetingSystem.SignalName.TargetConfirmed, Callable.From<Vector2I>(OnTargetConfirmed));
             _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorCanceled, Callable.From<int>(OnCursorCanceled));
+            _cursorSystem.Connect(CursorTargetingSystem.SignalName.EntityExamined, Callable.From<BaseEntity>(OnEntityExamined));
         }
     }
 
@@ -131,6 +132,10 @@ public partial class InputHandler : Node
 
         // Only process key presses, not releases or repeats
         if (@event is not InputEventKey keyEvent || !keyEvent.Pressed || keyEvent.Echo)
+            return;
+
+        // If entity detail modal is open, let it handle all input (only ESC closes it)
+        if (_gameHUD != null && _gameHUD.IsEntityDetailModalOpen())
             return;
 
         // If autoexplore is active, any keypress cancels it (except the one that starts a new autoexplore)
@@ -328,6 +333,14 @@ public partial class InputHandler : Node
         {
             _gameHUD.ExitTargetingMode();
             _gameplayProcessor.OnTargetCanceled();
+        }
+    }
+
+    private void OnEntityExamined(BaseEntity entity)
+    {
+        if (_gameHUD != null)
+        {
+            _gameHUD.ShowEntityDetail(entity);
         }
     }
 }

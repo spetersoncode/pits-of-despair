@@ -45,6 +45,20 @@ public class CursorInputProcessor
             return true;
         }
 
+        // Examine details in examine mode
+        if (isExamineMode)
+        {
+            bool isExamineKey = keyEvent.Keycode == Key.Enter ||
+                                keyEvent.Keycode == Key.KpEnter ||
+                                keyEvent.Keycode == Key.Space;
+
+            if (isExamineKey)
+            {
+                _cursorSystem.ExamineTarget();
+                return true;
+            }
+        }
+
         // Confirm target in action modes
         if (!isExamineMode)
         {

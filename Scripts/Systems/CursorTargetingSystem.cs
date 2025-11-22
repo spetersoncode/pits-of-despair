@@ -38,7 +38,26 @@ public partial class CursorTargetingSystem : Node
 	public delegate void CursorCanceledEventHandler(int mode);
 
 	[Signal]
+    public delegate void EntityExaminedEventHandler(BaseEntity entity);
+
+	[Signal]
 	public delegate void TargetConfirmedEventHandler(Vector2I targetPosition);
+
+    /// <summary>
+    /// Examines the target at the current cursor position.
+    /// Emits EntityExamined signal if an entity is present.
+    /// </summary>
+    public void ExamineTarget()
+    {
+        if (!_isActive || _currentMode != TargetingMode.Examine)
+            return;
+
+        var entity = GetEntityAtCursor();
+        if (entity != null)
+        {
+            EmitSignal(SignalName.EntityExamined, entity);
+        }
+    }
 
 	private GridPosition _cursorPosition;
 	private GridPosition _originPosition;
@@ -119,9 +138,7 @@ public partial class CursorTargetingSystem : Node
 
 		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
 
-		// Emit initial position update
-		var entity = _entityManager.GetEntityAtPosition(_cursorPosition);
-		EmitSignal(SignalName.CursorMoved, entity);
+		// Don't emit CursorMoved for initial position - player knows they're standing there
 	}
 
 	/// <summary>

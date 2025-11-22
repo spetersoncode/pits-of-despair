@@ -57,7 +57,7 @@ public partial class Player : BaseEntity
     public override void _Ready()
     {
         DisplayName = "Player";
-        Description = "A brave soul who dared descend into the Pits of Despair. Your reflection in your blade shows determination etched by hardship.";
+        Description = "A condemned prisoner, exiled to die in these forsaken depths. Weary but determined.";
         Glyph = "@";
         GlyphColor = Palette.Player;
         Faction = Faction.Player;

@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/ItemDetailModal.tscn" id="10"]
 [ext_resource type="PackedScene" uid="uid://7cfusfi6fop6" path="res://Scenes/UI/DebugConsoleModal.tscn" id="11"]
 [ext_resource type="PackedScene" uid="uid://d2v4e3hq07e5b" path="res://Scenes/UI/LevelUpModal.tscn" id="12"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/EntityDetailModal.tscn" id="13"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -72,4 +73,7 @@ layout_mode = 1
 layout_mode = 1
 
 [node name="LevelUpModal" parent="." instance=ExtResource("12")]
+layout_mode = 1
+
+[node name="EntityDetailModal" parent="." instance=ExtResource("13")]
 layout_mode = 1

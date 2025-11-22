@@ -87,6 +87,12 @@ public partial class EntityManager : Node
     /// <returns>Entity at position, or null if none found.</returns>
     public BaseEntity? GetEntityAtPosition(GridPosition position)
     {
+        // Check player first (tracked separately from other entities)
+        if (_player != null && _player.GridPosition == position)
+        {
+            return _player;
+        }
+
         if (_positionCache.TryGetValue(position, out BaseEntity entity))
         {
             return entity;

@@ -41,6 +41,7 @@ public partial class GameHUD : Control
     private EquipModal _equipPanel;
     private HelpModal _helpModal;
     private ItemDetailModal _itemDetailModal;
+    private EntityDetailModal _entityDetailModal;
     private DebugConsoleModal _debugConsoleModal;
     private LevelUpModal _levelUpModal;
     private Player _player;
@@ -65,6 +66,7 @@ public partial class GameHUD : Control
         _equipPanel = GetNode<EquipModal>("EquipModal");
         _helpModal = GetNode<HelpModal>("HelpModal");
         _itemDetailModal = GetNode<ItemDetailModal>("ItemDetailModal");
+        _entityDetailModal = GetNode<EntityDetailModal>("EntityDetailModal");
         _debugConsoleModal = GetNode<DebugConsoleModal>("DebugConsoleModal");
         _levelUpModal = GetNode<LevelUpModal>("LevelUpModal");
     }
@@ -106,6 +108,8 @@ public partial class GameHUD : Control
         _itemDetailModal.ConnectToPlayer(player);
         _itemDetailModal.Connect(ItemDetailModal.SignalName.KeyRebound, Callable.From<char, char>(OnItemKeyRebound));
         _itemDetailModal.Connect(ItemDetailModal.SignalName.Cancelled, Callable.From(OnItemDetailCancelled));
+
+        _entityDetailModal.Connect(EntityDetailModal.SignalName.Cancelled, Callable.From(OnEntityDetailCancelled));
 
         _activateItemPanel.Connect(ActivateItemModal.SignalName.ItemSelected, Callable.From<char>(OnActivateItemSelected));
         _activateItemPanel.Connect(ActivateItemModal.SignalName.Cancelled, Callable.From(OnActivateItemCancelled));
@@ -217,6 +221,15 @@ public partial class GameHUD : Control
     public bool IsAnyMenuOpen()
     {
         return _currentMenuState != MenuState.None || _helpModal.Visible || _debugConsoleModal.Visible || _levelUpModal.Visible;
+    }
+
+    /// <summary>
+    /// Checks if the entity detail modal is currently open.
+    /// Used by InputHandler to prevent cursor ESC from canceling examine mode while modal is open.
+    /// </summary>
+    public bool IsEntityDetailModalOpen()
+    {
+        return _entityDetailModal != null && _entityDetailModal.IsOpen;
     }
 
     /// <summary>
@@ -372,6 +385,19 @@ public partial class GameHUD : Control
         // Show inventory modal again
         _inventoryPanel.Show();
         _currentMenuState = MenuState.Inventory;
+    }
+
+    public void ShowEntityDetail(BaseEntity entity)
+    {
+        _entityDetailModal.ShowDetail(entity);
+        // We don't change menu state here because we want to stay in "Examine Mode" context
+        // But we need to block other inputs, which the modal does by handling input
+    }
+
+    private void OnEntityDetailCancelled()
+    {
+        _entityDetailModal.HideDetail();
+        // Return to examine mode (which is still active in CursorTargetingSystem)
     }
 
     private void OnItemKeyRebound(char oldKey, char newKey)
@@ -685,6 +711,11 @@ public partial class GameHUD : Control
         {
             _itemDetailModal.Disconnect(ItemDetailModal.SignalName.KeyRebound, Callable.From<char, char>(OnItemKeyRebound));
             _itemDetailModal.Disconnect(ItemDetailModal.SignalName.Cancelled, Callable.From(OnItemDetailCancelled));
+        }
+
+        if (_entityDetailModal != null)
+        {
+            _entityDetailModal.Disconnect(EntityDetailModal.SignalName.Cancelled, Callable.From(OnEntityDetailCancelled));
         }
 
         if (_activateItemPanel != null)
