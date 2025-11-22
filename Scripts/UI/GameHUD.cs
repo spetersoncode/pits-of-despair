@@ -645,7 +645,7 @@ public partial class GameHUD : Control
         _messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));
 
         // Show level-up modal for stat choice
-        _levelUpModal.ShowForLevel(newLevel);
+        _levelUpModal.ShowForLevel(newLevel, _playerStats.TotalEndurance);
         _currentMenuState = MenuState.LevelUpChoice;
     }
 
