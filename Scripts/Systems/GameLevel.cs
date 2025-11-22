@@ -236,7 +236,7 @@ public partial class GameLevel : Node
             }
         }
 
-        _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager);
+        _nonPlayerVisionSystem.Initialize(_mapSystem, _player, _entityManager, _combatSystem);
 
         // Initialize new systems for decoupling
         _levelUpSystem.Initialize(_player);

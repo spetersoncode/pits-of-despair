@@ -16,16 +16,18 @@ public partial class NonPlayerVisionSystem : Node
     private MapSystem _mapSystem;
     private Player _player;
     private EntityManager _entityManager;
+    private CombatSystem _combatSystem;
 
     /// <summary>
     /// Initializes the non-player vision system with required references.
     /// Called by GameLevel after scene setup.
     /// </summary>
-    public void Initialize(MapSystem mapSystem, Player player, EntityManager entityManager)
+    public void Initialize(MapSystem mapSystem, Player player, EntityManager entityManager, CombatSystem combatSystem)
     {
         _mapSystem = mapSystem;
         _player = player;
         _entityManager = entityManager;
+        _combatSystem = combatSystem;
 
         // Connect to player turn completion
         _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
@@ -66,6 +68,24 @@ public partial class NonPlayerVisionSystem : Node
             // Check if player is visible
             if (visiblePositions.Contains(playerPos))
             {
+                // Trigger JoinPlayerOnSight behavior
+                var joinComponent = entity.GetNodeOrNull<Components.AI.JoinPlayerOnSightComponent>("JoinPlayerOnSightComponent");
+                if (joinComponent != null)
+                {
+                    joinComponent.OnPlayerSeen(_combatSystem);
+                    
+                    // If it joined, we should also set it as a companion to the player
+                    if (entity.Faction == Faction.Player)
+                    {
+                        // We need to set the protection target to the player
+                        var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+                        if (aiComponent != null)
+                        {
+                            aiComponent.ProtectionTarget = _player;
+                        }
+                    }
+                }
+
                 // TODO: Trigger AI behavior when player is detected
             }
         }

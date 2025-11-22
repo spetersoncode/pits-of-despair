@@ -74,6 +74,10 @@ creaturePools:
         count:
           dice: "1d2" # Spawns 1-2 skeletons per occurrence
 
+      # Cat - neutral, joins player on sight
+      - type: single
+        creatureId: cat
+
   # Rare pool (5% weight) - Dangerous encounters
   - id: rare
     weight: 5

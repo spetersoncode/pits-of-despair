@@ -359,6 +359,7 @@ public partial class EntityFactory : Node
             "YellForHelpComponent" => new Components.AI.YellForHelpComponent(),
             "ShootAndScootComponent" => new Components.AI.ShootAndScootComponent(),
             "ItemUsageComponent" => new Components.AI.ItemUsageComponent(),
+            "JoinPlayerOnSightComponent" => new Components.AI.JoinPlayerOnSightComponent(),
             _ => null
         };
 
