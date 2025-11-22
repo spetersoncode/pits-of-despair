@@ -96,9 +96,19 @@ public class CreatureData
 
     /// <summary>
     /// List of goal IDs for goal-based AI (e.g., "MeleeAttack", "Wander").
-    /// Only used if HasAI is true.
+    /// DEPRECATED: Use AIComponents instead. This field is ignored by the new goal-stack AI system.
     /// </summary>
     public List<string> Goals { get; set; } = new();
+
+    /// <summary>
+    /// List of AI component configurations for goal-stack AI system.
+    /// Example YAML:
+    ///   aiComponents:
+    ///     - type: CowardlyComponent
+    ///       fleeTurns: 20
+    ///       safeDistance: 10
+    /// </summary>
+    public List<Dictionary<string, object>> AiComponents { get; set; } = new();
 
     /// <summary>
     /// List of item IDs that this creature starts equipped with.

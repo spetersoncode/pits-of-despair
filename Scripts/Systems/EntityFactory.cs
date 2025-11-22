@@ -288,9 +288,8 @@ public partial class EntityFactory : Node
             // Initialize sets up spawn position and initializes GoalStack with BoredGoal
             aiComponent.Initialize(position);
 
-            // Note: The new stack-based AI system uses BoredGoal as the entry point,
-            // which discovers targets and pushes appropriate goals (KillTargetGoal, etc.)
-            // Legacy goal lists from creature data are no longer used.
+            // Add AI behavior components from creature data
+            AddAIComponents(entity, data.AiComponents);
         }
 
         return entity;
@@ -311,6 +310,108 @@ public partial class EntityFactory : Node
         {
             aiComponent.ProtectionTarget = protectionTarget;
         }
+    }
+
+    /// <summary>
+    /// Adds AI behavior components to an entity based on creature data configuration.
+    /// </summary>
+    private void AddAIComponents(BaseEntity entity, List<Dictionary<string, object>> aiComponents)
+    {
+        if (aiComponents == null || aiComponents.Count == 0)
+            return;
+
+        foreach (var componentConfig in aiComponents)
+        {
+            if (!componentConfig.TryGetValue("type", out var typeObj) || typeObj == null)
+            {
+                GD.PushWarning($"EntityFactory: AI component missing 'type' field for creature '{entity.DisplayName}'");
+                continue;
+            }
+
+            string componentName = typeObj.ToString();
+            Node component = CreateAIComponent(componentName, componentConfig);
+            if (component != null)
+            {
+                component.Name = componentName;
+                entity.AddChild(component);
+            }
+            else
+            {
+                GD.PushWarning($"EntityFactory: Unknown AI component '{componentName}' for creature '{entity.DisplayName}'");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates an AI component instance by name and applies configuration.
+    /// </summary>
+    private Node CreateAIComponent(string componentName, Dictionary<string, object> config)
+    {
+        Node component = componentName switch
+        {
+            "CowardlyComponent" => new Components.AI.CowardlyComponent(),
+            "YellForHelpComponent" => new Components.AI.YellForHelpComponent(),
+            "ShootAndScootComponent" => new Components.AI.ShootAndScootComponent(),
+            "ItemUsageComponent" => new Components.AI.ItemUsageComponent(),
+            _ => null
+        };
+
+        if (component == null)
+            return null;
+
+        // Apply configuration values via reflection
+        ApplyComponentConfig(component, config);
+
+        return component;
+    }
+
+    /// <summary>
+    /// Applies configuration dictionary values to component properties.
+    /// </summary>
+    private void ApplyComponentConfig(Node component, Dictionary<string, object> config)
+    {
+        var type = component.GetType();
+
+        foreach (var kvp in config)
+        {
+            // Convert camelCase YAML key to PascalCase property name
+            string propertyName = char.ToUpper(kvp.Key[0]) + kvp.Key.Substring(1);
+            var property = type.GetProperty(propertyName);
+
+            if (property != null && property.CanWrite)
+            {
+                try
+                {
+                    object value = ConvertConfigValue(kvp.Value, property.PropertyType);
+                    property.SetValue(component, value);
+                }
+                catch (System.Exception e)
+                {
+                    GD.PushWarning($"EntityFactory: Failed to set {propertyName} on {type.Name}: {e.Message}");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Converts a config value to the expected property type.
+    /// </summary>
+    private object ConvertConfigValue(object value, System.Type targetType)
+    {
+        if (value == null)
+            return null;
+
+        // Handle common type conversions
+        if (targetType == typeof(int))
+            return System.Convert.ToInt32(value);
+        if (targetType == typeof(float))
+            return System.Convert.ToSingle(value);
+        if (targetType == typeof(bool))
+            return System.Convert.ToBoolean(value);
+        if (targetType == typeof(string))
+            return value.ToString();
+
+        return value;
     }
 
     /// <summary>

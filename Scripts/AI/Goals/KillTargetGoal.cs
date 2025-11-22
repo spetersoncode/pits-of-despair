@@ -169,8 +169,8 @@ public class KillTargetGoal : Goal
     /// </summary>
     private bool TryMovement(AIContext context)
     {
-        // Push ApproachGoal to get closer to target
-        var approach = new ApproachGoal(Target.GridPosition, desiredDistance: 1, originalIntent: this);
+        // Push ApproachGoal to track and approach the target entity
+        var approach = new ApproachGoal(Target, desiredDistance: 1, originalIntent: this);
         context.AIComponent.GoalStack.Push(approach);
         return true;
     }

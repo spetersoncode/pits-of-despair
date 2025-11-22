@@ -47,9 +47,8 @@ public class FleeGoal : Goal
         TurnsRemaining--;
 
         // Try to gather defensive actions (yelling, healing, etc.)
-        // TODO: Phase 4+ will implement FireEvent on BaseEntity
         var args = new GetActionsEventArgs { Context = context };
-        // context.Entity.FireEvent(AIEvents.OnGetDefensiveActions, args);
+        context.Entity.FireEvent(AIEvents.OnGetDefensiveActions, args);
 
         if (!args.ActionList.IsEmpty)
         {

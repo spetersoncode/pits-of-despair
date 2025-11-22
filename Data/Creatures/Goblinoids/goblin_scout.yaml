@@ -8,8 +8,12 @@ agility: 2
 endurance: -2
 maxHP: 5
 visionRange: 12
-goals:
-  - FleeForHelp
+aiComponents:
+  - type: CowardlyComponent
+    fleeTurns: 20
+    safeDistance: 10
+  - type: YellForHelpComponent
+    yellCooldown: 4
 attacks:
   - name: desperate bite
     type: Melee

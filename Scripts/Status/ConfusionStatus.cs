@@ -44,8 +44,6 @@ public class ConfusionStatus : Status
 			return StatusMessage.Empty;
 		}
 
-		aiComponent.ClearPath();
-
 		// Clear goal stack and push a wander-only goal
 		// The confused entity will just wander randomly each turn
 		aiComponent.GoalStack.Clear();
@@ -70,8 +68,6 @@ public class ConfusionStatus : Status
 		{
 			return StatusMessage.Empty;
 		}
-
-		aiComponent.ClearPath();
 
 		// Reset goal stack to normal behavior (BoredGoal at bottom)
 		aiComponent.GoalStack.Clear();

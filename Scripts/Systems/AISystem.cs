@@ -157,9 +157,6 @@ public partial class AISystem : Node
         // Build AI context
         var context = BuildAIContext(ai, entity);
 
-        // Update state tracking (player visibility, etc.)
-        UpdateStateTracking(ai, context);
-
         // Process the goal stack
         ProcessGoalStack(ai, context);
     }
@@ -229,29 +226,6 @@ public partial class AISystem : Node
             HealthComponent = entity.GetNodeOrNull<HealthComponent>("HealthComponent"),
             AttackComponent = entity.GetNodeOrNull<AttackComponent>("AttackComponent")
         };
-    }
-
-    /// <summary>
-    /// Updates state tracking variables based on current context.
-    /// </summary>
-    private void UpdateStateTracking(AIComponent ai, AIContext context)
-    {
-        if (context.IsPlayerVisible)
-        {
-            // Reset counter when player is seen
-            ai.TurnsSincePlayerSeen = 0;
-            // Reset search turns to full when player spotted
-            ai.SearchTurnsRemaining = ai.SearchTurns;
-            // Reset flee turns to full when player spotted
-            ai.FleeturnsRemaining = ai.FleeTurns;
-        }
-        else
-        {
-            // Increment counter when player not visible
-            ai.TurnsSincePlayerSeen++;
-            // Reset yell counter when player is lost
-            ai.TurnsSinceLastYell = 0;
-        }
     }
 
     /// <summary>

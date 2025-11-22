@@ -1,27 +1,30 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.AI.Goals;
 
 /// <summary>
-/// Goal that pathfinds to a target position and pushes MoveDirectionGoals.
-/// Recalculates the path periodically to handle dynamic obstacles.
+/// Goal that pathfinds to a target position or entity and pushes MoveDirectionGoals.
+/// When tracking an entity, automatically updates target position each turn.
 /// </summary>
 public class ApproachGoal : Goal
 {
     public GridPosition TargetPosition { get; private set; }
     public int DesiredDistance { get; private set; }
 
+    /// <summary>
+    /// Optional entity to track. If set, TargetPosition is updated each turn.
+    /// </summary>
+    public BaseEntity TargetEntity { get; private set; }
+
     private int _pathfindCooldown = 0;
     private const int PathfindEveryNTurns = 4;
 
     /// <summary>
-    /// Creates an approach goal to get within a desired distance of a target.
+    /// Creates an approach goal to get within a desired distance of a static position.
     /// </summary>
-    /// <param name="target">The position to approach</param>
-    /// <param name="desiredDistance">How close to get (1 = adjacent)</param>
-    /// <param name="originalIntent">The goal that created this one</param>
     public ApproachGoal(GridPosition target, int desiredDistance = 1, Goal originalIntent = null)
     {
         TargetPosition = target;
@@ -29,8 +32,26 @@ public class ApproachGoal : Goal
         OriginalIntent = originalIntent;
     }
 
+    /// <summary>
+    /// Creates an approach goal to get within a desired distance of a moving entity.
+    /// The target position is updated each turn to track the entity.
+    /// </summary>
+    public ApproachGoal(BaseEntity targetEntity, int desiredDistance = 1, Goal originalIntent = null)
+    {
+        TargetEntity = targetEntity;
+        TargetPosition = targetEntity.GridPosition;
+        DesiredDistance = desiredDistance;
+        OriginalIntent = originalIntent;
+    }
+
     public override bool IsFinished(AIContext context)
     {
+        // Update target position if tracking an entity
+        if (TargetEntity != null && GodotObject.IsInstanceValid(TargetEntity))
+        {
+            TargetPosition = TargetEntity.GridPosition;
+        }
+
         int distance = DistanceHelper.ChebyshevDistance(
             context.Entity.GridPosition,
             TargetPosition);
@@ -39,6 +60,12 @@ public class ApproachGoal : Goal
 
     public override void TakeAction(AIContext context)
     {
+        // Update target position if tracking an entity
+        if (TargetEntity != null && GodotObject.IsInstanceValid(TargetEntity))
+        {
+            TargetPosition = TargetEntity.GridPosition;
+        }
+
         _pathfindCooldown++;
 
         // Recalculate path periodically or if we're the top goal (no moves queued)
@@ -85,5 +112,7 @@ public class ApproachGoal : Goal
         context.AIComponent.GoalStack.Push(moveGoal);
     }
 
-    public override string GetName() => $"Approach {TargetPosition}";
+    public override string GetName() => TargetEntity != null
+        ? $"Approach {TargetEntity.DisplayName}"
+        : $"Approach {TargetPosition}";
 }
