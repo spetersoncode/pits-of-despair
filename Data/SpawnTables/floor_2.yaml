@@ -97,15 +97,12 @@ itemPools:
   - id: common
     weight: 65
     entries:
-      # Healing potions
-      - itemId: potion_healing_8
-        weight: 2
-
       # Stat buff potions
-      - itemId: potion_barkskin_2
-      - itemId: potion_bulls_strength_2
-      - itemId: potion_cats_grace_2
-      - itemId: potion_bears_endurance_2
+      - itemId: potion_armor_1
+      - itemId: potion_strength_1
+      - itemId: potion_agility_1
+      - itemId: potion_endurance_1
+      - itemId: potion_will_1
 
       # Utility scrolls
       - itemId: scroll_blink
@@ -123,6 +120,9 @@ itemPools:
       - itemId: scroll_teleport
       - itemId: weapon_spear
       - itemId: weapon_short_bow
+      - itemId: weapon_broadsword
+      - itemId: weapon_mace
+      - itemId: weapon_axe
       - itemId: armor_leather
         weight: 2 # Armor more common on floor 2
 

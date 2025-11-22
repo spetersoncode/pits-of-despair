@@ -1,0 +1,9 @@
+name: major endurance
+type: potion
+color: PotionEnduranceMajor
+description: Brilliant pink life force churns within. Merely holding it quickens your heartbeat.
+effects:
+  - type: apply_status
+    statusType: endurance_buff
+    amount: 3
+    duration: 10

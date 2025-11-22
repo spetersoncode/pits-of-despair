@@ -104,17 +104,12 @@ itemPools:
       # All entries have weight: 1 by default (equal probability within pool)
       # Item IDs follow pattern: {type}_{name}
 
-      # Healing potions
-      - itemId: potion_healing_8
-
       # Stat buff potions (temporary bonuses)
-      - itemId: potion_barkskin_2
-
-      - itemId: potion_bulls_strength_2
-
-      - itemId: potion_cats_grace_2
-
-      - itemId: potion_bears_endurance_2
+      - itemId: potion_armor_1
+      - itemId: potion_strength_1
+      - itemId: potion_agility_1
+      - itemId: potion_endurance_1
+      - itemId: potion_will_1
 
       # Utility scrolls
       - itemId: scroll_blink

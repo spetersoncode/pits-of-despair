@@ -1,0 +1,9 @@
+name: major agility
+type: potion
+color: PotionAgilityMajor
+description: Brilliant cyan dances without stillness. Time itself seems to hesitate nearby.
+effects:
+  - type: apply_status
+    statusType: agility_buff
+    amount: 3
+    duration: 10

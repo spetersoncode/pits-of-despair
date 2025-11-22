@@ -38,7 +38,7 @@ public class CreatureData
         },
         ["undead"] = new CreatureTypeInfo
         {
-            DefaultGlyph = "s",
+            DefaultGlyph = "z",
             DefaultColor = Palette.ToHex(Palette.Default)
         }
     };

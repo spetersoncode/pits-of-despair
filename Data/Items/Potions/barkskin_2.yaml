@@ -1,9 +1,0 @@
-name: barkskin (+2)
-type: potion
-color: Barkskin
-description: A murky brown elixir flecked with fragments of bark and moss. Its earthy scent promises the resilience of ancient oaks.
-effects:
-  - type: apply_status
-    statusType: armor_buff
-    amount: 2
-    duration: 40

@@ -128,8 +128,17 @@ public static class Palette
     /// <summary>Crude, unrefined iron (dark brown-gray)</summary>
     public static readonly Color CrudeIron = new("#665544");
 
+    /// <summary>Rusted iron, corroded and neglected (warm brown)</summary>
+    public static readonly Color RustedIron = new("#885544");
+
+    /// <summary>Brutal iron, aggressive weapons like axes (warm red-brown)</summary>
+    public static readonly Color BrutalIron = new("#996655");
+
     /// <summary>Iron material (medium gray)</summary>
     public static readonly Color Iron = new("#888888");
+
+    /// <summary>Heavy iron, weighty bludgeons (cool gray)</summary>
+    public static readonly Color HeavyIron = new("#777788");
 
     /// <summary>Steel material (blue-gray)</summary>
     public static readonly Color Steel = new("#99AABB");
@@ -137,8 +146,14 @@ public static class Palette
     /// <summary>Forged steel, quality craftsmanship (medium blue-gray)</summary>
     public static readonly Color ForgedSteel = new("#8899AA");
 
+    /// <summary>Dark steel, sinister weapons (dark blue-gray)</summary>
+    public static readonly Color DarkSteel = new("#667788");
+
     /// <summary>Refined steel, highest quality (light blue-gray)</summary>
     public static readonly Color RefinedSteel = new("#AABBCC");
+
+    /// <summary>Polished steel, fine blades (bright blue-gray)</summary>
+    public static readonly Color PolishedSteel = new("#BBCCDD");
 
     /// <summary>Copper metal (reddish-brown)</summary>
     public static readonly Color Copper = new("#AA6644");
@@ -210,14 +225,32 @@ public static class Palette
 
     #region Materials - Wood
 
+    /// <summary>Birch, pale almost white wood</summary>
+    public static readonly Color Birch = new("#D8C8A8");
+
+    /// <summary>Pine, light yellowish common wood</summary>
+    public static readonly Color Pine = new("#C4A060");
+
     /// <summary>Ash wood, light gray-brown (clubs, simple items)</summary>
     public static readonly Color AshWood = new("#B0A090");
+
+    /// <summary>Yew, greenish-brown bow wood</summary>
+    public static readonly Color Yew = new("#8A7A50");
 
     /// <summary>Oak wood, medium-dark brown (quality items)</summary>
     public static readonly Color Oak = new("#7A6453");
 
     /// <summary>Mahogany, reddish-brown premium wood</summary>
     public static readonly Color Mahogany = new("#8A5A4A");
+
+    /// <summary>Walnut, dark brown dense wood</summary>
+    public static readonly Color Walnut = new("#5A4A3A");
+
+    /// <summary>Darkwood, dark but readable quality wood</summary>
+    public static readonly Color Darkwood = new("#6A5A4A");
+
+    /// <summary>Ironwood, gray-brown wood hard as metal</summary>
+    public static readonly Color Ironwood = new("#7A7068");
 
     #endregion
 
@@ -378,10 +411,68 @@ public static class Palette
 
     #endregion
 
-    #region Effects - Magical
+    #region Potions - Strength
 
-    /// <summary>Barkskin, olive-brown nature magic (tree-like protection)</summary>
-    public static readonly Color Barkskin = new("#7A8A5A");
+    /// <summary>Minor strength potion (burnt orange)</summary>
+    public static readonly Color PotionStrengthMinor = new("#AA6633");
+
+    /// <summary>Regular strength potion (rich amber-orange)</summary>
+    public static readonly Color PotionStrength = new("#CC7733");
+
+    /// <summary>Major strength potion (blazing orange)</summary>
+    public static readonly Color PotionStrengthMajor = new("#EE8833");
+
+    #endregion
+
+    #region Potions - Agility
+
+    /// <summary>Minor agility potion (deep teal)</summary>
+    public static readonly Color PotionAgilityMinor = new("#448888");
+
+    /// <summary>Regular agility potion (bright teal)</summary>
+    public static readonly Color PotionAgility = new("#55AAAA");
+
+    /// <summary>Major agility potion (brilliant cyan)</summary>
+    public static readonly Color PotionAgilityMajor = new("#66CCCC");
+
+    #endregion
+
+    #region Potions - Endurance
+
+    /// <summary>Minor endurance potion (dusty rose)</summary>
+    public static readonly Color PotionEnduranceMinor = new("#AA5566");
+
+    /// <summary>Regular endurance potion (vibrant rose)</summary>
+    public static readonly Color PotionEndurance = new("#CC6677");
+
+    /// <summary>Major endurance potion (brilliant pink)</summary>
+    public static readonly Color PotionEnduranceMajor = new("#EE7788");
+
+    #endregion
+
+    #region Potions - Will
+
+    /// <summary>Minor will potion (deep violet)</summary>
+    public static readonly Color PotionWillMinor = new("#7755AA");
+
+    /// <summary>Regular will potion (rich purple)</summary>
+    public static readonly Color PotionWill = new("#9966CC");
+
+    /// <summary>Major will potion (brilliant lavender)</summary>
+    public static readonly Color PotionWillMajor = new("#BB77EE");
+
+    #endregion
+
+    #region Potions - Skin (Armor)
+
+    /// <summary>Barkskin potion (dark olive-brown)</summary>
+    public static readonly Color PotionBarkskin = new("#667744");
+
+    /// <summary>Stoneskin potion (cool slate-gray)</summary>
+    public static readonly Color PotionStoneskin = new("#778899");
+
+    /// <summary>Ironskin potion (blue-gray steel)</summary>
+    public static readonly Color PotionIronskin = new("#99AABB");
 
     #endregion
 
