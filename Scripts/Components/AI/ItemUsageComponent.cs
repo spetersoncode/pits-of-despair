@@ -1,7 +1,7 @@
 using Godot;
+using PitsOfDespair.Actions;
 using PitsOfDespair.AI;
 using PitsOfDespair.Components;
-using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 
@@ -119,12 +119,13 @@ public partial class ItemUsageComponent : Node, IAIEventHandler
             // Calculate weight based on HP level
             int weight = CalculateHealingWeight(hpRatio);
 
-            char itemKey = slot.Key; // Capture for closure
-            args.ActionList.Add(
+            var useItemAction = new UseItemAction(slot.Key);
+            var aiAction = new AIAction(
+                action: useItemAction,
                 weight: weight,
-                execute: ctx => UseItem(ctx, itemKey),
                 debugName: $"Use {template.GetDisplayName(1)}"
             );
+            args.ActionList.Add(aiAction);
         }
     }
 
@@ -160,59 +161,5 @@ public partial class ItemUsageComponent : Node, IAIEventHandler
             // Below threshold but not critical
             return BaseHealingWeight;
         }
-    }
-
-    /// <summary>
-    /// Use an item from inventory, applying its effects.
-    /// </summary>
-    private void UseItem(AIContext context, char itemKey)
-    {
-        if (_entity == null || _inventory == null)
-        {
-            return;
-        }
-
-        var slot = _inventory.GetSlot(itemKey);
-        if (slot == null)
-        {
-            return;
-        }
-
-        var template = slot.Item.Template;
-        string itemName = template.GetDisplayName(1);
-
-        // Apply all effects
-        var effects = template.GetEffects();
-        bool anyEffectSucceeded = false;
-
-        foreach (var effect in effects)
-        {
-            var effectResult = effect.Apply(_entity, context.ActionContext);
-            if (effectResult.Success)
-            {
-                anyEffectSucceeded = true;
-            }
-        }
-
-        // If no effects succeeded, don't consume the item
-        if (!anyEffectSucceeded)
-        {
-            return;
-        }
-
-        // Handle consumption based on item type
-        if (template.GetIsConsumable())
-        {
-            // Consumable: remove one from stack
-            _inventory.RemoveItem(itemKey, 1);
-        }
-        else if (template.GetMaxCharges() > 0)
-        {
-            // Charged item: use one charge
-            slot.Item.UseCharge();
-        }
-
-        // Note: Effect results contain messages that could be displayed by a UI system
-        // listening to entity events. For now, AI item usage is silent.
     }
 }

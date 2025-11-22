@@ -53,9 +53,15 @@ public class FleeGoal : Goal
         if (!args.ActionList.IsEmpty)
         {
             // Execute defensive action (might be yell for help)
-            var action = args.ActionList.PickRandomWeighted();
-            action?.Invoke(context);
-            return;
+            var aiAction = args.ActionList.PickRandomWeighted();
+            if (aiAction != null)
+            {
+                var result = aiAction.Execute(context);
+                if (result.Success)
+                {
+                    return;
+                }
+            }
         }
 
         // Otherwise, flee movement

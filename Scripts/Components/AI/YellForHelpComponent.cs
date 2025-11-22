@@ -17,6 +17,12 @@ public partial class YellForHelpComponent : Node, IAIEventHandler
     [Export] public int YellCooldown { get; set; } = 4;
 
     private int _turnsSinceYell = 0;
+    private BaseEntity? _entity;
+
+    public override void _Ready()
+    {
+        _entity = GetParent<BaseEntity>();
+    }
 
     public void HandleAIEvent(string eventName, GetActionsEventArgs args)
     {
@@ -27,20 +33,18 @@ public partial class YellForHelpComponent : Node, IAIEventHandler
 
         if (_turnsSinceYell >= YellCooldown)
         {
-            // High weight - yelling is important when fleeing
-            args.ActionList.Add(
+            // Reset cooldown now - we're offering the action
+            // The action might not be picked (weighted random), but that's fine
+            // since the creature is actively considering yelling
+            _turnsSinceYell = 0;
+
+            var yellAction = new YellForHelpAction();
+            var aiAction = new AIAction(
+                action: yellAction,
                 weight: 100,
-                execute: ctx => YellForHelp(ctx),
                 debugName: "Yell for help"
             );
+            args.ActionList.Add(aiAction);
         }
-    }
-
-    private void YellForHelp(AIContext context)
-    {
-        _turnsSinceYell = 0;
-
-        var yellAction = new YellForHelpAction();
-        context.Entity.ExecuteAction(yellAction, context.ActionContext);
     }
 }

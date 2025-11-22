@@ -41,7 +41,9 @@ Components inject behavior without coupling to goals via the event system:
 
 **GetActionsEventArgs**: Event payload containing `WeightedActionList`, `AIContext`, optional `Target`, and `Handled` flag.
 
-**WeightedActionList**: Weighted random selection utility. Components add actions with weights; `PickRandomWeighted()` selects probabilistically. Enables behavioral variety—creatures don't always make the same choice.
+**WeightedActionList**: Weighted random selection utility. Components add `AIAction` objects; `PickRandomWeighted()` selects probabilistically. Enables behavioral variety—creatures don't always make the same choice.
+
+**AIAction**: Adapter between Action system and AI. Wraps an Action with weight (selection probability) and debug name. `Execute(AIContext)` runs the action and returns `ActionResult`, enabling goals to react to success/failure.
 
 **Event Types** (defined in `AIEvents`):
 - `OnGetMeleeActions`: Gather melee attack options
@@ -165,7 +167,8 @@ Goals can be pushed by other goals or by components via events. Most goals deleg
 1. Add constant to `AIEvents` class
 2. Have goals fire the event with appropriate `GetActionsEventArgs`
 3. Components implement `IAIEventHandler` and check `eventName`
-4. Components add actions to `args.ActionList` or set `args.Handled = true`
+4. Components create `AIAction` objects wrapping Action instances with weight and debug name
+5. Components add `AIAction` to `args.ActionList` or set `args.Handled = true`
 
 Event names follow pattern `On[Situation]` (e.g., `OnGetMeleeActions`, `OnIAmBored`).
 

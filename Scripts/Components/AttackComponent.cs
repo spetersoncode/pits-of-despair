@@ -119,12 +119,13 @@ public partial class AttackComponent : Node, IAIEventHandler
                 continue;
             }
 
-            int attackIndex = i; // Capture for closure
-            args.ActionList.Add(
+            var attackAction = new AttackAction(args.Target, i);
+            var aiAction = new AIAction(
+                action: attackAction,
                 weight: 1,
-                execute: ctx => ExecuteMeleeAttack(ctx, args.Target, attackIndex),
-                debugName: attack.Name ?? $"Melee {attackIndex}"
+                debugName: attack.Name ?? $"Melee {i}"
             );
+            args.ActionList.Add(aiAction);
         }
     }
 
@@ -171,12 +172,13 @@ public partial class AttackComponent : Node, IAIEventHandler
                 }
             }
 
-            int attackIndex = i; // Capture for closure
-            args.ActionList.Add(
+            var rangedAction = new RangedAttackAction(target.GridPosition, i);
+            var aiAction = new AIAction(
+                action: rangedAction,
                 weight: 1,
-                execute: ctx => ExecuteRangedAttack(ctx, target, attackIndex),
-                debugName: attack.Name ?? $"Ranged {attackIndex}"
+                debugName: attack.Name ?? $"Ranged {i}"
             );
+            args.ActionList.Add(aiAction);
         }
     }
 
@@ -212,22 +214,5 @@ public partial class AttackComponent : Node, IAIEventHandler
         return ammoSlot.Item.Template.Type?.ToLower() == "ammo" &&
                ammoSlot.Item.Template.Name.Contains(ammoType, System.StringComparison.OrdinalIgnoreCase) &&
                ammoSlot.Item.Quantity > 0;
-    }
-
-    /// <summary>
-    /// Execute a melee attack against the target.
-    /// </summary>
-    private void ExecuteMeleeAttack(AIContext context, BaseEntity target, int attackIndex)
-    {
-        RequestAttack(target, attackIndex);
-    }
-
-    /// <summary>
-    /// Execute a ranged attack against the target using RangedAttackAction.
-    /// </summary>
-    private void ExecuteRangedAttack(AIContext context, BaseEntity target, int attackIndex)
-    {
-        var action = new RangedAttackAction(target.GridPosition, attackIndex);
-        _entity!.ExecuteAction(action, context.ActionContext);
     }
 }

@@ -80,9 +80,14 @@ public class KillTargetGoal : Goal
         }
 
         // Pick and execute random weighted action
-        var action = args.ActionList.PickRandomWeighted();
-        action?.Invoke(context);
-        return true;
+        var aiAction = args.ActionList.PickRandomWeighted();
+        if (aiAction == null)
+        {
+            return false;
+        }
+
+        var result = aiAction.Execute(context);
+        return result.Success;
     }
 
     /// <summary>
@@ -103,9 +108,14 @@ public class KillTargetGoal : Goal
             return false;
         }
 
-        var action = args.ActionList.PickRandomWeighted();
-        action?.Invoke(context);
-        return true;
+        var aiAction = args.ActionList.PickRandomWeighted();
+        if (aiAction == null)
+        {
+            return false;
+        }
+
+        var result = aiAction.Execute(context);
+        return result.Success;
     }
 
     /// <summary>
@@ -126,18 +136,26 @@ public class KillTargetGoal : Goal
             return false;
         }
 
-        var action = args.ActionList.PickRandomWeighted();
-        action?.Invoke(context);
-
-        // Fire success event for shoot-and-scoot behavior
-        var successArgs = new GetActionsEventArgs
+        var aiAction = args.ActionList.PickRandomWeighted();
+        if (aiAction == null)
         {
-            Context = context,
-            Target = Target
-        };
-        context.Entity.FireEvent(AIEvents.OnRangedAttackSuccess, successArgs);
+            return false;
+        }
 
-        return true;
+        var result = aiAction.Execute(context);
+
+        if (result.Success)
+        {
+            // Fire success event for shoot-and-scoot behavior
+            var successArgs = new GetActionsEventArgs
+            {
+                Context = context,
+                Target = Target
+            };
+            context.Entity.FireEvent(AIEvents.OnRangedAttackSuccess, successArgs);
+        }
+
+        return result.Success;
     }
 
     /// <summary>
@@ -158,9 +176,14 @@ public class KillTargetGoal : Goal
             return false;
         }
 
-        var action = args.ActionList.PickRandomWeighted();
-        action?.Invoke(context);
-        return true;
+        var aiAction = args.ActionList.PickRandomWeighted();
+        if (aiAction == null)
+        {
+            return false;
+        }
+
+        var result = aiAction.Execute(context);
+        return result.Success;
     }
 
     /// <summary>

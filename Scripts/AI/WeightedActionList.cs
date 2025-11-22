@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -7,45 +6,32 @@ namespace PitsOfDespair.AI;
 
 /// <summary>
 /// Utility class for weighted random selection of AI actions.
-/// Components add actions with weights; higher weight = more likely selection.
+/// Components add AIAction objects; higher weight = more likely selection.
 /// </summary>
 public class WeightedActionList
 {
-    private List<WeightedAction> _actions = new List<WeightedAction>();
-
-    private struct WeightedAction
-    {
-        public int Weight;
-        public Action<AIContext> Execute;
-        public string DebugName;
-    }
+    private List<AIAction> _actions = new List<AIAction>();
 
     public bool IsEmpty => _actions.Count == 0;
     public int Count => _actions.Count;
     public int TotalWeight => _actions.Sum(a => a.Weight);
 
     /// <summary>
-    /// Adds an action with the specified weight.
-    /// Weight represents "number of balls in the bag" - higher = more likely.
-    /// Most actions should use weight 1 for equal probability.
+    /// Adds an AIAction to the list.
     /// </summary>
-    public void Add(int weight, Action<AIContext> execute, string debugName = null)
+    public void Add(AIAction action)
     {
-        if (weight <= 0) return;
+        if (action == null || action.Weight <= 0)
+            return;
 
-        _actions.Add(new WeightedAction
-        {
-            Weight = weight,
-            Execute = execute,
-            DebugName = debugName ?? "Unknown"
-        });
+        _actions.Add(action);
     }
 
     /// <summary>
     /// Picks a random action weighted by the weights.
     /// Returns null if list is empty.
     /// </summary>
-    public Action<AIContext> PickRandomWeighted(RandomNumberGenerator rng = null)
+    public AIAction PickRandomWeighted(RandomNumberGenerator rng = null)
     {
         if (_actions.Count == 0) return null;
 
@@ -62,11 +48,11 @@ public class WeightedActionList
             cumulative += action.Weight;
             if (roll < cumulative)
             {
-                return action.Execute;
+                return action;
             }
         }
 
-        return _actions[^1].Execute; // Fallback
+        return _actions[^1]; // Fallback
     }
 
     /// <summary>
