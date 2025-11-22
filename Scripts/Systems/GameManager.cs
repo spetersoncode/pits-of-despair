@@ -1,6 +1,9 @@
 using Godot;
+using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PitsOfDespair.Systems;
 
@@ -62,6 +65,11 @@ public partial class GameManager : Node
 	/// Saved player state for floor transitions.
 	/// </summary>
 	private PlayerState? _savedPlayerState = null;
+
+	/// <summary>
+	/// Saved companion states for floor transitions.
+	/// </summary>
+	private List<CompanionState>? _savedCompanionStates = null;
 
 	/// <summary>
 	/// Current GameLevel instance.
@@ -180,6 +188,9 @@ public partial class GameManager : Node
 		// Extract player state
 		_savedPlayerState = PlayerState.ExtractFromPlayer(_currentGameLevel.Player);
 
+		// Extract companion states (player faction entities excluding the player)
+		_savedCompanionStates = ExtractCompanionStates();
+
 		// Extract debug mode state from GameHUD
 		var gameHUD = _currentGameLevel.GetNodeOrNull<UI.GameHUD>("HUD/GameHUD");
 		if (gameHUD != null)
@@ -279,6 +290,53 @@ public partial class GameManager : Node
 	public bool GetDebugModeActive()
 	{
 		return _debugModeActive;
+	}
+
+	/// <summary>
+	/// Gets the saved companion states for the current floor transition.
+	/// Returns null if no companions are saved (e.g., first floor).
+	/// </summary>
+	public List<CompanionState>? GetSavedCompanionStates()
+	{
+		return _savedCompanionStates;
+	}
+
+	/// <summary>
+	/// Clears the saved companion states after they have been restored.
+	/// </summary>
+	public void ClearSavedCompanionStates()
+	{
+		_savedCompanionStates = null;
+	}
+
+	#endregion
+
+	#region Companion Management
+
+	/// <summary>
+	/// Extracts state from all player faction companions on the current floor.
+	/// </summary>
+	private List<CompanionState> ExtractCompanionStates()
+	{
+		var companionStates = new List<CompanionState>();
+
+		if (_currentGameLevel == null)
+			return companionStates;
+
+		// Find all player faction entities (excluding the player)
+		var companions = _currentGameLevel.EntityManager.GetAllEntities()
+			.Where(e => e.Faction == Faction.Player);
+
+		foreach (var companion in companions)
+		{
+			var state = CompanionState.ExtractFromCompanion(companion);
+			if (state != null)
+			{
+				companionStates.Add(state);
+			}
+		}
+
+		return companionStates;
 	}
 
 	#endregion

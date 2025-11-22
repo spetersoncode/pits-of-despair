@@ -5,6 +5,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using Faction = PitsOfDespair.Core.Faction;
 
 namespace PitsOfDespair.Systems;
 
@@ -144,17 +145,21 @@ public partial class EntityManager : Node
 
     /// <summary>
     /// Handle entity death by removing it from the game.
-    /// Awards XP to player if the dead entity is a creature.
+    /// Awards XP to player if the dead entity was killed by a player faction entity.
     /// </summary>
     private void OnEntityDied(BaseEntity entity)
     {
         // Award XP if player exists and this is a creature (not the player, has stats)
         if (_player != null && entity != _player)
         {
+            var healthComponent = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
             var creatureStats = entity.GetNodeOrNull<StatsComponent>("StatsComponent");
             var playerStats = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
 
-            if (creatureStats != null && playerStats != null)
+            // Only award XP if the killer was a player faction entity
+            bool killedByPlayerFaction = healthComponent?.LastDamageSource?.Faction == Faction.Player;
+
+            if (creatureStats != null && playerStats != null && killedByPlayerFaction)
             {
                 // Calculate XP reward using delta-based formula
                 int xpAwarded = CalculateXPReward(creatureStats.Level, playerStats.Level);

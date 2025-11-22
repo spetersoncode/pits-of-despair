@@ -163,8 +163,10 @@ public partial class CursorTargetingSystem : Node
 			var entity = _entityManager.GetEntityAtPosition(tile);
 			if (entity != null)
 			{
-				// Only target entities with health (attackable creatures)
-				if (entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null)
+				// Only target hostile entities with health (attackable creatures)
+				// Excludes player faction (allies) from hostile targeting
+				if (entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null &&
+					entity.Faction != Faction.Player)
 				{
 					_validCreatureTargets.Add(entity);
 				}

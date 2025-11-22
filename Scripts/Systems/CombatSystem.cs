@@ -169,7 +169,7 @@ public partial class CombatSystem : Node
             EmitSignal(SignalName.AttackExecuted, attacker, target, actualDamage, attackData.Name); // Legacy support
 
             // Now apply the damage (which may trigger death signals)
-            targetHealth.TakeDamage(finalDamage, attackData.DamageType);
+            targetHealth.TakeDamage(finalDamage, attackData.DamageType, attacker);
         }
         else
         {

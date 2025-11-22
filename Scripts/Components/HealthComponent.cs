@@ -61,6 +61,12 @@ public partial class HealthComponent : Node, IAIEventHandler
     public int CurrentHP { get; private set; }
 
     /// <summary>
+    /// The last entity that dealt damage to this entity.
+    /// Used for tracking kill attribution (e.g., XP awards).
+    /// </summary>
+    public BaseEntity? LastDamageSource { get; private set; }
+
+    /// <summary>
     /// Damage types this entity is immune to (takes 0 damage).
     /// </summary>
     public List<DamageType> Immunities { get; set; } = new();
@@ -168,11 +174,18 @@ public partial class HealthComponent : Node, IAIEventHandler
     /// </summary>
     /// <param name="amount">Base amount of damage to take</param>
     /// <param name="damageType">Type of damage being dealt</param>
+    /// <param name="source">The entity that dealt the damage (for kill attribution)</param>
     /// <returns>The actual amount of damage dealt after modifiers</returns>
-    public int TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning)
+    public int TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning, BaseEntity? source = null)
     {
         if (amount <= 0)
             return 0;
+
+        // Track damage source for kill attribution
+        if (source != null)
+        {
+            LastDamageSource = source;
+        }
 
         // Check immunity - immune entities take 0 damage
         if (Immunities.Contains(damageType))

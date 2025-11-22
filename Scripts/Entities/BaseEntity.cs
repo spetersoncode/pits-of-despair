@@ -100,6 +100,13 @@ public partial class BaseEntity : Node2D
     public Faction Faction { get; set; } = Faction.Hostile;
 
     /// <summary>
+    /// The creature data file ID used to create this entity (e.g., "cat", "goblin").
+    /// Used for recreating companions across floor transitions.
+    /// Empty string for non-creature entities (player, items).
+    /// </summary>
+    public string CreatureId { get; set; } = string.Empty;
+
+    /// <summary>
     /// Whether this entity is dead.
     /// Checks HealthComponent if present, otherwise returns false.
     /// </summary>

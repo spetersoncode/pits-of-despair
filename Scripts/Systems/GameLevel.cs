@@ -1,11 +1,15 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Spawning;
 using PitsOfDespair.UI;
+using System.Collections.Generic;
 
 namespace PitsOfDespair.Systems;
 
@@ -112,15 +116,28 @@ public partial class GameLevel : Node
 
         _entityFactory.InitializePlayerInventory(_player);
 
-        // Spawn a friendly cat companion for testing
-        var catSpawn = new Core.GridPosition(playerSpawn.X + 1, playerSpawn.Y);
-        if (!_mapSystem.IsWalkable(catSpawn))
-            catSpawn = new Core.GridPosition(playerSpawn.X - 1, playerSpawn.Y);
-        var cat = _entityFactory.CreateCreature("cat", catSpawn);
-        if (cat != null)
+        // Spawn companions based on floor depth
+        var gameManager = GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager");
+        var savedCompanions = gameManager?.GetSavedCompanionStates();
+
+        if (savedCompanions != null && savedCompanions.Count > 0)
         {
-            _entityFactory.SetupAsFriendlyCompanion(cat, _player);
-            _entityManager.AddEntity(cat);
+            // Restore companions from saved states (floors > 1)
+            RestoreCompanions(savedCompanions, playerSpawn);
+            gameManager?.ClearSavedCompanionStates();
+        }
+        else if (FloorDepth == 1)
+        {
+            // Spawn initial cat companion on floor 1 only
+            var catSpawn = new GridPosition(playerSpawn.X + 1, playerSpawn.Y);
+            if (!_mapSystem.IsWalkable(catSpawn))
+                catSpawn = new GridPosition(playerSpawn.X - 1, playerSpawn.Y);
+            var cat = _entityFactory.CreateCreature("cat", catSpawn);
+            if (cat != null)
+            {
+                _entityFactory.SetupAsFriendlyCompanion(cat, _player);
+                _entityManager.AddEntity(cat);
+            }
         }
 
         _player.SetEntityManager(_entityManager);
@@ -228,12 +245,7 @@ public partial class GameLevel : Node
         );
 
         // Get persistent debug mode state from GameManager (if it exists)
-        bool debugModeActive = false;
-        var gameManager = GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager");
-        if (gameManager != null)
-        {
-            debugModeActive = gameManager.GetDebugModeActive();
-        }
+        bool debugModeActive = gameManager?.GetDebugModeActive() ?? false;
 
         // Initialize GameHUD with new systems
         _gameHUD.Initialize(
@@ -255,6 +267,84 @@ public partial class GameLevel : Node
         sidePanel.Initialize(_player, _playerStatsViewModel, _equipmentViewModel, _nearbyEntitiesTracker);
 
         _turnManager.StartFirstPlayerTurn();
+    }
+
+    /// <summary>
+    /// Restores companions from saved states, spawning them near the player.
+    /// </summary>
+    private void RestoreCompanions(List<CompanionState> companionStates, GridPosition playerSpawn)
+    {
+        const int companionRange = 3;
+
+        foreach (var state in companionStates)
+        {
+            // Find a valid spawn position near the player
+            var spawnPos = FindNearbyValidPosition(playerSpawn, companionRange);
+            if (spawnPos == null)
+            {
+                GD.PushWarning($"GameLevel: Could not find spawn position for companion '{state.CreatureId}'");
+                continue;
+            }
+
+            // Create the creature from its ID
+            var companion = _entityFactory.CreateCreature(state.CreatureId, spawnPos.Value);
+            if (companion == null)
+            {
+                GD.PushWarning($"GameLevel: Failed to create companion '{state.CreatureId}'");
+                continue;
+            }
+
+            // Set up as friendly companion
+            _entityFactory.SetupAsFriendlyCompanion(companion, _player);
+
+            // Apply saved state (health, status effects)
+            state.ApplyToCompanion(companion);
+
+            // Register with entity manager
+            _entityManager.AddEntity(companion);
+        }
+    }
+
+    /// <summary>
+    /// Finds a valid (walkable, unoccupied) position within range of the center.
+    /// </summary>
+    private GridPosition? FindNearbyValidPosition(GridPosition center, int range)
+    {
+        var validPositions = new List<GridPosition>();
+
+        for (int dx = -range; dx <= range; dx++)
+        {
+            for (int dy = -range; dy <= range; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+
+                var checkPos = new GridPosition(center.X + dx, center.Y + dy);
+
+                // Check Chebyshev distance
+                if (DistanceHelper.ChebyshevDistance(center, checkPos) > range)
+                    continue;
+
+                if (!_mapSystem.IsWalkable(checkPos))
+                    continue;
+
+                if (_entityManager.IsPositionOccupied(checkPos))
+                    continue;
+
+                // Check player position
+                if (checkPos == center)
+                    continue;
+
+                validPositions.Add(checkPos);
+            }
+        }
+
+        if (validPositions.Count == 0)
+            return null;
+
+        // Pick a random position
+        int index = GD.RandRange(0, validPositions.Count - 1);
+        return validPositions[index];
     }
 
     public override void _ExitTree()

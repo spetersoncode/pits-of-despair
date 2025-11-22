@@ -37,7 +37,7 @@ public partial class EntityFactory : Node
             return null;
         }
 
-        return CreateEntityFromCreatureData(data, position);
+        return CreateEntityFromCreatureData(data, position, creatureId);
     }
 
     /// <summary>
@@ -117,7 +117,10 @@ public partial class EntityFactory : Node
     /// <summary>
     /// Create an entity from creature data.
     /// </summary>
-    private BaseEntity CreateEntityFromCreatureData(CreatureData data, GridPosition position)
+    /// <param name="data">The creature data.</param>
+    /// <param name="position">The grid position to place the creature.</param>
+    /// <param name="creatureId">The creature ID for recreation (e.g., "cat").</param>
+    private BaseEntity CreateEntityFromCreatureData(CreatureData data, GridPosition position, string creatureId)
     {
         // Create base entity
         var faction = data.GetFaction();
@@ -129,6 +132,7 @@ public partial class EntityFactory : Node
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = faction == Faction.Player ? Palette.Player : data.GetColor(),
             Faction = faction,
+            CreatureId = creatureId,
             Name = data.Name // Set node name for debugging
         };
 
