@@ -56,7 +56,7 @@ public partial class HelpModal : PanelContainer
   Space / Numpad 5 - Wait
 
 [color={Palette.ToHex(Palette.Alert)}]ACTIONS[/color]
-  G - Pickup   F - Fire Ranged
+  G - Pickup   F - Fire Ranged   O/Numpad 0 - Autoexplore
 
 [color={Palette.ToHex(Palette.Gold)}]MENUS[/color]
   I - Inventory   A - Activate   D - Drop
