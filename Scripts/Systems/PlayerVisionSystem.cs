@@ -161,13 +161,11 @@ public partial class PlayerVisionSystem : Node
         {
             // Reveal entire map
             RevealEntireMap();
-            GD.Print("Map Reveal: ON");
         }
         else
         {
             // Return to normal FOV
             CalculateVision();
-            GD.Print("Map Reveal: OFF");
         }
     }
 

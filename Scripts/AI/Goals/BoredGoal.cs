@@ -35,8 +35,6 @@ public class BoredGoal : Goal
         if (args.Handled) return;
 
         // Check for protection target (friendly bodyguard behavior)
-        bool hasProtectionTarget = context.ProtectionTarget != null;
-        GD.Print($"[{context.Entity.DisplayName}] BoredGoal.TakeAction - HasProtectionTarget: {hasProtectionTarget}");
         if (TryProtectionBehavior(context))
             return;
 
@@ -78,12 +76,10 @@ public class BoredGoal : Goal
             target.GridPosition);
 
         int followDistance = context.AIComponent.FollowDistance;
-        GD.Print($"[{context.Entity.DisplayName}] Distance to VIP: {distance}, FollowDistance: {followDistance}");
 
         // Priority 1: If too far from VIP, follow them
         if (distance > followDistance)
         {
-            GD.Print($"[{context.Entity.DisplayName}] Too far, pushing FollowTargetGoal");
             var followGoal = new FollowTargetGoal(originalIntent: this);
             context.AIComponent.GoalStack.Push(followGoal);
             return true;

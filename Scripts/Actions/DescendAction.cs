@@ -26,15 +26,8 @@ public class DescendAction : Action
 
 	public override ActionResult Execute(BaseEntity actor, ActionContext context)
 	{
-		GD.Print("DescendAction: Execute called");
-
-		// Check if actor is standing on stairs
-		var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
-		GD.Print($"DescendAction: Entity at position: {entityAtPosition?.GetType().Name ?? "null"}");
-
 		if (!CanExecute(actor, context))
 		{
-			GD.Print("DescendAction: Not on stairs");
 			return ActionResult.CreateFailure("There are no stairs here.");
 		}
 
@@ -46,7 +39,6 @@ public class DescendAction : Action
 
 		// Find GameManager by navigating up the tree
 		var gameManager = player.GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager");
-		GD.Print($"DescendAction: GameManager found: {gameManager != null}");
 		if (gameManager == null)
 		{
 			GD.PrintErr("DescendAction: GameManager not found in scene tree");
@@ -54,7 +46,6 @@ public class DescendAction : Action
 		}
 
 		// Trigger floor transition
-		GD.Print("DescendAction: Calling DescendToNextFloor");
 		gameManager.DescendToNextFloor();
 
 		// Return success (this action consumes a turn)

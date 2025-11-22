@@ -153,7 +153,6 @@ public partial class GameManager : Node
 			healthComponent.Connect(Components.HealthComponent.SignalName.Died, Callable.From(OnPlayerDied));
 		}
 
-		GD.Print($"GameManager: Started floor {CurrentFloorDepth}");
 	}
 
 	#endregion
@@ -239,7 +238,6 @@ public partial class GameManager : Node
 	/// </summary>
 	public void OnThroneReached()
 	{
-		GD.Print("GameManager: Player reached the Throne of Despair! Victory!");
 		EmitSignal(SignalName.GameWon);
 
 		// TODO: Show victory screen, restart option, etc.
@@ -250,7 +248,6 @@ public partial class GameManager : Node
 	/// </summary>
 	private void OnPlayerDied()
 	{
-		GD.Print($"GameManager: Player died on floor {CurrentFloorDepth}");
 		EmitSignal(SignalName.GameLost, CurrentFloorDepth);
 
 		// TODO: Show death screen, score, restart option, etc.

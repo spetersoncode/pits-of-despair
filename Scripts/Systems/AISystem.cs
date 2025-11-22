@@ -118,8 +118,6 @@ public partial class AISystem : Node
         if (!_aiComponents.Contains(component))
         {
             _aiComponents.Add(component);
-            var entity = component.GetEntity();
-            GD.Print($"[AISystem] Registered: {entity?.DisplayName ?? "null"} (Total: {_aiComponents.Count})");
         }
     }
 
@@ -129,20 +127,15 @@ public partial class AISystem : Node
     /// </summary>
     private void OnCreatureTurnsStarted()
     {
-        GD.Print($"[AISystem] OnCreatureTurnsStarted - Processing {_aiComponents.Count} AI components");
-
         // Process each creature's AI
         foreach (AIComponent ai in _aiComponents)
         {
             // Skip if component or entity no longer valid
             if (!IsInstanceValid(ai) || ai.GetParent() == null)
             {
-                GD.Print($"[AISystem] Skipping invalid AI component");
                 continue;
             }
 
-            var entity = ai.GetEntity();
-            GD.Print($"[AISystem] Processing: {entity?.DisplayName ?? "null"}");
             ProcessCreatureTurn(ai);
         }
 

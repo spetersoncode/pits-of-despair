@@ -215,7 +215,6 @@ public partial class DataLoader : Node
         // Bands folder is optional (not all projects may use bands)
         if (!DirAccess.DirExistsAbsolute(BandsPath))
         {
-            GD.Print($"DataLoader: Bands directory not found at {BandsPath}, skipping band loading");
             return;
         }
 

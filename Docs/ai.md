@@ -1,139 +1,174 @@
 # AI System
 
-The AI system uses **goal-based utility scoring** for decision-making. Each AI entity maintains available goals, evaluates them every turn using utility scores (0-100 range), and executes the highest-scoring goal. This enables flexible, priority-driven behavior that naturally blends different AI personalities without rigid state transitions.
+The AI system uses a **hierarchical goal stack** for decision-making. Goals persist on a stack until completed, can push sub-goals for complex multi-step behaviors, and support failure recovery through intent tracking. This enables composable, stateful behaviors that naturally decompose complex actions into simple, reusable primitives.
 
 ## Architecture
 
 ### Core Components
 
-**AIComponent**: Data and state management for AI entities. Stores available goals, current goal state, pathfinding data (current path queue), positional tracking (spawn position, last known player position), and behavior state (turn counters for search/flee). Designer-tweakable exports: `SearchTurns` (default: 12), `SearchRadius` (default: 3), `FleeTurns` (default: 20).
+**GoalStack**: Stack data structure managing active goals. Top goal executes each turn. Goals remain until `IsFinished()` returns true. Supports failure recovery via `FailToIntent()` which pops goals back to the original decision point.
 
-**VisionComponent**: Lightweight marker component indicating vision capability. Stores `VisionRange` (default: 10 tiles). Used by both player fog-of-war and AI perception.
+**Goal**: Base class for all AI behaviors. Key methods:
+- `IsFinished(AIContext)`: Returns true when goal's objective is complete
+- `TakeAction(AIContext)`: Executes one step—may push sub-goals or perform actions
+- `Fail(AIContext)`: Handles failure by popping back to `OriginalIntent` for replanning
+- `OriginalIntent`: Reference to parent goal for failure recovery chain
 
-**AISystem**: Central coordinator orchestrating AI decision-making. Subscribes to `TurnManager.CreatureTurnsStarted` signal, processes all registered AIComponents by building context, evaluating goals, handling transitions, and executing selected goals. Signals `TurnManager.EndCreatureTurns()` when complete.
+**AIContext**: Per-turn perception bundle containing entity references, system access (via `ActionContext`), visibility state, and component caches. Provides helper methods: `GetVisibleEnemies()`, `GetClosestEnemy()`, `CanSee()`, `GetEnemiesNearProtectionTarget()`.
 
-**AIContext**: Per-turn perception bundle built by AISystem. Provides entity references, player reference, system references (MapSystem, EntityManager), perception state (IsPlayerVisible, DistanceToPlayer), and component caches (VisionComponent, HealthComponent, AttackComponent).
+**AIComponent**: Data and state management. Stores `GoalStack`, protection target, follow distance, spawn position. Designer-tweakable exports for behavior tuning.
+
+**AISystem**: Central coordinator subscribing to `TurnManager.CreatureTurnsStarted`. Each turn: builds AIContext, removes finished goals, ensures BoredGoal fallback, calls `TakeAction()` on top goal.
 
 ### Decision-Making Flow
 
-**Evaluation Phase**: Build AIContext with current state, update state tracking (visibility, distance, turn counters), call `GoalEvaluator.EvaluateBestGoal()` on all available goals, return goal with highest score.
+**Turn Processing**:
+1. Build AIContext with current perception state
+2. Call `GoalStack.RemoveFinished()` to pop completed goals
+3. If stack empty, push `BoredGoal` as fallback
+4. Call `TakeAction()` on top goal
+5. Goal may: execute action directly, push sub-goals, or fail (triggering replan)
 
-**Transition Phase**: If goal changed, call `OnDeactivated()` on old goal and `OnActivated()` on new goal. Enables cleanup and initialization for goal-specific logic.
+**Goal Composition**: High-level intent goals delegate to tactical sub-goals. Example: `KillTargetGoal` pushes `ApproachGoal` for movement, which pushes `MoveDirectionGoal` for individual steps. Each layer handles its concern without knowing implementation details of sub-goals.
 
-**Execution Phase**: Call `Execute()` on selected goal, which returns `ActionResult` with success status and message.
+**Failure Recovery**: Goals track their `OriginalIntent`. When `Fail()` is called, stack pops back to the intent goal, allowing it to replan with updated world state. Prevents stuck behaviors when paths are blocked or targets move.
 
-### Goal Interface
+### Event-Driven Actions
 
-All goals inherit from abstract `Goal` base class:
+Components inject behavior without coupling to goals via the event system:
 
-- `CalculateScore(AIContext)`: Returns 0-100 utility score (0 = invalid, higher = more desirable)
-- `Execute(AIContext)`: Performs the goal's action, returns `ActionResult`
-- `OnActivated(AIContext)`: Called when goal becomes active
-- `OnDeactivated(AIContext)`: Called when goal stops being active
-- `GetName()`: Returns debug name string
+**IAIEventHandler**: Interface for components responding to AI events. Implement `HandleAIEvent(eventName, args)` to add actions.
+
+**GetActionsEventArgs**: Event payload containing `WeightedActionList`, `AIContext`, optional `Target`, and `Handled` flag.
+
+**WeightedActionList**: Weighted random selection utility. Components add actions with weights; `PickRandomWeighted()` selects probabilistically. Enables behavioral variety—creatures don't always make the same choice.
+
+**Event Types** (defined in `AIEvents`):
+- `OnGetMeleeActions`: Gather melee attack options
+- `OnGetDefensiveActions`: Gather healing, blocking, yelling for help
+- `OnGetRangedActions`: Gather ranged attack options
+- `OnGetItemActions`: Gather usable item actions
+- `OnGetMovementActions`: Gather special movement abilities
+- `OnIAmBored`: Let components push goals when idle (flee triggers, patrol routes)
+- `OnRangedAttackSuccess`: Post-attack hooks (shoot-and-scoot behavior)
 
 ## Available Goals
 
-**MeleeAttackGoal**: Score 90f when player visible. If adjacent, executes `AttackAction`; otherwise pathfinds to player using A* and moves toward them. Updates last known player position and turn counters. Handles path blocking by recalculating when obstacles appear.
+**BoredGoal**: Permanent fallback at stack bottom, never finishes. Decision hub that fires `OnIAmBored` event, checks for protection target (follow/defend), finds visible enemies (push `KillTargetGoal`), or random wander. All creature behavior flows through BoredGoal when no other goals active.
 
-**SearchLastKnownPositionGoal**: Score 70f (decays 10 points per turn since player seen, minimum 0). Paths to last known player position, wanders randomly within `SearchRadius` tiles of that position for `SearchTurnsRemaining` turns. Clears last known position when search expires, falling through to next goal.
+**KillTargetGoal**: Pursues and kills a target entity. Priority-ordered action attempts:
+1. Melee attack (if adjacent) via `OnGetMeleeActions` event
+2. Defensive actions via `OnGetDefensiveActions` event
+3. Ranged attack via `OnGetRangedActions` event
+4. Item usage via `OnGetItemActions` event
+5. Movement: pushes `ApproachGoal` to close distance
 
-**ReturnToSpawnGoal**: Score 10f base + (3 per turn since player seen). Paths to spawn position. Score increases gradually, encouraging creatures to give up and return home. Prevents endless wandering.
+Finished when target is dead or invalid.
 
-**WanderGoal**: Score 20f (low priority). Randomly selects from valid adjacent tiles (8 directions), checking walkability and occupancy. Used for passive roaming behavior.
+**ApproachGoal**: Pathfinds toward a position or entity. Tracks moving entities automatically by updating `TargetPosition` each turn. Uses `NavigationWeightMap` for capability-aware pathfinding. Pushes `MoveDirectionGoal` for individual steps. Finished when within `DesiredDistance`.
 
-**IdleGoal**: Score 1f (absolute fallback, always valid). Does nothing—entity waits in place. Ensures entities always have a valid action.
+**FleeGoal**: Moves away from a threat for a duration. Prioritizes fleeing toward allies using Dijkstra maps. Fires `OnGetDefensiveActions` for yelling/healing while fleeing. Finished when turns expire AND (can't see threat OR far enough away).
 
-**FleeForHelpGoal**: Score 85f (when player visible), 75f base (decays when fleeing). Multi-level fleeing: attempts to flee toward nearby allies using Dijkstra pathfinding, falls back to fleeing directly away from player, falls back to fleeing from last known position. Yells for help every 4 turns. Ally detection finds creatures with SearchLastKnown goal within 20-tile radius.
+**DefendTargetGoal**: Attacks enemies threatening the protection target. Uses union of VIP's and protector's vision, prioritizes threats VIP can see. Pushes `KillTargetGoal` for each threat. Finished when no visible enemies.
 
-**DefendTargetGoal**: Score 80f when hostile enemies near protection target (within 5 tiles). Attacks closest enemy threatening the protection target. Pathfinds toward enemies out of melee range. Used by friendly creatures. See [factions.md](factions.md).
+**FollowTargetGoal**: Stays within `FollowDistance` of protection target. Pushes `ApproachGoal` to close distance. Finished when close enough.
 
-**FollowTargetGoal**: Score 50f+ when too far from protection target. Score increases with distance. Maintains `AIComponent.FollowDistance` (default 3 tiles) from target. Lower priority than DefendTarget. Used by friendly creatures. See [factions.md](factions.md).
+**WanderGoal**: Single random step in a valid direction. Optional radius constraint around a center point for search behavior. Pushes `MoveDirectionGoal`. Completes after one move attempt.
 
-## Perception and Pathfinding
+**MoveDirectionGoal**: Atomic single-tile movement. Executes `MoveAction` directly. Marks `_completed` or `_failed` based on result. Calls `Fail()` if blocked, allowing parent goal to replan.
 
-**FOVCalculator**: Recursive shadowcasting algorithm providing symmetric, efficient line-of-sight. Casts light through 8 octants from origin position within vision range, respecting walls as blockers. Returns HashSet of visible grid positions. Completes in O(vision_range²).
+## Navigation System
 
-**AStarPathfinder**: Uses Chebyshev distance heuristic for 8-directional movement with equal cost. Checks terrain walkability and treats occupied tiles as obstacles (allows pathfinding to player position for squeeze-through). Returns queue of GridPositions to follow.
+**NavigationWeightMap**: Per-cell cost map for weighted A* pathfinding. Costs depend on terrain, entities, hazards, and creature capabilities. Standard weights:
+- `NormalFloor`: 1 (base cost)
+- `Door`: 2 (slight penalty for intelligent creatures)
+- `Hazard`: 3 (webs, shallow water)
+- `OtherCreature`: 50 (prefer going around)
+- `DangerousHazard`: 100 (fire, acid)
+- `Impassable`: 999 (walls for non-burrowers)
+- `BurrowWall`: 20 (burrowers can dig through)
+- `DoorUnintelligent`: 999 (animals can't open doors)
 
-**DijkstraMapBuilder**: Multi-target pathfinding for fleeing behavior. Flood-fills from multiple goal positions simultaneously, builds distance map where each cell equals distance to nearest goal. Gradient descent follows downhill to nearest goal. Used by FleeForHelpGoal to find nearest ally.
+**CreatureCapabilities**: Per-creature movement profile:
+- `IsIntelligent`: Can open doors, use complex paths (default: true)
+- `CanFly`: Ignores ground hazards (default: false)
+- `CanBurrow`: Can path through walls at high cost (default: false)
+
+Capabilities extracted from entity data; defaults to intelligent non-flying non-burrowing.
+
+## Perception
+
+**FOVCalculator**: Recursive shadowcasting for line-of-sight. 8-octant symmetric visibility within vision range. O(vision_range²) complexity. Used by `AIContext.CanSee()` and `GetVisibleEnemies()`.
+
+**AStarPathfinder**: Weighted A* with Chebyshev distance heuristic for 8-directional movement. Uses `NavigationWeightMap` costs. Returns path as `Queue<GridPosition>`.
+
+**DijkstraMapBuilder**: Multi-target distance map for fleeing toward allies. Flood-fills from goal positions, gradient descent finds nearest goal. Used by `FleeGoal`.
 
 ## System Integration
 
-**Turn Coordinator**: TurnManager emits `CreatureTurnsStarted` signal → AISystem processes all creatures → AISystem calls `EndCreatureTurns()` → cycle repeats with `PlayerTurnStarted`.
+**Turn Coordination**: `TurnManager.CreatureTurnsStarted` → AISystem processes all creatures → AISystem calls `EndCreatureTurns()` → cycle repeats.
 
-**Action System**: All AI movement and combat goes through actions (`MoveAction`, `AttackAction`, `YellForHelpAction`, `WaitAction`). Goals execute actions via `entity.ExecuteAction(action, context)`. Actions validate and execute atomically.
+**Action System**: Goals execute actions via `entity.ExecuteAction(action, context)`. All movement, combat, and abilities use the action system for validation and execution.
 
-**Entity Factory**: Creates AIComponent and initializes goals during creature instantiation using GoalFactory.
-
-**Combat and Movement**: CombatSystem executes AttackActions issued by goals, MovementSystem executes MoveActions.
-
-**Map and Entity Queries**: MapSystem provides terrain walkability for pathfinding validation, EntityManager tracks creature positions with O(1) occupancy lookup.
+**Entity Events**: Goals fire events on entities via `entity.FireEvent(eventName, args)`. Components implementing `IAIEventHandler` receive these events and can add actions or set `Handled = true`.
 
 ## Configuration
 
-**GoalFactory**: Registry maps string IDs to goal factories:
-- "MeleeAttack" → MeleeAttackGoal
-- "SearchLastKnown" → SearchLastKnownPositionGoal
-- "ReturnToSpawn" → ReturnToSpawnGoal
-- "Wander" → WanderGoal
-- "FleeForHelp" → FleeForHelpGoal
-- "Idle" → IdleGoal
-- "DefendTarget" → DefendTargetGoal (friendly AI)
-- "FollowTarget" → FollowTargetGoal (friendly AI)
-
-**Creature Data**: YAML files in `Data/Creatures/` specify goal lists, vision range, and AI flags. Example:
+**Creature Data**: YAML files specify AI flags and vision range. Goals are no longer listed in YAML—all creatures use the goal stack with `BoredGoal` as entry point. Behavior emerges from components and faction.
 
 ```yaml
 name: goblin
-goals:
-  - MeleeAttack
-  - SearchLastKnown
-  - ReturnToSpawn
 visionRange: 10
 hasMovement: true
 hasAI: true
+faction: Hostile
 ```
 
-Idle goal automatically added if not specified. Goal order doesn't affect execution—scoring determines priority.
+**Faction-Based Behavior**: Hostility determined by faction. `Hostile` creatures attack `Friendly` and `Player`. `Friendly` creatures have protection targets and use follow/defend behavior. See [factions.md](factions.md).
 
 ## AI Personalities
 
-**Aggressive** (Rats, Goblins): Goals [MeleeAttack, SearchLastKnown, ReturnToSpawn]. Attack when player visible, search briefly when lost, return to patrol after timeout, fallback to wandering.
+Personalities emerge from component configuration and faction rather than goal lists:
 
-**Cowardly** (Goblin Scouts): Goals [FleeForHelp]. Flee when player visible, call allies, maintain safe distance, eventually stop fleeing when flee turns expire.
+**Aggressive** (Most hostiles): BoredGoal finds enemies → KillTargetGoal → ApproachGoal → attack. Standard hostile behavior.
 
-**Passive Roamers** (Rats): Goals [MeleeAttack, Wander]. Only attack if player adjacent, otherwise wander randomly. No searching or returning.
+**Cowardly**: Component listens to `OnIAmBored`, pushes `FleeGoal` when health low or enemies visible. Can yell for help via `OnGetDefensiveActions`.
 
-**Friendly Bodyguard**: Goals [DefendTarget, FollowTarget, Idle]. Faction Friendly. Attacks enemies near protection target, follows when no threats, idles when close. See [factions.md](factions.md) for setup.
+**Bodyguard** (Friendly faction): BoredGoal checks protection target → FollowTargetGoal when distant → DefendTargetGoal when threats visible. Prioritizes VIP safety.
+
+**Ranged Tactical**: Component provides ranged attacks via `OnGetRangedActions`, listens to `OnRangedAttackSuccess` to push retreat behavior (shoot-and-scoot).
 
 ## Design Patterns
 
-**Utility Scoring Over State Machines**: Goals compete based on utility rather than rigid state transitions. Allows flexible blending—fleeing creature naturally transitions from FleeForHelp to Wander as flee turns decay.
+**Goal Stack Over Utility Scoring**: Goals persist until complete rather than re-evaluating every turn. Enables multi-step behaviors and stateful execution. Sub-goals handle tactical details while intent goals track objectives.
 
-**Composition of Goals**: Creature behavior emerges from available goals plus scoring functions. Different goal combinations create distinct personalities.
+**Composition via Sub-Goals**: Complex behaviors decompose into simple primitives. `KillTargetGoal` doesn't know pathfinding—it delegates to `ApproachGoal`. `ApproachGoal` doesn't know movement details—it delegates to `MoveDirectionGoal`.
 
-**Per-Turn Pathfinding**: Goals recalculate paths each turn rather than caching across turns. Adjusts to dynamic obstacles (moving creatures) at small CPU cost.
+**Event-Driven Action Gathering**: Components inject behavior without goal coupling. Attack components respond to `OnGetMeleeActions`. Healing items respond to `OnGetDefensiveActions`. Goals request actions without knowing what's available.
 
-**State Tracking as Context**: AIComponent tracks shared state variables (TurnsSincePlayerSeen, LastKnownPlayerPosition, SearchTurnsRemaining, FleeturnsRemaining) read by multiple goals. AISystem updates state once per turn, reducing duplication.
+**Intent-Based Failure Recovery**: `OriginalIntent` chain enables replanning. When `MoveDirectionGoal` fails (blocked), `ApproachGoal` can recalculate path. When `ApproachGoal` fails (unreachable), `KillTargetGoal` can try alternatives.
 
-**Signal-Based Communication**: Turn coordination uses signals rather than polling. Maintains loose coupling between systems.
+**Capability-Aware Navigation**: Pathfinding costs depend on creature capabilities. Intelligent creatures path through doors. Burrowers path through walls. Flying creatures ignore ground hazards. One algorithm handles all creature types.
 
 ## Adding New Goals
 
-Create class inheriting from `Goal` base class. Implement required methods:
+1. Create class inheriting from `Goal`
+2. Implement `IsFinished(AIContext)`: Return true when objective complete
+3. Implement `TakeAction(AIContext)`: Execute one step, may push sub-goals
+4. Optionally override `Fail(AIContext)` for custom failure handling
+5. Accept `Goal originalIntent` in constructor for failure recovery chain
 
-- `CalculateScore(AIContext)`: Return 0-100 utility score based on current context
-- `Execute(AIContext)`: Perform goal's action, return ActionResult
-- `OnActivated(AIContext)`: Initialize goal-specific state (optional)
-- `OnDeactivated(AIContext)`: Clean up goal-specific state (optional)
-- `GetName()`: Return descriptive string for debugging
+Goals can be pushed by other goals or by components via events. Most goals delegate to existing sub-goals (`ApproachGoal`, `MoveDirectionGoal`) rather than implementing movement directly.
 
-Register in `GoalFactory._goalRegistry` dictionary with string key. Add goal ID to creature YAML files in `CreatureData.Goals` list. Goals with score > 0 compete for execution priority—highest score wins.
+## Adding New AI Events
 
-## See Also
+1. Add constant to `AIEvents` class
+2. Have goals fire the event with appropriate `GetActionsEventArgs`
+3. Components implement `IAIEventHandler` and check `eventName`
+4. Components add actions to `args.ActionList` or set `args.Handled = true`
 
-- [actions.md](actions.md) - Action system integration
-- [components.md](components.md) - Component architecture
-- [turn-based.md](turn-based.md) - Turn coordination
-- [factions.md](factions.md) - Faction system and friendly creatures
+Event names follow pattern `On[Situation]` (e.g., `OnGetMeleeActions`, `OnIAmBored`).
+
+---
+
+*See [actions.md](actions.md) for action system, [components.md](components.md) for component architecture, [turn-based.md](turn-based.md) for turn coordination, [factions.md](factions.md) for faction system.*
