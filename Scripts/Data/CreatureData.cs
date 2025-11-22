@@ -15,6 +15,31 @@ public class CreatureTypeInfo
 }
 
 /// <summary>
+/// Maps short AI component names used in YAML to full class names.
+/// </summary>
+public static class AIComponentTypes
+{
+    private static readonly Dictionary<string, string> TypeMap = new()
+    {
+        ["Cowardly"] = "CowardlyComponent",
+        ["YellForHelp"] = "YellForHelpComponent",
+        ["ShootAndScoot"] = "ShootAndScootComponent",
+        ["ItemUsage"] = "ItemUsageComponent"
+    };
+
+    /// <summary>
+    /// Resolves a component type name from YAML to the full class name.
+    /// Accepts both short names (Cowardly) and full names (CowardlyComponent).
+    /// </summary>
+    public static string Resolve(string typeName)
+    {
+        if (TypeMap.TryGetValue(typeName, out var fullName))
+            return fullName;
+        return typeName; // Already full name or unknown
+    }
+}
+
+/// <summary>
 /// Serializable creature data structure.
 /// Loaded from Data/Creatures/*.yaml files.
 /// </summary>
@@ -107,13 +132,15 @@ public class CreatureData
 
     /// <summary>
     /// List of AI component configurations for goal-stack AI system.
+    /// Supports short type names (Cowardly) or full names (CowardlyComponent).
+    /// Only specify properties when overriding defaults.
     /// Example YAML:
-    ///   aiComponents:
-    ///     - type: CowardlyComponent
-    ///       fleeTurns: 20
-    ///       safeDistance: 10
+    ///   ai:
+    ///     - type: Cowardly
+    ///     - type: ShootAndScoot
+    ///       fleeTurns: 2
     /// </summary>
-    public List<Dictionary<string, object>> AiComponents { get; set; } = new();
+    public List<Dictionary<string, object>> Ai { get; set; } = new();
 
     /// <summary>
     /// List of item IDs that this creature starts equipped with.

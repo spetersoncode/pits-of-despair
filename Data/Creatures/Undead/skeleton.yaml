@@ -6,9 +6,6 @@ strength: 0
 agility: 0
 endurance: -1
 maxHP: 8
-goals:
-  - MeleeAttack
-  - SearchLastKnown
 attacks:
   - name: claw
     type: Melee

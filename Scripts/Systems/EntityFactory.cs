@@ -289,7 +289,7 @@ public partial class EntityFactory : Node
             aiComponent.Initialize(position);
 
             // Add AI behavior components from creature data
-            AddAIComponents(entity, data.AiComponents);
+            AddAIComponents(entity, data.Ai);
         }
 
         return entity;
@@ -328,7 +328,7 @@ public partial class EntityFactory : Node
                 continue;
             }
 
-            string componentName = typeObj.ToString();
+            string componentName = AIComponentTypes.Resolve(typeObj.ToString());
             Node component = CreateAIComponent(componentName, componentConfig);
             if (component != null)
             {

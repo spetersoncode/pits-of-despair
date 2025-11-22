@@ -7,9 +7,5 @@ strength: 1
 agility: -1
 endurance: 1
 maxHP: 12
-goals:
-  - MeleeAttack
-  - SearchLastKnown
-  - ReturnToSpawn
 equipment:
   - weapon_knobbed_club

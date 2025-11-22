@@ -7,9 +7,6 @@ strength: 0
 agility: 1
 endurance: -1
 maxHP: 8
-goals:
-  - MeleeAttack
-  - Wander
 attacks:
   - name: bite
     type: Melee
