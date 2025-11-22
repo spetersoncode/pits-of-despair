@@ -5,8 +5,7 @@ using Godot;
 namespace PitsOfDespair.AI;
 
 /// <summary>
-/// [LEGACY] Evaluates all available goals and selects the highest-scoring one.
-/// This is part of the old utility-scoring system, kept for transition period.
+/// Evaluates all available goals and selects the highest-scoring one.
 /// </summary>
 public static class GoalEvaluator
 {

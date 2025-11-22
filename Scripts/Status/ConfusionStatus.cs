@@ -11,6 +11,7 @@ namespace PitsOfDespair.Status;
 /// <summary>
 /// Status that causes an entity to wander randomly for a duration.
 /// Confused entities lose their current goal and move randomly like rats.
+/// Uses the new goal stack system - clears the stack and only allows wandering.
 /// </summary>
 public class ConfusionStatus : Status
 {
@@ -46,11 +47,16 @@ public class ConfusionStatus : Status
 			return StatusMessage.Empty;
 		}
 
-		// Save current goals and replace with only WanderGoal
+		// Save current legacy goals
 		_savedGoals = aiComponent.AvailableGoals;
-		aiComponent.AvailableGoals = new List<Goal> { new WanderGoal() };
-		aiComponent.CurrentGoal = null; // Force re-evaluation
+		aiComponent.AvailableGoals = new List<Goal>();
+		aiComponent.CurrentGoal = null;
 		aiComponent.ClearPath();
+
+		// Clear goal stack and push a wander-only goal
+		// The confused entity will just wander randomly each turn
+		aiComponent.GoalStack.Clear();
+		aiComponent.GoalStack.Push(new ConfusedWanderGoal());
 
 		return new StatusMessage(
 			$"{target.DisplayName} looks confused!",
@@ -72,7 +78,7 @@ public class ConfusionStatus : Status
 			return StatusMessage.Empty;
 		}
 
-		// Restore original goals
+		// Restore original legacy goals
 		if (_savedGoals != null)
 		{
 			aiComponent.AvailableGoals = _savedGoals;
@@ -81,9 +87,35 @@ public class ConfusionStatus : Status
 		aiComponent.CurrentGoal = null; // Force re-evaluation with restored goals
 		aiComponent.ClearPath();
 
+		// Reset goal stack to normal behavior (BoredGoal at bottom)
+		aiComponent.GoalStack.Clear();
+		aiComponent.GoalStack.Push(new BoredGoal());
+
 		return new StatusMessage(
 			$"{target.DisplayName} is no longer confused.",
 			Palette.ToHex(Palette.Default)
 		);
 	}
+}
+
+/// <summary>
+/// Special goal used during confusion status.
+/// Never finishes, just wanders randomly each turn.
+/// </summary>
+internal class ConfusedWanderGoal : Goal
+{
+	public override bool IsFinished(AIContext context)
+	{
+		// Never finishes - confusion status controls when this is removed
+		return false;
+	}
+
+	public override void TakeAction(AIContext context)
+	{
+		// Just push a wander goal each turn
+		var wanderGoal = new WanderGoal(originalIntent: this);
+		context.AIComponent.GoalStack.Push(wanderGoal);
+	}
+
+	public override string GetName() => "Confused (Wandering)";
 }

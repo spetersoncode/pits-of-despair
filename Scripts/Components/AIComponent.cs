@@ -16,7 +16,10 @@ public partial class AIComponent : Node
     [Export] public int SearchRadius { get; set; } = 3;
     [Export] public int FleeTurns { get; set; } = 20;
 
-    // Goal-based AI
+    // Goal-based AI (new stack-based system)
+    public GoalStack GoalStack { get; private set; } = new GoalStack();
+
+    // Goal-based AI (legacy - kept for transition)
     public List<Goal> AvailableGoals { get; set; } = new List<Goal>();
     public Goal CurrentGoal { get; set; }
 

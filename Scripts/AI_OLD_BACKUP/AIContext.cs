@@ -10,7 +10,7 @@ namespace PitsOfDespair.AI;
 
 /// <summary>
 /// Context data bundle provided to goals for evaluation and execution.
-/// Contains all information goals need to make decisions and perform actions.
+/// Contains all information goals need to calculate scores and perform actions.
 ///
 /// Core game systems (MapSystem, EntityManager, Player, etc.) are accessed via the
 /// ActionContext property to avoid duplication. For example:
@@ -66,26 +66,6 @@ public class AIContext
     /// Returns null if no protection target is set.
     /// </summary>
     public BaseEntity? ProtectionTarget => AIComponent?.ProtectionTarget;
-
-    /// <summary>
-    /// Checks if this entity can see the target entity.
-    /// </summary>
-    public bool CanSee(BaseEntity target)
-    {
-        if (target == null || VisionComponent == null)
-            return false;
-
-        var mapSystem = ActionContext?.MapSystem;
-        if (mapSystem == null)
-            return false;
-
-        var visibleTiles = FOVCalculator.CalculateVisibleTiles(
-            Entity.GridPosition,
-            VisionComponent.VisionRange,
-            mapSystem);
-
-        return visibleTiles.Contains(target.GridPosition);
-    }
 
     /// <summary>
     /// Gets all visible hostile entities within vision range.
@@ -148,7 +128,7 @@ public class AIContext
 
     /// <summary>
     /// Gets visible enemies that are near the protection target.
-    /// Used by defender goals to find threats to defend against.
+    /// Used by DefendTargetGoal to find threats to defend against.
     /// </summary>
     /// <param name="maxDistanceFromTarget">Maximum distance from protection target to consider.</param>
     public List<BaseEntity> GetEnemiesNearProtectionTarget(int maxDistanceFromTarget = 5)

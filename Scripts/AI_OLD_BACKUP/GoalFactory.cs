@@ -1,31 +1,28 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using PitsOfDespair.AI.Goals;
 
 namespace PitsOfDespair.AI;
 
 /// <summary>
-/// [LEGACY] Factory for creating Goal instances from string identifiers.
+/// Factory for creating Goal instances from string identifiers.
 /// Used to instantiate goals based on creature data configuration.
-///
-/// NOTE: This factory currently returns stub goals since the old goal implementations
-/// were moved to backup. As Phase 2 implements new goals, this factory will be updated
-/// to use the new implementations.
 /// </summary>
 public static class GoalFactory
 {
-    // TODO: Phase 2 will add new goal implementations here
     private static readonly Dictionary<string, Func<Goal>> _goalRegistry = new()
     {
-        // Stub entries - will be replaced with new goal implementations
-        // { "MeleeAttack", () => new MeleeAttackGoal() },
-        // { "SearchLastKnown", () => new SearchLastKnownPositionGoal() },
-        // { "ReturnToSpawn", () => new ReturnToSpawnGoal() },
-        // { "Wander", () => new WanderGoal() },
-        // { "FleeForHelp", () => new FleeForHelpGoal() },
-        // { "Idle", () => new IdleGoal() },
-        // { "FollowTarget", () => new FollowTargetGoal() },
-        // { "DefendTarget", () => new DefendTargetGoal() }
+        // Hostile AI goals
+        { "MeleeAttack", () => new MeleeAttackGoal() },
+        { "SearchLastKnown", () => new SearchLastKnownPositionGoal() },
+        { "ReturnToSpawn", () => new ReturnToSpawnGoal() },
+        { "Wander", () => new WanderGoal() },
+        { "FleeForHelp", () => new FleeForHelpGoal() },
+        { "Idle", () => new IdleGoal() },
+        // Friendly AI goals
+        { "FollowTarget", () => new FollowTargetGoal() },
+        { "DefendTarget", () => new DefendTargetGoal() }
     };
 
     /// <summary>
@@ -46,8 +43,7 @@ public static class GoalFactory
             return factory();
         }
 
-        // During transition, log but don't error - goals will be implemented in later phases
-        GD.Print($"GoalFactory: Goal ID '{goalId}' not yet implemented in new system");
+        GD.PrintErr($"GoalFactory: Unknown goal ID '{goalId}'");
         return null;
     }
 

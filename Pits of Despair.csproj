@@ -8,4 +8,8 @@
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
+  <!-- Exclude old AI backup folder from compilation -->
+  <ItemGroup>
+    <Compile Remove="Scripts/AI_OLD_BACKUP/**/*.cs" />
+  </ItemGroup>
 </Project>

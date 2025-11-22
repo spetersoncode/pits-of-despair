@@ -1,72 +1,108 @@
-using System.Collections.Generic;
 using Godot;
-using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
+using PitsOfDespair.Helpers;
+using System.Collections.Generic;
 
 namespace PitsOfDespair.AI.Goals;
 
 /// <summary>
-/// Goal for wandering randomly around the dungeon.
-/// Low-priority fallback behavior for roaming creatures (like rats)
-/// that don't return to a spawn point.
+/// Goal that moves the entity one step in a random valid direction.
+/// Completes after pushing a single MoveDirectionGoal.
+/// Optionally constrained to a radius around a center point.
 /// </summary>
 public class WanderGoal : Goal
 {
-    private const float WanderScore = 20f;
+    public GridPosition? Center { get; private set; }
+    public int? Radius { get; private set; }
+    private bool _moved = false;
 
-    public override float CalculateScore(AIContext context)
+    /// <summary>
+    /// Creates a wander goal with no constraints.
+    /// </summary>
+    public WanderGoal(Goal originalIntent = null)
     {
-        // Always valid, but low priority
-        // Will be selected when no higher-priority goals are available
-        return WanderScore;
+        OriginalIntent = originalIntent;
     }
 
-    public override ActionResult Execute(AIContext context)
+    /// <summary>
+    /// Creates a wander goal constrained to a radius around a center point.
+    /// Used for searching behavior.
+    /// </summary>
+    public WanderGoal(GridPosition center, int radius, Goal originalIntent = null)
     {
-        var entity = context.Entity;
-        var mapSystem = context.ActionContext.MapSystem;
-        var entityManager = context.ActionContext.EntityManager;
+        Center = center;
+        Radius = radius;
+        OriginalIntent = originalIntent;
+    }
 
-        // Try all 8 directions and collect valid ones
-        List<Vector2I> possibleDirections = new List<Vector2I>();
+    public override bool IsFinished(AIContext context)
+    {
+        return _moved;
+    }
 
-        Vector2I[] allDirections = {
-            Vector2I.Up, Vector2I.Down, Vector2I.Left, Vector2I.Right,
-            new Vector2I(-1, -1), new Vector2I(1, -1),
-            new Vector2I(-1, 1), new Vector2I(1, 1)
-        };
-
-        foreach (Vector2I dir in allDirections)
+    public override void TakeAction(AIContext context)
+    {
+        var directions = GetValidDirections(context);
+        if (directions.Count == 0)
         {
-            GridPosition newPos = new GridPosition(
-                entity.GridPosition.X + dir.X,
-                entity.GridPosition.Y + dir.Y
-            );
-
-            // Check if walkable and not occupied
-            if (mapSystem.IsWalkable(newPos) && entityManager.GetEntityAtPosition(newPos) == null)
-            {
-                possibleDirections.Add(dir);
-            }
+            // No valid directions - just mark as done (wait in place)
+            _moved = true;
+            return;
         }
 
         // Pick random valid direction
-        if (possibleDirections.Count > 0)
-        {
-            int randomIndex = GD.RandRange(0, possibleDirections.Count - 1);
-            Vector2I direction = possibleDirections[randomIndex];
-            var moveAction = new MoveAction(direction);
-            return entity.ExecuteAction(moveAction, context.ActionContext);
-        }
-
-        // No valid directions - just wait
-        return new ActionResult
-        {
-            Success = true,
-            Message = "No valid wander directions, waiting",
-            ConsumesTurn = true
-        };
+        var dir = directions[GD.RandRange(0, directions.Count - 1)];
+        var moveGoal = new MoveDirectionGoal(dir, originalIntent: this);
+        context.AIComponent.GoalStack.Push(moveGoal);
+        _moved = true;
     }
 
-    public override string GetName() => "Wander";
+    private List<Vector2I> GetValidDirections(AIContext context)
+    {
+        var validDirs = new List<Vector2I>();
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
+        var currentPos = context.Entity.GridPosition;
+
+        // All 8 directions
+        var directions = new Vector2I[]
+        {
+            new Vector2I(-1, -1), new Vector2I(0, -1), new Vector2I(1, -1),
+            new Vector2I(-1, 0),                       new Vector2I(1, 0),
+            new Vector2I(-1, 1),  new Vector2I(0, 1),  new Vector2I(1, 1)
+        };
+
+        foreach (var dir in directions)
+        {
+            var targetPos = new GridPosition(currentPos.X + dir.X, currentPos.Y + dir.Y);
+
+            // Check if walkable
+            if (!mapSystem.IsWalkable(targetPos))
+                continue;
+
+            // Check if occupied by another entity
+            var entityAtPos = entityManager.GetEntityAtPosition(targetPos);
+            if (entityAtPos != null)
+                continue;
+
+            // Check radius constraint if present
+            if (Center.HasValue && Radius.HasValue)
+            {
+                int distFromCenter = DistanceHelper.ChebyshevDistance(targetPos, Center.Value);
+                if (distFromCenter > Radius.Value)
+                    continue;
+            }
+
+            validDirs.Add(dir);
+        }
+
+        return validDirs;
+    }
+
+    public override string GetName()
+    {
+        if (Center.HasValue)
+            return $"Wander (around {Center.Value}, radius {Radius})";
+        return "Wander";
+    }
 }
