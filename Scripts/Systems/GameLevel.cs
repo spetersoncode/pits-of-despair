@@ -7,6 +7,7 @@ using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Input;
+using PitsOfDespair.Systems.Projectiles;
 using PitsOfDespair.Systems.Spawning;
 using PitsOfDespair.UI;
 using System.Collections.Generic;

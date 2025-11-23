@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Projectiles;
 
 namespace PitsOfDespair.Systems;
 
@@ -433,37 +434,139 @@ public partial class TextRenderer : Control
 	}
 
 	/// <summary>
-	/// Draws an animated projectile line/beam.
+	/// Draws an animated projectile with shape and trail support.
 	/// </summary>
 	private void DrawProjectileLine(ProjectileData projectile, Vector2 offset)
 	{
-		// Get current position based on animation progress
 		Vector2 currentPos = projectile.GetCurrentPosition();
+		Vector2 currentDrawPos = GetProjectileDrawPosition(currentPos, offset);
+		Vector2 direction = projectile.GetDirection();
 
-		// Calculate current draw position (center of tile)
-		Vector2 currentWorldPos = new Vector2(
-			currentPos.X * TileSize + TileSize / 2.0f - 2.0f,
-			currentPos.Y * TileSize - TileSize / 2.0f + 2.0f
+		// Draw trail first (behind the head)
+		if (projectile.TrailPositions.Count > 0)
+		{
+			DrawProjectileTrail(projectile, offset);
+		}
+
+		// Draw projectile head
+		DrawProjectileShape(projectile.Definition, currentDrawPos, direction);
+	}
+
+	/// <summary>
+	/// Converts a tile position to screen draw position for projectiles.
+	/// </summary>
+	private Vector2 GetProjectileDrawPosition(Vector2 tilePos, Vector2 offset)
+	{
+		return offset + new Vector2(
+			tilePos.X * TileSize + TileSize / 2.0f - 2.0f,
+			tilePos.Y * TileSize - TileSize / 2.0f + 2.0f
 		);
-		Vector2 currentDrawPos = offset + currentWorldPos;
+	}
 
-		// Calculate direction vector from origin to target
-		Vector2 direction = new Vector2(
-			projectile.Target.X - projectile.Origin.X,
-			projectile.Target.Y - projectile.Origin.Y
-		).Normalized();
+	/// <summary>
+	/// Draws the projectile trail (fading segments behind the head).
+	/// </summary>
+	private void DrawProjectileTrail(ProjectileData projectile, Vector2 offset)
+	{
+		var definition = projectile.Definition!;
+		var trailPositions = projectile.TrailPositions;
 
-		// Create a line segment centered at current position
-		// Length of 1.5 tiles
-		float segmentLength = TileSize * 1.5f;
-		Vector2 halfSegment = direction * (segmentLength / 2.0f);
+		for (int i = 0; i < trailPositions.Count; i++)
+		{
+			Vector2 trailDrawPos = GetProjectileDrawPosition(trailPositions[i], offset);
+			Color trailColor = definition.GetTrailColorAtSegment(i, trailPositions.Count);
 
-		Vector2 lineStart = currentDrawPos - halfSegment;
-		Vector2 lineEnd = currentDrawPos + halfSegment;
+			// Draw smaller version of shape for trail
+			float trailScale = 1.0f - ((float)i / trailPositions.Count) * 0.5f;
+			float trailSize = definition.Size * trailScale;
 
-		// Draw moving line segment
-		Color lineColor = new Color(projectile.Color.R, projectile.Color.G, projectile.Color.B, 0.8f);
-		DrawLine(lineStart, lineEnd, lineColor, 3.0f);
+			switch (definition.Shape)
+			{
+				case ProjectileShape.Circle:
+					DrawCircle(trailDrawPos, trailSize * 0.7f, trailColor);
+					break;
+				case ProjectileShape.Diamond:
+					DrawDiamond(trailDrawPos, trailSize * 0.7f, trailColor);
+					break;
+				case ProjectileShape.Triangle:
+					DrawTriangle(trailDrawPos, trailSize * 0.7f, projectile.GetDirection(), trailColor);
+					break;
+				case ProjectileShape.Line:
+					// Line trails are just dots
+					DrawCircle(trailDrawPos, 2.0f, trailColor);
+					break;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Draws the projectile head based on its shape definition.
+	/// </summary>
+	private void DrawProjectileShape(ProjectileDefinition definition, Vector2 position, Vector2 direction)
+	{
+		Color headColor = new Color(definition.HeadColor.R, definition.HeadColor.G, definition.HeadColor.B, 0.9f);
+
+		switch (definition.Shape)
+		{
+			case ProjectileShape.Circle:
+				DrawCircle(position, definition.Size, headColor);
+				break;
+
+			case ProjectileShape.Diamond:
+				DrawDiamond(position, definition.Size, headColor);
+				break;
+
+			case ProjectileShape.Triangle:
+				DrawTriangle(position, definition.Size, direction, headColor);
+				break;
+
+			case ProjectileShape.Line:
+				DrawProjectileLineShape(position, direction, definition.Size, definition.LineWidth, headColor);
+				break;
+		}
+	}
+
+	/// <summary>
+	/// Draws a diamond shape at the given position.
+	/// </summary>
+	private void DrawDiamond(Vector2 center, float size, Color color)
+	{
+		Vector2[] points = new Vector2[]
+		{
+			center + new Vector2(0, -size),      // Top
+			center + new Vector2(size, 0),       // Right
+			center + new Vector2(0, size),       // Bottom
+			center + new Vector2(-size, 0)       // Left
+		};
+		DrawPolygon(points, new Color[] { color });
+	}
+
+	/// <summary>
+	/// Draws a triangle pointing in the given direction.
+	/// </summary>
+	private void DrawTriangle(Vector2 center, float size, Vector2 direction, Color color)
+	{
+		// Calculate perpendicular vector for triangle base
+		Vector2 perp = new Vector2(-direction.Y, direction.X);
+
+		// Triangle points: tip in direction of travel, base behind
+		Vector2 tip = center + direction * size;
+		Vector2 baseLeft = center - direction * size * 0.5f + perp * size * 0.6f;
+		Vector2 baseRight = center - direction * size * 0.5f - perp * size * 0.6f;
+
+		Vector2[] points = new Vector2[] { tip, baseLeft, baseRight };
+		DrawPolygon(points, new Color[] { color });
+	}
+
+	/// <summary>
+	/// Draws a line segment projectile shape.
+	/// </summary>
+	private void DrawProjectileLineShape(Vector2 center, Vector2 direction, float length, float width, Color color)
+	{
+		Vector2 halfSegment = direction * (length * TileSize / 12.0f);
+		Vector2 lineStart = center - halfSegment;
+		Vector2 lineEnd = center + halfSegment;
+		DrawLine(lineStart, lineEnd, color, width);
 	}
 
 	public override void _ExitTree()

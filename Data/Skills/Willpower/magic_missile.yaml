@@ -5,6 +5,7 @@ targeting: enemy
 range: 6
 willpowerCost: 3
 tier: 1
+projectile: magic_missile
 prerequisites:
   wil: 1
 tags:

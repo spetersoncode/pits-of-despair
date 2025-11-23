@@ -100,6 +100,17 @@ public class SkillDefinition
     public int Tier { get; set; } = 1;
 
     /// <summary>
+    /// Projectile type ID for ranged skills (e.g., "magic_missile", "fireball").
+    /// If set, skill spawns a projectile that applies effects on impact.
+    /// </summary>
+    public string? Projectile { get; set; } = null;
+
+    /// <summary>
+    /// Whether this skill uses a projectile.
+    /// </summary>
+    public bool HasProjectile => !string.IsNullOrEmpty(Projectile);
+
+    /// <summary>
     /// Gets the skill category as an enum value.
     /// </summary>
     public SkillCategory GetCategory()

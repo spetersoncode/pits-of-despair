@@ -6,6 +6,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Systems.Projectiles;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Skills;
@@ -117,11 +118,81 @@ public static class SkillExecutor
             return result;
         }
 
+        // Check if skill uses a projectile
+        if (skillDef.HasProjectile)
+        {
+            return ExecuteProjectileSkill(caster, skillDef, targets, context, result);
+        }
+
+        // Non-projectile skill: apply effects immediately
+        return ExecuteImmediateSkill(caster, skillDef, targets, context, result);
+    }
+
+    /// <summary>
+    /// Executes a skill that spawns projectiles with deferred effects.
+    /// </summary>
+    private static SkillResult ExecuteProjectileSkill(
+        BaseEntity caster,
+        SkillDefinition skillDef,
+        List<BaseEntity> targets,
+        ActionContext context,
+        SkillResult result)
+    {
+        var projectileDef = ProjectileDefinitions.GetById(skillDef.Projectile!);
+        if (projectileDef == null)
+        {
+            GD.PrintErr($"SkillExecutor: Unknown projectile type '{skillDef.Projectile}' in skill '{skillDef.Id}'");
+            return ExecuteImmediateSkill(caster, skillDef, targets, context, result);
+        }
+
+        // Spawn projectile for each target
+        foreach (var target in targets)
+        {
+            // Create effect chain for this target
+            foreach (var effectDef in skillDef.Effects)
+            {
+                var effect = Effect.CreateFromSkillDefinition(effectDef);
+                if (effect == null)
+                {
+                    GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
+                    continue;
+                }
+
+                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef);
+
+                // Spawn projectile - effect will be applied on impact
+                context.ProjectileSystem.SpawnSkillProjectile(
+                    caster.GridPosition,
+                    target.GridPosition,
+                    projectileDef,
+                    effect,
+                    effectContext,
+                    caster,
+                    target);
+
+                result.AddAffectedEntity(target);
+            }
+        }
+
+        result.AddMessage($"{caster.DisplayName} uses {skillDef.Name}!");
+        result.Success = true;
+        return result;
+    }
+
+    /// <summary>
+    /// Executes a skill with immediate effect application.
+    /// </summary>
+    private static SkillResult ExecuteImmediateSkill(
+        BaseEntity caster,
+        SkillDefinition skillDef,
+        List<BaseEntity> targets,
+        ActionContext context,
+        SkillResult result)
+    {
         bool anyEffectSucceeded = false;
 
         foreach (var effectDef in skillDef.Effects)
         {
-            // Use unified effect system
             var effect = Effect.CreateFromSkillDefinition(effectDef);
             if (effect == null)
             {
@@ -129,7 +200,6 @@ public static class SkillExecutor
                 continue;
             }
 
-            // Apply effect to all targets using unified context
             foreach (var target in targets)
             {
                 var effectContext = EffectContext.ForSkill(target, caster, context, skillDef);
@@ -152,14 +222,12 @@ public static class SkillExecutor
             }
         }
 
-        // If no messages were added, add a generic one
         if (result.Messages.Count == 0)
         {
             result.AddMessage($"{caster.DisplayName} uses {skillDef.Name}!");
         }
 
         result.Success = anyEffectSucceeded || skillDef.Effects.Count == 0;
-
         return result;
     }
 
