@@ -1,4 +1,5 @@
 using PitsOfDespair.Actions;
+using PitsOfDespair.Data;
 using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Debug;
@@ -32,13 +33,41 @@ public class DebugContext
     /// </summary>
     public PlayerVisionSystem VisionSystem { get; }
 
+    /// <summary>
+    /// Cursor targeting system for interactive tile selection.
+    /// </summary>
+    public CursorTargetingSystem TargetingSystem { get; }
+
+    /// <summary>
+    /// Data loader for looking up creature and item definitions.
+    /// </summary>
+    public DataLoader DataLoader { get; }
+
+    /// <summary>
+    /// AI system for registering spawned creature AI components.
+    /// </summary>
+    public AISystem AISystem { get; }
+
+    /// <summary>
+    /// Movement system for registering spawned creature movement components.
+    /// </summary>
+    public MovementSystem MovementSystem { get; }
+
     public DebugContext(
         ActionContext actionContext,
         TurnManager turnManager,
-        PlayerVisionSystem visionSystem)
+        PlayerVisionSystem visionSystem,
+        CursorTargetingSystem targetingSystem,
+        DataLoader dataLoader,
+        AISystem aiSystem,
+        MovementSystem movementSystem)
     {
         ActionContext = actionContext;
         TurnManager = turnManager;
         VisionSystem = visionSystem;
+        TargetingSystem = targetingSystem;
+        DataLoader = dataLoader;
+        AISystem = aiSystem;
+        MovementSystem = movementSystem;
     }
 }

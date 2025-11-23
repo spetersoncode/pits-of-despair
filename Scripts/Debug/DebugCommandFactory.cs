@@ -13,10 +13,13 @@ public static class DebugCommandFactory
 {
     private static readonly Dictionary<string, Func<DebugCommand>> _commandRegistry = new()
     {
+        { "ally", () => new AllyCommand() },
         { "give", () => new GiveCommand() },
         { "help", () => new HelpCommand() },
+        { "level", () => new LevelCommand() },
         { "reveal", () => new RevealCommand() },
         { "skill", () => new SkillCommand() },
+        { "spawn", () => new SpawnCommand() },
         { "stairs", () => new StairsCommand() }
     };
 

@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Debug;
+using PitsOfDespair.Systems;
 using PitsOfDespair.Systems.Input.Processors;
+using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.UI;
 
@@ -24,6 +26,10 @@ public partial class DebugConsoleModal : CenterContainer
     private IReadOnlyList<string> _currentSuggestions = new List<string>();
     private int _selectedIndex = -1;
     private DebugAutocomplete.AutocompleteContext _currentContext;
+
+    // Targeting state for spawn/ally commands
+    private TargetingRequest _pendingTargetingRequest;
+    private bool _isWaitingForTargeting = false;
 
     public bool IsDebugModeActive => _debugModeActive;
 
@@ -253,17 +259,31 @@ public partial class DebugConsoleModal : CenterContainer
         var cleanInput = currentText.StartsWith('/') ? currentText.Substring(1) : currentText;
 
         string newText;
+        string commandName;
+        int nextArgIndex;
+
         if (_currentContext.IsArgumentContext)
         {
             // Replace just the current argument being typed
             // Find where the current value starts and replace from there
             var beforeCurrentValue = cleanInput.Substring(0, cleanInput.Length - _currentContext.CurrentValue.Length);
             newText = "/" + beforeCurrentValue + suggestion;
+            commandName = _currentContext.CommandName;
+            nextArgIndex = _currentContext.ArgIndex + 1;
         }
         else
         {
             // Replace the whole command
             newText = "/" + suggestion;
+            commandName = suggestion;
+            nextArgIndex = 0;
+        }
+
+        // Check if the command expects more arguments and add trailing space if so
+        var nextSuggestions = DebugCommandFactory.GetArgumentSuggestions(commandName, nextArgIndex, "");
+        if (nextSuggestions != null && nextSuggestions.Count > 0)
+        {
+            newText += " ";
         }
 
         _commandInput.Text = newText;
@@ -328,9 +348,169 @@ public partial class DebugConsoleModal : CenterContainer
 
         var result = command.Execute(_debugContext, args);
 
-        if (result != null)
+        if (result == null)
+        {
+            return;
+        }
+
+        // Handle targeting requests
+        if (result.RequiresTargeting)
+        {
+            StartTargetingForSpawn(result.TargetingRequest);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(result.Message))
         {
             _messageLog?.AddMessage(result.Message, result.MessageColor);
+        }
+    }
+
+    private void StartTargetingForSpawn(TargetingRequest request)
+    {
+        if (_debugContext?.TargetingSystem == null || _debugContext?.ActionContext?.Player == null)
+        {
+            _messageLog?.AddMessage("Targeting system not available.", Palette.ToHex(Palette.Danger));
+            return;
+        }
+
+        _pendingTargetingRequest = request;
+        _isWaitingForTargeting = true;
+
+        // Connect to targeting signals
+        var targetingSystem = _debugContext.TargetingSystem;
+        targetingSystem.Connect(CursorTargetingSystem.SignalName.TargetConfirmed,
+            Callable.From<Vector2I>(OnTargetConfirmed));
+        targetingSystem.Connect(CursorTargetingSystem.SignalName.CursorCanceled,
+            Callable.From<int>(OnTargetingCanceled));
+
+        // Start tile targeting with large range within LOS
+        var definition = TargetingDefinition.Tile(range: 20, requiresLOS: true);
+        targetingSystem.StartTargeting(
+            _debugContext.ActionContext.Player,
+            definition,
+            _debugContext.ActionContext
+        );
+
+        _messageLog?.AddMessage("Select target tile...", Palette.ToHex(Palette.Alert));
+    }
+
+    private void OnTargetConfirmed(Vector2I targetPosition)
+    {
+        DisconnectTargetingSignals();
+
+        if (_pendingTargetingRequest == null)
+        {
+            return;
+        }
+
+        var position = new GridPosition(targetPosition.X, targetPosition.Y);
+        var request = _pendingTargetingRequest;
+        _pendingTargetingRequest = null;
+        _isWaitingForTargeting = false;
+
+        // Check if position is valid for spawning
+        var mapSystem = _debugContext.ActionContext.MapSystem;
+        var entityManager = _debugContext.ActionContext.EntityManager;
+
+        if (!mapSystem.IsWalkable(position))
+        {
+            _messageLog?.AddMessage("Cannot spawn on non-walkable tile.", Palette.ToHex(Palette.Danger));
+            return;
+        }
+
+        if (entityManager.IsPositionOccupied(position))
+        {
+            _messageLog?.AddMessage("Cannot spawn on occupied tile.", Palette.ToHex(Palette.Danger));
+            return;
+        }
+
+        // Spawn the entity
+        var entityFactory = _debugContext.ActionContext.EntityFactory;
+
+        if (request.EntityType == SpawnEntityType.Creature)
+        {
+            var creature = entityFactory.CreateCreature(request.EntityId, position);
+            if (creature == null)
+            {
+                _messageLog?.AddMessage($"Failed to create creature: {request.EntityId}", Palette.ToHex(Palette.Danger));
+                return;
+            }
+
+            if (request.MakeAlly)
+            {
+                entityFactory.SetupAsFriendlyCompanion(creature, _debugContext.ActionContext.Player);
+            }
+
+            entityManager.AddEntity(creature);
+
+            // Register components with their respective systems so the creature functions properly
+            var movementComponent = creature.GetNodeOrNull<Components.MovementComponent>("MovementComponent");
+            if (movementComponent != null)
+            {
+                _debugContext.MovementSystem?.RegisterMovementComponent(movementComponent);
+            }
+
+            var attackComponent = creature.GetNodeOrNull<Components.AttackComponent>("AttackComponent");
+            if (attackComponent != null)
+            {
+                _debugContext.ActionContext.CombatSystem?.RegisterAttackComponent(attackComponent);
+            }
+
+            var aiComponent = creature.GetNodeOrNull<Components.AIComponent>("AIComponent");
+            if (aiComponent != null)
+            {
+                _debugContext.AISystem?.RegisterAIComponent(aiComponent);
+            }
+
+            string allyText = request.MakeAlly ? " as ally" : "";
+            _messageLog?.AddMessage($"Spawned {request.EntityId}{allyText} at ({position.X}, {position.Y}).", Palette.ToHex(Palette.Success));
+        }
+        else
+        {
+            var item = entityFactory.CreateItem(request.EntityId, position);
+            if (item == null)
+            {
+                _messageLog?.AddMessage($"Failed to create item: {request.EntityId}", Palette.ToHex(Palette.Danger));
+                return;
+            }
+
+            entityManager.AddEntity(item);
+            _messageLog?.AddMessage($"Spawned {request.EntityId} at ({position.X}, {position.Y}).", Palette.ToHex(Palette.Success));
+        }
+    }
+
+    private void OnTargetingCanceled(int mode)
+    {
+        DisconnectTargetingSignals();
+
+        _pendingTargetingRequest = null;
+        _isWaitingForTargeting = false;
+
+        _messageLog?.AddMessage("Spawn cancelled.", Palette.ToHex(Palette.Disabled));
+    }
+
+    private void DisconnectTargetingSignals()
+    {
+        if (_debugContext?.TargetingSystem == null)
+        {
+            return;
+        }
+
+        var targetingSystem = _debugContext.TargetingSystem;
+
+        if (targetingSystem.IsConnected(CursorTargetingSystem.SignalName.TargetConfirmed,
+            Callable.From<Vector2I>(OnTargetConfirmed)))
+        {
+            targetingSystem.Disconnect(CursorTargetingSystem.SignalName.TargetConfirmed,
+                Callable.From<Vector2I>(OnTargetConfirmed));
+        }
+
+        if (targetingSystem.IsConnected(CursorTargetingSystem.SignalName.CursorCanceled,
+            Callable.From<int>(OnTargetingCanceled)))
+        {
+            targetingSystem.Disconnect(CursorTargetingSystem.SignalName.CursorCanceled,
+                Callable.From<int>(OnTargetingCanceled));
         }
     }
 
@@ -346,5 +526,8 @@ public partial class DebugConsoleModal : CenterContainer
         {
             _suggestionList.Disconnect(ItemList.SignalName.ItemSelected, Callable.From<long>(OnSuggestionSelected));
         }
+
+        // Clean up any pending targeting connections
+        DisconnectTargetingSignals();
     }
 }

@@ -249,10 +249,15 @@ public partial class GameLevel : Node
         _nearbyEntitiesTracker.Initialize(_player, _entityManager, _visionSystem);
 
         // Create debug context for debug commands (composes ActionContext for core systems)
+        var dataLoader = GetNode<Data.DataLoader>("/root/DataLoader");
         var debugContext = new DebugContext(
             actionContext,
             _turnManager,
-            _visionSystem
+            _visionSystem,
+            _cursorSystem,
+            dataLoader,
+            _aiSystem,
+            _movementSystem
         );
 
         // Get persistent debug mode state from GameManager (if it exists)
