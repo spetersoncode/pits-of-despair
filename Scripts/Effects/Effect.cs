@@ -1,32 +1,107 @@
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Effects;
 
 /// <summary>
 /// Base class for all effects in the game.
-/// Effects can be applied by items, spells, traps, or environmental hazards.
+/// Effects can be applied by items, skills, on-hit procs, traps, or environmental hazards.
+/// This is the unified effect system - all effect implementations inherit from this class.
 /// </summary>
 public abstract class Effect
 {
     /// <summary>
-    /// The name of this effect type.
+    /// The type identifier for this effect (e.g., "damage", "heal", "apply_condition").
+    /// Used for serialization and factory creation.
     /// </summary>
-    public abstract string Name { get; }
+    public abstract string Type { get; }
 
     /// <summary>
-    /// Applies this effect to the target entity.
+    /// Display name for this effect (defaults to Type if not overridden).
     /// </summary>
-    /// <param name="target">The entity receiving the effect.</param>
-    /// <param name="context">The action context containing game systems.</param>
+    public virtual string Name => Type;
+
+    /// <summary>
+    /// Applies this effect using the unified context.
+    /// Target, caster, and game systems are all accessible via context.
+    /// </summary>
+    /// <param name="context">The effect context containing target, caster, and game systems.</param>
     /// <returns>The result of applying the effect.</returns>
-    public abstract EffectResult Apply(BaseEntity target, ActionContext context);
+    public abstract EffectResult Apply(EffectContext context);
+
+    /// <summary>
+    /// Legacy method for backward compatibility during migration.
+    /// Wraps the old signature into the new context-based approach.
+    /// </summary>
+    [System.Obsolete("Use Apply(EffectContext) instead. This method exists for backward compatibility.")]
+    public EffectResult Apply(BaseEntity target, ActionContext actionContext)
+    {
+        var context = EffectContext.ForItem(target, target, actionContext);
+        return Apply(context);
+    }
+
+    /// <summary>
+    /// Creates an effect from a unified effect definition.
+    /// </summary>
+    public static Effect? CreateFromDefinition(EffectDefinition definition)
+    {
+        return definition.Type?.ToLower() switch
+        {
+            "heal" => new HealEffect(definition),
+            "damage" => new DamageEffect(definition),
+            "apply_condition" => new ApplyConditionEffect(definition),
+            "teleport" => new TeleportEffect(definition),
+            "blink" => new BlinkEffect(definition),
+            "knockback" => new KnockbackEffect(definition),
+            "restore_willpower" => new RestoreWillpowerEffect(definition),
+            "charm" => new CharmEffect(),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Creates an effect from a skill effect definition.
+    /// Maps skill effect definitions to unified effects.
+    /// </summary>
+    public static Effect? CreateFromSkillDefinition(SkillEffectDefinition definition)
+    {
+        // Convert SkillEffectDefinition to unified EffectDefinition
+        var effectDef = EffectDefinition.FromSkillEffect(definition);
+        return CreateFromDefinition(effectDef);
+    }
+
+    /// <summary>
+    /// Helper to calculate a scaled amount with optional dice and stat scaling.
+    /// Common pattern used by damage, healing, and other scaled effects.
+    /// </summary>
+    protected int CalculateScaledAmount(int baseAmount, string? dice, string? scalingStat, float scalingMultiplier, EffectContext context)
+    {
+        int amount = baseAmount;
+
+        // Add dice roll if specified
+        if (!string.IsNullOrEmpty(dice))
+        {
+            amount += DiceRoller.Roll(dice);
+        }
+
+        // Add stat scaling if we have a caster
+        if (!string.IsNullOrEmpty(scalingStat) && context.Caster != null)
+        {
+            int statValue = context.GetCasterStat(scalingStat);
+            amount += (int)(statValue * scalingMultiplier);
+        }
+
+        return amount;
+    }
 }
 
 /// <summary>
 /// Represents the result of applying an effect.
+/// Unified result type for all effect sources (items, skills, on-hit, etc.).
 /// </summary>
 public class EffectResult
 {
@@ -45,10 +120,32 @@ public class EffectResult
     /// </summary>
     public string MessageColor { get; set; }
 
+    /// <summary>
+    /// The entity affected by this effect (if applicable).
+    /// Useful for chaining effects or tracking what was hit.
+    /// </summary>
+    public BaseEntity? AffectedEntity { get; set; }
+
     public EffectResult(bool success, string message, string? messageColor = null)
     {
         Success = success;
         Message = message;
         MessageColor = messageColor ?? Palette.ToHex(Palette.Default);
+    }
+
+    /// <summary>
+    /// Creates a successful effect result.
+    /// </summary>
+    public static EffectResult CreateSuccess(string message, string? color = null, BaseEntity? affected = null)
+    {
+        return new EffectResult(true, message, color) { AffectedEntity = affected };
+    }
+
+    /// <summary>
+    /// Creates a failed effect result.
+    /// </summary>
+    public static EffectResult CreateFailure(string message, string? color = null)
+    {
+        return new EffectResult(false, message, color);
     }
 }

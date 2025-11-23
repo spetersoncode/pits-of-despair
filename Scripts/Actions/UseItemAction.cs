@@ -1,4 +1,5 @@
 using PitsOfDespair.Components;
+using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using System.Text;
@@ -105,13 +106,14 @@ public class UseItemAction : Action
             return ActionResult.CreateFailure($"{itemName} has no effects.");
         }
 
-        // Apply all effects
+        // Apply all effects using unified context
+        var effectContext = EffectContext.ForItem(actor, actor, context);
         var messages = new StringBuilder();
         bool anyEffectSucceeded = false;
 
         foreach (var effect in effects)
         {
-            var effectResult = effect.Apply(actor, context);
+            var effectResult = effect.Apply(effectContext);
             if (effectResult.Success)
             {
                 anyEffectSucceeded = true;

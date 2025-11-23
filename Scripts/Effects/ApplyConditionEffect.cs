@@ -1,21 +1,23 @@
 using Godot;
-using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
-using PitsOfDespair.Core;
-using PitsOfDespair.Entities;
 using PitsOfDespair.Conditions;
+using PitsOfDespair.Core;
 
 namespace PitsOfDespair.Effects;
 
 /// <summary>
 /// Effect that applies a condition (buff/debuff) to the target entity.
+/// Supports stat scaling for amount calculation.
 /// </summary>
 public class ApplyConditionEffect : Effect
 {
+    public override string Type => "apply_condition";
+    public override string Name => "Apply Condition";
+
     /// <summary>
     /// The type of condition to apply (e.g., "armor_buff", "poison", "paralyze", "confusion").
     /// </summary>
-    public string ConditionType { get; set; }
+    public string? ConditionType { get; set; }
 
     /// <summary>
     /// The amount/magnitude of the condition effect.
@@ -24,11 +26,18 @@ public class ApplyConditionEffect : Effect
 
     /// <summary>
     /// Duration as dice notation (e.g., "10", "2d3").
-    /// Resolved by the Condition when applied.
     /// </summary>
     public string Duration { get; set; }
 
-    public override string Name => "Apply Condition";
+    /// <summary>
+    /// Stat to scale amount with.
+    /// </summary>
+    public string? ScalingStat { get; set; }
+
+    /// <summary>
+    /// Multiplier for stat scaling.
+    /// </summary>
+    public float ScalingMultiplier { get; set; } = 1.0f;
 
     public ApplyConditionEffect()
     {
@@ -44,28 +53,41 @@ public class ApplyConditionEffect : Effect
         Duration = duration;
     }
 
-    public override EffectResult Apply(BaseEntity target, ActionContext context)
+    /// <summary>
+    /// Creates an apply condition effect from a unified effect definition.
+    /// </summary>
+    public ApplyConditionEffect(EffectDefinition definition)
     {
-        var name = target.DisplayName;
+        ConditionType = definition.ConditionType;
+        Amount = definition.Amount;
+        Duration = definition.GetDurationString();
+        ScalingStat = definition.ScalingStat;
+        ScalingMultiplier = definition.ScalingMultiplier;
+    }
+
+    public override EffectResult Apply(EffectContext context)
+    {
+        var target = context.Target;
+        var targetName = target.DisplayName;
         var conditionComponent = target.GetNodeOrNull<ConditionComponent>("ConditionComponent");
 
         if (conditionComponent == null)
         {
-            return new EffectResult(
-                false,
-                $"{name} cannot receive conditions.",
+            return EffectResult.CreateFailure(
+                $"{targetName} cannot receive conditions.",
                 Palette.ToHex(Palette.Disabled)
             );
         }
 
-        // Create the appropriate condition based on type
-        // Duration resolution is handled by the Condition itself via ConditionComponent
-        var condition = CreateCondition(ConditionType, Amount, Duration);
+        // Calculate amount with scaling
+        int finalAmount = CalculateScaledAmount(Amount, null, ScalingStat, ScalingMultiplier, context);
+
+        // Create condition using the factory
+        var condition = ConditionFactory.Create(ConditionType, finalAmount, Duration);
         if (condition == null)
         {
             GD.PrintErr($"ApplyConditionEffect: Unknown condition type '{ConditionType}'");
-            return new EffectResult(
-                false,
+            return EffectResult.CreateFailure(
                 $"Failed to apply condition.",
                 Palette.ToHex(Palette.Disabled)
             );
@@ -74,38 +96,11 @@ public class ApplyConditionEffect : Effect
         // Add condition to target (message will be emitted via signal)
         conditionComponent.AddCondition(condition);
 
-        // Return success (the actual message is emitted by ConditionComponent signal)
-        return new EffectResult(
-            true,
+        // Return success - the actual message is emitted by ConditionComponent signal
+        return EffectResult.CreateSuccess(
             string.Empty,
-            Palette.ToHex(Palette.Success)
+            Palette.ToHex(Palette.StatusBuff),
+            target
         );
-    }
-
-    /// <summary>
-    /// Factory method to create Condition instances from type string.
-    /// </summary>
-    private Condition? CreateCondition(string conditionType, int amount, string duration)
-    {
-        switch (conditionType.ToLower())
-        {
-            case "armor_buff":
-                return new StatBuffCondition(StatType.Armor, amount, duration);
-
-            case "strength_buff":
-                return new StatBuffCondition(StatType.Strength, amount, duration);
-
-            case "agility_buff":
-                return new StatBuffCondition(StatType.Agility, amount, duration);
-
-            case "endurance_buff":
-                return new StatBuffCondition(StatType.Endurance, amount, duration);
-
-            case "confusion":
-                return new ConfusionCondition(duration);
-
-            default:
-                return null;
-        }
     }
 }

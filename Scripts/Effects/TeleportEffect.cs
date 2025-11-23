@@ -9,41 +9,67 @@ using System.Linq;
 namespace PitsOfDespair.Effects;
 
 /// <summary>
-/// Teleports the target to a random unoccupied location on the current map.
-/// If the target is the player, all player faction companions are teleported nearby.
+/// Teleports the target to a random unoccupied location.
+/// Supports range-limited teleportation (for skills) or full-map teleportation (for items).
+/// If TeleportCompanions is true and the target is the player, companions are teleported nearby.
 /// </summary>
 public class TeleportEffect : Effect
 {
     private const int CompanionTeleportRange = 3;
 
+    public override string Type => "teleport";
     public override string Name => "Teleport";
 
     /// <summary>
-    /// Applies the teleport effect to the target entity.
-    /// Teleports the target to a random walkable, unoccupied position anywhere on the map.
-    /// If the target is the player, companions are teleported nearby.
+    /// Range for teleportation. 0 = anywhere on the map.
     /// </summary>
-    /// <param name="target">The entity to teleport</param>
-    /// <param name="context">The action context containing map and entity information</param>
-    /// <returns>The result of the effect application</returns>
-    public override EffectResult Apply(BaseEntity target, ActionContext context)
+    public int Range { get; set; } = 0;
+
+    /// <summary>
+    /// Whether to teleport companions when the target is the player.
+    /// Typically true for item teleports, false for skill teleports.
+    /// </summary>
+    public bool TeleportCompanions { get; set; } = true;
+
+    public TeleportEffect() { }
+
+    /// <summary>
+    /// Creates a teleport effect from a unified effect definition.
+    /// </summary>
+    public TeleportEffect(EffectDefinition definition)
     {
+        Range = definition.Range > 0 ? definition.Range : definition.Amount;
+        // Default: teleport companions for items (no scaling stat), don't for skills
+        TeleportCompanions = string.IsNullOrEmpty(definition.ScalingStat);
+    }
+
+    public override EffectResult Apply(EffectContext context)
+    {
+        var target = context.Target;
+        var targetName = target.DisplayName;
         var currentPos = target.GridPosition;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
 
-        // Get all walkable tiles on the map
-        var allWalkableTiles = context.MapSystem.GetAllWalkableTiles();
+        List<GridPosition> validPositions;
 
-        // Filter out occupied positions and current position
-        var validPositions = allWalkableTiles
-            .Where(pos => pos != currentPos && !context.EntityManager.IsPositionOccupied(pos))
-            .ToList();
+        if (Range <= 0)
+        {
+            // Teleport to any valid position on the map
+            validPositions = mapSystem.GetAllWalkableTiles()
+                .Where(pos => pos != currentPos && !entityManager.IsPositionOccupied(pos))
+                .ToList();
+        }
+        else
+        {
+            // Teleport within range
+            validPositions = FindValidPositionsInRange(currentPos, Range, context.ActionContext);
+        }
 
-        // If no valid positions found, the magic fizzles
         if (validPositions.Count == 0)
         {
-            return new EffectResult(
-                false,
-                $"{target.DisplayName} tries to teleport, but the magic fizzles!",
+            return EffectResult.CreateFailure(
+                $"{targetName} tries to teleport, but the magic fizzles!",
                 Palette.ToHex(Palette.Disabled)
             );
         }
@@ -55,56 +81,31 @@ public class TeleportEffect : Effect
         // Teleport the target
         target.SetGridPosition(newPos);
 
-        // If the target is the player, teleport companions nearby
-        if (target is Player)
+        // If the target is the player and we should teleport companions
+        if (TeleportCompanions && target is Player)
         {
-            TeleportCompanionsNearby(target, newPos, context);
+            TeleportCompanionsNearby(target, newPos, context.ActionContext);
         }
 
-        return new EffectResult(
-            true,
-            $"{target.DisplayName} teleports to a distant location!",
-            Palette.ToHex(Palette.ScrollTeleport)
+        string message = Range > 0
+            ? $"{targetName} teleports!"
+            : $"{targetName} teleports to a distant location!";
+
+        return EffectResult.CreateSuccess(
+            message,
+            Palette.ToHex(Palette.ScrollTeleport),
+            target
         );
-    }
-
-    /// <summary>
-    /// Teleports all player faction companions to positions near the player's new location.
-    /// </summary>
-    private void TeleportCompanionsNearby(BaseEntity player, GridPosition playerNewPos, ActionContext context)
-    {
-        // Find all player faction entities (excluding the player)
-        var companions = context.EntityManager.GetAllEntities()
-            .Where(e => e != player && e.Faction == Faction.Player)
-            .ToList();
-
-        if (companions.Count == 0)
-            return;
-
-        // Find valid positions near the player
-        var nearbyPositions = FindNearbyValidPositions(playerNewPos, CompanionTeleportRange, context);
-
-        // Teleport each companion to a nearby position
-        foreach (var companion in companions)
-        {
-            if (nearbyPositions.Count == 0)
-                break;
-
-            // Pick a random nearby position
-            int index = GD.RandRange(0, nearbyPositions.Count - 1);
-            var companionNewPos = nearbyPositions[index];
-            nearbyPositions.RemoveAt(index);
-
-            companion.SetGridPosition(companionNewPos);
-        }
     }
 
     /// <summary>
     /// Finds all valid (walkable, unoccupied) positions within range of the center position.
     /// </summary>
-    private List<GridPosition> FindNearbyValidPositions(GridPosition center, int range, ActionContext context)
+    private List<GridPosition> FindValidPositionsInRange(GridPosition center, int range, ActionContext context)
     {
         var validPositions = new List<GridPosition>();
+        var mapSystem = context.MapSystem;
+        var entityManager = context.EntityManager;
 
         for (int dx = -range; dx <= range; dx++)
         {
@@ -115,18 +116,13 @@ public class TeleportEffect : Effect
 
                 var checkPos = new GridPosition(center.X + dx, center.Y + dy);
 
-                // Check Chebyshev distance
                 if (DistanceHelper.ChebyshevDistance(center, checkPos) > range)
                     continue;
 
-                if (!context.MapSystem.IsWalkable(checkPos))
+                if (!mapSystem.IsWalkable(checkPos))
                     continue;
 
-                if (context.EntityManager.IsPositionOccupied(checkPos))
-                    continue;
-
-                // Also check if player is at this position
-                if (checkPos == center)
+                if (entityManager.IsPositionOccupied(checkPos))
                     continue;
 
                 validPositions.Add(checkPos);
@@ -134,5 +130,32 @@ public class TeleportEffect : Effect
         }
 
         return validPositions;
+    }
+
+    /// <summary>
+    /// Teleports all player faction companions to positions near the player's new location.
+    /// </summary>
+    private void TeleportCompanionsNearby(BaseEntity player, GridPosition playerNewPos, ActionContext context)
+    {
+        var companions = context.EntityManager.GetAllEntities()
+            .Where(e => e != player && e.Faction == Faction.Player)
+            .ToList();
+
+        if (companions.Count == 0)
+            return;
+
+        var nearbyPositions = FindValidPositionsInRange(playerNewPos, CompanionTeleportRange, context);
+
+        foreach (var companion in companions)
+        {
+            if (nearbyPositions.Count == 0)
+                break;
+
+            int index = GD.RandRange(0, nearbyPositions.Count - 1);
+            var companionNewPos = nearbyPositions[index];
+            nearbyPositions.RemoveAt(index);
+
+            companion.SetGridPosition(companionNewPos);
+        }
     }
 }

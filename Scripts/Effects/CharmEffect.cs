@@ -1,8 +1,6 @@
-using PitsOfDespair.Actions;
 using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
-using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Effects;
 
@@ -12,18 +10,21 @@ namespace PitsOfDespair.Effects;
 /// </summary>
 public class CharmEffect : Effect
 {
+    public override string Type => "charm";
     public override string Name => "Charm";
 
-    public override EffectResult Apply(BaseEntity target, ActionContext context)
+    public CharmEffect() { }
+
+    public override EffectResult Apply(EffectContext context)
     {
-        var name = target.DisplayName;
+        var target = context.Target;
+        var targetName = target.DisplayName;
 
         // Can't charm entities already in player faction
         if (target.Faction == Faction.Player)
         {
-            return new EffectResult(
-                false,
-                $"{name} is already friendly!",
+            return EffectResult.CreateFailure(
+                $"{targetName} is already friendly!",
                 Palette.ToHex(Palette.Disabled)
             );
         }
@@ -36,13 +37,13 @@ public class CharmEffect : Effect
         var aiComponent = target.GetNodeOrNull<AIComponent>("AIComponent");
         if (aiComponent != null)
         {
-            aiComponent.ProtectionTarget = context.Player;
+            aiComponent.ProtectionTarget = context.ActionContext.Player;
         }
 
-        return new EffectResult(
-            true,
-            $"{name} is charmed and joins your side!",
-            Palette.ToHex(Palette.ScrollCharm)
+        return EffectResult.CreateSuccess(
+            $"{targetName} is charmed and joins your side!",
+            Palette.ToHex(Palette.ScrollCharm),
+            target
         );
     }
 }

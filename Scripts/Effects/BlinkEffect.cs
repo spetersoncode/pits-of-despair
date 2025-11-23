@@ -1,7 +1,5 @@
 using Godot;
-using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
-using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using System.Collections.Generic;
 
@@ -10,15 +8,17 @@ namespace PitsOfDespair.Effects;
 /// <summary>
 /// Effect that teleports the target to a random valid position within range.
 /// Uses Chebyshev distance (diagonal-friendly) for range calculation.
+/// Similar to TeleportEffect but always range-limited (short-range blink).
 /// </summary>
 public class BlinkEffect : Effect
 {
+    public override string Type => "blink";
+    public override string Name => "Blink";
+
     /// <summary>
     /// Maximum distance to teleport (in Chebyshev distance).
     /// </summary>
     public int Range { get; set; }
-
-    public override string Name => "Blink";
 
     public BlinkEffect()
     {
@@ -31,10 +31,21 @@ public class BlinkEffect : Effect
         Range = range > 0 ? range : 5;
     }
 
-    public override EffectResult Apply(BaseEntity target, ActionContext context)
+    /// <summary>
+    /// Creates a blink effect from a unified effect definition.
+    /// </summary>
+    public BlinkEffect(EffectDefinition definition)
     {
-        var name = target.DisplayName;
+        Range = definition.Range > 0 ? definition.Range : 5;
+    }
+
+    public override EffectResult Apply(EffectContext context)
+    {
+        var target = context.Target;
+        var targetName = target.DisplayName;
         var currentPos = target.GridPosition;
+        var mapSystem = context.ActionContext.MapSystem;
+        var entityManager = context.ActionContext.EntityManager;
 
         // Find all valid positions within range
         var validPositions = new List<GridPosition>();
@@ -55,10 +66,10 @@ public class BlinkEffect : Effect
                     continue;
 
                 // Check if position is valid (walkable, unoccupied, in bounds)
-                if (!context.MapSystem.IsWalkable(checkPos))
+                if (!mapSystem.IsWalkable(checkPos))
                     continue;
 
-                if (context.EntityManager.IsPositionOccupied(checkPos))
+                if (entityManager.IsPositionOccupied(checkPos))
                     continue;
 
                 // This position is valid!
@@ -69,9 +80,8 @@ public class BlinkEffect : Effect
         // If no valid positions found, fail (but still consume scroll)
         if (validPositions.Count == 0)
         {
-            return new EffectResult(
-                false,
-                $"{name} tries to blink, but the magic fizzles!",
+            return EffectResult.CreateFailure(
+                $"{targetName} tries to blink, but the magic fizzles!",
                 Palette.ToHex(Palette.Disabled)
             );
         }
@@ -83,10 +93,10 @@ public class BlinkEffect : Effect
         // Teleport the target
         target.SetGridPosition(newPos);
 
-        return new EffectResult(
-            true,
-            $"{name} blinks to a new location!",
-            Palette.ToHex(Palette.ScrollBlink)
+        return EffectResult.CreateSuccess(
+            $"{targetName} blinks to a new location!",
+            Palette.ToHex(Palette.ScrollBlink),
+            target
         );
     }
 }

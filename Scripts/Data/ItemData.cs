@@ -478,6 +478,7 @@ public class ItemData
 
     /// <summary>
     /// Converts the YAML effect definitions into actual Effect instances.
+    /// Uses the unified Effect.CreateFromDefinition factory.
     /// </summary>
     public List<Effect> GetEffects()
     {
@@ -485,52 +486,20 @@ public class ItemData
 
         foreach (var effectDef in Effects)
         {
-            var effect = CreateEffect(effectDef);
+            // Convert item EffectDefinition to unified Effects.EffectDefinition
+            var unifiedDef = PitsOfDespair.Effects.EffectDefinition.FromItemEffect(effectDef);
+            var effect = Effect.CreateFromDefinition(unifiedDef);
             if (effect != null)
             {
                 effects.Add(effect);
             }
+            else
+            {
+                GD.PrintErr($"ItemData: Unknown effect type '{effectDef.Type}' in item '{Name}'");
+            }
         }
 
         return effects;
-    }
-
-    private Effect CreateEffect(EffectDefinition definition)
-    {
-        switch (definition.Type?.ToLower())
-        {
-            case "heal":
-                return new HealEffect(definition.Amount);
-
-            case "blink":
-                return new BlinkEffect(definition.Range);
-
-            case "apply_condition":
-                // Generic condition effect - uses ConditionType and duration from definition
-                string conditionType = definition.ConditionType ?? string.Empty;
-                // Coalesce: prefer DurationDice if set, otherwise use Duration as string
-                string duration = !string.IsNullOrEmpty(definition.DurationDice)
-                    ? definition.DurationDice
-                    : definition.Duration.ToString();
-
-                if (string.IsNullOrEmpty(conditionType))
-                {
-                    GD.PrintErr($"ItemData.CreateEffect: apply_condition effect in item '{Name}' has no conditionType specified");
-                    return null;
-                }
-
-                return new ApplyConditionEffect(conditionType, definition.Amount, duration);
-
-            case "teleport":
-                return new TeleportEffect();
-
-            case "charm":
-                return new CharmEffect();
-
-            default:
-                GD.PrintErr($"ItemData: Unknown effect type '{definition.Type}' in item '{Name}'");
-                return null;
-        }
     }
 }
 

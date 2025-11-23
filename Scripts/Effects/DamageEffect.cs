@@ -2,18 +2,17 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
-using PitsOfDespair.Entities;
-using PitsOfDespair.Helpers;
 
-namespace PitsOfDespair.Skills.Effects;
+namespace PitsOfDespair.Effects;
 
 /// <summary>
-/// Skill effect that deals damage to the target.
+/// Effect that deals damage to the target.
 /// Supports flat damage, dice-based damage, and stat scaling.
 /// </summary>
-public class DamageSkillEffect : SkillEffect
+public class DamageEffect : Effect
 {
     public override string Type => "damage";
+    public override string Name => "Damage";
 
     /// <summary>
     /// Flat damage amount.
@@ -40,44 +39,53 @@ public class DamageSkillEffect : SkillEffect
     /// </summary>
     public DamageType DamageType { get; set; } = DamageType.Bludgeoning;
 
-    public DamageSkillEffect() { }
+    public DamageEffect() { }
 
-    public DamageSkillEffect(SkillEffectDefinition definition)
+    /// <summary>
+    /// Creates a simple damage effect with a fixed amount.
+    /// </summary>
+    public DamageEffect(int amount, DamageType damageType = DamageType.Bludgeoning)
+    {
+        Amount = amount;
+        DamageType = damageType;
+    }
+
+    /// <summary>
+    /// Creates a damage effect from a unified effect definition.
+    /// </summary>
+    public DamageEffect(EffectDefinition definition)
     {
         Amount = definition.Amount;
         Dice = definition.Dice;
         ScalingStat = definition.ScalingStat;
         ScalingMultiplier = definition.ScalingMultiplier;
+
+        // Parse damage type if specified
+        if (!string.IsNullOrEmpty(definition.DamageType))
+        {
+            if (System.Enum.TryParse<DamageType>(definition.DamageType, ignoreCase: true, out var dt))
+            {
+                DamageType = dt;
+            }
+        }
     }
 
-    public override SkillEffectResult Apply(BaseEntity target, SkillEffectContext context)
+    public override EffectResult Apply(EffectContext context)
     {
+        var target = context.Target;
         var targetName = target.DisplayName;
         var healthComponent = target.GetNodeOrNull<HealthComponent>("HealthComponent");
 
         if (healthComponent == null)
         {
-            return SkillEffectResult.CreateFailure(
+            return EffectResult.CreateFailure(
                 $"{targetName} cannot be damaged.",
                 Palette.ToHex(Palette.Disabled)
             );
         }
 
-        // Calculate base damage
-        int damage = Amount;
-
-        // Add dice roll if specified
-        if (!string.IsNullOrEmpty(Dice))
-        {
-            damage += DiceRoller.Roll(Dice);
-        }
-
-        // Add stat scaling
-        if (!string.IsNullOrEmpty(ScalingStat))
-        {
-            int statValue = context.GetCasterStat(ScalingStat);
-            damage += (int)(statValue * ScalingMultiplier);
-        }
+        // Calculate damage with dice and scaling
+        int damage = CalculateScaledAmount(Amount, Dice, ScalingStat, ScalingMultiplier, context);
 
         // Ensure minimum of 1 damage if we're supposed to deal damage
         if (damage < 1 && (Amount > 0 || !string.IsNullOrEmpty(Dice)))
@@ -87,8 +95,8 @@ public class DamageSkillEffect : SkillEffect
 
         if (damage <= 0)
         {
-            return SkillEffectResult.CreateFailure(
-                $"{context.Skill.Name} has no effect on {targetName}.",
+            return EffectResult.CreateFailure(
+                $"{context.GetSourceName()} has no effect on {targetName}.",
                 Palette.ToHex(Palette.Disabled)
             );
         }
@@ -96,10 +104,8 @@ public class DamageSkillEffect : SkillEffect
         // Apply damage with caster as source for kill attribution
         int actualDamage = healthComponent.TakeDamage(damage, DamageType, context.Caster);
 
-        string message = $"{targetName} takes {actualDamage} damage!";
-
-        return SkillEffectResult.CreateSuccess(
-            message,
+        return EffectResult.CreateSuccess(
+            $"{targetName} takes {actualDamage} damage!",
             Palette.ToHex(Palette.CombatDamage),
             target
         );

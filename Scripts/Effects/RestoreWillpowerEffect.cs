@@ -1,18 +1,17 @@
 using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
-using PitsOfDespair.Data;
-using PitsOfDespair.Entities;
-using PitsOfDespair.Helpers;
 
-namespace PitsOfDespair.Skills.Effects;
+namespace PitsOfDespair.Effects;
 
 /// <summary>
-/// Skill effect that restores Willpower to the target.
+/// Effect that restores Willpower to the target.
+/// Supports flat restoration, dice-based restoration, and stat scaling.
 /// </summary>
-public class RestoreWillpowerEffect : SkillEffect
+public class RestoreWillpowerEffect : Effect
 {
     public override string Type => "restore_willpower";
+    public override string Name => "Restore Willpower";
 
     /// <summary>
     /// Flat WP restoration amount.
@@ -36,7 +35,18 @@ public class RestoreWillpowerEffect : SkillEffect
 
     public RestoreWillpowerEffect() { }
 
-    public RestoreWillpowerEffect(SkillEffectDefinition definition)
+    /// <summary>
+    /// Creates a restore WP effect with a fixed amount.
+    /// </summary>
+    public RestoreWillpowerEffect(int amount)
+    {
+        Amount = amount;
+    }
+
+    /// <summary>
+    /// Creates a restore WP effect from a unified effect definition.
+    /// </summary>
+    public RestoreWillpowerEffect(EffectDefinition definition)
     {
         Amount = definition.Amount;
         Dice = definition.Dice;
@@ -44,14 +54,15 @@ public class RestoreWillpowerEffect : SkillEffect
         ScalingMultiplier = definition.ScalingMultiplier;
     }
 
-    public override SkillEffectResult Apply(BaseEntity target, SkillEffectContext context)
+    public override EffectResult Apply(EffectContext context)
     {
+        var target = context.Target;
         var targetName = target.DisplayName;
         var willpowerComponent = target.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
 
         if (willpowerComponent == null)
         {
-            return SkillEffectResult.CreateFailure(
+            return EffectResult.CreateFailure(
                 $"{targetName} has no Willpower.",
                 Palette.ToHex(Palette.Disabled)
             );
@@ -60,32 +71,19 @@ public class RestoreWillpowerEffect : SkillEffect
         // Check if already at full WP
         if (willpowerComponent.CurrentWillpower >= willpowerComponent.MaxWillpower)
         {
-            return SkillEffectResult.CreateFailure(
+            return EffectResult.CreateFailure(
                 $"{targetName} is already at full Willpower.",
                 Palette.ToHex(Palette.Disabled)
             );
         }
 
-        // Calculate restoration amount
-        int restoration = Amount;
-
-        // Add dice roll if specified
-        if (!string.IsNullOrEmpty(Dice))
-        {
-            restoration += DiceRoller.Roll(Dice);
-        }
-
-        // Add stat scaling
-        if (!string.IsNullOrEmpty(ScalingStat))
-        {
-            int statValue = context.GetCasterStat(ScalingStat);
-            restoration += (int)(statValue * ScalingMultiplier);
-        }
+        // Calculate restoration amount with dice and scaling
+        int restoration = CalculateScaledAmount(Amount, Dice, ScalingStat, ScalingMultiplier, context);
 
         if (restoration <= 0)
         {
-            return SkillEffectResult.CreateFailure(
-                $"{context.Skill.Name} has no effect.",
+            return EffectResult.CreateFailure(
+                $"{context.GetSourceName()} has no effect.",
                 Palette.ToHex(Palette.Disabled)
             );
         }
@@ -95,7 +93,7 @@ public class RestoreWillpowerEffect : SkillEffect
         willpowerComponent.RestoreWillpower(restoration);
         int actualRestored = willpowerComponent.CurrentWillpower - oldWP;
 
-        return SkillEffectResult.CreateSuccess(
+        return EffectResult.CreateSuccess(
             $"{targetName} restores {actualRestored} WP.",
             Palette.ToHex(Palette.StatusBuff),
             target

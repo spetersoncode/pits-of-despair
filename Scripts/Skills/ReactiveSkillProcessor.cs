@@ -319,6 +319,7 @@ public partial class ReactiveSkillProcessor : Node
 
     /// <summary>
     /// Applies a condition effect to the entity.
+    /// Uses the unified ConditionFactory.
     /// </summary>
     private void ApplyConditionEffect(SkillEffectDefinition effect)
     {
@@ -326,34 +327,32 @@ public partial class ReactiveSkillProcessor : Node
             return;
 
         string duration = effect.Duration > 0 ? effect.Duration.ToString() : "1";
-        var condition = CreateCondition(effect.ConditionType, effect.Amount, duration);
+
+        // Handle special reactive condition types that map to standard conditions
+        string conditionType = effect.ConditionType.ToLower() switch
+        {
+            "damage_buff" => "strength_buff",     // Damage bonus via STR buff
+            "power_attack" => "strength_buff",    // Power attack is also a STR buff
+            _ => effect.ConditionType
+        };
+
+        int amount = effect.Amount;
+        if (conditionType == "strength_buff" && effect.ConditionType.ToLower() == "power_attack" && amount == 0)
+        {
+            amount = 3; // Default power attack bonus
+        }
+
+        var condition = ConditionFactory.Create(conditionType, amount, duration);
 
         if (condition != null)
         {
             _conditionComponent.AddCondition(condition);
             GD.Print($"ReactiveSkillProcessor: Applied condition '{effect.ConditionType}'");
         }
-    }
-
-    /// <summary>
-    /// Factory method to create Condition instances from type string.
-    /// </summary>
-    private static Condition? CreateCondition(string? conditionType, int amount, string duration)
-    {
-        if (string.IsNullOrEmpty(conditionType))
-            return null;
-
-        return conditionType.ToLower() switch
+        else
         {
-            "armor_buff" => new StatBuffCondition(StatType.Armor, amount, duration),
-            "strength_buff" => new StatBuffCondition(StatType.Strength, amount, duration),
-            "agility_buff" => new StatBuffCondition(StatType.Agility, amount, duration),
-            "endurance_buff" => new StatBuffCondition(StatType.Endurance, amount, duration),
-            "damage_buff" => new StatBuffCondition(StatType.Strength, amount, duration), // Damage bonus via STR
-            "power_attack" => new StatBuffCondition(StatType.Strength, amount > 0 ? amount : 3, duration), // Power attack condition
-            "confusion" => new ConfusionCondition(duration),
-            _ => null
-        };
+            GD.PrintErr($"ReactiveSkillProcessor: Unknown condition type '{effect.ConditionType}'");
+        }
     }
 
     /// <summary>

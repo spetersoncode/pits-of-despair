@@ -3,9 +3,9 @@ using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
+using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Skills;
-using PitsOfDespair.Skills.Effects;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Skills;
@@ -110,9 +110,6 @@ public static class SkillExecutor
         var result = SkillResult.CreateSuccess();
         result.WillpowerSpent = skillDef.WillpowerCost;
 
-        // Create effect context
-        var effectContext = new SkillEffectContext(caster, context, skillDef);
-
         // Process effects
         if (skillDef.Effects.Count == 0)
         {
@@ -124,17 +121,19 @@ public static class SkillExecutor
 
         foreach (var effectDef in skillDef.Effects)
         {
-            var effect = SkillEffect.CreateFromDefinition(effectDef);
+            // Use unified effect system
+            var effect = Effect.CreateFromSkillDefinition(effectDef);
             if (effect == null)
             {
                 GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
                 continue;
             }
 
-            // Apply effect to all targets
+            // Apply effect to all targets using unified context
             foreach (var target in targets)
             {
-                var effectResult = effect.Apply(target, effectContext);
+                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef);
+                var effectResult = effect.Apply(effectContext);
 
                 if (effectResult.Success)
                 {

@@ -1,17 +1,17 @@
 using Godot;
 using PitsOfDespair.Core;
-using PitsOfDespair.Data;
-using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
-namespace PitsOfDespair.Skills.Effects;
+namespace PitsOfDespair.Effects;
 
 /// <summary>
-/// Skill effect that pushes the target away from the caster.
+/// Effect that pushes the target away from the caster.
+/// Supports stat scaling for knockback distance.
 /// </summary>
-public class KnockbackEffect : SkillEffect
+public class KnockbackEffect : Effect
 {
     public override string Type => "knockback";
+    public override string Name => "Knockback";
 
     /// <summary>
     /// Number of tiles to push the target.
@@ -30,16 +30,38 @@ public class KnockbackEffect : SkillEffect
 
     public KnockbackEffect() { }
 
-    public KnockbackEffect(SkillEffectDefinition definition)
+    /// <summary>
+    /// Creates a knockback effect with a fixed distance.
+    /// </summary>
+    public KnockbackEffect(int distance)
+    {
+        Distance = distance > 0 ? distance : 1;
+    }
+
+    /// <summary>
+    /// Creates a knockback effect from a unified effect definition.
+    /// </summary>
+    public KnockbackEffect(EffectDefinition definition)
     {
         Distance = definition.Amount > 0 ? definition.Amount : 1;
         ScalingStat = definition.ScalingStat;
         ScalingMultiplier = definition.ScalingMultiplier;
     }
 
-    public override SkillEffectResult Apply(BaseEntity target, SkillEffectContext context)
+    public override EffectResult Apply(EffectContext context)
     {
+        var target = context.Target;
         var targetName = target.DisplayName;
+
+        // Knockback requires a caster to determine direction
+        if (context.Caster == null)
+        {
+            return EffectResult.CreateFailure(
+                $"{targetName} cannot be knocked back without a source.",
+                Palette.ToHex(Palette.Disabled)
+            );
+        }
+
         var casterPos = context.Caster.GridPosition;
         var targetPos = target.GridPosition;
         var mapSystem = context.ActionContext.MapSystem;
@@ -63,16 +85,11 @@ public class KnockbackEffect : SkillEffect
         }
 
         // Calculate final distance with scaling
-        int finalDistance = Distance;
-        if (!string.IsNullOrEmpty(ScalingStat))
-        {
-            int statValue = context.GetCasterStat(ScalingStat);
-            finalDistance += (int)(statValue * ScalingMultiplier);
-        }
+        int finalDistance = CalculateScaledAmount(Distance, null, ScalingStat, ScalingMultiplier, context);
 
         if (finalDistance <= 0)
         {
-            return SkillEffectResult.CreateFailure(
+            return EffectResult.CreateFailure(
                 $"{targetName} is unmoved.",
                 Palette.ToHex(Palette.Disabled)
             );
@@ -98,7 +115,7 @@ public class KnockbackEffect : SkillEffect
 
         if (tilesKnocked == 0)
         {
-            return SkillEffectResult.CreateFailure(
+            return EffectResult.CreateFailure(
                 $"{targetName} cannot be pushed!",
                 Palette.ToHex(Palette.Disabled)
             );
@@ -111,7 +128,7 @@ public class KnockbackEffect : SkillEffect
             ? $"{targetName} is knocked back!"
             : $"{targetName} is knocked back {tilesKnocked} tiles!";
 
-        return SkillEffectResult.CreateSuccess(
+        return EffectResult.CreateSuccess(
             message,
             Palette.ToHex(Palette.CombatDamage),
             target

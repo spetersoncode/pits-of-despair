@@ -1,5 +1,6 @@
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using System.Text;
@@ -117,13 +118,15 @@ public class UseTargetedItemAction : Action
 			return ActionResult.CreateFailure($"{itemName} has no effects.");
 		}
 
-		// Apply all effects to the target entity (not the actor!)
+		// Apply all effects to the target entity using unified context
+		// Actor is the user (caster), targetEntity is the target
+		var effectContext = EffectContext.ForItem(targetEntity, actor, context);
 		var messages = new StringBuilder();
 		bool anyEffectSucceeded = false;
 
 		foreach (var effect in effects)
 		{
-			var effectResult = effect.Apply(targetEntity, context);
+			var effectResult = effect.Apply(effectContext);
 			if (effectResult.Success)
 			{
 				anyEffectSucceeded = true;
