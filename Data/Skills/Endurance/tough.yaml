@@ -1,0 +1,14 @@
+name: Tough
+description: +8 max HP.
+category: passive
+targeting: self
+willpowerCost: 0
+tier: 1
+prerequisites:
+  end: 1
+tags:
+  - health
+effects:
+  - type: stat_bonus
+    stat: max_hp
+    amount: 8

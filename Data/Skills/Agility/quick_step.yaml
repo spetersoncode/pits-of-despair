@@ -1,0 +1,14 @@
+name: Quick Step
+description: Move 1 extra tile this turn.
+category: active
+targeting: self
+willpowerCost: 2
+tier: 1
+prerequisites:
+  agi: 1
+tags:
+  - movement
+  - utility
+effects:
+  - type: bonus_movement
+    amount: 1

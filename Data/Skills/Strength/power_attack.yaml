@@ -1,0 +1,16 @@
+name: Power Attack
+description: Next melee attack deals +3 damage.
+category: active
+targeting: self
+willpowerCost: 3
+tier: 1
+prerequisites:
+  str: 1
+tags:
+  - melee
+  - damage
+  - buff
+effects:
+  - type: apply_condition
+    conditionType: power_attack
+    duration: 1

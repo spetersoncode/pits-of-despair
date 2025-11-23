@@ -20,9 +20,11 @@ public partial class DataLoader : Node
     private const string SpawnTablesPath = "res://Data/SpawnTables/";
     private const string ItemsPath = "res://Data/Items/";
     private const string BandsPath = "res://Data/Bands/";
+    private const string SkillsPath = "res://Data/Skills/";
 
     private Dictionary<string, CreatureData> _creatures = new();
     private Dictionary<string, ItemData> _items = new();
+    private Dictionary<string, SkillDefinition> _skills = new();
 
     // Spawning system data
     private Dictionary<string, SpawnTableData> _spawnTables = new();
@@ -34,6 +36,7 @@ public partial class DataLoader : Node
         LoadAllItems();
         LoadAllSpawnTables();
         LoadAllBands();
+        LoadAllSkills();
     }
 
     /// <summary>
@@ -106,6 +109,36 @@ public partial class DataLoader : Node
 
         GD.PrintErr($"DataLoader: Band '{bandId}' not found!");
         return null;
+    }
+
+    /// <summary>
+    /// Gets skill data by ID (filename without extension).
+    /// </summary>
+    public SkillDefinition GetSkill(string skillId)
+    {
+        if (_skills.TryGetValue(skillId, out var skill))
+        {
+            return skill;
+        }
+
+        GD.PrintErr($"DataLoader: Skill '{skillId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all loaded skill IDs.
+    /// </summary>
+    public IEnumerable<string> GetAllSkillIds()
+    {
+        return _skills.Keys;
+    }
+
+    /// <summary>
+    /// Gets all loaded skill definitions.
+    /// </summary>
+    public IEnumerable<SkillDefinition> GetAllSkills()
+    {
+        return _skills.Values;
     }
 
     private void LoadAllCreatures()
@@ -227,6 +260,23 @@ public partial class DataLoader : Node
         }
 
         LoadYamlFilesRecursive(BandsPath, "", _bands, "band");
+    }
+
+    private void LoadAllSkills()
+    {
+        _skills.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(SkillsPath))
+        {
+            return;
+        }
+
+        LoadYamlFilesRecursive(SkillsPath, "", _skills, "skill", (skill, id) =>
+        {
+            skill.Id = id;
+        });
+
+        GD.Print($"DataLoader: Loaded {_skills.Count} skills");
     }
 
     /// <summary>

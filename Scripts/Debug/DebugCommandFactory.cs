@@ -16,6 +16,7 @@ public static class DebugCommandFactory
         { "give", () => new GiveCommand() },
         { "help", () => new HelpCommand() },
         { "reveal", () => new RevealCommand() },
+        { "skill", () => new SkillCommand() },
         { "stairs", () => new StairsCommand() }
     };
 

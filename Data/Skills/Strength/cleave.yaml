@@ -1,0 +1,15 @@
+name: Cleave
+description: Attack hits two adjacent enemies.
+category: active
+targeting: adjacent
+willpowerCost: 6
+tier: 2
+prerequisites:
+  str: 3
+tags:
+  - melee
+  - damage
+  - multi-target
+effects:
+  - type: melee_attack
+    targets: 2
