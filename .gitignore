@@ -21,3 +21,6 @@ exports/
 *.app
 *.zip
 *.tar.gz
+
+# Claude Code
+.claude/settings.local.json
