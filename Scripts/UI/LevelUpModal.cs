@@ -309,28 +309,31 @@ public partial class LevelUpModal : PanelContainer
                 // Record which skills will be newly unlocked by this stat choice
                 _newlyUnlockedSkills = GetSkillsUnlockedByStat(statIndex);
 
-                // Emit signal for stat selection
-                EmitSignal(SignalName.StatChosen, statIndex);
-                GetViewport().SetInputAsHandled();
-
-                // Check if this level grants a skill
+                // Check if this level grants a skill - must happen BEFORE signal emission
+                // because GameHUD checks IsInSkillSelectionPhase synchronously when handling the signal
                 if (SkillGrantingLevels.Contains(_newLevel) && _dataLoader != null && _skills != null && _stats != null)
                 {
-                    // Transition to skill selection phase
-                    TransitionToSkillSelection();
+                    // Transition to skill selection phase (pass statIndex to simulate stat increase)
+                    TransitionToSkillSelection(statIndex);
                 }
-                // If no skill grant, GameHUD will hide modal via HideModal()
+
+                // Emit signal for stat selection - GameHUD will check IsInSkillSelectionPhase
+                // and only hide modal if we're NOT in skill selection phase
+                EmitSignal(SignalName.StatChosen, statIndex);
+                GetViewport().SetInputAsHandled();
             }
         }
     }
 
     /// <summary>
     /// Transitions to skill selection phase after stat choice.
+    /// Must be called BEFORE the stat is applied, so we simulate the increase.
     /// </summary>
-    private void TransitionToSkillSelection()
+    /// <param name="statIndex">The stat index being increased (0=STR, 1=AGI, 2=END, 3=WIL)</param>
+    private void TransitionToSkillSelection(int statIndex)
     {
-        // Get available skills (already meets prereqs after stat increase, not learned)
-        _availableSkills = _skills.GetAvailableSkills(_stats, _dataLoader)
+        // Get available skills with simulated stat increase (stat hasn't been applied yet)
+        _availableSkills = GetAvailableSkillsWithSimulatedStat(statIndex)
             .OrderBy(s => s.Tier)
             .ThenBy(s => s.GetCategory())
             .ThenBy(s => s.GetTotalPrerequisites())
@@ -339,12 +342,52 @@ public partial class LevelUpModal : PanelContainer
 
         if (_availableSkills.Count == 0)
         {
-            // No skills available - close modal
+            // No skills available - don't transition
             return;
         }
 
         _currentPhase = LevelUpPhase.SkillSelection;
         UpdateSkillSelectionContent();
+    }
+
+    /// <summary>
+    /// Gets available skills assuming the specified stat will be increased by 1.
+    /// Used to check skill availability BEFORE the stat is actually applied.
+    /// </summary>
+    private List<SkillDefinition> GetAvailableSkillsWithSimulatedStat(int statIndex)
+    {
+        var available = new List<SkillDefinition>();
+
+        if (_stats == null || _skills == null || _dataLoader == null)
+            return available;
+
+        // Simulate stat increase
+        int simStr = _stats.BaseStrength + (statIndex == 0 ? 1 : 0);
+        int simAgi = _stats.BaseAgility + (statIndex == 1 ? 1 : 0);
+        int simEnd = _stats.BaseEndurance + (statIndex == 2 ? 1 : 0);
+        int simWil = _stats.BaseWill + (statIndex == 3 ? 1 : 0);
+
+        foreach (var skill in _dataLoader.GetAllSkills())
+        {
+            // Skip if already learned
+            if (_skills.HasSkill(skill.Id))
+                continue;
+
+            var prereqs = skill.Prerequisites;
+
+            // Check if skill would be available after stat increase
+            bool wouldMeet = simStr >= prereqs.Str
+                          && simAgi >= prereqs.Agi
+                          && simEnd >= prereqs.End
+                          && simWil >= prereqs.Wil;
+
+            if (wouldMeet)
+            {
+                available.Add(skill);
+            }
+        }
+
+        return available;
     }
 
     /// <summary>

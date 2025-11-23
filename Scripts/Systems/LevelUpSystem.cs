@@ -95,7 +95,7 @@ public partial class LevelUpSystem : Node
 
 	/// <summary>
 	/// Called when the player levels up.
-	/// Queues the level-up for processing - discrete one at a time.
+	/// Queues the level-up for later processing when player presses L key.
 	/// </summary>
 	/// <param name="newLevel">The new level reached</param>
 	private void OnPlayerLevelUp(int newLevel)
@@ -104,11 +104,8 @@ public partial class LevelUpSystem : Node
 		_pendingLevelUps.Enqueue(newLevel);
 		EmitSignal(SignalName.PendingLevelUpsChanged, _pendingLevelUps.Count);
 
-		// If not already processing, show the modal for this level-up
-		if (!_isProcessingLevelUp)
-		{
-			ProcessNextLevelUp();
-		}
+		// Don't auto-open modal - player will see "LEVEL UP! [L]" indicator
+		// and can press L when ready to make their choices
 	}
 
 	/// <summary>
