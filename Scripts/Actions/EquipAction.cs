@@ -113,8 +113,8 @@ public class EquipAction : Action
         }
 
         // Emit equipment signal for UI feedback
-        player.EmitSignal(Player.SignalName.ItemEquipped, itemTemplate.Name);
+        player.EmitSignal(Player.SignalName.ItemEquipped, itemTemplate.GetDisplayName(1));
 
-        return ActionResult.CreateSuccess($"Equipped {itemTemplate.Name}.");
+        return ActionResult.CreateSuccess($"Equipped {itemTemplate.GetDisplayName(1)}.");
     }
 }

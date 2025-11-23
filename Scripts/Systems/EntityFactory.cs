@@ -102,7 +102,7 @@ public partial class EntityFactory : Node
         var entity = new BaseEntity
         {
             GridPosition = position,
-            DisplayName = data.Name,
+            DisplayName = data.GetDisplayName(),
             Description = data.Description,
             Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
             GlyphColor = data.GetColor(),
