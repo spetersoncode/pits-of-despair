@@ -68,7 +68,8 @@ public partial class CursorTargetingSystem : Node
 
 	// Action mode state
 	private int _maxRange;
-	private HashSet<GridPosition> _validTiles;
+	private HashSet<GridPosition> _validTiles;           // Full range for overlay display
+	private HashSet<GridPosition> _validCursorPositions; // Valid positions for cursor movement
 	private List<BaseEntity> _validCreatureTargets;
 	private int _currentCreatureIndex = -1;
 	private bool _requiresCreature = true;
@@ -155,6 +156,7 @@ public partial class CursorTargetingSystem : Node
 
 		// Clear action mode state
 		_validTiles = null;
+		_validCursorPositions = null;
 		_validCreatureTargets = null;
 		_currentCreatureIndex = -1;
 		_requiresCreature = false;
@@ -199,6 +201,9 @@ public partial class CursorTargetingSystem : Node
 			var distanceMetric = useGridDistance ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean;
 			_validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem, distanceMetric);
 		}
+
+		// For legacy action targeting, cursor positions match the overlay
+		_validCursorPositions = _validTiles;
 
 		// Find all creatures in valid tiles
 		_validCreatureTargets = new List<BaseEntity>();
@@ -269,13 +274,22 @@ public partial class CursorTargetingSystem : Node
 		_useGridDistance = definition.Metric == DistanceMetric.Chebyshev;
 		_isActive = true;
 
-		// Get valid positions from the handler
-		var validPositions = _targetingHandler.GetValidTargetPositions(caster, definition, context);
-		_validTiles = new HashSet<GridPosition>(validPositions);
+		// Calculate full visible range for the overlay (always shows entire targeting range)
+		int range = definition.Range > 0 ? definition.Range : 1;
+		_validTiles = FOVCalculator.CalculateVisibleTiles(_originPosition, range, context.MapSystem, definition.Metric);
 
-		// Build creature target list based on the filter
+		// Get valid target positions from the handler (may be a subset for creature-only targeting)
+		var validTargetPositions = _targetingHandler.GetValidTargetPositions(caster, definition, context);
+
+		// Set valid cursor positions based on filter type
+		// Tile targeting allows free movement within range; creature targeting restricts to targets
+		_validCursorPositions = definition.Filter == TargetFilter.Tile
+			? _validTiles
+			: new HashSet<GridPosition>(validTargetPositions);
+
+		// Build creature target list from valid target positions
 		_validCreatureTargets = new List<BaseEntity>();
-		foreach (var tile in _validTiles)
+		foreach (var tile in validTargetPositions)
 		{
 			if (tile == _originPosition)
 				continue;
@@ -357,6 +371,7 @@ public partial class CursorTargetingSystem : Node
 	{
 		_isActive = false;
 		_validTiles = null;
+		_validCursorPositions = null;
 		_validCreatureTargets = null;
 		_currentCreatureIndex = -1;
 		_targetingDefinition = null;
@@ -382,7 +397,7 @@ public partial class CursorTargetingSystem : Node
 		// Validate based on mode
 		bool isValid = _currentMode == TargetingMode.Examine
 			? _visionSystem.IsVisible(newPosition)
-			: _validTiles != null && _validTiles.Contains(newPosition);
+			: _validCursorPositions != null && _validCursorPositions.Contains(newPosition);
 
 		if (isValid)
 		{
