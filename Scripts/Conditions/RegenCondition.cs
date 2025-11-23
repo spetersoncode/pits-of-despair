@@ -27,7 +27,7 @@ public class RegenCondition : Condition
 
     public override string Name => "Regeneration";
 
-    public override string TypeId => "regen_buff";
+    public override string TypeId => "regen_modifier";
 
     /// <summary>
     /// Parameterless constructor for deserialization.

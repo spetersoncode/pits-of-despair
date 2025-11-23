@@ -9,7 +9,7 @@ entries:
     description: Layers of quilted cloth and wool that offer minimal protection. Better than nothing, but only just.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 1
 
   leather:
@@ -18,7 +18,7 @@ entries:
     description: Supple leather hardened with oils and wax. Light enough to move freely, tough enough to turn a glancing blow.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 2
 
   studded_leather:
@@ -27,10 +27,10 @@ entries:
     description: Tough leather reinforced with metal studs along the vital areas. The weight slows you slightly, but the protection is worth it.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 3
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -1
 
   hide:
@@ -39,10 +39,10 @@ entries:
     description: Thick animal hide crudely stitched together. Bulky and awkward, but it can absorb tremendous punishment.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 3
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -3
 
   chain_shirt:
@@ -51,10 +51,10 @@ entries:
     description: Interlocking rings of bronze that flow like water when worn. The weight settles on your shoulders with grim familiarity.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 4
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -2
 
   scale_mail:
@@ -63,10 +63,10 @@ entries:
     description: Overlapping copper plates sewn to leather backing, reminiscent of serpent scales. Heavy and cumbersome, but it catches blades effectively.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 4
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -4
 
   chainmail:
@@ -75,10 +75,10 @@ entries:
     description: A full hauberk of interlocked rings that jingles softly with every movement. The weight is crushing, but few weapons can penetrate its weave.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 5
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -5
 
   breastplate:
@@ -87,10 +87,10 @@ entries:
     description: Forged steel shaped to deflect blows from the heart and lungs. Battle-scarred but dependable, a fortress for your chest.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 5
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -4
 
   splint_mail:
@@ -99,10 +99,10 @@ entries:
     description: Vertical strips of iron riveted to a leather backing. Crude and brutally heavy, but it turns even savage blows.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 6
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -7
 
   banded_mail:
@@ -111,10 +111,10 @@ entries:
     description: Horizontal iron bands fastened to chain and leather. Each band bears the hammer marks of its forging, and the scars of past battles.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 6
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -6
 
   half_plate:
@@ -123,10 +123,10 @@ entries:
     description: Masterwork plates protecting chest, shoulders, and thighs, backed with mail. Moving in this is exhausting, but you feel nearly invincible.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 7
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -7
 
   full_plate:
@@ -135,8 +135,8 @@ entries:
     description: The pinnacle of the armorer's art. Articulated steel encases you from head to toe, transforming you into a walking fortress.
     effects:
       - type: apply_condition
-        conditionType: armor_buff
+        conditionType: armor_modifier
         amount: 8
       - type: apply_condition
-        conditionType: evasion_buff
+        conditionType: evasion_modifier
         amount: -6

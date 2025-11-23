@@ -329,13 +329,13 @@ public partial class ReactiveSkillProcessor : Node
         // Handle special reactive condition types that map to standard conditions
         string conditionType = effect.ConditionType.ToLower() switch
         {
-            "damage_buff" => "strength_buff",     // Damage bonus via STR buff
-            "power_attack" => "strength_buff",    // Power attack is also a STR buff
+            "damage_buff" => "strength_modifier",     // Damage bonus via STR modifier
+            "power_attack" => "strength_modifier",    // Power attack is also a STR modifier
             _ => effect.ConditionType
         };
 
         int amount = effect.Amount;
-        if (conditionType == "strength_buff" && effect.ConditionType.ToLower() == "power_attack" && amount == 0)
+        if (conditionType == "strength_modifier" && effect.ConditionType.ToLower() == "power_attack" && amount == 0)
         {
             amount = 3; // Default power attack bonus
         }

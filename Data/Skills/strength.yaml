@@ -71,7 +71,7 @@ entries:
       - combat
     effects:
       - type: apply_condition
-        conditionType: strength_buff
+        conditionType: strength_modifier
         amount: 3
         duration: 1
 

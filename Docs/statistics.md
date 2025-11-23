@@ -8,7 +8,7 @@ The statistics system manages creature attributes and combat modifiers through m
 
 **Signal-Based Updates**: `StatsChanged` signal emitted on any modification. UI and dependent systems (health) subscribe for reactive updates without tight coupling.
 
-**Stat Categories**: Four primary attributes (STR/AGI/END/WIL), two defensive values (Armor/Evasion Penalty), and derived combat values calculated on-demand.
+**Stat Categories**: Four primary attributes (STR/AGI/END/WIL), two defensive values (Armor/Evasion Modifier), and derived combat values calculated on-demand. All stats use unified `AddStatModifier(StatType, sourceId, amount)` API.
 
 ## Primary Attributes
 
@@ -24,7 +24,7 @@ The statistics system manages creature attributes and combat modifiers through m
 
 **Armor**: Flat damage reduction applied after successful hits. Multi-source (equipment, buffs). Final damage: `max(0, BaseDamage + DamageBonus - Armor)`.
 
-**Evasion Penalty**: Negative modifier applied to defense rolls. Primary source: heavy armor restricting movement. Defense calculation: `2d6 + AGI + EvasionPenalty` (penalty typically negative).
+**Evasion Modifier**: Modifier applied to defense rolls. Positive values (buffs) increase evasion, negative values (penalties from heavy armor) reduce it. Defense calculation: `2d6 + AGI + EvasionModifier`.
 
 **Attack Modifiers**: Melee uses STR, ranged uses AGI. Retrieved via `GetAttackModifier(isMelee)` for combat roll calculations.
 

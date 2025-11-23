@@ -41,25 +41,25 @@ entries:
     #   - type: heal
     #     amount: 10
     #   - type: apply_condition
-    #     conditionType: armor_buff      # Armor bonus
+    #     conditionType: armor_modifier      # Armor bonus
     #     amount: 3
     #   - type: apply_condition
-    #     conditionType: evasion_buff    # Evasion bonus (negative = penalty)
+    #     conditionType: evasion_modifier    # Evasion modifier (negative = penalty)
     #     amount: -1
     #   - type: apply_condition
-    #     conditionType: strength_buff   # Strength bonus
+    #     conditionType: strength_modifier   # Strength bonus
     #     amount: 2
-    #     duration: 10                   # Only for consumables (equipment is WhileEquipped)
+    #     duration: 10                       # Only for consumables (equipment is WhileEquipped)
     #   - type: apply_condition
-    #     conditionType: agility_buff
+    #     conditionType: agility_modifier
     #     amount: 1
     #   - type: apply_condition
-    #     conditionType: regen_buff      # Regeneration (+80 = DCSS ring)
+    #     conditionType: regen_modifier      # Regeneration (+80 = DCSS ring)
     #     amount: 80
     #
     # Available condition types:
-    #   armor_buff, strength_buff, agility_buff, endurance_buff,
-    #   evasion_buff, regen_buff, confusion
+    #   armor_modifier, strength_modifier, agility_modifier, endurance_modifier,
+    #   will_modifier, evasion_modifier, regen_modifier, confusion
 
     # === CHARGED ITEM FIELDS ===
     # charges: "1d6"      # Dice for initial charges

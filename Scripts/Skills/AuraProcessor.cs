@@ -294,12 +294,8 @@ public partial class AuraProcessor : Node
     {
         string source = GetAuraSource(skill.Id);
 
-        // Remove all conditions from this aura source (now on BaseEntity directly)
+        // Remove all conditions from this aura source (handles all stat modifiers)
         target.RemoveConditionsBySource(source);
-
-        // Also remove any direct will modifiers (not yet in condition system)
-        var statsComponent = target.GetNodeOrNull<StatsComponent>("StatsComponent");
-        statsComponent?.RemoveWillModifier(source);
 
         GD.Print($"AuraProcessor: Removed aura '{skill.Name}' from {target.DisplayName}");
     }
@@ -316,12 +312,12 @@ public partial class AuraProcessor : Node
                 break;
 
             case "armor_bonus":
-                ApplyAuraCondition(target, "armor_buff", effect.Amount, source);
+                ApplyAuraCondition(target, "armor_modifier", effect.Amount, source);
                 break;
 
             case "attack_bonus":
                 // Apply as strength modifier (affects melee attack)
-                ApplyAuraCondition(target, "strength_buff", effect.Amount, source);
+                ApplyAuraCondition(target, "strength_modifier", effect.Amount, source);
                 break;
 
             case "debuff":
@@ -346,25 +342,18 @@ public partial class AuraProcessor : Node
         // Map stat names to condition types
         string? conditionType = stat switch
         {
-            "str" or "strength" or "attack" => "strength_buff",
-            "agi" or "agility" => "agility_buff",
-            "end" or "endurance" => "endurance_buff",
-            "armor" => "armor_buff",
-            "evasion" => "evasion_buff",
+            "str" or "strength" or "attack" => "strength_modifier",
+            "agi" or "agility" => "agility_modifier",
+            "end" or "endurance" => "endurance_modifier",
+            "wil" or "will" or "willpower" => "will_modifier",
+            "armor" => "armor_modifier",
+            "evasion" => "evasion_modifier",
             _ => null
         };
 
         if (conditionType != null)
         {
             ApplyAuraCondition(target, conditionType, amount, source);
-            return;
-        }
-
-        // Handle will separately (not yet in condition system)
-        if (stat is "wil" or "will" or "willpower")
-        {
-            var statsComponent = target.GetNodeOrNull<StatsComponent>("StatsComponent");
-            statsComponent?.AddWillModifier(source, amount);
         }
     }
 
@@ -378,8 +367,8 @@ public partial class AuraProcessor : Node
 
         string? conditionType = stat switch
         {
-            "str" or "strength" or "attack" => "strength_buff",
-            "agi" or "agility" or "defense" => "agility_buff",
+            "str" or "strength" or "attack" => "strength_modifier",
+            "agi" or "agility" or "defense" => "agility_modifier",
             _ => null
         };
 

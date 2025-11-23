@@ -48,7 +48,7 @@ Conditions support four duration modes controlling expiration behavior:
 
 ## Non-Stacking Design
 
-**TypeId Uniqueness**: Each condition defines `TypeId` string identifier (armor_buff, confusion, regen_buff). Entity maintains at most one condition per `TypeId`—duplicates refresh duration rather than accumulate effects.
+**TypeId Uniqueness**: Each condition defines `TypeId` string identifier (armor_modifier, confusion, regen_modifier). Entity maintains at most one condition per `TypeId`—duplicates refresh duration rather than accumulate effects.
 
 **Refresh Logic**: Adding condition already present compares durations. New duration greater than remaining updates `RemainingTurns`. New duration less than or equal ignores application.
 
@@ -76,7 +76,7 @@ Conditions support four duration modes controlling expiration behavior:
 
 Current implementations demonstrate patterns for common effect types.
 
-**StatBuffCondition**: Configurable stat modifier supporting Armor, Strength, Agility, Endurance, Evasion, and Regen. `OnApplied` registers modifier with appropriate component. `OnRemoved` removes modifier. Works with all duration modes.
+**StatModifierCondition**: Configurable stat modifier supporting Armor, Strength, Agility, Endurance, Will, Evasion. Uses unified `AddStatModifier(StatType, sourceId, amount)` API. `OnApplied` registers modifier. `OnRemoved` removes modifier. Works with all duration modes. Positive amounts are buffs, negative amounts are penalties.
 
 **RegenCondition**: Temporary regeneration boost. Adds to health component's regeneration rate while active. Demonstrates per-turn stat modification pattern.
 

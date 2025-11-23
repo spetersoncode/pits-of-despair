@@ -128,16 +128,16 @@ public static class ItemEvaluator
 
     /// <summary>
     /// Checks if the armor is better than currently equipped.
-    /// Simplified: any armor with armor_buff effect is considered valuable.
+    /// Simplified: any armor with armor_modifier effect is considered valuable.
     /// </summary>
     private static bool IsBetterArmor(ItemData itemData, BaseEntity entity)
     {
         // Any armor is valuable if entity has none
-        // Check if item has any armor_buff effect
+        // Check if item has any armor_modifier effect
         foreach (var effect in itemData.Effects)
         {
             if (effect.Type?.ToLower() == "apply_condition" &&
-                effect.ConditionType?.ToLower() == "armor_buff" &&
+                effect.ConditionType?.ToLower() == "armor_modifier" &&
                 effect.Amount > 0)
             {
                 return true;

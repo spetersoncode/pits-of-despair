@@ -11,7 +11,7 @@ public static class ConditionFactory
     /// <summary>
     /// Creates a condition instance from a type string.
     /// </summary>
-    /// <param name="conditionType">The condition type (e.g., "armor_buff", "evasion_buff", "regen_buff").</param>
+    /// <param name="conditionType">The condition type (e.g., "armor_modifier", "evasion_modifier", "regen_modifier").</param>
     /// <param name="amount">The amount/magnitude of the condition (if applicable).</param>
     /// <param name="duration">Duration as dice notation (e.g., "10", "2d3").</param>
     /// <param name="durationMode">Duration mode (Temporary, Permanent, WhileEquipped, WhileActive).</param>
@@ -32,15 +32,16 @@ public static class ConditionFactory
 
         Condition? condition = conditionType.ToLower() switch
         {
-            // Stat buffs
-            "armor_buff" => new StatBuffCondition(StatType.Armor, amount, duration, durationMode, sourceId),
-            "strength_buff" => new StatBuffCondition(StatType.Strength, amount, duration, durationMode, sourceId),
-            "agility_buff" => new StatBuffCondition(StatType.Agility, amount, duration, durationMode, sourceId),
-            "endurance_buff" => new StatBuffCondition(StatType.Endurance, amount, duration, durationMode, sourceId),
-            "evasion_buff" => new StatBuffCondition(StatType.Evasion, amount, duration, durationMode, sourceId),
+            // Stat modifiers
+            "armor_modifier" => new StatModifierCondition(StatType.Armor, amount, duration, durationMode, sourceId),
+            "strength_modifier" => new StatModifierCondition(StatType.Strength, amount, duration, durationMode, sourceId),
+            "agility_modifier" => new StatModifierCondition(StatType.Agility, amount, duration, durationMode, sourceId),
+            "endurance_modifier" => new StatModifierCondition(StatType.Endurance, amount, duration, durationMode, sourceId),
+            "will_modifier" => new StatModifierCondition(StatType.Will, amount, duration, durationMode, sourceId),
+            "evasion_modifier" => new StatModifierCondition(StatType.Evasion, amount, duration, durationMode, sourceId),
 
-            // Regen buff
-            "regen_buff" => new RegenCondition(amount, duration, durationMode, sourceId),
+            // Regen modifier
+            "regen_modifier" => new RegenCondition(amount, duration, durationMode, sourceId),
 
             // Debuffs / Status effects
             "confusion" => new ConfusionCondition(duration),
@@ -75,12 +76,13 @@ public static class ConditionFactory
 
         return conditionType.ToLower() switch
         {
-            "armor_buff" => true,
-            "strength_buff" => true,
-            "agility_buff" => true,
-            "endurance_buff" => true,
-            "evasion_buff" => true,
-            "regen_buff" => true,
+            "armor_modifier" => true,
+            "strength_modifier" => true,
+            "agility_modifier" => true,
+            "endurance_modifier" => true,
+            "will_modifier" => true,
+            "evasion_modifier" => true,
+            "regen_modifier" => true,
             "confusion" => true,
             _ => false
         };

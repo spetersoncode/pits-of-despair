@@ -25,13 +25,8 @@ public class PlayerState
 	public int Level { get; set; }
 	public int CurrentExperience { get; set; }
 
-	// Multi-source modifier tracking
-	public Dictionary<string, int> StrengthModifiers { get; set; } = new();
-	public Dictionary<string, int> AgilityModifiers { get; set; } = new();
-	public Dictionary<string, int> EnduranceModifiers { get; set; } = new();
-	public Dictionary<string, int> WillModifiers { get; set; } = new();
-	public Dictionary<string, int> ArmorSources { get; set; } = new();
-	public Dictionary<string, int> EvasionPenaltySources { get; set; } = new();
+	// Unified stat modifier tracking
+	public Dictionary<StatType, Dictionary<string, int>> StatModifiers { get; set; } = new();
 
 	#endregion
 
@@ -104,13 +99,17 @@ public class PlayerState
 			state.Level = statsComponent.Level;
 			state.CurrentExperience = statsComponent.CurrentExperience;
 
-			// Extract modifiers using reflection to access private fields
-			state.StrengthModifiers = GetPrivateDictionary<string, int>(statsComponent, "_strengthModifiers");
-			state.AgilityModifiers = GetPrivateDictionary<string, int>(statsComponent, "_agilityModifiers");
-			state.EnduranceModifiers = GetPrivateDictionary<string, int>(statsComponent, "_enduranceModifiers");
-			state.WillModifiers = GetPrivateDictionary<string, int>(statsComponent, "_willModifiers");
-			state.ArmorSources = GetPrivateDictionary<string, int>(statsComponent, "_armorSources");
-			state.EvasionPenaltySources = GetPrivateDictionary<string, int>(statsComponent, "_evasionPenaltySources");
+			// Extract stat modifiers using public API
+			state.StatModifiers = new Dictionary<StatType, Dictionary<string, int>>();
+			foreach (StatType stat in new[] { StatType.Strength, StatType.Agility, StatType.Endurance,
+											   StatType.Will, StatType.Armor, StatType.Evasion })
+			{
+				var modifiers = statsComponent.GetStatModifiers(stat);
+				if (modifiers.Count > 0)
+				{
+					state.StatModifiers[stat] = new Dictionary<string, int>(modifiers);
+				}
+			}
 		}
 
 		// Extract Health
@@ -180,19 +179,14 @@ public class PlayerState
 			// Set CurrentExperience using reflection to access private setter
 			SetPrivateProperty(statsComponent, "CurrentExperience", CurrentExperience);
 
-			// Apply modifiers
-			foreach (var kvp in StrengthModifiers)
-				statsComponent.AddStrengthModifier(kvp.Key, kvp.Value);
-			foreach (var kvp in AgilityModifiers)
-				statsComponent.AddAgilityModifier(kvp.Key, kvp.Value);
-			foreach (var kvp in EnduranceModifiers)
-				statsComponent.AddEnduranceModifier(kvp.Key, kvp.Value);
-			foreach (var kvp in WillModifiers)
-				statsComponent.AddWillModifier(kvp.Key, kvp.Value);
-			foreach (var kvp in ArmorSources)
-				statsComponent.AddArmorSource(kvp.Key, kvp.Value);
-			foreach (var kvp in EvasionPenaltySources)
-				statsComponent.AddEvasionPenaltySource(kvp.Key, kvp.Value);
+			// Apply stat modifiers using unified API
+			foreach (var statEntry in StatModifiers)
+			{
+				foreach (var kvp in statEntry.Value)
+				{
+					statsComponent.AddStatModifier(statEntry.Key, kvp.Key, kvp.Value);
+				}
+			}
 
 			// Emit signals to update UI
 			statsComponent.EmitSignal(StatsComponent.SignalName.StatsChanged);

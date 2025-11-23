@@ -5,7 +5,7 @@ using PitsOfDespair.Helpers;
 namespace PitsOfDespair.Conditions;
 
 /// <summary>
-/// Types of stats that can be buffed by conditions.
+/// Types of stats that can be modified by conditions.
 /// </summary>
 public enum StatType
 {
@@ -13,6 +13,7 @@ public enum StatType
     Strength,
     Agility,
     Endurance,
+    Will,
     Evasion,
     Regen
 }

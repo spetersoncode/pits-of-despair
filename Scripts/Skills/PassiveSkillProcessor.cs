@@ -166,12 +166,12 @@ public partial class PassiveSkillProcessor : Node
         // Map stat names to condition types
         string? conditionType = stat switch
         {
-            "str" or "strength" => "strength_buff",
-            "agi" or "agility" => "agility_buff",
-            "end" or "endurance" => "endurance_buff",
-            "wil" or "will" or "willpower" => null, // Will not yet in condition system
-            "armor" => "armor_buff",
-            "evasion" => "evasion_buff",
+            "str" or "strength" => "strength_modifier",
+            "agi" or "agility" => "agility_modifier",
+            "end" or "endurance" => "endurance_modifier",
+            "wil" or "will" or "willpower" => "will_modifier",
+            "armor" => "armor_modifier",
+            "evasion" => "evasion_modifier",
             "max_hp" => null, // Special handling
             "max_wp" => null, // Special handling
             _ => null
@@ -194,16 +194,9 @@ public partial class PassiveSkillProcessor : Node
             return;
         }
 
-        // Handle special cases that don't use conditions (yet)
+        // Handle special cases that don't use conditions
         switch (stat)
         {
-            case "wil":
-            case "will":
-            case "willpower":
-                // Will modifier not yet in condition system, use direct call
-                _statsComponent?.AddWillModifier(source, amount);
-                break;
-
             case "max_hp":
                 ApplyMaxHPBonus(source, amount);
                 break;
@@ -229,7 +222,7 @@ public partial class PassiveSkillProcessor : Node
         if (_entity == null) return;
 
         var condition = ConditionFactory.Create(
-            "armor_buff",
+            "armor_modifier",
             effect.Amount,
             "1",
             ConditionDuration.Permanent,
@@ -249,7 +242,7 @@ public partial class PassiveSkillProcessor : Node
         if (_entity == null) return;
 
         var condition = ConditionFactory.Create(
-            "evasion_buff",
+            "evasion_modifier",
             effect.Amount,
             "1",
             ConditionDuration.Permanent,
@@ -297,15 +290,14 @@ public partial class PassiveSkillProcessor : Node
 
     /// <summary>
     /// Removes all modifiers for a given source.
-    /// Uses conditions system for stats, direct removal for max_hp/max_wp/will.
+    /// Uses conditions system for stats, direct removal for max_hp/max_wp.
     /// </summary>
     private void RemoveModifiersForSource(string source)
     {
-        // Remove conditions by source prefix
+        // Remove conditions by source prefix (handles all stat modifiers)
         _entity?.RemoveConditionsBySource(source);
 
-        // Remove direct modifiers (for stats not yet in condition system)
-        _statsComponent?.RemoveWillModifier(source);
+        // Remove direct modifiers (for stats not in condition system)
         _healthComponent?.RemoveMaxHPModifier(source);
         _willpowerComponent?.RemoveMaxWPModifier(source);
     }
