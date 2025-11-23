@@ -92,42 +92,24 @@ public partial class SkillsModal : PanelContainer
             return;
         }
 
-        // Check for number keys 1-9, 0
-        int selectedIndex = GetNumberKeyIndex(keyEvent);
-
-        if (selectedIndex >= 0 && selectedIndex < _displayedSkills.Count)
+        // Check for letter key selection (a-z)
+        if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {
-            var selectedSkill = _displayedSkills[selectedIndex];
+            int selectedIndex = char.ToLower(selectedKey) - 'a';
 
-            // Only allow activating active skills
-            if (selectedSkill.GetCategory() == SkillCategory.Active)
+            if (selectedIndex >= 0 && selectedIndex < _displayedSkills.Count)
             {
-                EmitSignal(SignalName.SkillSelected, selectedSkill.Id);
+                var selectedSkill = _displayedSkills[selectedIndex];
+
+                // Only allow activating active skills
+                if (selectedSkill.GetCategory() == SkillCategory.Active)
+                {
+                    EmitSignal(SignalName.SkillSelected, selectedSkill.Id);
+                }
             }
 
             GetViewport().SetInputAsHandled();
         }
-    }
-
-    private int GetNumberKeyIndex(InputEventKey keyEvent)
-    {
-        // Keys 1-9 map to indices 0-8
-        if (keyEvent.Keycode >= Key.Key1 && keyEvent.Keycode <= Key.Key9)
-        {
-            return (int)(keyEvent.Keycode - Key.Key1);
-        }
-        if (keyEvent.Keycode >= Key.Kp1 && keyEvent.Keycode <= Key.Kp9)
-        {
-            return (int)(keyEvent.Keycode - Key.Kp1);
-        }
-
-        // Key 0 maps to index 9
-        if (keyEvent.Keycode == Key.Key0 || keyEvent.Keycode == Key.Kp0)
-        {
-            return 9;
-        }
-
-        return -1;
     }
 
     private void UpdateDisplay()
@@ -173,7 +155,7 @@ public partial class SkillsModal : PanelContainer
             sb.AppendLine($"\n[color={Palette.ToHex(Palette.Cyan)}][b]─── Active Skills ───[/b][/color]");
             foreach (var skill in activeSkills)
             {
-                string keyDisplay = currentIndex < 9 ? (currentIndex + 1).ToString() : "0";
+                char keyDisplay = (char)('a' + currentIndex);
                 bool canAfford = currentWP >= skill.WillpowerCost;
                 sb.AppendLine(FormatActiveSkill(skill, keyDisplay, canAfford));
                 currentIndex++;
@@ -213,7 +195,7 @@ public partial class SkillsModal : PanelContainer
         _skillsLabel.Text = sb.ToString();
     }
 
-    private string FormatActiveSkill(SkillDefinition skill, string keyDisplay, bool canAfford)
+    private string FormatActiveSkill(SkillDefinition skill, char keyDisplay, bool canAfford)
     {
         string wpCost = skill.WillpowerCost > 0 ? $"[color={Palette.ToHex(Palette.Wizard)}]{skill.WillpowerCost} WP[/color]" : "[color=#888888]Free[/color]";
         string nameColor = canAfford ? Palette.ToHex(Palette.Default) : Palette.ToHex(Palette.Disabled);
@@ -244,7 +226,7 @@ public partial class SkillsModal : PanelContainer
         if (_skillsLabel != null)
         {
             var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-            _skillsLabel.Text = $"[center][b]Skills[/b][/center]\n[center]({closeKey} to close)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No skills learned[/color][/center]";
+            _skillsLabel.Text = $"[center][b]Skills (a-z)[/b][/center]\n[center]({closeKey} to close)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No skills learned[/color][/center]";
         }
     }
 
@@ -253,6 +235,6 @@ public partial class SkillsModal : PanelContainer
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
         int currentWP = _willpowerComponent?.CurrentWillpower ?? 0;
         int maxWP = _willpowerComponent?.MaxWillpower ?? 0;
-        return $"[center][b]Skills[/b][/center]\n[center]WP: [color={Palette.ToHex(Palette.Wizard)}]{currentWP}/{maxWP}[/color] | ({closeKey} to close)[/center]";
+        return $"[center][b]Skills (a-z)[/b][/center]\n[center]WP: [color={Palette.ToHex(Palette.Wizard)}]{currentWP}/{maxWP}[/color] | ({closeKey} to close)[/center]";
     }
 }
