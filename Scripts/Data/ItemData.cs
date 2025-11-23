@@ -157,10 +157,40 @@ public class ItemData
     /// </summary>
     public AttackData? Attack { get; set; } = null;
 
-    // NOTE: Equipment stat bonuses (ArmorValue, EvasionPenalty, StrengthBonus, etc.)
-    // have been removed. All equipment bonuses are now defined via the Effects array
-    // using apply_condition effects. This unifies all stat modifications through
-    // the Conditions system for cleaner architecture.
+    #region Equipment Stat Modifiers
+    // These properties provide clean YAML syntax for equipment bonuses.
+    // EquipComponent reads these and creates conditions via ConditionFactory.
+    // Example YAML: armor: 3, evasion: -1
+
+    /// <summary>Armor modifier when equipped.</summary>
+    public int? Armor { get; set; }
+
+    /// <summary>Evasion modifier when equipped.</summary>
+    public int? Evasion { get; set; }
+
+    /// <summary>Strength modifier when equipped.</summary>
+    public int? Strength { get; set; }
+
+    /// <summary>Agility modifier when equipped.</summary>
+    public int? Agility { get; set; }
+
+    /// <summary>Endurance modifier when equipped.</summary>
+    public int? Endurance { get; set; }
+
+    /// <summary>Will modifier when equipped.</summary>
+    public int? Will { get; set; }
+
+    /// <summary>Max HP modifier when equipped.</summary>
+    [YamlMember(Alias = "maxHp")]
+    public int? MaxHp { get; set; }
+
+    /// <summary>Max WP modifier when equipped.</summary>
+    [YamlMember(Alias = "maxWp")]
+    public int? MaxWp { get; set; }
+
+    /// <summary>Regeneration modifier when equipped (in basis points, 100 = 1%).</summary>
+    public int? Regen { get; set; }
+    #endregion
 
     /// <summary>
     /// Explicit targeting configuration for this item.

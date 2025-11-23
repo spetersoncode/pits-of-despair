@@ -7,136 +7,80 @@ entries:
     name: padded armor
     color: Wool
     description: Layers of quilted cloth and wool that offer minimal protection. Better than nothing, but only just.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 1
+    armor: 1
 
   leather:
     name: leather armor
     color: SoftLeather
     description: Supple leather hardened with oils and wax. Light enough to move freely, tough enough to turn a glancing blow.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 2
+    armor: 2
 
   studded_leather:
     name: studded leather armor
     color: ToughLeather
     description: Tough leather reinforced with metal studs along the vital areas. The weight slows you slightly, but the protection is worth it.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 3
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -1
+    armor: 3
+    evasion: -1
 
   hide:
     name: hide armor
     color: RawHide
     description: Thick animal hide crudely stitched together. Bulky and awkward, but it can absorb tremendous punishment.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 3
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -3
+    armor: 3
+    evasion: -3
 
   chain_shirt:
     name: chain shirt
     color: Bronze
     description: Interlocking rings of bronze that flow like water when worn. The weight settles on your shoulders with grim familiarity.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 4
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -2
+    armor: 4
+    evasion: -2
 
   scale_mail:
     name: scale mail
     color: Copper
     description: Overlapping copper plates sewn to leather backing, reminiscent of serpent scales. Heavy and cumbersome, but it catches blades effectively.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 4
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -4
+    armor: 4
+    evasion: -4
 
   chainmail:
     name: chainmail
     color: Silver
     description: A full hauberk of interlocked rings that jingles softly with every movement. The weight is crushing, but few weapons can penetrate its weave.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 5
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -5
+    armor: 5
+    evasion: -5
 
   breastplate:
     name: breastplate
     color: Steel
     description: Forged steel shaped to deflect blows from the heart and lungs. Battle-scarred but dependable, a fortress for your chest.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 5
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -4
+    armor: 5
+    evasion: -4
 
   splint_mail:
     name: splint mail
     color: CrudeIron
     description: Vertical strips of iron riveted to a leather backing. Crude and brutally heavy, but it turns even savage blows.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 6
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -7
+    armor: 6
+    evasion: -7
 
   banded_mail:
     name: banded mail
     color: Iron
     description: Horizontal iron bands fastened to chain and leather. Each band bears the hammer marks of its forging, and the scars of past battles.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 6
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -6
+    armor: 6
+    evasion: -6
 
   half_plate:
     name: half-plate
     color: ForgedSteel
     description: Masterwork plates protecting chest, shoulders, and thighs, backed with mail. Moving in this is exhausting, but you feel nearly invincible.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 7
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -7
+    armor: 7
+    evasion: -7
 
   full_plate:
     name: full plate
     color: RefinedSteel
     description: The pinnacle of the armorer's art. Articulated steel encases you from head to toe, transforming you into a walking fortress.
-    effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 8
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: -6
+    armor: 8
+    evasion: -6

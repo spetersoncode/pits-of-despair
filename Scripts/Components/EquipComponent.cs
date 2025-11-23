@@ -248,8 +248,8 @@ public partial class EquipComponent : Node
     }
 
     /// <summary>
-    /// Applies item effects as conditions when equipping.
-    /// Effects from item's effects array are applied as WhileEquipped conditions.
+    /// Applies item stat modifiers as conditions when equipping.
+    /// Reads stat properties from ItemData and creates WhileEquipped conditions.
     /// </summary>
     private void ApplyItemBonuses(char inventoryKey, EquipmentSlot slot)
     {
@@ -266,34 +266,44 @@ public partial class EquipComponent : Node
 
         // Generate source prefix for tracking (e.g., "equipped_armor", "equipped_ring1")
         string sourcePrefix = $"equipped_{slot.ToString().ToLower()}";
-
-        // Apply each effect as a WhileEquipped condition
         int effectIndex = 0;
-        foreach (var effectDef in itemData.Effects)
+
+        // Apply stat modifiers from ItemData properties
+        ApplyStatCondition(itemData.Armor, "armor_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Evasion, "evasion_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Strength, "strength_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Agility, "agility_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Endurance, "endurance_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Will, "will_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.MaxHp, "max_hp_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.MaxWp, "max_wp_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Regen, "regen_modifier", sourcePrefix, ref effectIndex);
+    }
+
+    /// <summary>
+    /// Creates and applies a stat condition if the value is non-null.
+    /// </summary>
+    private void ApplyStatCondition(int? value, string conditionType, string sourcePrefix, ref int effectIndex)
+    {
+        if (value == null || _entity == null)
         {
-            var effectType = effectDef.Type?.ToLower();
-            if (effectType != "apply_condition")
-            {
-                continue; // Only process condition effects for equipment
-            }
+            return;
+        }
 
-            // Create unique source ID for this effect
-            string sourceId = $"{sourcePrefix}_{effectIndex}";
-            effectIndex++;
+        string sourceId = $"{sourcePrefix}_{effectIndex}";
+        effectIndex++;
 
-            // Create condition with WhileEquipped duration mode
-            var condition = ConditionFactory.Create(
-                effectDef.ConditionType,
-                effectDef.Amount,
-                "1", // Duration doesn't matter for WhileEquipped
-                ConditionDuration.WhileEquipped,
-                sourceId
-            );
+        var condition = ConditionFactory.Create(
+            conditionType,
+            value.Value,
+            "1", // Duration doesn't matter for WhileEquipped
+            ConditionDuration.WhileEquipped,
+            sourceId
+        );
 
-            if (condition != null)
-            {
-                _entity.AddCondition(condition);
-            }
+        if (condition != null)
+        {
+            _entity.AddCondition(condition);
         }
     }
 

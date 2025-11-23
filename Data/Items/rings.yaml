@@ -8,16 +8,10 @@ entries:
     name: evasion
     color: Jade
     description: A pale green ring that shimmers with captured light. When worn, your reflexes sharpen and blows seem to miss you by the narrowest of margins.
-    effects:
-      - type: apply_condition
-        conditionType: evasion_modifier
-        amount: 1
+    evasion: 1
 
   regeneration:
     name: regeneration
     color: Crimson
     description: This deep red ring pulses with a warm inner light. Wounds close faster while you wear it, flesh knitting together as if touched by healing magic.
-    effects:
-      - type: apply_condition
-        conditionType: regen_modifier
-        amount: 80
+    regen: 80
