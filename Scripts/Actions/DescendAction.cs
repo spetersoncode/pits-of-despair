@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
@@ -19,9 +20,10 @@ public class DescendAction : Action
 			return false;
 		}
 
-		// Check if actor is standing on stairs
-		var entityAtPosition = context.EntityManager.GetEntityAtPosition(actor.GridPosition);
-		return entityAtPosition is Stairs;
+		// Check if actor is standing on stairs (use GetEntitiesAtPosition to find stairs
+		// underneath the player, since GetEntityAtPosition returns the player first)
+		var entitiesAtPosition = context.EntityManager.GetEntitiesAtPosition(actor.GridPosition);
+		return entitiesAtPosition.Any(e => e is Stairs);
 	}
 
 	public override ActionResult Execute(BaseEntity actor, ActionContext context)
