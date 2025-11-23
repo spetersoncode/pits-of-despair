@@ -32,7 +32,7 @@ Current instantaneous effect types demonstrate the system's flexibility and comp
 
 **Blink**: Short-range random teleport within radius. Finds valid positions within Chebyshev distance (default 5), selects random unoccupied walkable tile. Unlike teleportation, range-limited and tactical. Fizzles if no valid nearby positions.
 
-**Status Application**: Bridge between instantaneous and duration-based systems. Creates status instances and adds to target's status component. Uses internal factory to instantiate correct status type from string identifier and parameters. See **[status.md](status.md)** for comprehensive status system architecture.
+**Condition Application**: Bridge between instantaneous and duration-based systems. Creates condition instances via `ConditionFactory` and adds to target entity. See **[conditions.md](conditions.md)** for comprehensive condition system architecture.
 
 ## Data Configuration
 
@@ -48,9 +48,9 @@ Current instantaneous effect types demonstrate the system's flexibility and comp
 
 **Item Integration**: UseItemAction is unified entry point for effect triggering. Works with consumables (destroyed on use) and charged items (multiple uses, recharge over turns). Effect success determines consumption—at least one effect must succeed to use charge or destroy consumable.
 
-**Component Integration**: Effects work with composition-based entity architecture. Query for capabilities rather than checking types. Any entity with HealthComponent can be healed. Any entity with StatusComponent can receive statuses. Player-specific and creature-specific code paths eliminated.
+**Component Integration**: Effects work with composition-based entity architecture. Query for capabilities rather than checking types. Any entity with `HealthComponent` can be healed. Any entity can receive conditions (managed directly by `BaseEntity`). Player-specific and creature-specific code paths eliminated.
 
-**Turn System Integration**: Status effects process automatically each turn via signal subscription. No manual update loops or iteration. Turn consumption happens at action level (UseItemAction costs turn), not effect level. Consistent with action system philosophy.
+**Turn System Integration**: Conditions process automatically each turn via entity's turn signal subscription. No manual update loops or iteration. Turn consumption happens at action level (UseItemAction costs turn), not effect level. Consistent with action system philosophy.
 
 **Combat Separation**: Effects currently separate from combat resolution. Combat uses attack components and dice rolls; effects are targeted modifications. Clear architectural boundary enables independent development. Future potential for combat-triggered effects (poison on hit, life steal).
 
@@ -58,11 +58,11 @@ Current instantaneous effect types demonstrate the system's flexibility and comp
 
 **Strategy Pattern**: Effect is abstract strategy defining Apply interface. Concrete effects (Heal, Blink, Teleport) are strategies. UseItemAction is context executing strategies. Runtime selection based on item data enables data-driven effect composition.
 
-**Template Method**: Status base class defines lifecycle hooks. Concrete statuses override OnApplied, OnTurnProcessed, OnRemoved for specific behavior. StatusComponent orchestrates lifecycle timing. Guarantees consistent execution, prevents lifecycle bugs.
+**Template Method**: `Condition` base class defines lifecycle hooks. Concrete conditions override `OnApplied`, `OnTurnProcessed`, `OnRemoved` for specific behavior. `BaseEntity` orchestrates lifecycle timing. Guarantees consistent execution, prevents lifecycle bugs.
 
 **Factory Pattern**: Centralized effect creation from untyped YAML data. Type-safe instantiation with validation. Extension point for new effect types—add case to switch statement, implement effect class, define YAML schema.
 
-**Observer Pattern**: StatusComponent emits signals for status events (added, removed, turn processing). UI and systems subscribe without StatusComponent knowing about them. Decoupled communication enables extensibility without modification.
+**Observer Pattern**: `BaseEntity` emits signals for condition events (added, removed, messages). UI and systems subscribe without entity knowing about them. Decoupled communication enables extensibility without modification.
 
 **Two-Phase Validation**: Item activation validates first, then effects validate preconditions. Granular failure feedback. Free retries for invalid actions—doesn't waste resources on precondition failures.
 
@@ -80,9 +80,9 @@ Subclass Effect base class implementing Apply method that receives target entity
 
 **Examples**: Direct damage (HealthComponent only). Attribute boosts (StatsComponent modifiers). Map revelation (MapSystem tile visibility). Summon creature (EntityManager spawning).
 
-### Adding New Status Effects
+### Adding New Condition Types
 
-Status effects extend instantaneous effects with turn-based lifecycle requiring additional integration with StatusComponent and turn management. See **[status.md](status.md)** for complete implementation guide including status subclass creation, factory registration, lifecycle hooks, component integration, and turn processing patterns.
+Conditions extend instantaneous effects with turn-based lifecycle. See **[conditions.md](conditions.md)** for complete implementation guide including condition subclass creation, factory registration, lifecycle hooks, and turn processing patterns.
 
 ### Advanced Extensions
 
@@ -108,14 +108,14 @@ Status effects extend instantaneous effects with turn-based lifecycle requiring 
 
 **Single-Target Limitation**: Simplifies implementation and semantics but prevents area-of-effect abilities. Future extension possible through new base class or signature modification. Current constraint acceptable for item-based effects.
 
-**Instantaneous vs Duration Split**: Clear separation between one-time and persistent effects but complicates delayed effects (apply damage in N turns). Workaround: Status with OnTurnProcessed achieves similar result.
+**Instantaneous vs Duration Split**: Clear separation between one-time and persistent effects but complicates delayed effects (apply damage in N turns). Workaround: Condition with `OnTurnProcessed` achieves similar result.
 
-**Non-Stacking Statuses**: Prevents exploits and ensures predictable behavior but eliminates cumulative buffs. Intentional design choice for game balance. Same effect type refreshes duration rather than stacking magnitude.
+**Non-Stacking Conditions**: Prevents exploits and ensures predictable behavior but eliminates cumulative buffs. Intentional design choice for game balance. Same condition type refreshes duration rather than stacking magnitude.
 
 **Centralized Factories**: Single point of creation enables validation and logging but requires all effect types known to factory. Easy to extend with new cases. Clear error messages guide implementation.
 
 ## See Also
 
-- [status.md](status.md) - Status system architecture
+- [conditions.md](conditions.md) - Condition system architecture
 - [components.md](components.md) - Component architecture and composition
 - [actions.md](actions.md) - Action system integration

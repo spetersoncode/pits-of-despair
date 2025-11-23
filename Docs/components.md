@@ -58,7 +58,7 @@ Examples: stats (equipment/buffs/debuffs), armor (worn/magical/stances), evasion
 
 ## Component Composition Patterns
 
-Entities combine components for capabilities: combat (Health, Stats, Attack), autonomy (Movement, Vision, AI), complexity (Inventory, Equipment, Status). See **[entities.md](entities.md)** for specific compositions.
+Entities combine components for capabilities: combat (Health, Stats, Attack), autonomy (Movement, Vision, AI), complexity (Inventory, Equipment). Note that conditions are managed directly by `BaseEntity` rather than through a component. See **[entities.md](entities.md)** for specific compositions.
 
 ## Benefits
 

@@ -918,7 +918,7 @@ skills:
 Skills compose effects from existing primitives:
 - `DamageEffect` - deal damage to target
 - `HealEffect` - restore HP
-- `ApplyStatusEffect` - add status condition
+- `ApplyConditionEffect` - add condition (buff/debuff)
 - `TeleportEffect` - move to tile
 - `SummonEffect` - create ally entity
 - `KnockbackEffect` - push target
