@@ -75,6 +75,9 @@ public static class KeybindingConfig
         { InputAction.SelectAgility, new() { Key.A } },
         { InputAction.SelectEndurance, new() { Key.E } },
         { InputAction.SelectWill, new() { Key.W } },
+
+        // Level-Up Menu (opens when level-up is available)
+        { InputAction.OpenLevelUp, new() { Key.L } },
     };
 
     /// <summary>

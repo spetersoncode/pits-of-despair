@@ -42,6 +42,9 @@ public partial class SidePanel : PanelContainer
 	private ViewModels.EquipmentViewModel _equipmentViewModel;
 	private Systems.NearbyEntitiesTracker _nearbyEntitiesTracker;
 
+	// Pending level-up tracking
+	private int _pendingLevelUps = 0;
+
 	public override void _Ready()
 	{
 		_healthBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/HealthBar");
@@ -235,8 +238,17 @@ public partial class SidePanel : PanelContainer
 		int currentXP = _statsViewModel.CurrentXP;
 		int xpToNext = _statsViewModel.XPToNextLevel;
 
-		_levelLabel.Text = $"Level: {level}";
-		_levelLabel.AddThemeColorOverride("font_color", DefaultTextColor);
+		// Show level-up indicator if pending level-ups exist
+		if (_pendingLevelUps > 0)
+		{
+			_levelLabel.Text = $"LEVEL UP! [L]";
+			_levelLabel.AddThemeColorOverride("font_color", Palette.Alert);
+		}
+		else
+		{
+			_levelLabel.Text = $"Level: {level}";
+			_levelLabel.AddThemeColorOverride("font_color", DefaultTextColor);
+		}
 
 		_experienceBar.MaxValue = xpToNext;
 		_experienceBar.Value = currentXP;
@@ -244,6 +256,16 @@ public partial class SidePanel : PanelContainer
 
 		_experienceLabel.Text = $"XP: {currentXP}/{xpToNext}";
 		_experienceLabel.AddThemeColorOverride("font_color", ExperienceBarColor);
+	}
+
+	/// <summary>
+	/// Sets the number of pending level-ups for the HUD indicator.
+	/// </summary>
+	/// <param name="count">Number of pending level-ups</param>
+	public void SetPendingLevelUps(int count)
+	{
+		_pendingLevelUps = count;
+		UpdateLevelAndXPDisplay();
 	}
 
 	private StyleBoxFlat CreateExperienceBarStyle()

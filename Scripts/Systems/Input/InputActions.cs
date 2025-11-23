@@ -72,6 +72,9 @@ public enum InputAction
     SelectEndurance,
     SelectWill,
 
+    // Level-Up Menu
+    OpenLevelUp,
+
     // Item Selection (A-Z)
     // Handled separately via letter key range checking
 }

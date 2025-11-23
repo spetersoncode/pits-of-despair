@@ -49,8 +49,10 @@ public partial class GameHUD : Control
     private CursorTargetingSystem _cursorSystem;
     private AutoExploreSystem _autoExploreSystem;
     private Components.StatsComponent _playerStats;
+    private Components.SkillComponent _playerSkills;
     private Components.ConditionComponent _conditionComponent;
     private Systems.EntityManager _entityManager;
+    private DataLoader _dataLoader;
 
     // New systems for decoupling
     private Systems.LevelUpSystem _levelUpSystem;
@@ -122,18 +124,22 @@ public partial class GameHUD : Control
         _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
 
         _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
+        _levelUpModal.Connect(LevelUpModal.SignalName.SkillChosen, Callable.From<string>(OnSkillChosen));
 
         // Connect to LevelUpSystem for showing level-up modal
         _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.ShowLevelUpModal, Callable.From<int>(OnShowLevelUpModal));
         _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.StatIncreased, Callable.From<string, int>(OnStatIncreased));
+        _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.PendingLevelUpsChanged, Callable.From<int>(OnPendingLevelUpsChanged));
 
         // Connect to PlayerActionHandler for action results
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
 
-        // Keep reference to player stats for other uses
+        // Keep reference to player components and DataLoader for level-up modal
         _playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
+        _playerSkills = player.GetNodeOrNull<Components.SkillComponent>("SkillComponent");
+        _dataLoader = GetNode<DataLoader>("/root/DataLoader");
 
         // Initialize debug console if debug context provided
         if (debugContext != null)
@@ -680,8 +686,8 @@ public partial class GameHUD : Control
         // Log level-up message
         _messageLog.AddMessage($"Level Up! You are now level {newLevel}.", Palette.ToHex(Palette.Success));
 
-        // Show level-up modal for stat choice
-        _levelUpModal.ShowForLevel(newLevel, _playerStats.TotalEndurance);
+        // Show level-up modal with full references for enhanced stat/skill preview
+        _levelUpModal.ShowForLevel(newLevel, _playerStats, _playerSkills, _dataLoader);
         _currentMenuState = MenuState.LevelUpChoice;
     }
 
@@ -694,9 +700,48 @@ public partial class GameHUD : Control
         // Delegate stat application to LevelUpSystem
         _levelUpSystem.ApplyStatChoice(statIndex);
 
+        // Only hide modal if not transitioning to skill selection
+        // Modal handles transition internally and will emit SkillChosen when done
+        if (!_levelUpModal.IsInSkillSelectionPhase)
+        {
+            _levelUpModal.HideModal();
+            _currentMenuState = MenuState.None;
+
+            // Notify LevelUpSystem that this level-up is complete (no skill selection phase)
+            _levelUpSystem.CompleteLevelUp();
+        }
+    }
+
+    /// <summary>
+    /// Called when the player chooses a skill to learn in the level-up modal.
+    /// </summary>
+    private void OnSkillChosen(string skillId)
+    {
+        // Learn the skill
+        if (_playerSkills != null && _playerSkills.LearnSkill(skillId))
+        {
+            var skillDef = _dataLoader?.GetSkill(skillId);
+            string skillName = skillDef?.Name ?? skillId;
+            _messageLog.AddMessage($"Learned {skillName}!", Palette.ToHex(Palette.PotionWill));
+        }
+
         // Hide modal and reset menu state
         _levelUpModal.HideModal();
         _currentMenuState = MenuState.None;
+
+        // Notify LevelUpSystem that this level-up is complete
+        _levelUpSystem.CompleteLevelUp();
+    }
+
+    /// <summary>
+    /// Called when L key is pressed and player wants to open level-up if available.
+    /// </summary>
+    public void RequestLevelUp()
+    {
+        if (_levelUpSystem != null && _levelUpSystem.HasPendingLevelUp)
+        {
+            _levelUpSystem.TriggerPendingLevelUp();
+        }
     }
 
     /// <summary>
@@ -706,6 +751,15 @@ public partial class GameHUD : Control
     private void OnStatIncreased(string statName, int newLevel)
     {
         _messageLog.AddMessage($"You increased {statName}!", Palette.ToHex(Palette.Success));
+    }
+
+    /// <summary>
+    /// Called when the number of pending level-ups changes.
+    /// Updates the HUD indicator.
+    /// </summary>
+    private void OnPendingLevelUpsChanged(int count)
+    {
+        _sidePanel?.SetPendingLevelUps(count);
     }
 
     public override void _ExitTree()
@@ -754,6 +808,7 @@ public partial class GameHUD : Control
         if (_levelUpModal != null)
         {
             _levelUpModal.Disconnect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
+            _levelUpModal.Disconnect(LevelUpModal.SignalName.SkillChosen, Callable.From<string>(OnSkillChosen));
         }
 
         if (_debugConsoleModal != null)
@@ -785,6 +840,7 @@ public partial class GameHUD : Control
         {
             _levelUpSystem.Disconnect(Systems.LevelUpSystem.SignalName.ShowLevelUpModal, Callable.From<int>(OnShowLevelUpModal));
             _levelUpSystem.Disconnect(Systems.LevelUpSystem.SignalName.StatIncreased, Callable.From<string, int>(OnStatIncreased));
+            _levelUpSystem.Disconnect(Systems.LevelUpSystem.SignalName.PendingLevelUpsChanged, Callable.From<int>(OnPendingLevelUpsChanged));
         }
 
         if (_actionHandler != null)

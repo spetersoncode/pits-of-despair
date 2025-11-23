@@ -204,6 +204,7 @@ public partial class GameLevel : Node
         _inputHandler.Connect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
         _inputHandler.Connect(InputHandler.SignalName.DebugModeToggled, Callable.From(_gameHUD.ToggleDebugMode));
         _inputHandler.Connect(InputHandler.SignalName.DebugConsoleRequested, Callable.From(_gameHUD.RequestDebugConsole));
+        _inputHandler.Connect(InputHandler.SignalName.OpenLevelUpRequested, Callable.From(_gameHUD.RequestLevelUp));
 
         _aiSystem.SetMapSystem(_mapSystem);
         _aiSystem.SetPlayer(_player);
@@ -368,6 +369,7 @@ public partial class GameLevel : Node
             _inputHandler.Disconnect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
             _inputHandler.Disconnect(InputHandler.SignalName.DebugModeToggled, Callable.From(_gameHUD.ToggleDebugMode));
             _inputHandler.Disconnect(InputHandler.SignalName.DebugConsoleRequested, Callable.From(_gameHUD.RequestDebugConsole));
+            _inputHandler.Disconnect(InputHandler.SignalName.OpenLevelUpRequested, Callable.From(_gameHUD.RequestLevelUp));
         }
     }
 }

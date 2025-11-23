@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 
@@ -9,6 +10,7 @@ namespace PitsOfDespair.Systems;
 /// Listens to StatsComponent.LevelUp signal and:
 /// - Coordinates stat choice UI
 /// - Applies chosen stat increases
+/// - Queues multiple level-ups for discrete processing
 /// Note: HP gains come purely from Endurance stat investment (no automatic HP per level).
 /// </summary>
 public partial class LevelUpSystem : Node
@@ -29,13 +31,31 @@ public partial class LevelUpSystem : Node
 	[Signal]
 	public delegate void StatIncreasedEventHandler(string statName, int newLevel);
 
+	/// <summary>
+	/// Emitted when the pending level-up count changes (for HUD indicator).
+	/// Parameter: count of pending level-ups
+	/// </summary>
+	[Signal]
+	public delegate void PendingLevelUpsChangedEventHandler(int count);
+
 	#endregion
 
 	#region State
 
 	private Player _player;
 	private StatsComponent _statsComponent;
-	private int _pendingLevel; // Level waiting for stat choice
+	private readonly Queue<int> _pendingLevelUps = new(); // Queue of levels waiting for processing
+	private bool _isProcessingLevelUp = false; // Prevent overlapping modals
+
+	/// <summary>
+	/// Whether there are pending level-ups waiting to be processed.
+	/// </summary>
+	public bool HasPendingLevelUp => _pendingLevelUps.Count > 0;
+
+	/// <summary>
+	/// Number of pending level-ups waiting to be processed.
+	/// </summary>
+	public int PendingLevelUpCount => _pendingLevelUps.Count;
 
 	#endregion
 
@@ -75,16 +95,68 @@ public partial class LevelUpSystem : Node
 
 	/// <summary>
 	/// Called when the player levels up.
-	/// Requests stat choice from UI. HP gains now come purely from END stat investment.
+	/// Queues the level-up for processing - discrete one at a time.
 	/// </summary>
 	/// <param name="newLevel">The new level reached</param>
 	private void OnPlayerLevelUp(int newLevel)
 	{
-		_pendingLevel = newLevel;
+		// Queue this level-up
+		_pendingLevelUps.Enqueue(newLevel);
+		EmitSignal(SignalName.PendingLevelUpsChanged, _pendingLevelUps.Count);
+
+		// If not already processing, show the modal for this level-up
+		if (!_isProcessingLevelUp)
+		{
+			ProcessNextLevelUp();
+		}
+	}
+
+	/// <summary>
+	/// Processes the next pending level-up by showing the modal.
+	/// </summary>
+	private void ProcessNextLevelUp()
+	{
+		if (_pendingLevelUps.Count == 0)
+		{
+			_isProcessingLevelUp = false;
+			return;
+		}
+
+		_isProcessingLevelUp = true;
+		int nextLevel = _pendingLevelUps.Peek(); // Don't dequeue yet - wait for completion
 
 		// Request UI to show stat choice modal
-		// Note: No automatic HP increase - all HP gains come from END stat choices
-		EmitSignal(SignalName.ShowLevelUpModal, newLevel);
+		EmitSignal(SignalName.ShowLevelUpModal, nextLevel);
+	}
+
+	/// <summary>
+	/// Manually triggers the level-up modal if there are pending level-ups.
+	/// Called when player presses L key.
+	/// </summary>
+	public void TriggerPendingLevelUp()
+	{
+		if (HasPendingLevelUp && !_isProcessingLevelUp)
+		{
+			ProcessNextLevelUp();
+		}
+	}
+
+	/// <summary>
+	/// Called when a level-up has been fully completed (stat chosen, skill chosen if applicable).
+	/// Advances to the next pending level-up if any.
+	/// </summary>
+	public void CompleteLevelUp()
+	{
+		if (_pendingLevelUps.Count > 0)
+		{
+			_pendingLevelUps.Dequeue();
+			EmitSignal(SignalName.PendingLevelUpsChanged, _pendingLevelUps.Count);
+		}
+
+		_isProcessingLevelUp = false;
+
+		// Note: We don't auto-process next level-up here
+		// Player must press L or trigger will happen naturally on next XP gain
 	}
 
 	#endregion
@@ -121,8 +193,11 @@ public partial class LevelUpSystem : Node
 		// Trigger stat recalculation
 		_statsComponent.EmitSignal(StatsComponent.SignalName.StatsChanged);
 
+		// Get the level being processed (peeked but not yet dequeued)
+		int currentLevel = _pendingLevelUps.Count > 0 ? _pendingLevelUps.Peek() : _statsComponent.Level;
+
 		// Notify that stat was increased
-		EmitSignal(SignalName.StatIncreased, statName, _pendingLevel);
+		EmitSignal(SignalName.StatIncreased, statName, currentLevel);
 	}
 
 	private string ApplyStrengthIncrease()

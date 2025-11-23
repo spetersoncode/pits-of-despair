@@ -36,6 +36,9 @@ public partial class InputHandler : Node
     [Signal]
     public delegate void DebugConsoleRequestedEventHandler();
 
+    [Signal]
+    public delegate void OpenLevelUpRequestedEventHandler();
+
     // Core dependencies
     private Player _player;
     private TurnManager _turnManager;
@@ -253,6 +256,11 @@ public partial class InputHandler : Node
                     }
                     _cursorSystem.StartExamine(_player.GridPosition);
                 }
+                GetViewport().SetInputAsHandled();
+                return true;
+
+            case InputAction.OpenLevelUp:
+                EmitSignal(SignalName.OpenLevelUpRequested);
                 GetViewport().SetInputAsHandled();
                 return true;
 
