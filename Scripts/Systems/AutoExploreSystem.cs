@@ -97,6 +97,7 @@ public partial class AutoExploreSystem : Node
         // Check for immediate interrupts before starting - don't start if enemies visible
         if (CheckForVisibleEnemies())
         {
+            _actionContext.CombatSystem.EmitActionMessage(_player, "Autoexplore blocked: Enemy in view.", Palette.ToHex(Palette.Caution));
             return;
         }
 
