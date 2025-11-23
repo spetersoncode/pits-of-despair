@@ -10,15 +10,12 @@ namespace PitsOfDespair.Skills;
 
 /// <summary>
 /// Processes passive skills, applying their permanent effects when learned.
-/// Listens to SkillComponent.SkillLearned and registers stat modifiers.
+/// Listens to SkillComponent.SkillLearned and applies effects via the condition system.
 /// </summary>
 public partial class PassiveSkillProcessor : Node
 {
     private BaseEntity? _entity;
     private SkillComponent? _skillComponent;
-    private StatsComponent? _statsComponent;
-    private WillpowerComponent? _willpowerComponent;
-    private HealthComponent? _healthComponent;
     private DataLoader? _dataLoader;
 
     /// <summary>
@@ -37,17 +34,12 @@ public partial class PassiveSkillProcessor : Node
         }
 
         _skillComponent = _entity.GetNodeOrNull<SkillComponent>("SkillComponent");
-        _statsComponent = _entity.GetNodeOrNull<StatsComponent>("StatsComponent");
-        _willpowerComponent = _entity.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
-        _healthComponent = _entity.GetNodeOrNull<HealthComponent>("HealthComponent");
-
         if (_skillComponent == null)
         {
             GD.PushWarning("PassiveSkillProcessor: SkillComponent not found");
             return;
         }
 
-        // Find DataLoader
         _dataLoader = GetTree()?.Root.GetNodeOrNull<DataLoader>("DataLoader");
         if (_dataLoader == null)
         {
@@ -129,145 +121,61 @@ public partial class PassiveSkillProcessor : Node
 
     /// <summary>
     /// Applies a single passive effect based on its type.
+    /// All stat effects are routed through the condition system.
     /// </summary>
     private void ApplyPassiveEffect(SkillEffectDefinition effect, string source, SkillDefinition skill)
     {
+        string? conditionType = null;
+        int amount = effect.Amount;
+
         switch (effect.Type?.ToLower())
         {
             case "stat_bonus":
-                ApplyStatBonus(effect, source);
+                // Use StatConditionMapper to convert stat name to condition type
+                conditionType = StatConditionMapper.GetConditionType(effect.Stat);
                 break;
 
             case "armor_bonus":
-                ApplyArmorBonus(effect, source);
+                conditionType = "armor_modifier";
                 break;
 
             case "evasion_bonus":
-                ApplyEvasionBonus(effect, source);
+                conditionType = "evasion_modifier";
                 break;
 
             default:
                 GD.PushWarning($"PassiveSkillProcessor: Unknown passive effect type '{effect.Type}' in skill '{skill.Id}'");
-                break;
+                return;
         }
-    }
 
-    /// <summary>
-    /// Applies a stat bonus effect via Permanent conditions.
-    /// Supports: str, agi, end, wil, armor, evasion (via conditions)
-    /// Also supports: max_hp, max_wp (via direct modifiers)
-    /// </summary>
-    private void ApplyStatBonus(SkillEffectDefinition effect, string source)
-    {
-        // Use the Stat property from YAML (e.g., "stat: max_hp")
-        string stat = effect.Stat?.ToLower() ?? string.Empty;
-        int amount = effect.Amount;
-
-        // Map stat names to condition types
-        string? conditionType = stat switch
+        if (conditionType == null)
         {
-            "str" or "strength" => "strength_modifier",
-            "agi" or "agility" => "agility_modifier",
-            "end" or "endurance" => "endurance_modifier",
-            "wil" or "will" or "willpower" => "will_modifier",
-            "armor" => "armor_modifier",
-            "evasion" => "evasion_modifier",
-            "max_hp" => null, // Special handling
-            "max_wp" => null, // Special handling
-            _ => null
-        };
-
-        // Handle stats via conditions
-        if (conditionType != null && _entity != null)
-        {
-            var condition = ConditionFactory.Create(
-                conditionType,
-                amount,
-                "1", // Duration doesn't matter for Permanent
-                ConditionDuration.Permanent,
-                source
-            );
-            if (condition != null)
-            {
-                _entity.AddCondition(condition);
-            }
+            GD.PushWarning($"PassiveSkillProcessor: Unknown stat type '{effect.Stat}' in skill '{skill.Id}'");
             return;
         }
 
-        // Handle special cases that don't use conditions
-        switch (stat)
-        {
-            case "max_hp":
-                ApplyMaxHPBonus(source, amount);
-                break;
-
-            case "max_wp":
-                ApplyMaxWPBonus(source, amount);
-                break;
-
-            default:
-                if (conditionType == null)
-                {
-                    GD.PushWarning($"PassiveSkillProcessor: Unknown stat type '{stat}' for stat_bonus");
-                }
-                break;
-        }
+        ApplyCondition(conditionType, amount, source);
     }
 
     /// <summary>
-    /// Applies an armor bonus effect via Permanent condition.
+    /// Creates and applies a permanent condition to the entity.
     /// </summary>
-    private void ApplyArmorBonus(SkillEffectDefinition effect, string source)
+    private void ApplyCondition(string conditionType, int amount, string source)
     {
         if (_entity == null) return;
 
         var condition = ConditionFactory.Create(
-            "armor_modifier",
-            effect.Amount,
-            "1",
+            conditionType,
+            amount,
+            "1", // Duration doesn't matter for Permanent
             ConditionDuration.Permanent,
             source
         );
+
         if (condition != null)
         {
             _entity.AddCondition(condition);
         }
-    }
-
-    /// <summary>
-    /// Applies an evasion bonus effect via Permanent condition.
-    /// </summary>
-    private void ApplyEvasionBonus(SkillEffectDefinition effect, string source)
-    {
-        if (_entity == null) return;
-
-        var condition = ConditionFactory.Create(
-            "evasion_modifier",
-            effect.Amount,
-            "1",
-            ConditionDuration.Permanent,
-            source
-        );
-        if (condition != null)
-        {
-            _entity.AddCondition(condition);
-        }
-    }
-
-    /// <summary>
-    /// Applies a max HP bonus directly to HealthComponent.
-    /// </summary>
-    private void ApplyMaxHPBonus(string source, int amount)
-    {
-        _healthComponent?.AddMaxHPModifier(source, amount);
-    }
-
-    /// <summary>
-    /// Applies a max WP bonus directly to WillpowerComponent.
-    /// </summary>
-    private void ApplyMaxWPBonus(string source, int amount)
-    {
-        _willpowerComponent?.AddMaxWPModifier(source, amount);
     }
 
     /// <summary>
@@ -290,16 +198,11 @@ public partial class PassiveSkillProcessor : Node
 
     /// <summary>
     /// Removes all modifiers for a given source.
-    /// Uses conditions system for stats, direct removal for max_hp/max_wp.
+    /// All modifiers are now handled via the condition system.
     /// </summary>
     private void RemoveModifiersForSource(string source)
     {
-        // Remove conditions by source prefix (handles all stat modifiers)
         _entity?.RemoveConditionsBySource(source);
-
-        // Remove direct modifiers (for stats not in condition system)
-        _healthComponent?.RemoveMaxHPModifier(source);
-        _willpowerComponent?.RemoveMaxWPModifier(source);
     }
 
     /// <summary>

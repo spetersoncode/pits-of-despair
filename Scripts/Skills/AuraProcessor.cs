@@ -336,24 +336,11 @@ public partial class AuraProcessor : Node
     /// </summary>
     private void ApplyAuraStatBonus(SkillEffectDefinition effect, BaseEntity target, string source)
     {
-        string stat = effect.Stat?.ToLower() ?? string.Empty;
-        int amount = effect.Amount;
-
-        // Map stat names to condition types
-        string? conditionType = stat switch
-        {
-            "str" or "strength" or "attack" => "strength_modifier",
-            "agi" or "agility" => "agility_modifier",
-            "end" or "endurance" => "endurance_modifier",
-            "wil" or "will" or "willpower" => "will_modifier",
-            "armor" => "armor_modifier",
-            "evasion" => "evasion_modifier",
-            _ => null
-        };
+        string? conditionType = StatConditionMapper.GetConditionType(effect.Stat);
 
         if (conditionType != null)
         {
-            ApplyAuraCondition(target, conditionType, amount, source);
+            ApplyAuraCondition(target, conditionType, effect.Amount, source);
         }
     }
 
@@ -362,15 +349,11 @@ public partial class AuraProcessor : Node
     /// </summary>
     private void ApplyAuraDebuff(SkillEffectDefinition effect, BaseEntity target, string source)
     {
-        string stat = effect.Stat?.ToLower() ?? "attack";
+        // Default to attack/strength if no stat specified
+        string stat = effect.Stat ?? "attack";
         int amount = -Mathf.Abs(effect.Amount); // Ensure negative
 
-        string? conditionType = stat switch
-        {
-            "str" or "strength" or "attack" => "strength_modifier",
-            "agi" or "agility" or "defense" => "agility_modifier",
-            _ => null
-        };
+        string? conditionType = StatConditionMapper.GetConditionType(stat);
 
         if (conditionType != null)
         {

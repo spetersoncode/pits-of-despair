@@ -11,7 +11,7 @@ namespace PitsOfDespair.Conditions;
 /// DCSS formula: +80 per instance adds roughly 1 HP per 1.25 turns.
 /// Supports all duration modes: Temporary (potions), WhileEquipped (rings), Permanent (passive skills).
 /// </summary>
-public class RegenCondition : Condition
+public class RegenModifierCondition : Condition
 {
     /// <summary>
     /// Amount of regen bonus provided by this condition.
@@ -32,20 +32,20 @@ public class RegenCondition : Condition
     /// <summary>
     /// Parameterless constructor for deserialization.
     /// </summary>
-    public RegenCondition()
+    public RegenModifierCondition()
     {
         Amount = 80;
         Duration = "10";
     }
 
     /// <summary>
-    /// Parameterized constructor for creating regen conditions.
+    /// Parameterized constructor for creating regen modifier conditions.
     /// </summary>
     /// <param name="amount">Regen rate bonus (default 80 per DCSS).</param>
     /// <param name="duration">Duration as dice notation (e.g., "10", "2d3").</param>
     /// <param name="durationMode">Duration mode (Temporary, Permanent, WhileEquipped, WhileActive).</param>
     /// <param name="sourceId">Optional source identifier for tracking.</param>
-    public RegenCondition(int amount, string duration,
+    public RegenModifierCondition(int amount, string duration,
         ConditionDuration durationMode = ConditionDuration.Temporary, string? sourceId = null)
     {
         Amount = amount;
@@ -59,7 +59,7 @@ public class RegenCondition : Condition
         var health = target.GetNodeOrNull<HealthComponent>("HealthComponent");
         if (health == null)
         {
-            GD.PrintErr($"RegenCondition: {target.DisplayName} has no HealthComponent");
+            GD.PrintErr($"RegenModifierCondition: {target.DisplayName} has no HealthComponent");
             return ConditionMessage.Empty;
         }
 

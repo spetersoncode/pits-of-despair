@@ -40,8 +40,10 @@ public static class ConditionFactory
             "will_modifier" => new StatModifierCondition(StatType.Will, amount, duration, durationMode, sourceId),
             "evasion_modifier" => new StatModifierCondition(StatType.Evasion, amount, duration, durationMode, sourceId),
 
-            // Regen modifier
-            "regen_modifier" => new RegenCondition(amount, duration, durationMode, sourceId),
+            // Resource modifiers
+            "max_hp_modifier" => new MaxHPModifierCondition(amount, duration, durationMode, sourceId),
+            "max_wp_modifier" => new MaxWPModifierCondition(amount, duration, durationMode, sourceId),
+            "regen_modifier" => new RegenModifierCondition(amount, duration, durationMode, sourceId),
 
             // Debuffs / Status effects
             "confusion" => new ConfusionCondition(duration),
@@ -82,6 +84,8 @@ public static class ConditionFactory
             "endurance_modifier" => true,
             "will_modifier" => true,
             "evasion_modifier" => true,
+            "max_hp_modifier" => true,
+            "max_wp_modifier" => true,
             "regen_modifier" => true,
             "confusion" => true,
             _ => false

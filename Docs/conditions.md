@@ -78,7 +78,7 @@ Current implementations demonstrate patterns for common effect types.
 
 **StatModifierCondition**: Configurable stat modifier supporting Armor, Strength, Agility, Endurance, Will, Evasion. Uses unified `AddStatModifier(StatType, sourceId, amount)` API. `OnApplied` registers modifier. `OnRemoved` removes modifier. Works with all duration modes. Positive amounts are buffs, negative amounts are penalties.
 
-**RegenCondition**: Temporary regeneration boost. Adds to health component's regeneration rate while active. Demonstrates per-turn stat modification pattern.
+**RegenModifierCondition**: Regeneration modifier. Adds to health component's regeneration rate while active. Supports all duration modes like other modifier conditions.
 
 **ConfusionCondition**: Debuff causing random movement. Demonstrates behavioral modification rather than stat modification.
 
