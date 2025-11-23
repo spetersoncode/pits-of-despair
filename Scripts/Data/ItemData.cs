@@ -11,67 +11,53 @@ namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Type information for item categories.
-/// Defines default properties for item types.
+/// Contains functional defaults required for game logic.
+/// Visual defaults (glyph, color) are defined in YAML sheets.
 /// </summary>
 public class ItemTypeInfo
 {
-    public string DefaultGlyph { get; set; } = DataDefaults.UnknownGlyph;
-    public string DefaultColor { get; set; } = DataDefaults.DefaultColor;
     public bool IsEquippable { get; set; } = false;
     public bool IsConsumable { get; set; } = false;
     public string? EquipSlot { get; set; } = null;
     public bool AutoPickup { get; set; } = false;
-    public bool UsesOfPattern { get; set; } = false;  // Does this type use "X of Y" naming?
+    public bool UsesOfPattern { get; set; } = false;
 }
 
 /// <summary>
 /// Serializable item data structure.
-/// Loaded from Data/Items/*.yaml files.
+/// Loaded from Data/Items/*.yaml sheet files.
+/// Functional defaults come from code, visual defaults from YAML.
 /// </summary>
 public class ItemData
 {
     /// <summary>
     /// Type metadata for item categories.
-    /// Maps type string (e.g., "potion") to default properties.
+    /// Contains functional defaults only - visual defaults are in YAML sheets.
     /// </summary>
     private static readonly Dictionary<string, ItemTypeInfo> TypeInfo = new()
     {
         ["potion"] = new ItemTypeInfo
         {
-            DefaultGlyph = "!",
-            DefaultColor = Palette.ToHex(Palette.Default),
-            IsEquippable = false,
             IsConsumable = true,
             UsesOfPattern = true
         },
         ["scroll"] = new ItemTypeInfo
         {
-            DefaultGlyph = "♪",
-            DefaultColor = Palette.ToHex(Palette.Default),
-            IsEquippable = false,
             IsConsumable = true,
             UsesOfPattern = true
         },
         ["weapon"] = new ItemTypeInfo
         {
-            DefaultGlyph = "/",
-            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
-            IsConsumable = false,
             EquipSlot = "MeleeWeapon"
         },
         ["armor"] = new ItemTypeInfo
         {
-            DefaultGlyph = "[",
-            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
-            IsConsumable = false,
             EquipSlot = "Armor"
         },
         ["ammo"] = new ItemTypeInfo
         {
-            DefaultGlyph = "↑",
-            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
             IsConsumable = true,
             EquipSlot = "Ammo",
@@ -79,27 +65,16 @@ public class ItemData
         },
         ["ring"] = new ItemTypeInfo
         {
-            DefaultGlyph = "=",
-            DefaultColor = Palette.ToHex(Palette.Default),
             IsEquippable = true,
-            IsConsumable = false,
             EquipSlot = "Ring",
             UsesOfPattern = true
         },
         ["wand"] = new ItemTypeInfo
         {
-            DefaultGlyph = "~",
-            DefaultColor = Palette.ToHex(Palette.Default),
-            IsEquippable = false,
-            IsConsumable = false,  // Not consumed immediately, but removed when charges depleted
             UsesOfPattern = true
         },
         ["staff"] = new ItemTypeInfo
         {
-            DefaultGlyph = "|",
-            DefaultColor = Palette.ToHex(Palette.Default),
-            IsEquippable = false,
-            IsConsumable = false,
             UsesOfPattern = true
         }
     };
@@ -220,64 +195,33 @@ public class ItemData
     public ItemTargeting? Targeting { get; set; } = null;
 
     /// <summary>
-    /// Applies type-based defaults for properties not explicitly set in YAML.
-    /// Should be called after deserialization.
+    /// Applies type-based functional defaults from code.
+    /// Visual defaults (glyph, color) come from YAML sheets.
     /// </summary>
     public void ApplyDefaults()
     {
-        if (string.IsNullOrEmpty(Type))
+        if (!string.IsNullOrEmpty(Type))
         {
-            return; // No type means no inherited defaults
-        }
-
-        var typeKey = Type.ToLower();
-        if (TypeInfo.TryGetValue(typeKey, out var info))
-        {
-            // Apply defaults for properties not explicitly set
-            // Special handling for weapons: assign glyph based on attack type and damage type
-            if (Glyph == null)
+            var typeKey = Type.ToLower();
+            if (TypeInfo.TryGetValue(typeKey, out var info))
             {
-                if (typeKey == "weapon" && Attack != null)
+                // Apply functional defaults only if not explicitly set
+                IsConsumable ??= info.IsConsumable;
+                IsEquippable ??= info.IsEquippable;
+                EquipSlot ??= info.EquipSlot;
+
+                // AutoPickup only if not already true
+                if (!AutoPickup)
                 {
-                    // Ranged weapons use } glyph
-                    if (Attack.Type == AttackType.Ranged)
-                    {
-                        Glyph = "}";
-                    }
-                    // Melee weapons use glyph based on damage type
-                    else
-                    {
-                        Glyph = Attack.DamageType switch
-                        {
-                            DamageType.Piercing => "†",
-                            DamageType.Slashing => "/",
-                            DamageType.Bludgeoning => "¶",
-                            _ => "/" // Fallback to forward slash
-                        };
-                    }
-                }
-                else
-                {
-                    // Non-weapon items use type default
-                    Glyph = info.DefaultGlyph;
+                    AutoPickup = info.AutoPickup;
                 }
             }
 
-            // Only set color if it's still the default white
-            if (Color == DataDefaults.DefaultColor)
+            // Set weapon attack name to the display name
+            if (typeKey == "weapon" && Attack != null)
             {
-                Color = info.DefaultColor;
+                Attack.Name = GetDisplayName();
             }
-
-            IsConsumable ??= info.IsConsumable;
-            IsEquippable ??= info.IsEquippable;
-            EquipSlot ??= info.EquipSlot;
-        }
-
-        // Set weapon attack name to the display name
-        if (typeKey == "weapon" && Attack != null)
-        {
-            Attack.Name = GetDisplayName();
         }
 
         // Validation: Warn if equippable item has Endurance bonus (design violation)
@@ -383,13 +327,9 @@ public class ItemData
         }
 
         var typeKey = Type.ToLower();
-        if (!TypeInfo.TryGetValue(typeKey, out var info))
-        {
-            return count == 1 ? Name : $"{Name} ({count})";
-        }
 
-        // Items that use "X of Y" pattern (potion, scroll, ring, wand)
-        if (info.UsesOfPattern)
+        // Check if this type uses "X of Y" pattern
+        if (TypeInfo.TryGetValue(typeKey, out var info) && info.UsesOfPattern)
         {
             if (count == 1)
             {
@@ -410,7 +350,7 @@ public class ItemData
             return count == 1 ? Name : $"{count} {Name}";
         }
 
-        // Other items (weapon, armor, staff): just append count in parens
+        // Other items (weapon, armor): just append count in parens
         return count == 1 ? Name : $"{Name} ({count})";
     }
 

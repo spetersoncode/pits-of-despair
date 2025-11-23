@@ -1,9 +1,0 @@
-name: broadsword
-type: weapon
-color: Bronze
-equipSlot: MeleeWeapon
-description: A wide bronze blade, heavier than it looks. It hacks and cleaves where finer swords would thrust.
-attack:
-  type: Melee
-  dice: "1d8"
-  damageType: Slashing

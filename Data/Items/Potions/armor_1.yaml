@@ -1,9 +1,0 @@
-name: barkskin
-type: potion
-color: PotionBarkskin
-description: Dark olive sludge, thick as sap. The scent of deep forest fills your nose.
-effects:
-  - type: apply_condition
-    conditionType: armor_buff
-    amount: 1
-    duration: 10

@@ -1,0 +1,26 @@
+type: allies
+defaults:
+  glyph: a
+  color: Player
+  faction: Neutral
+
+entries:
+  cat:
+    name: cat
+    description: A scrawny dungeon cat with keen eyes and quick reflexes. It survived down here by being faster and smarter than the rats.
+    level: 1
+    glyph: c
+    color: "#c8a060"
+    strength: -1
+    agility: 2
+    endurance: -1
+    maxHP: 6
+    ai:
+      - type: JoinPlayerOnSightComponent
+      - type: FollowTargetGoal
+      - type: DefendTargetGoal
+    attacks:
+      - name: claws
+        type: Melee
+        dice: "1d3"
+        damageType: Slashing

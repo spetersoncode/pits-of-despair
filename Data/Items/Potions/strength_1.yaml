@@ -1,9 +1,0 @@
-name: minor strength
-type: potion
-color: PotionStrengthMinor
-description: Burnt orange liquid swirls sluggishly. It smells of iron and exertion.
-effects:
-  - type: apply_condition
-    conditionType: strength_buff
-    amount: 1
-    duration: 10

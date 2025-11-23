@@ -1,9 +1,0 @@
-name: strength
-type: potion
-color: PotionStrength
-description: Amber fluid pulses with warmth. The taste of forge-fire lingers on sealed lips.
-effects:
-  - type: apply_condition
-    conditionType: strength_buff
-    amount: 2
-    duration: 10

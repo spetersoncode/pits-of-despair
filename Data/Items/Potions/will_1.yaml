@@ -1,9 +1,0 @@
-name: minor will
-type: potion
-color: PotionWillMinor
-description: Deep violet liquid rests perfectly still. Staring into it clears unwanted thoughts.
-effects:
-  - type: apply_condition
-    conditionType: will_buff
-    amount: 1
-    duration: 10

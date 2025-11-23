@@ -1,9 +1,0 @@
-name: short sword
-type: weapon
-color: Steel
-equipSlot: MeleeWeapon
-description: A serviceable blade of cold steel, nicked from use but still keen. The leather-wrapped grip shows the marks of desperate combat.
-attack:
-  type: Melee
-  dice: "1d6"
-  damageType: Slashing

@@ -1,0 +1,95 @@
+type: willpower
+
+entries:
+  magic_missile:
+    name: Magic Missile
+    description: 2d4 damage, never misses, 6 range.
+    category: active
+    targeting: enemy
+    range: 6
+    willpowerCost: 3
+    tier: 1
+    projectile: magic_missile
+    prerequisites:
+      wil: 1
+    tags:
+      - spell
+      - damage
+      - ranged
+    effects:
+      - type: damage
+        dice: 2d4
+        autoHit: true
+
+  arcane_focus:
+    name: Arcane Focus
+    description: +5 max Willpower.
+    category: passive
+    targeting: self
+    willpowerCost: 0
+    tier: 1
+    prerequisites:
+      wil: 2
+    tags:
+      - magic
+      - willpower
+    effects:
+      - type: stat_bonus
+        stat: max_wp
+        amount: 5
+
+  minor_heal:
+    name: Minor Heal
+    description: Heal 2d6 HP to self or adjacent ally.
+    category: active
+    targeting: ally
+    range: 1
+    willpowerCost: 4
+    tier: 2
+    prerequisites:
+      wil: 2
+    tags:
+      - spell
+      - heal
+    effects:
+      - type: heal
+        dice: 2d6
+
+  mana_shield:
+    name: Mana Shield
+    description: When damaged, spend 2 WP to reduce damage by 3.
+    category: reactive
+    targeting: self
+    willpowerCost: 0
+    triggerCost: 2
+    trigger: on_damage
+    autoTrigger: true
+    tier: 2
+    prerequisites:
+      wil: 3
+    tags:
+      - magic
+      - defense
+    effects:
+      - type: reduce_damage
+        amount: 3
+
+  intimidating_presence:
+    name: Intimidating Presence
+    description: Enemies within 2 tiles suffer -1 attack.
+    category: aura
+    targeting: self
+    willpowerCost: 0
+    auraRadius: 2
+    auraTarget: enemies
+    tier: 2
+    prerequisites:
+      wil: 4
+    tags:
+      - debuff
+      - enemies
+      - control
+    effects:
+      - type: debuff
+        stat: attack
+        amount: 1

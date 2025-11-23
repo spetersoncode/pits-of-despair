@@ -1,0 +1,16 @@
+type: weapon
+defaults:
+  glyph: "}"
+  equipSlot: RangedWeapon
+
+entries:
+  short_bow:
+    name: short bow
+    color: Yew
+    description: Crafted from supple yew, this bow has ended lives from the shadows. The string hums with barely-contained tension when drawn.
+    attack:
+      type: Ranged
+      dice: "1d6"
+      range: 8
+      damageType: Piercing
+      ammoType: arrow

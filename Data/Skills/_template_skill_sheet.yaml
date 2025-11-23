@@ -1,0 +1,101 @@
+# Skill Sheet Template
+# One file per skill category (e.g., strength.yaml, agility.yaml)
+# Multiple skills defined in entries section
+
+# === TYPE (Optional) ===
+type: strength            # strength, agility, endurance, willpower, universal
+
+# === DEFAULTS (Optional) ===
+# Values here apply to all entries unless overridden
+# defaults:
+#   category: active
+#   tier: 1
+#   willpowerCost: 0
+
+# === ENTRIES ===
+# Key becomes the skill ID (e.g., "power_attack")
+entries:
+  example_skill:
+    # Required fields
+    name: Example Skill
+    description: What the skill does.
+
+    # Category (required)
+    category: active      # active, passive, reactive, aura
+
+    # Targeting (required)
+    targeting: self       # self, adjacent, tile, enemy, ally, area, line, cone
+    # range: 0            # For ranged targeting types
+
+    # Cost
+    willpowerCost: 3      # WP to activate
+
+    # Tier (for UI sorting)
+    tier: 1               # 1-5, higher = more powerful
+
+    # Prerequisites
+    prerequisites:
+      str: 1              # Minimum stat requirements
+      # agi: 0
+      # end: 0
+      # wil: 0
+
+    # Tags (for filtering/categorization)
+    tags:
+      - melee
+      - damage
+
+    # Effects
+    effects:
+      - type: apply_condition
+        conditionType: power_attack
+        duration: 1
+
+    # === REACTIVE SKILLS ===
+    # trigger: on_kill    # on_kill, on_hit, on_dodge, on_enemy_miss, on_damage, on_lethal
+    # triggerCost: 0      # WP cost when triggered
+    # autoTrigger: true   # Auto-trigger or prompt player
+
+    # === AURA SKILLS ===
+    # auraRadius: 2       # Radius in tiles
+    # auraTarget: allies  # allies, enemies, all
+
+    # === PROJECTILE SKILLS ===
+    # projectile: magic_missile   # Projectile type ID
+
+# Effect types reference:
+#   apply_condition - Apply a status condition
+#     conditionType: string
+#     amount: int
+#     duration: int
+#
+#   stat_bonus - Permanent stat bonus (passive)
+#     stat: str, agi, end, wil, max_hp, max_wp, evasion
+#     amount: int
+#
+#   damage - Deal damage
+#     dice: "2d4"
+#     autoHit: bool
+#
+#   heal - Restore HP
+#     amount: int
+#     dice: "2d6"
+#     scalingStat: str, agi, end, wil
+#     scalingMultiplier: float
+#
+#   heal_percent - Heal percentage of max HP
+#     amount: int (percentage)
+#
+#   melee_attack / ranged_attack - Perform attacks
+#     targets: int
+#     count: int
+#
+#   bonus_movement - Extra movement this turn
+#     amount: int
+#
+#   counter_attack - Attack back on trigger
+#
+#   survive_lethal - Survive at 1 HP
+#
+#   reduce_damage - Reduce incoming damage
+#     amount: int

@@ -1,0 +1,31 @@
+type: weapon
+defaults:
+  glyph: "¶"
+
+entries:
+  club:
+    name: club
+    color: AshWood
+    description: Worn smooth by countless hands, this crude bludgeon has seen its share of violence. Simple, but effective against skulls and bones alike.
+    attack:
+      type: Melee
+      dice: "1d3+1"
+      damageType: Bludgeoning
+
+  knobbed_club:
+    name: knobbed club
+    color: Oak
+    description: Heavy oak topped with iron studs that leave wicked indentations. The wood itself bears dark stains that speak to its brutal history.
+    attack:
+      type: Melee
+      dice: "1d3+2"
+      damageType: Bludgeoning
+
+  mace:
+    name: mace
+    color: HeavyIron
+    description: A heavy iron head mounted on a sturdy shaft. It cares nothing for armor, only the bones beneath.
+    attack:
+      type: Melee
+      dice: "1d6+1"
+      damageType: Bludgeoning

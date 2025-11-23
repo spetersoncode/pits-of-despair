@@ -1,9 +1,0 @@
-name: stoneskin
-type: potion
-color: PotionStoneskin
-description: Cool gray liquid with grit suspended within. It settles heavy in the stomach.
-effects:
-  - type: apply_condition
-    conditionType: armor_buff
-    amount: 2
-    duration: 10

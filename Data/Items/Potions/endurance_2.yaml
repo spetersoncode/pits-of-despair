@@ -1,9 +1,0 @@
-name: endurance
-type: potion
-color: PotionEndurance
-description: Vibrant rose essence swirls with vitality. The glass feels alive in your grip.
-effects:
-  - type: apply_condition
-    conditionType: endurance_buff
-    amount: 2
-    duration: 10

@@ -1,0 +1,154 @@
+type: potion
+defaults:
+  glyph: "!"
+
+entries:
+  strength_1:
+    name: minor strength
+    color: PotionStrengthMinor
+    description: Burnt orange liquid swirls sluggishly. It smells of iron and exertion.
+    effects:
+      - type: apply_condition
+        conditionType: strength_buff
+        amount: 1
+        duration: 10
+
+  strength_2:
+    name: strength
+    color: PotionStrength
+    description: Amber fluid pulses with warmth. The taste of forge-fire lingers on sealed lips.
+    effects:
+      - type: apply_condition
+        conditionType: strength_buff
+        amount: 2
+        duration: 10
+
+  strength_3:
+    name: major strength
+    color: PotionStrengthMajor
+    description: Blazing orange radiance strains against the glass. Raw power made liquid.
+    effects:
+      - type: apply_condition
+        conditionType: strength_buff
+        amount: 3
+        duration: 10
+
+  agility_1:
+    name: minor agility
+    color: PotionAgilityMinor
+    description: Deep teal liquid shifts like restless water. Light bends strangely around it.
+    effects:
+      - type: apply_condition
+        conditionType: agility_buff
+        amount: 1
+        duration: 10
+
+  agility_2:
+    name: agility
+    color: PotionAgility
+    description: Bright teal flows endlessly within itself. Holding it makes your fingers twitch.
+    effects:
+      - type: apply_condition
+        conditionType: agility_buff
+        amount: 2
+        duration: 10
+
+  agility_3:
+    name: major agility
+    color: PotionAgilityMajor
+    description: Brilliant cyan dances without stillness. Time itself seems to hesitate nearby.
+    effects:
+      - type: apply_condition
+        conditionType: agility_buff
+        amount: 3
+        duration: 10
+
+  armor_1:
+    name: barkskin
+    color: PotionBarkskin
+    description: Dark olive sludge, thick as sap. The scent of deep forest fills your nose.
+    effects:
+      - type: apply_condition
+        conditionType: armor_buff
+        amount: 1
+        duration: 10
+
+  armor_2:
+    name: stoneskin
+    color: PotionStoneskin
+    description: Cool gray liquid with grit suspended within. It settles heavy in the stomach.
+    effects:
+      - type: apply_condition
+        conditionType: armor_buff
+        amount: 2
+        duration: 10
+
+  armor_3:
+    name: ironskin
+    color: PotionIronskin
+    description: Metallic blue-gray fluid, cold to the touch. Your reflection warps in its surface.
+    effects:
+      - type: apply_condition
+        conditionType: armor_buff
+        amount: 3
+        duration: 10
+
+  endurance_1:
+    name: minor endurance
+    color: PotionEnduranceMinor
+    description: Dusty rose fluid, thick and warm. It pulses faintly like a sleeping heart.
+    effects:
+      - type: apply_condition
+        conditionType: endurance_buff
+        amount: 1
+        duration: 10
+
+  endurance_2:
+    name: endurance
+    color: PotionEndurance
+    description: Vibrant rose essence swirls with vitality. The glass feels alive in your grip.
+    effects:
+      - type: apply_condition
+        conditionType: endurance_buff
+        amount: 2
+        duration: 10
+
+  endurance_3:
+    name: major endurance
+    color: PotionEnduranceMajor
+    description: Brilliant pink life force churns within. Merely holding it quickens your heartbeat.
+    effects:
+      - type: apply_condition
+        conditionType: endurance_buff
+        amount: 3
+        duration: 10
+
+  will_1:
+    name: minor will
+    color: PotionWillMinor
+    description: Deep violet liquid rests perfectly still. Staring into it clears unwanted thoughts.
+    effects:
+      - type: apply_condition
+        conditionType: will_buff
+        amount: 1
+        duration: 10
+
+  will_2:
+    name: will
+    color: PotionWill
+    description: Rich purple clarity shimmers with purpose. Your mind sharpens just holding it.
+    effects:
+      - type: apply_condition
+        conditionType: will_buff
+        amount: 2
+        duration: 10
+
+  will_3:
+    name: major will
+    color: PotionWillMajor
+    description: Radiant lavender hums with focus. Reality feels more defined in its presence.
+    effects:
+      - type: apply_condition
+        conditionType: will_buff
+        amount: 3
+        duration: 10

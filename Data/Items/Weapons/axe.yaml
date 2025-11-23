@@ -1,9 +1,0 @@
-name: hand axe
-type: weapon
-color: BrutalIron
-equipSlot: MeleeWeapon
-description: A brutal wedge of iron on a wooden haft. It bites deep and leaves ragged wounds that weep.
-attack:
-  type: Melee
-  dice: "1d6+1"
-  damageType: Slashing

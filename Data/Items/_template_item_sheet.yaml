@@ -1,0 +1,102 @@
+# Item Sheet Template
+# One file per item type (e.g., weapons.yaml, armor.yaml, potions.yaml)
+# Multiple items defined in entries section
+
+# === TYPE (Required) ===
+type: weapon              # weapon, armor, potion, scroll, ammo, ring, wand, staff
+
+# === DEFAULTS (Optional) ===
+# Values here apply to all entries unless overridden
+defaults:
+  # glyph: /              # Character displayed on map
+  # color: Default        # Palette.cs color name
+  isEquippable: true      # Can be equipped
+  equipSlot: MeleeWeapon  # MeleeWeapon, RangedWeapon, Armor, Ring, Ammo
+  # isConsumable: false   # One-time use
+  # autoPickup: false     # Auto-pickup when walked over
+
+# === ENTRIES ===
+# Key becomes part of the item ID: {type}_{key}
+# e.g., type: weapon + key: club = ID "weapon_club"
+entries:
+  example_item:
+    # Required fields
+    name: example item
+    description: Description for examine/inventory.
+
+    # Visual (optional - uses defaults if not specified)
+    color: Steel          # Palette.cs color name
+
+    # === WEAPON FIELDS ===
+    # attack:
+    #   type: Melee       # Melee or Ranged
+    #   dice: "1d6"
+    #   range: 1          # Range for reach/ranged weapons
+    #   damageType: Slashing
+    #   ammoType: arrow   # For ranged weapons
+
+    # === ARMOR FIELDS ===
+    # armorValue: 3
+    # evasionPenalty: -1
+
+    # === CONSUMABLE FIELDS ===
+    # effects:
+    #   - type: heal
+    #     amount: 10
+    #   - type: apply_condition
+    #     conditionType: strength_buff
+    #     amount: 2
+    #     duration: 10
+
+    # === CHARGED ITEM FIELDS ===
+    # charges: "1d6"      # Dice for initial charges
+    # rechargeTurns: 0    # Turns per charge recovery
+
+    # === EQUIPMENT BONUSES ===
+    # strengthBonus: 0
+    # agilityBonus: 0
+    # enduranceBonus: 0   # Warning: can create exploits
+    # willBonus: 0
+
+    # === TARGETING ===
+    # targeting:
+    #   type: enemy       # self, enemy, ally, tile, creature, area
+    #   range: 8
+    #   areaSize: 0
+    #   requiresLos: true
+
+# Example item types and their typical defaults:
+#
+# weapons.yaml:
+#   type: weapon
+#   defaults:
+#     isEquippable: true
+#     equipSlot: MeleeWeapon
+#
+# armor.yaml:
+#   type: armor
+#   defaults:
+#     glyph: "["
+#     isEquippable: true
+#     equipSlot: Armor
+#
+# potions.yaml:
+#   type: potion
+#   defaults:
+#     glyph: "!"
+#     isConsumable: true
+#
+# scrolls.yaml:
+#   type: scroll
+#   defaults:
+#     glyph: "♪"
+#     isConsumable: true
+#
+# ammo.yaml:
+#   type: ammo
+#   defaults:
+#     glyph: "↑"
+#     isEquippable: true
+#     isConsumable: true
+#     equipSlot: Ammo
+#     autoPickup: true

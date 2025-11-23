@@ -13,6 +13,7 @@ namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Singleton autoload that loads and provides access to game data from YAML files.
+/// Supports sheet format where multiple entities are defined in a single file.
 /// </summary>
 public partial class DataLoader : Node
 {
@@ -144,109 +145,156 @@ public partial class DataLoader : Node
     private void LoadAllCreatures()
     {
         _creatures.Clear();
-        LoadYamlFilesRecursive(CreaturesPath, "", _creatures, "creature", (creature, id) =>
+        LoadSheetFiles<CreatureSheetData>(CreaturesPath, (sheet, fileName) =>
         {
-            creature.ApplyDefaults(); // Apply type-based defaults
+            foreach (var (entryKey, creature) in sheet.Entries)
+            {
+                var id = entryKey.ToLower();
+
+                // Apply sheet type to entry if not specified
+                if (string.IsNullOrEmpty(creature.Type) && !string.IsNullOrEmpty(sheet.Type))
+                {
+                    creature.Type = sheet.Type;
+                }
+
+                // Apply sheet defaults
+                ApplyCreatureDefaults(creature, sheet.Defaults);
+
+                // Apply type-based defaults from code (fallback)
+                creature.ApplyDefaults();
+
+                if (_creatures.ContainsKey(id))
+                {
+                    GD.PushWarning($"DataLoader: Duplicate creature ID '{id}' from {fileName}, skipping");
+                }
+                else
+                {
+                    _creatures[id] = creature;
+                }
+            }
         });
+        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures");
+    }
+
+    private void ApplyCreatureDefaults(CreatureData creature, CreatureDefaults defaults)
+    {
+        if (defaults == null) return;
+
+        // Only apply defaults where creature hasn't specified a value
+        if (creature.Glyph == DataDefaults.UnknownGlyph && defaults.Glyph != null)
+            creature.Glyph = defaults.Glyph;
+
+        if (creature.Color == DataDefaults.DefaultColor && defaults.Color != null)
+            creature.Color = defaults.Color;
+
+        if (creature.Level == 1 && defaults.Level.HasValue)
+            creature.Level = defaults.Level.Value;
+
+        if (creature.VisionRange == 10 && defaults.VisionRange.HasValue)
+            creature.VisionRange = defaults.VisionRange.Value;
+
+        if (creature.Faction == "Hostile" && defaults.Faction != null)
+            creature.Faction = defaults.Faction;
+
+        // Stats default to 0, so we check HasValue
+        if (creature.Strength == 0 && defaults.Strength.HasValue)
+            creature.Strength = defaults.Strength.Value;
+        if (creature.Agility == 0 && defaults.Agility.HasValue)
+            creature.Agility = defaults.Agility.Value;
+        if (creature.Endurance == 0 && defaults.Endurance.HasValue)
+            creature.Endurance = defaults.Endurance.Value;
+        if (creature.Will == 0 && defaults.Will.HasValue)
+            creature.Will = defaults.Will.Value;
+
+        // Boolean defaults
+        if (creature.HasMovement && defaults.HasMovement.HasValue)
+            creature.HasMovement = defaults.HasMovement.Value;
+        if (creature.HasAI && defaults.HasAI.HasValue)
+            creature.HasAI = defaults.HasAI.Value;
     }
 
     private void LoadAllItems()
     {
         _items.Clear();
-        LoadItemsRecursive(ItemsPath, "");
-    }
-
-    /// <summary>
-    /// Specialized loader for items that uses type-based IDs.
-    /// ID format: {type}_{filename} (e.g., "weapon_club", "potion_cure_light_wounds")
-    /// </summary>
-    private void LoadItemsRecursive(string basePath, string currentRelativePath)
-    {
-        string fullPath = string.IsNullOrEmpty(currentRelativePath)
-            ? basePath
-            : basePath + currentRelativePath + "/";
-
-        if (!DirAccess.DirExistsAbsolute(fullPath))
+        LoadSheetFiles<ItemSheetData>(ItemsPath, (sheet, fileName) =>
         {
-            return;
-        }
-
-        var dir = DirAccess.Open(fullPath);
-        if (dir == null)
-        {
-            return;
-        }
-
-        dir.ListDirBegin();
-        string fileName = dir.GetNext();
-
-        while (fileName != string.Empty)
-        {
-            // Skip hidden files/folders
-            if (fileName.StartsWith('.'))
+            if (sheet.Entries == null || sheet.Entries.Count == 0)
             {
-                fileName = dir.GetNext();
-                continue;
+                GD.PushWarning($"DataLoader: Item sheet '{fileName}' has no entries");
+                return;
             }
 
-            if (dir.CurrentIsDir())
+            foreach (var (entryKey, item) in sheet.Entries)
             {
-                // Recursively scan subdirectory
-                string newRelativePath = string.IsNullOrEmpty(currentRelativePath)
-                    ? fileName
-                    : currentRelativePath + "/" + fileName;
-
-                LoadItemsRecursive(basePath, newRelativePath);
-            }
-            else if (fileName.EndsWith(".yaml"))
-            {
-                string filePath = fullPath + fileName;
-                string fileNameWithoutExt = fileName.Replace(".yaml", "");
-
-                // Load the YAML to get the type field
-                var item = LoadYamlFile<ItemData>(filePath);
-                if (item != null)
+                // Apply sheet type to entry if not specified
+                if (string.IsNullOrEmpty(item.Type) && !string.IsNullOrEmpty(sheet.Type))
                 {
-                    // Generate ID as {type}_{filename}
-                    string id;
-                    if (!string.IsNullOrEmpty(item.Type))
-                    {
-                        id = $"{item.Type.ToLower()}_{fileNameWithoutExt}";
-                    }
-                    else
-                    {
-                        // Fallback: use filename only if no type specified
-                        id = fileNameWithoutExt;
-                        GD.PushWarning($"DataLoader: Item '{fileNameWithoutExt}' has no type, using filename as ID");
-                    }
+                    item.Type = sheet.Type;
+                }
 
-                    if (_items.ContainsKey(id))
-                    {
-                        string relativePath = string.IsNullOrEmpty(currentRelativePath)
-                            ? fileName
-                            : currentRelativePath + "/" + fileName;
-                        GD.PushWarning($"DataLoader: Duplicate item ID '{id}' from {relativePath}, skipping");
-                    }
-                    else
-                    {
-                        item.DataFileId = id; // Set unique ID for inventory stacking
-                        item.ApplyDefaults(); // Apply type-based defaults
-                        _items[id] = item;
-                        // GD.Print($"DataLoader: Loaded item '{id}' from {fileName}");
-                    }
+                // Generate ID as {type}_{key}
+                string id;
+                if (!string.IsNullOrEmpty(item.Type))
+                {
+                    id = $"{item.Type.ToLower()}_{entryKey.ToLower()}";
+                }
+                else
+                {
+                    id = entryKey.ToLower();
+                    GD.PushWarning($"DataLoader: Item '{entryKey}' in {fileName} has no type, using key as ID");
+                }
+
+                // Apply sheet defaults
+                ApplyItemDefaults(item, sheet.Defaults);
+
+                // Set data file ID for stacking
+                item.DataFileId = id;
+
+                // Apply type-based defaults from code (fallback)
+                item.ApplyDefaults();
+
+                if (_items.ContainsKey(id))
+                {
+                    GD.PushWarning($"DataLoader: Duplicate item ID '{id}' from {fileName}, skipping");
+                }
+                else
+                {
+                    _items[id] = item;
                 }
             }
+        });
+        GD.Print($"DataLoader: Loaded {_items.Count} items");
+    }
 
-            fileName = dir.GetNext();
-        }
+    private void ApplyItemDefaults(ItemData item, ItemDefaults defaults)
+    {
+        if (defaults == null) return;
 
-        dir.ListDirEnd();
+        // Only apply defaults where item hasn't specified a value
+        if (item.Glyph == null && defaults.Glyph != null)
+            item.Glyph = defaults.Glyph;
+
+        if (item.Color == DataDefaults.DefaultColor && defaults.Color != null)
+            item.Color = defaults.Color;
+
+        if (!item.IsConsumable.HasValue && defaults.IsConsumable.HasValue)
+            item.IsConsumable = defaults.IsConsumable.Value;
+
+        if (!item.IsEquippable.HasValue && defaults.IsEquippable.HasValue)
+            item.IsEquippable = defaults.IsEquippable.Value;
+
+        if (item.EquipSlot == null && defaults.EquipSlot != null)
+            item.EquipSlot = defaults.EquipSlot;
+
+        if (!item.AutoPickup && defaults.AutoPickup.HasValue)
+            item.AutoPickup = defaults.AutoPickup.Value;
     }
 
     private void LoadAllSpawnTables()
     {
         _spawnTables.Clear();
         LoadYamlFilesRecursive(SpawnTablesPath, "", _spawnTables, "spawn table");
+        GD.Print($"DataLoader: Loaded {_spawnTables.Count} spawn tables");
     }
 
     private void LoadAllBands()
@@ -271,17 +319,117 @@ public partial class DataLoader : Node
             return;
         }
 
-        LoadYamlFilesRecursive(SkillsPath, "", _skills, "skill", (skill, id) =>
+        LoadSheetFiles<SkillSheetData>(SkillsPath, (sheet, fileName) =>
         {
-            skill.Id = id;
+            foreach (var (entryKey, skill) in sheet.Entries)
+            {
+                var id = entryKey.ToLower();
+
+                // Apply sheet defaults
+                ApplySkillDefaults(skill, sheet.Defaults);
+
+                // Set ID from entry key
+                skill.Id = id;
+
+                if (_skills.ContainsKey(id))
+                {
+                    GD.PushWarning($"DataLoader: Duplicate skill ID '{id}' from {fileName}, skipping");
+                }
+                else
+                {
+                    _skills[id] = skill;
+                }
+            }
         });
 
         GD.Print($"DataLoader: Loaded {_skills.Count} skills");
     }
 
+    private void ApplySkillDefaults(SkillDefinition skill, SkillDefaults defaults)
+    {
+        if (defaults == null) return;
+
+        if (skill.Category == "active" && defaults.Category != null)
+            skill.Category = defaults.Category;
+
+        if (skill.Targeting == "self" && defaults.Targeting != null)
+            skill.Targeting = defaults.Targeting;
+
+        if (skill.Tier == 1 && defaults.Tier.HasValue)
+            skill.Tier = defaults.Tier.Value;
+
+        if (skill.WillpowerCost == 0 && defaults.WillpowerCost.HasValue)
+            skill.WillpowerCost = defaults.WillpowerCost.Value;
+
+        if (skill.Range == 0 && defaults.Range.HasValue)
+            skill.Range = defaults.Range.Value;
+    }
+
+    /// <summary>
+    /// Loads all sheet YAML files from a directory (non-recursive, flat structure).
+    /// Each file is expected to contain a sheet with type, defaults, and entries.
+    /// </summary>
+    private void LoadSheetFiles<T>(string basePath, Action<T, string> sheetHandler) where T : class
+    {
+        if (!DirAccess.DirExistsAbsolute(basePath))
+        {
+            GD.PushWarning($"DataLoader: Directory not found: {basePath}");
+            return;
+        }
+
+        var dir = DirAccess.Open(basePath);
+        if (dir == null)
+        {
+            GD.PrintErr($"DataLoader: Failed to open directory: {basePath}");
+            return;
+        }
+
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+        int filesProcessed = 0;
+
+        while (fileName != string.Empty)
+        {
+            // Skip hidden files, templates, and directories
+            if (fileName.StartsWith('.') || fileName.StartsWith('_') || dir.CurrentIsDir())
+            {
+                fileName = dir.GetNext();
+                continue;
+            }
+
+            if (fileName.EndsWith(".yaml"))
+            {
+                string filePath = basePath + fileName;
+                var sheet = LoadYamlFile<T>(filePath);
+                if (sheet != null)
+                {
+                    try
+                    {
+                        sheetHandler(sheet, fileName);
+                        filesProcessed++;
+                    }
+                    catch (System.Exception ex)
+                    {
+                        GD.PrintErr($"DataLoader: Error processing sheet '{fileName}': {ex.Message}");
+                    }
+                }
+            }
+
+            fileName = dir.GetNext();
+        }
+
+        dir.ListDirEnd();
+
+        if (filesProcessed == 0)
+        {
+            GD.PushWarning($"DataLoader: No sheet files processed in {basePath}");
+        }
+    }
+
     /// <summary>
     /// Recursively loads YAML files from a directory and its subdirectories.
     /// Converts folder paths to IDs (e.g., "Goblins/warrior.yaml" -> "goblins_warrior").
+    /// Used for spawn tables and bands which still use the old format.
     /// </summary>
     private void LoadYamlFilesRecursive<T>(
         string basePath,
@@ -310,8 +458,8 @@ public partial class DataLoader : Node
 
         while (fileName != string.Empty)
         {
-            // Skip hidden files/folders
-            if (fileName.StartsWith('.'))
+            // Skip hidden files/folders and templates
+            if (fileName.StartsWith('.') || fileName.StartsWith('_'))
             {
                 fileName = dir.GetNext();
                 continue;

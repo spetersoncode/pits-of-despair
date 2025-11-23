@@ -1,8 +1,0 @@
-name: knobbed club
-type: weapon
-color: Oak
-description: Heavy oak topped with iron studs that leave wicked indentations. The wood itself bears dark stains that speak to its brutal history.
-attack:
-  type: Melee
-  dice: "1d3+2"
-  damageType: Bludgeoning

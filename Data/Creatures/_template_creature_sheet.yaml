@@ -1,0 +1,75 @@
+# Creature Sheet Template
+# One file per creature type (e.g., goblinoids.yaml, rodents.yaml, undead.yaml)
+# Multiple creatures defined in entries section
+
+# === TYPE (Required) ===
+type: goblinoid           # goblinoid, rodents, undead, allies
+
+# === DEFAULTS (Optional) ===
+# Values here apply to all entries unless overridden
+defaults:
+  glyph: g                # Character displayed on map
+  color: Default          # Palette.cs color name or hex (#RRGGBB)
+  # level: 1              # Default level for all entries
+  # faction: Hostile      # Hostile, Player, Neutral
+  # visionRange: 10
+  # hasMovement: true
+  # hasAI: true
+
+# === ENTRIES ===
+# Key becomes the creature ID (e.g., "goblin" -> lookup as "goblin")
+entries:
+  example_creature:
+    # Required fields
+    name: example creature
+    description: Description for examine window.
+    level: 1
+    maxHP: 8              # Base HP (actual = maxHP + endurance x level)
+
+    # Stats (optional, default 0)
+    strength: 0           # Melee damage bonus = STR/2
+    agility: 0            # Ranged attack and defense bonus
+    endurance: 0          # HP bonus = END x level
+    will: 0               # Mental resistance
+
+    # Visual (optional - uses defaults if not specified)
+    # glyph: g
+    # color: Minion
+
+    # Behavior (optional)
+    # visionRange: 10
+    # hasMovement: true
+    # hasAI: true
+    # faction: Hostile
+
+    # Equipment (optional) - item IDs from Data/Items/
+    # equipment:
+    #   - weapon_club
+    #   - armor_leather
+
+    # Natural attacks (optional - defaults to 1d2 punch)
+    # attacks:
+    #   - name: bite
+    #     type: Melee       # Melee or Ranged
+    #     dice: "1d4"
+    #     range: 1
+    #     damageType: Piercing
+
+    # AI components (optional)
+    # ai:
+    #   - type: Cowardly
+    #   - type: ShootAndScoot
+    #   - type: YellForHelp
+
+    # Damage modifiers (optional)
+    # immunities:
+    #   - Poison
+    # resistances:
+    #   - Piercing
+    # vulnerabilities:
+    #   - Fire
+
+  # Add more creatures...
+  # another_creature:
+  #   name: another creature
+  #   ...

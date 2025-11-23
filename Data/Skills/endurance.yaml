@@ -1,0 +1,72 @@
+type: endurance
+
+entries:
+  tough:
+    name: Tough
+    description: +8 max HP.
+    category: passive
+    targeting: self
+    willpowerCost: 0
+    tier: 1
+    prerequisites:
+      end: 1
+    tags:
+      - health
+    effects:
+      - type: stat_bonus
+        stat: max_hp
+        amount: 8
+
+  recover:
+    name: Recover
+    description: Heal END x 2 HP.
+    category: active
+    targeting: self
+    willpowerCost: 5
+    tier: 2
+    prerequisites:
+      end: 2
+    tags:
+      - heal
+    effects:
+      - type: heal
+        scalingStat: end
+        scalingMultiplier: 2
+
+  protective_aura:
+    name: Protective Aura
+    description: Allies within 2 tiles gain +2 armor.
+    category: aura
+    targeting: self
+    willpowerCost: 0
+    auraRadius: 2
+    auraTarget: allies
+    tier: 2
+    prerequisites:
+      end: 4
+    tags:
+      - buff
+      - allies
+      - defense
+    effects:
+      - type: armor_bonus
+        amount: 2
+
+  die_hard:
+    name: Die Hard
+    description: Once per floor, survive lethal damage at 1 HP.
+    category: reactive
+    targeting: self
+    willpowerCost: 0
+    triggerCost: 0
+    trigger: on_lethal
+    autoTrigger: true
+    tier: 3
+    prerequisites:
+      end: 4
+    tags:
+      - survival
+      - defense
+      - once_per_floor
+    effects:
+      - type: survive_lethal

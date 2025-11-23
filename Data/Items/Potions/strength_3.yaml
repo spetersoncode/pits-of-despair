@@ -1,9 +1,0 @@
-name: major strength
-type: potion
-color: PotionStrengthMajor
-description: Blazing orange radiance strains against the glass. Raw power made liquid.
-effects:
-  - type: apply_condition
-    conditionType: strength_buff
-    amount: 3
-    duration: 10

@@ -1,0 +1,16 @@
+type: universal
+
+entries:
+  second_wind:
+    name: Second Wind
+    description: Heal 20% max HP. Once per floor.
+    category: active
+    targeting: self
+    willpowerCost: 5
+    tier: 1
+    tags:
+      - heal
+      - utility
+    effects:
+      - type: heal_percent
+        amount: 20

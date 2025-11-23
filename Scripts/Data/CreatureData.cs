@@ -5,16 +5,6 @@ using PitsOfDespair.Core;
 namespace PitsOfDespair.Data;
 
 /// <summary>
-/// Type information for creature categories.
-/// Defines default glyph and color for creature types.
-/// </summary>
-public class CreatureTypeInfo
-{
-    public string DefaultGlyph { get; set; } = DataDefaults.UnknownGlyph;
-    public string DefaultColor { get; set; } = DataDefaults.DefaultColor;
-}
-
-/// <summary>
 /// Maps short AI component names used in YAML to full class names.
 /// </summary>
 public static class AIComponentTypes
@@ -41,38 +31,11 @@ public static class AIComponentTypes
 
 /// <summary>
 /// Serializable creature data structure.
-/// Loaded from Data/Creatures/*.yaml files.
+/// Loaded from Data/Creatures/*.yaml sheet files.
+/// Type-specific defaults are defined in YAML sheet defaults sections.
 /// </summary>
 public class CreatureData
 {
-    /// <summary>
-    /// Type metadata for creature categories.
-    /// Maps type string (e.g., "goblinoid") to default properties.
-    /// </summary>
-    private static readonly Dictionary<string, CreatureTypeInfo> TypeInfo = new()
-    {
-        ["goblinoid"] = new CreatureTypeInfo
-        {
-            DefaultGlyph = "g",
-            DefaultColor = Palette.ToHex(Palette.Default)
-        },
-        ["rodents"] = new CreatureTypeInfo
-        {
-            DefaultGlyph = "r",
-            DefaultColor = Palette.ToHex(Palette.Minion)
-        },
-        ["undead"] = new CreatureTypeInfo
-        {
-            DefaultGlyph = "z",
-            DefaultColor = Palette.ToHex(Palette.Default)
-        },
-        ["allies"] = new CreatureTypeInfo
-        {
-            DefaultGlyph = "a",
-            DefaultColor = Palette.ToHex(Palette.Player)
-        }
-    };
-
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
@@ -194,29 +157,16 @@ public class CreatureData
     }
 
     /// <summary>
-    /// Applies type-based defaults for properties not explicitly set in YAML.
-    /// Should be called after deserialization.
+    /// Applies minimal fallback defaults for properties not set via YAML.
+    /// Type-specific defaults should be defined in YAML sheet defaults sections.
+    /// This method provides last-resort fallbacks only.
     /// </summary>
     public void ApplyDefaults()
     {
-        if (string.IsNullOrEmpty(Type))
-        {
-            return; // No type means no inherited defaults
-        }
+        // YAML sheet defaults should handle type-specific values.
+        // This method only ensures we have valid fallback values if nothing else was set.
 
-        var typeKey = Type.ToLower();
-        if (TypeInfo.TryGetValue(typeKey, out var info))
-        {
-            // Apply defaults only if not explicitly set
-            if (Glyph == DataDefaults.UnknownGlyph)
-            {
-                Glyph = info.DefaultGlyph;
-            }
-
-            if (Color == DataDefaults.DefaultColor)
-            {
-                Color = info.DefaultColor;
-            }
-        }
+        // No additional logic needed - DataDefaults.UnknownGlyph and DataDefaults.DefaultColor
+        // are already set as property defaults and serve as fallbacks.
     }
 }

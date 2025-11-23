@@ -1,0 +1,31 @@
+type: weapon
+defaults:
+  glyph: "/"
+
+entries:
+  short_sword:
+    name: short sword
+    color: Steel
+    description: A serviceable blade of cold steel, nicked from use but still keen. The leather-wrapped grip shows the marks of desperate combat.
+    attack:
+      type: Melee
+      dice: "1d6"
+      damageType: Slashing
+
+  axe:
+    name: hand axe
+    color: BrutalIron
+    description: A brutal wedge of iron on a wooden haft. It bites deep and leaves ragged wounds that weep.
+    attack:
+      type: Melee
+      dice: "1d6+1"
+      damageType: Slashing
+
+  broadsword:
+    name: broadsword
+    color: Bronze
+    description: A wide bronze blade, heavier than it looks. It hacks and cleaves where finer swords would thrust.
+    attack:
+      type: Melee
+      dice: "1d8"
+      damageType: Slashing

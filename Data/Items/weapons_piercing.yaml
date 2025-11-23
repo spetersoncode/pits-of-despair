@@ -1,0 +1,14 @@
+type: weapon
+defaults:
+  glyph: "†"
+
+entries:
+  spear:
+    name: spear
+    color: AshWood
+    description: An iron-tipped shaft of ash wood, balanced for both thrust and throw. Its reach keeps the dangers of the deep at arm's length.
+    attack:
+      type: Melee
+      dice: "1d6"
+      range: 2
+      damageType: Piercing

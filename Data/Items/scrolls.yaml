@@ -1,0 +1,35 @@
+type: scroll
+defaults:
+  glyph: "♪"
+
+entries:
+  blink:
+    name: blink
+    color: ScrollBlink
+    description: Ancient words of translocation writhe across yellowed parchment. Reading them tears reality asunder for the briefest moment.
+    effects:
+      - type: blink
+        range: 5
+
+  teleport:
+    name: teleport
+    color: ScrollTeleport
+    description: Glowing runes pulse with unstable energy, their power barely contained by arcane bindings. Speaking them unmakes you and remakes you elsewhere.
+    effects:
+      - type: teleport
+
+  confusion:
+    name: confusion
+    color: ScrollConfusion
+    description: Twisted symbols that hurt to look at dance across the page. Even a glance makes your thoughts scatter like frightened birds.
+    effects:
+      - type: apply_condition
+        conditionType: confusion
+        durationDice: 2d3
+
+  charm:
+    name: charm
+    color: ScrollCharm
+    description: Soothing whispers emanate from the parchment, promising friendship and loyalty to any creature that hears them read aloud.
+    effects:
+      - type: charm

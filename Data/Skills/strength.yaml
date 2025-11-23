@@ -1,0 +1,95 @@
+type: strength
+
+entries:
+  power_attack:
+    name: Power Attack
+    description: Next melee attack deals +3 damage.
+    category: active
+    targeting: self
+    willpowerCost: 3
+    tier: 1
+    prerequisites:
+      str: 1
+    tags:
+      - melee
+      - damage
+      - buff
+    effects:
+      - type: apply_condition
+        conditionType: power_attack
+        duration: 1
+
+  mighty_thews:
+    name: Mighty Thews
+    description: +1 melee damage.
+    category: passive
+    targeting: self
+    willpowerCost: 0
+    tier: 1
+    prerequisites:
+      str: 2
+    tags:
+      - melee
+      - damage
+    effects:
+      - type: stat_bonus
+        stat: str
+        amount: 1
+
+  cleave:
+    name: Cleave
+    description: Attack hits two adjacent enemies.
+    category: active
+    targeting: adjacent
+    willpowerCost: 6
+    tier: 2
+    prerequisites:
+      str: 3
+    tags:
+      - melee
+      - damage
+      - multi-target
+    effects:
+      - type: melee_attack
+        targets: 2
+
+  rampage:
+    name: Rampage
+    description: On kill, gain +3 damage for next attack.
+    category: reactive
+    targeting: self
+    willpowerCost: 0
+    triggerCost: 0
+    trigger: on_kill
+    autoTrigger: true
+    tier: 2
+    prerequisites:
+      str: 3
+    tags:
+      - melee
+      - damage
+      - combat
+    effects:
+      - type: apply_condition
+        conditionType: strength_buff
+        amount: 3
+        duration: 1
+
+  command_aura:
+    name: Command Aura
+    description: Allies within 2 tiles gain +1 attack.
+    category: aura
+    targeting: self
+    willpowerCost: 0
+    auraRadius: 2
+    auraTarget: allies
+    tier: 2
+    prerequisites:
+      str: 4
+    tags:
+      - buff
+      - allies
+      - leadership
+    effects:
+      - type: attack_bonus
+        amount: 1

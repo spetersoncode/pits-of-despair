@@ -1,9 +1,0 @@
-name: will
-type: potion
-color: PotionWill
-description: Rich purple clarity shimmers with purpose. Your mind sharpens just holding it.
-effects:
-  - type: apply_condition
-    conditionType: will_buff
-    amount: 2
-    duration: 10

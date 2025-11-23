@@ -1,9 +1,0 @@
-name: minor agility
-type: potion
-color: PotionAgilityMinor
-description: Deep teal liquid shifts like restless water. Light bends strangely around it.
-effects:
-  - type: apply_condition
-    conditionType: agility_buff
-    amount: 1
-    duration: 10

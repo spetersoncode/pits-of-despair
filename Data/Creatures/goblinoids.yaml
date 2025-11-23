@@ -1,0 +1,63 @@
+type: goblinoid
+defaults:
+  glyph: g
+  color: Default
+
+entries:
+  goblin:
+    name: goblin
+    description: A wretched creature with yellowed eyes and jagged teeth. It clutches its weapon with malicious intent, eager for violence.
+    color: Minion
+    level: 1
+    strength: 0
+    agility: 0
+    endurance: -1
+    maxHP: 6
+    equipment:
+      - weapon_club
+
+  goblin_archer:
+    name: goblin archer
+    description: A goblin armed with a crude bow. It keeps its distance, raining arrows on intruders from afar.
+    color: Archer
+    level: 2
+    strength: -1
+    agility: 2
+    endurance: -1
+    maxHP: 7
+    ai:
+      - type: ShootAndScoot
+    equipment:
+      - weapon_short_bow
+      - ammo_arrow
+
+  goblin_ruffian:
+    name: goblin ruffian
+    description: A brutish specimen, larger and meaner than its kin. Scars criss-cross its hide, and its crude weapon has seen considerable use.
+    level: 2
+    color: Brute
+    strength: 1
+    agility: -1
+    endurance: 1
+    maxHP: 12
+    equipment:
+      - weapon_knobbed_club
+
+  goblin_scout:
+    name: goblin scout
+    description: A scrawny goblin with wide, darting eyes. It looks ready to bolt at the first sign of real danger, shrieking for help.
+    level: 1
+    color: Scout
+    strength: -2
+    agility: 2
+    endurance: -2
+    maxHP: 5
+    visionRange: 12
+    ai:
+      - type: Cowardly
+      - type: YellForHelp
+    attacks:
+      - name: desperate bite
+        type: Melee
+        dice: "1d2"
+        damageType: Piercing

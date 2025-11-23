@@ -1,0 +1,5 @@
+type: staff
+defaults:
+  glyph: "|"
+
+entries: {}
