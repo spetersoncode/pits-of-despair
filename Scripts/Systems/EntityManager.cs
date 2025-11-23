@@ -124,6 +124,51 @@ public partial class EntityManager : Node
     }
 
     /// <summary>
+    /// Get an entity by its instance ID hash.
+    /// Used for tracking entities across frames (e.g., aura targets).
+    /// </summary>
+    /// <param name="idHash">Hash code of the entity's instance ID</param>
+    /// <returns>Entity with matching ID, or null if not found</returns>
+    public BaseEntity? GetEntityById(int idHash)
+    {
+        // Check player first
+        if (_player != null && _player.GetInstanceId().GetHashCode() == idHash)
+            return _player;
+
+        return _entities.FirstOrDefault(e => e.GetInstanceId().GetHashCode() == idHash);
+    }
+
+    /// <summary>
+    /// Get all entities within a radius of a position.
+    /// Uses Chebyshev distance (king's move distance).
+    /// </summary>
+    /// <param name="center">Center position</param>
+    /// <param name="radius">Maximum distance (inclusive)</param>
+    /// <returns>List of entities within radius</returns>
+    public System.Collections.Generic.List<BaseEntity> GetEntitiesInRadius(GridPosition center, int radius)
+    {
+        var result = new System.Collections.Generic.List<BaseEntity>();
+
+        // Check player
+        if (_player != null)
+        {
+            int playerDist = Helpers.DistanceHelper.ChebyshevDistance(center, _player.GridPosition);
+            if (playerDist <= radius)
+                result.Add(_player);
+        }
+
+        // Check all managed entities
+        foreach (var entity in _entities)
+        {
+            int dist = Helpers.DistanceHelper.ChebyshevDistance(center, entity.GridPosition);
+            if (dist <= radius)
+                result.Add(entity);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Checks if a position is occupied by any entity (not including player).
     /// </summary>
     /// <param name="position">The grid position to check.</param>

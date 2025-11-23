@@ -172,54 +172,55 @@ Checklist document for implementing the Skills system. Each phase builds on the 
 
 ---
 
-## Phase 6: Passive Skills
+## Phase 6: Passive Skills ✓
 
 ### Session 6A: Passive Processor
-- [ ] `PassiveSkillProcessor.cs` - **CREATE**
-  - [ ] On skill learn: check if passive, register effects
-  - [ ] Use multi-source modifier pattern: source = `skill_<skillId>`
-  - [ ] Support: flat bonuses, percentage bonuses
-  - [ ] Support: conditional bonuses (below 50% HP, etc.)
-  - [ ] On skill "forget" (if ever): unregister effects
+- [x] `PassiveSkillProcessor.cs` - **CREATE**
+  - [x] On skill learn: check if passive, register effects
+  - [x] Use multi-source modifier pattern: source = `skill_<skillId>`
+  - [x] Support: flat bonuses (stat_bonus effect type)
+  - [x] Support: max HP/WP modifiers (added to HealthComponent/WillpowerComponent)
+  - [x] On skill "forget" (if ever): unregister effects
 
-### Session 6B: Passive Skill Content
-- [ ] Implement STR passives: Mighty Thews, Relentless
-- [ ] Implement AGI passives: Fleet of Foot, Evasion
-- [ ] Implement END passives: Tough, Grit, Thick Skinned, Regeneration, Fortified
-- [ ] Implement WIL passives: Arcane Focus
-- [ ] Implement hybrid passives: Weapon Mastery, Warmaster, etc.
-- [ ] Verify stat modifiers apply correctly
+### Session 6B: Passive Skill Content (One per stat implemented)
+- [x] Implement STR passive: Mighty Thews (+1 STR)
+- [x] Implement AGI passive: Fleet of Foot (+1 evasion)
+- [x] Implement END passive: Tough (+8 max HP) - already existed
+- [x] Implement WIL passive: Arcane Focus (+5 max WP)
+- [ ] Implement remaining passives (content phase)
+- [x] Verify stat modifiers apply correctly
 
 ---
 
-## Phase 7: Reactive Skills
+## Phase 7: Reactive Skills ✓
 
 ### Session 7: Reactive Processor
-- [ ] `ReactiveSkillProcessor.cs` - **CREATE**
-  - [ ] Subscribe to relevant signals based on learned reactive skills
-  - [ ] Trigger types: on_hit, on_miss, on_dodge, on_damage, on_kill, on_low_hp
-  - [ ] On trigger: check WP cost (if any), execute effect
-  - [ ] Auto-trigger vs prompt (per skill definition)
-- [ ] Implement: Die Hard (on lethal → survive at 1 HP)
-- [ ] Implement: Riposte (on enemy miss → counter-attack)
-- [ ] Implement: Sidestep (on dodge → free move)
-- [ ] Implement: Rampage (on kill → free attack)
-- [ ] Implement: Revenge (on damage → damage bonus)
+- [x] `ReactiveSkillProcessor.cs` - **CREATE**
+  - [x] Subscribe to relevant signals based on learned reactive skills
+  - [x] Trigger types: on_hit, on_enemy_miss, on_damage, on_kill, on_low_hp
+  - [x] On trigger: check WP cost (if any), execute effect
+  - [x] Auto-trigger vs prompt (per skill definition - auto for now)
+- [x] Implement: Die Hard (on_lethal → survive at 1 HP) - END skill
+- [x] Implement: Riposte (on_enemy_miss → counter-attack) - AGI skill
+- [x] Implement: Rampage (on_kill → damage bonus) - STR skill
+- [x] Implement: Mana Shield (on_damage → spend WP to reduce damage) - WIL skill
+- [ ] Implement remaining reactive skills (content phase)
 
 ---
 
-## Phase 8: Aura Skills
+## Phase 8: Aura Skills ✓
 
 ### Session 8: Aura Processor
-- [ ] `AuraProcessor.cs` - **CREATE**
-  - [ ] Track active auras on entities
-  - [ ] On movement: recalculate affected entities
-  - [ ] Apply aura conditions to entities in range
-  - [ ] Remove aura conditions when entities leave range
-  - [ ] Source tracking: `aura_<skillId>_<entityId>`
-- [ ] Implement: Protective Aura (allies take reduced damage)
-- [ ] Implement: Command Aura (allies gain attack/damage bonus)
-- [ ] Implement: War Cry (enemies debuffed in range)
+- [x] `AuraProcessor.cs` - **CREATE**
+  - [x] Track active auras on entities
+  - [x] On movement/turn: recalculate affected entities
+  - [x] Apply aura effects to entities in range (via stat modifiers)
+  - [x] Remove aura effects when entities leave range
+  - [x] Source tracking: `aura_<skillId>_<entityId>`
+- [x] Implement: Protective Aura (allies gain +2 armor) - END skill
+- [x] Implement: Command Aura (allies gain +1 attack) - STR skill
+- [x] Implement: Intimidating Presence (enemies suffer -1 attack) - WIL skill
+- [ ] Implement remaining aura skills (content phase)
 
 ---
 

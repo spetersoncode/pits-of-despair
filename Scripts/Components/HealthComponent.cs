@@ -94,6 +94,12 @@ public partial class HealthComponent : Node, IAIEventHandler
     private int _regenPoints = 0;
 
     /// <summary>
+    /// Multi-source max HP modifiers from skills, items, buffs, etc.
+    /// Key is source identifier (e.g., "skill_tough"), value is HP bonus.
+    /// </summary>
+    private readonly Dictionary<string, int> _maxHPModifiers = new();
+
+    /// <summary>
     /// Base regeneration rate per turn (before modifiers).
     /// Formula: 20 + MaxHP / 6
     /// At 100 points accumulated, heal 1 HP.
@@ -212,13 +218,14 @@ public partial class HealthComponent : Node, IAIEventHandler
     }
 
     /// <summary>
-    /// Recalculates MaxHP based on BaseMaxHP and Endurance bonus.
+    /// Recalculates MaxHP based on BaseMaxHP, Endurance bonus, and external modifiers.
     /// MaxHP is floored at BaseMaxHP (negative END can't reduce HP below base).
     /// </summary>
     private void RecalculateMaxHP()
     {
         int enduranceBonus = _stats?.GetHPBonus() ?? 0;
-        int newMaxHP = BaseMaxHP + enduranceBonus;
+        int modifierBonus = GetTotalMaxHPModifiers();
+        int newMaxHP = BaseMaxHP + enduranceBonus + modifierBonus;
 
         // Enforce floor: MaxHP can never go below BaseMaxHP
         // This handles negative Endurance (debuffs, weak creatures)
@@ -361,6 +368,47 @@ public partial class HealthComponent : Node, IAIEventHandler
     {
         return CurrentHP > 0;
     }
+
+    #region Max HP Modifiers
+
+    /// <summary>
+    /// Adds a max HP modifier from a named source.
+    /// Used by passive skills, items, buffs, etc.
+    /// </summary>
+    /// <param name="source">Source identifier (e.g., "skill_tough", "item_amulet")</param>
+    /// <param name="value">HP bonus value (can be positive or negative)</param>
+    public void AddMaxHPModifier(string source, int value)
+    {
+        _maxHPModifiers[source] = value;
+        RecalculateMaxHP();
+    }
+
+    /// <summary>
+    /// Removes a max HP modifier by source name.
+    /// </summary>
+    /// <param name="source">Source identifier to remove</param>
+    public void RemoveMaxHPModifier(string source)
+    {
+        if (_maxHPModifiers.Remove(source))
+        {
+            RecalculateMaxHP();
+        }
+    }
+
+    /// <summary>
+    /// Gets the total max HP bonus from all modifier sources.
+    /// </summary>
+    private int GetTotalMaxHPModifiers()
+    {
+        int total = 0;
+        foreach (var value in _maxHPModifiers.Values)
+        {
+            total += value;
+        }
+        return total;
+    }
+
+    #endregion
 
     /// <summary>
     /// Helper method to emit HealthChanged signal (called deferred to avoid re-entrancy issues).

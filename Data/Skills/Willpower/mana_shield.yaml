@@ -1,0 +1,17 @@
+name: Mana Shield
+description: When damaged, spend 2 WP to reduce damage by 3.
+category: reactive
+targeting: self
+willpowerCost: 0
+triggerCost: 2
+trigger: on_damage
+autoTrigger: true
+tier: 2
+prerequisites:
+  wil: 3
+tags:
+  - magic
+  - defense
+effects:
+  - type: reduce_damage
+    amount: 3

@@ -4,6 +4,9 @@
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net9.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>PitsofDespair</RootNamespace>
+    <!-- Disable analyzers to work around Roslyn crash in .NET 8 SDK -->
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="16.3.0" />

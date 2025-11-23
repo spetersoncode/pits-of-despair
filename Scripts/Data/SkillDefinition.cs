@@ -235,7 +235,7 @@ public class SkillPrerequisites
 public class SkillEffectDefinition
 {
     /// <summary>
-    /// Effect type (e.g., "damage", "heal", "apply_condition").
+    /// Effect type (e.g., "damage", "heal", "apply_condition", "stat_bonus").
     /// </summary>
     public string Type { get; set; } = string.Empty;
 
@@ -258,6 +258,11 @@ public class SkillEffectDefinition
     /// Condition type for status effects.
     /// </summary>
     public string? ConditionType { get; set; } = null;
+
+    /// <summary>
+    /// Target stat for stat_bonus effects (e.g., "str", "max_hp", "armor").
+    /// </summary>
+    public string? Stat { get; set; } = null;
 
     /// <summary>
     /// Stat to scale effect with (e.g., "str", "wil").

@@ -1,0 +1,17 @@
+name: Protective Aura
+description: Allies within 2 tiles gain +2 armor.
+category: aura
+targeting: self
+willpowerCost: 0
+auraRadius: 2
+auraTarget: allies
+tier: 2
+prerequisites:
+  end: 4
+tags:
+  - buff
+  - allies
+  - defense
+effects:
+  - type: armor_bonus
+    amount: 2

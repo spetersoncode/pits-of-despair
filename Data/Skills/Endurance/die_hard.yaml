@@ -1,0 +1,17 @@
+name: Die Hard
+description: Once per floor, survive lethal damage at 1 HP.
+category: reactive
+targeting: self
+willpowerCost: 0
+triggerCost: 0
+trigger: on_lethal
+autoTrigger: true
+tier: 3
+prerequisites:
+  end: 4
+tags:
+  - survival
+  - defense
+  - once_per_floor
+effects:
+  - type: survive_lethal

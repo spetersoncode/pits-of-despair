@@ -4,6 +4,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Skills;
 using PitsOfDespair.Systems;
 using PitsOfDespair.UI;
 using System.Collections.Generic;
@@ -97,6 +98,16 @@ public partial class Player : BaseEntity
 
         var skillComponent = new SkillComponent { Name = "SkillComponent" };
         AddChild(skillComponent);
+
+        // Skill processors for passive/reactive/aura effects
+        var passiveProcessor = new PassiveSkillProcessor { Name = "PassiveSkillProcessor" };
+        AddChild(passiveProcessor);
+
+        var reactiveProcessor = new ReactiveSkillProcessor { Name = "ReactiveSkillProcessor" };
+        AddChild(reactiveProcessor);
+
+        var auraProcessor = new AuraProcessor { Name = "AuraProcessor" };
+        AddChild(auraProcessor);
 
         _inventoryComponent = new InventoryComponent { Name = "InventoryComponent" };
         AddChild(_inventoryComponent);

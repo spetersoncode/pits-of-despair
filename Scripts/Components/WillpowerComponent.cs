@@ -55,6 +55,12 @@ public partial class WillpowerComponent : Node
     /// </summary>
     private int _regenPoints = 0;
 
+    /// <summary>
+    /// Multi-source max WP modifiers from skills, items, buffs, etc.
+    /// Key is source identifier (e.g., "skill_arcane_focus"), value is WP bonus.
+    /// </summary>
+    private readonly System.Collections.Generic.Dictionary<string, int> _maxWPModifiers = new();
+
     #endregion
 
     #region Lifecycle
@@ -197,13 +203,14 @@ public partial class WillpowerComponent : Node
     }
 
     /// <summary>
-    /// Recalculates MaxWillpower based on WIL stat.
-    /// Formula: 10 + (WIL × 5)
+    /// Recalculates MaxWillpower based on WIL stat and external modifiers.
+    /// Formula: 10 + (WIL × 5) + modifiers
     /// </summary>
     private void RecalculateMaxWillpower()
     {
         int wil = _stats?.TotalWill ?? 0;
-        int newMax = 10 + (wil * 5);
+        int modifierBonus = GetTotalMaxWPModifiers();
+        int newMax = 10 + (wil * 5) + modifierBonus;
 
         // Ensure minimum of 10
         if (newMax < 10)
@@ -292,6 +299,47 @@ public partial class WillpowerComponent : Node
     public BaseEntity? GetEntity()
     {
         return _entity;
+    }
+
+    #endregion
+
+    #region Max WP Modifiers
+
+    /// <summary>
+    /// Adds a max WP modifier from a named source.
+    /// Used by passive skills, items, buffs, etc.
+    /// </summary>
+    /// <param name="source">Source identifier (e.g., "skill_arcane_focus")</param>
+    /// <param name="value">WP bonus value (can be positive or negative)</param>
+    public void AddMaxWPModifier(string source, int value)
+    {
+        _maxWPModifiers[source] = value;
+        RecalculateMaxWillpower();
+    }
+
+    /// <summary>
+    /// Removes a max WP modifier by source name.
+    /// </summary>
+    /// <param name="source">Source identifier to remove</param>
+    public void RemoveMaxWPModifier(string source)
+    {
+        if (_maxWPModifiers.Remove(source))
+        {
+            RecalculateMaxWillpower();
+        }
+    }
+
+    /// <summary>
+    /// Gets the total max WP bonus from all modifier sources.
+    /// </summary>
+    private int GetTotalMaxWPModifiers()
+    {
+        int total = 0;
+        foreach (var value in _maxWPModifiers.Values)
+        {
+            total += value;
+        }
+        return total;
     }
 
     #endregion

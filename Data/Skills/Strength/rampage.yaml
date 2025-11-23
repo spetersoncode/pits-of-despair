@@ -1,0 +1,20 @@
+name: Rampage
+description: On kill, gain +3 damage for next attack.
+category: reactive
+targeting: self
+willpowerCost: 0
+triggerCost: 0
+trigger: on_kill
+autoTrigger: true
+tier: 2
+prerequisites:
+  str: 3
+tags:
+  - melee
+  - damage
+  - combat
+effects:
+  - type: apply_condition
+    conditionType: strength_buff
+    amount: 3
+    duration: 1
