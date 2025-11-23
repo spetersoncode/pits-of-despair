@@ -101,7 +101,7 @@ public class GameplayInputProcessor
         if (range > 0)
         {
             var definition = TargetingDefinition.Ranged(range);
-            _cursorSystem.StartTargeting(_player, definition, _actionContext);
+            _cursorSystem.StartTargeting(_player, definition, _actionContext, Key.F);
             _gameHUD.EnterTargetingMode();
         }
     }
@@ -121,7 +121,8 @@ public class GameplayInputProcessor
         if (slot != null)
         {
             var definition = TargetingDefinition.FromItem(slot.Item.Template);
-            _cursorSystem.StartTargeting(_player, definition, _actionContext);
+            var initiatingKey = CharToKey(itemKey);
+            _cursorSystem.StartTargeting(_player, definition, _actionContext, initiatingKey);
         }
     }
 
@@ -141,7 +142,8 @@ public class GameplayInputProcessor
         {
             int range = slot.Item.Template.Attack.Range;
             var definition = TargetingDefinition.Reach(range);
-            _cursorSystem.StartTargeting(_player, definition, _actionContext);
+            var initiatingKey = CharToKey(itemKey);
+            _cursorSystem.StartTargeting(_player, definition, _actionContext, initiatingKey);
         }
     }
 
@@ -296,5 +298,18 @@ public class GameplayInputProcessor
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Converts a character (a-z) to a Godot Key enum value.
+    /// </summary>
+    private static Key? CharToKey(char c)
+    {
+        c = char.ToLower(c);
+        if (c >= 'a' && c <= 'z')
+        {
+            return (Key)((int)Key.A + (c - 'a'));
+        }
+        return null;
     }
 }

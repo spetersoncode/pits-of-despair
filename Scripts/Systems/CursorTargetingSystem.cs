@@ -80,6 +80,7 @@ public partial class CursorTargetingSystem : Node
 	private TargetingHandler? _targetingHandler;
 	private BaseEntity? _caster;
 	private ActionContext? _actionContext;
+	private Key? _initiatingKey;
 
 	// Dependencies
 	private PlayerVisionSystem _visionSystem;
@@ -126,6 +127,11 @@ public partial class CursorTargetingSystem : Node
 	/// Gets the current targeting handler, if using unified targeting.
 	/// </summary>
 	public TargetingHandler? TargetingHandler => _targetingHandler;
+
+	/// <summary>
+	/// Gets the key that initiated targeting (for confirmation).
+	/// </summary>
+	public Key? InitiatingKey => _initiatingKey;
 
 	/// <summary>
 	/// Gets the current affected positions for area preview.
@@ -176,7 +182,8 @@ public partial class CursorTargetingSystem : Node
 	/// <param name="requiresCreature">Whether targeting requires a creature (shows warning on empty tiles)</param>
 	/// <param name="useGridDistance">Use Chebyshev (grid) distance instead of Euclidean</param>
 	/// <param name="validPositions">Optional pre-calculated valid positions (overrides FOV calculation if provided)</param>
-	public void StartActionTargeting(TargetingMode mode, GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false, HashSet<GridPosition> validPositions = null)
+	/// <param name="initiatingKey">Optional key that initiated targeting (can be used to confirm)</param>
+	public void StartActionTargeting(TargetingMode mode, GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false, HashSet<GridPosition> validPositions = null, Key? initiatingKey = null)
 	{
 		if (mode == TargetingMode.Examine)
 		{
@@ -189,6 +196,7 @@ public partial class CursorTargetingSystem : Node
 		_maxRange = range;
 		_requiresCreature = requiresCreature;
 		_useGridDistance = useGridDistance;
+		_initiatingKey = initiatingKey;
 		_isActive = true;
 
 		// Use provided valid positions or calculate using FOV
@@ -254,7 +262,8 @@ public partial class CursorTargetingSystem : Node
 	/// <param name="caster">The entity doing the targeting</param>
 	/// <param name="definition">The targeting definition</param>
 	/// <param name="context">The action context for handler operations</param>
-	public void StartTargeting(BaseEntity caster, TargetingDefinition definition, ActionContext context)
+	/// <param name="initiatingKey">Optional key that initiated targeting (can be used to confirm)</param>
+	public void StartTargeting(BaseEntity caster, TargetingDefinition definition, ActionContext context, Key? initiatingKey = null)
 	{
 		if (!definition.RequiresSelection)
 		{
@@ -266,6 +275,7 @@ public partial class CursorTargetingSystem : Node
 		_targetingDefinition = definition;
 		_actionContext = context;
 		_targetingHandler = TargetingHandler.CreateForDefinition(definition);
+		_initiatingKey = initiatingKey;
 
 		_currentMode = TargetingMode.TargetedItem; // Use generic mode for unified targeting
 		_originPosition = caster.GridPosition;
@@ -378,6 +388,7 @@ public partial class CursorTargetingSystem : Node
 		_targetingHandler = null;
 		_caster = null;
 		_actionContext = null;
+		_initiatingKey = null;
 		AffectedPositions = null;
 	}
 

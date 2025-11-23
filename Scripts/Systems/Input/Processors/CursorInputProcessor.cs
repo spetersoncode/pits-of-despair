@@ -67,11 +67,9 @@ public class CursorInputProcessor
                                 keyEvent.Keycode == Key.KpEnter ||
                                 keyEvent.Keycode == Key.Space;
 
-            // Add mode-specific confirmation keys
-            if (_cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.RangedAttack)
-                isConfirmKey |= keyEvent.Keycode == Key.F;
-            else if (_cursorSystem.CurrentMode == CursorTargetingSystem.TargetingMode.ReachAttack)
-                isConfirmKey |= keyEvent.Keycode == Key.A;
+            // Allow the initiating key to also confirm (for "spamming" actions)
+            if (_cursorSystem.InitiatingKey.HasValue && keyEvent.Keycode == _cursorSystem.InitiatingKey.Value)
+                isConfirmKey = true;
 
             if (isConfirmKey)
             {
