@@ -26,11 +26,9 @@ public partial class SidePanel : PanelContainer
 	private Label _healthLabel;
 	private ProgressBar _willpowerBar;
 	private Label _willpowerLabel;
-	private Label _levelLabel;
 	private ProgressBar _experienceBar;
-	private Label _experienceLabel;
-	private Label _floorLabel;
-	private Label _goldLabel;
+	private RichTextLabel _xpGoldLabel;
+	private RichTextLabel _levelFloorLabel;
 	private RichTextLabel _equipmentLabel;
 	private RichTextLabel _statsLabel;
 	private RichTextLabel _visibleEntitiesLabel;
@@ -51,17 +49,15 @@ public partial class SidePanel : PanelContainer
 		_healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
 		_willpowerBar = GetNodeOrNull<ProgressBar>("MarginContainer/VBoxContainer/WillpowerBar");
 		_willpowerLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/WillpowerLabel");
-		_levelLabel = GetNode<Label>("MarginContainer/VBoxContainer/LevelLabel");
 		_experienceBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/ExperienceBar");
-		_experienceLabel = GetNode<Label>("MarginContainer/VBoxContainer/ExperienceLabel");
-		_floorLabel = GetNode<Label>("MarginContainer/VBoxContainer/FloorLabel");
-		_goldLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/GoldLabel");
+		_xpGoldLabel = GetNode<RichTextLabel>("MarginContainer/VBoxContainer/XPGoldLabel");
+		_levelFloorLabel = GetNode<RichTextLabel>("MarginContainer/VBoxContainer/LevelFloorLabel");
 		_equipmentLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/EquipmentLabel");
 		_statsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/StatsLabel");
 		_visibleEntitiesLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/ScrollContainer/VisibleEntitiesLabel");
 
-		UpdateFloorDisplay();
-		UpdateGoldDisplay();
+		UpdateXPGoldDisplay();
+		UpdateLevelFloorDisplay();
 		UpdateEquipmentDisplay();
 		UpdateStatsDisplay();
 		UpdateVisibleEntitiesDisplay();
@@ -108,9 +104,8 @@ public partial class SidePanel : PanelContainer
 	{
 		UpdateHealthDisplay();
 		UpdateWillpowerDisplay();
-		UpdateLevelAndXPDisplay();
-		UpdateFloorDisplay();
-		UpdateGoldDisplay();
+		UpdateXPGoldDisplay();
+		UpdateLevelFloorDisplay();
 		UpdateStatsDisplay();
 		UpdateEquipmentDisplay();
 		UpdateVisibleEntitiesDisplay();
@@ -124,9 +119,8 @@ public partial class SidePanel : PanelContainer
 	{
 		UpdateHealthDisplay();
 		UpdateWillpowerDisplay();
-		UpdateLevelAndXPDisplay();
-		UpdateFloorDisplay();
-		UpdateGoldDisplay();
+		UpdateXPGoldDisplay();
+		UpdateLevelFloorDisplay();
 		UpdateStatsDisplay();
 	}
 
@@ -169,7 +163,7 @@ public partial class SidePanel : PanelContainer
 		_healthBar.AddThemeStyleboxOverride("fill", styleBox);
 
 		// Update text label
-		_healthLabel.Text = $"HP: {current}/{max}";
+		_healthLabel.Text = $"Hit Points: {current}/{max}";
 		_healthLabel.AddThemeColorOverride("font_color", healthColor);
 	}
 
@@ -207,55 +201,61 @@ public partial class SidePanel : PanelContainer
 		_willpowerBar.AddThemeStyleboxOverride("fill", styleBox);
 
 		// Update text label
-		_willpowerLabel.Text = $"WP: {current}/{max}";
+		_willpowerLabel.Text = $"Willpower: {current}/{max}";
 		_willpowerLabel.AddThemeColorOverride("font_color", WillpowerBarColor);
 	}
 
-	private void UpdateFloorDisplay()
-	{
-		if (_floorLabel != null && _statsViewModel != null)
-		{
-			_floorLabel.Text = $"Floor: {_statsViewModel.FloorDepth}";
-			_floorLabel.AddThemeColorOverride("font_color", DefaultTextColor);
-		}
-	}
+	private const int SidePanelLabelWidth = 24;
 
-	private void UpdateGoldDisplay()
+	private void UpdateXPGoldDisplay()
 	{
-		if (_goldLabel != null && _statsViewModel != null)
-		{
-			_goldLabel.Text = $"Gold: {_statsViewModel.Gold}";
-			_goldLabel.AddThemeColorOverride("font_color", Palette.Gold);
-		}
-	}
-
-	private void UpdateLevelAndXPDisplay()
-	{
-		if (_levelLabel == null || _experienceBar == null || _experienceLabel == null || _statsViewModel == null)
+		if (_xpGoldLabel == null || _statsViewModel == null)
 			return;
 
-		int level = _statsViewModel.Level;
 		int currentXP = _statsViewModel.CurrentXP;
 		int xpToNext = _statsViewModel.XPToNextLevel;
-
-		// Show level-up indicator if pending level-ups exist
-		if (_pendingLevelUps > 0)
-		{
-			_levelLabel.Text = $"LEVEL UP! [L]";
-			_levelLabel.AddThemeColorOverride("font_color", Palette.Alert);
-		}
-		else
-		{
-			_levelLabel.Text = $"Level: {level}";
-			_levelLabel.AddThemeColorOverride("font_color", DefaultTextColor);
-		}
 
 		_experienceBar.MaxValue = xpToNext;
 		_experienceBar.Value = currentXP;
 		_experienceBar.AddThemeStyleboxOverride("fill", CreateExperienceBarStyle());
 
-		_experienceLabel.Text = $"XP: {currentXP}/{xpToNext}";
-		_experienceLabel.AddThemeColorOverride("font_color", ExperienceBarColor);
+		string xpText = $"XP: {currentXP}/{xpToNext}";
+		string goldText = $"Gold: {_statsViewModel.Gold}";
+		string colorHex = ColorToHex(ExperienceBarColor);
+		string paddedText = PadBetween(xpText, goldText, SidePanelLabelWidth);
+		_xpGoldLabel.Text = $"[color={colorHex}]{paddedText}[/color]";
+	}
+
+	private void UpdateLevelFloorDisplay()
+	{
+		if (_levelFloorLabel == null || _statsViewModel == null)
+			return;
+
+		int level = _statsViewModel.Level;
+		string floorText = $"Floor: {_statsViewModel.FloorDepth}";
+
+		// Show level-up indicator if pending level-ups exist
+		if (_pendingLevelUps > 0)
+		{
+			string levelText = "LEVEL UP! [L]";
+			string levelColorHex = ColorToHex(Palette.Alert);
+			string floorColorHex = ColorToHex(DefaultTextColor);
+			string paddedText = PadBetween(levelText, floorText, SidePanelLabelWidth);
+			int levelLen = levelText.Length;
+			_levelFloorLabel.Text = $"[color={levelColorHex}]{paddedText.Substring(0, levelLen)}[/color]{paddedText.Substring(levelLen, paddedText.Length - levelLen - floorText.Length)}[color={floorColorHex}]{floorText}[/color]";
+		}
+		else
+		{
+			string levelText = $"Level: {level}";
+			string colorHex = ColorToHex(DefaultTextColor);
+			string paddedText = PadBetween(levelText, floorText, SidePanelLabelWidth);
+			_levelFloorLabel.Text = $"[color={colorHex}]{paddedText}[/color]";
+		}
+	}
+
+	private static string ColorToHex(Color color)
+	{
+		return $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
 	}
 
 	/// <summary>
@@ -265,7 +265,7 @@ public partial class SidePanel : PanelContainer
 	public void SetPendingLevelUps(int count)
 	{
 		_pendingLevelUps = count;
-		UpdateLevelAndXPDisplay();
+		UpdateLevelFloorDisplay();
 	}
 
 	private StyleBoxFlat CreateExperienceBarStyle()
@@ -275,35 +275,15 @@ public partial class SidePanel : PanelContainer
 		return styleBox;
 	}
 
-	private void UpdateExperienceDisplay()
+	/// <summary>
+	/// Creates a string with left text and right text separated by space padding to fill totalWidth.
+	/// </summary>
+	private static string PadBetween(string left, string right, int totalWidth)
 	{
-		if (_levelLabel == null || _experienceBar == null || _experienceLabel == null || _player == null)
-			return;
-
-		var statsComponent = _player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
-		if (statsComponent == null)
-		{
-			_levelLabel.Text = "Level: ?";
-			_experienceLabel.Text = "XP: ?/?";
-			return;
-		}
-
-		// Update level label
-		_levelLabel.Text = $"Level: {statsComponent.Level}";
-		_levelLabel.AddThemeColorOverride("font_color", DefaultTextColor);
-
-		// Update experience bar
-		_experienceBar.MaxValue = statsComponent.ExperienceToNextLevel;
-		_experienceBar.Value = statsComponent.CurrentExperience;
-
-		// Create StyleBoxFlat for the experience bar fill with gold color
-		var styleBox = new StyleBoxFlat();
-		styleBox.BgColor = ExperienceBarColor;
-		_experienceBar.AddThemeStyleboxOverride("fill", styleBox);
-
-		// Update experience label
-		_experienceLabel.Text = $"XP: {statsComponent.CurrentExperience}/{statsComponent.ExperienceToNextLevel}";
-		_experienceLabel.AddThemeColorOverride("font_color", ExperienceBarColor);
+		int spacesNeeded = totalWidth - left.Length - right.Length;
+		if (spacesNeeded <= 0)
+			return left + " " + right;
+		return left + new string(' ', spacesNeeded) + right;
 	}
 
 	private void UpdateEquipmentDisplay()
@@ -320,8 +300,10 @@ public partial class SidePanel : PanelContainer
 
 			if (slot.IsEquipped)
 			{
-				string colorHex = $"#{(int)(slot.ItemColor.R * 255):X2}{(int)(slot.ItemColor.G * 255):X2}{(int)(slot.ItemColor.B * 255):X2}";
-				sb.AppendLine($"[color={colorHex}]{slot.ItemGlyph} {slot.ItemName}[/color]");
+				string colorHex = ColorToHex(slot.ItemColor);
+				// Show quantity for ammo
+				string quantityStr = slot.SlotName == "Ammo" ? $" ({slot.Quantity})" : "";
+				sb.AppendLine($"[color={colorHex}]{slot.ItemGlyph} {slot.ItemName}{quantityStr}[/color]");
 			}
 			else
 			{
@@ -355,8 +337,8 @@ public partial class SidePanel : PanelContainer
 
 		// Get attack component for damage dice (still needs direct access)
 		var attackComponent = _player.GetNodeOrNull<Components.AttackComponent>("AttackComponent");
-		string meleeDamage = "?";
-		string rangedDamage = "?";
+		string meleeDamage = "-";
+		string rangedDamage = "-";
 
 		if (attackComponent != null)
 		{
@@ -366,7 +348,7 @@ public partial class SidePanel : PanelContainer
 				if (attack.Type == Data.AttackType.Melee)
 				{
 					int damageBonus = _statsViewModel.TotalStrength;
-					meleeDamage = damageBonus > 0 ? $"{attack.DiceNotation}+{damageBonus}" : attack.DiceNotation;
+					meleeDamage = Helpers.DiceRoller.AddBonus(attack.DiceNotation, damageBonus);
 				}
 				else if (attack.Type == Data.AttackType.Ranged)
 				{

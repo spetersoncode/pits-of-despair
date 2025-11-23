@@ -97,4 +97,34 @@ public static class DiceRoller
 
 		return count > 0 && sides > 0;
 	}
+
+	/// <summary>
+	/// Adds a bonus to dice notation, combining with any existing modifier.
+	/// E.g., "1d6" + 2 = "1d6+2", "1d6+1" + 2 = "1d6+3", "1d6-1" + 2 = "1d6+1"
+	/// </summary>
+	/// <param name="notation">Original dice notation</param>
+	/// <param name="bonus">Bonus to add</param>
+	/// <returns>New dice notation with combined bonus</returns>
+	public static string AddBonus(string notation, int bonus)
+	{
+		if (bonus == 0)
+			return notation;
+
+		if (!TryParse(notation, out int count, out int sides, out int modifier))
+			return notation;
+
+		int totalModifier = modifier + bonus;
+
+		// Plain number case
+		if (count == 0 && sides == 0)
+			return totalModifier.ToString();
+
+		// Dice notation case
+		if (totalModifier == 0)
+			return $"{count}d{sides}";
+		else if (totalModifier > 0)
+			return $"{count}d{sides}+{totalModifier}";
+		else
+			return $"{count}d{sides}{totalModifier}";
+	}
 }

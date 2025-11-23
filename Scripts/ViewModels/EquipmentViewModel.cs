@@ -36,6 +36,7 @@ public partial class EquipmentViewModel : Node
 		public string ItemName { get; set; }
 		public string ItemGlyph { get; set; }
 		public Color ItemColor { get; set; }
+		public int Quantity { get; set; }
 
 		public EquipmentSlotData(string slotName)
 		{
@@ -44,6 +45,7 @@ public partial class EquipmentViewModel : Node
 			ItemName = "(none)";
 			ItemGlyph = "";
 			ItemColor = Colors.Gray;
+			Quantity = 0;
 		}
 	}
 
@@ -176,6 +178,7 @@ public partial class EquipmentViewModel : Node
 				slotData.ItemName = inventorySlot.Item.Template.Name;
 				slotData.ItemGlyph = inventorySlot.Item.Template.GetGlyph();
 				slotData.ItemColor = inventorySlot.Item.Template.GetColor();
+				slotData.Quantity = inventorySlot.Item.Quantity;
 			}
 			else
 			{
@@ -184,6 +187,7 @@ public partial class EquipmentViewModel : Node
 				slotData.ItemName = "(error)";
 				slotData.ItemGlyph = "?";
 				slotData.ItemColor = Colors.Red;
+				slotData.Quantity = 0;
 			}
 		}
 		else
@@ -193,6 +197,7 @@ public partial class EquipmentViewModel : Node
 			slotData.ItemName = "(none)";
 			slotData.ItemGlyph = "";
 			slotData.ItemColor = Colors.Gray;
+			slotData.Quantity = 0;
 		}
 	}
 

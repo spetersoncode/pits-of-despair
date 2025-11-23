@@ -19,7 +19,7 @@ theme_override_constants/margin_bottom = 16
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 4
 
 [node name="PlayerNameLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -33,7 +33,7 @@ show_percentage = false
 
 [node name="HealthLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "HP: 20/20"
+text = "Hit Points: 20/20"
 
 [node name="WillpowerBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 20)
@@ -43,31 +43,26 @@ show_percentage = false
 
 [node name="WillpowerLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "WP: 10/10"
-
-[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Level: 1"
+text = "Willpower: 10/10"
 
 [node name="ExperienceBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 show_percentage = false
 
-[node name="ExperienceLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="XPGoldLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "XP: 0/100"
+bbcode_enabled = true
+text = "XP: 0/100        Gold: 0"
+fit_content = true
+scroll_active = false
 
-[node name="Separator1" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+[node name="LevelFloorLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-
-[node name="FloorLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Floor: 1"
-
-[node name="GoldLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Gold: 0"
+bbcode_enabled = true
+text = "Level: 1       Floor: 1"
+fit_content = true
+scroll_active = false
 
 [node name="Separator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -78,7 +73,6 @@ theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 text = "STATS:"
 
 [node name="StatsLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 bbcode_enabled = true
 text = "Strength: 0
@@ -102,7 +96,6 @@ theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 text = "EQUIPMENT:"
 
 [node name="EquipmentLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 bbcode_enabled = true
 text = "Melee: (none)
