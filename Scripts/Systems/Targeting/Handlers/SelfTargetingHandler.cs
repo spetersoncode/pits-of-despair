@@ -1,17 +1,15 @@
 using System.Collections.Generic;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
-using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Skills;
 
-namespace PitsOfDespair.Skills.Targeting;
+namespace PitsOfDespair.Targeting;
 
 /// <summary>
-/// Targeting handler for self-targeting skills.
+/// Targeting handler for self-targeting.
 /// No selection required - always targets the caster.
 /// </summary>
-public class SelfTargeting : TargetingHandler
+public class SelfTargetingHandler : TargetingHandler
 {
     public override TargetingType TargetType => TargetingType.Self;
 
@@ -19,30 +17,27 @@ public class SelfTargeting : TargetingHandler
 
     public override List<GridPosition> GetValidTargetPositions(
         BaseEntity caster,
-        SkillDefinition skill,
+        TargetingDefinition definition,
         ActionContext context)
     {
-        // Only valid position is the caster's position
         return new List<GridPosition> { caster.GridPosition };
     }
 
     public override bool IsValidTarget(
         BaseEntity caster,
         GridPosition targetPosition,
-        SkillDefinition skill,
+        TargetingDefinition definition,
         ActionContext context)
     {
-        // Only the caster's position is valid
         return targetPosition == caster.GridPosition;
     }
 
     public override List<BaseEntity> GetAffectedEntities(
         BaseEntity caster,
         GridPosition targetPosition,
-        SkillDefinition skill,
+        TargetingDefinition definition,
         ActionContext context)
     {
-        // Self-targeting always affects the caster
         return new List<BaseEntity> { caster };
     }
 }

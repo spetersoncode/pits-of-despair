@@ -1,17 +1,16 @@
 using System.Collections.Generic;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
-using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Skills;
 
-namespace PitsOfDespair.Skills.Targeting;
+namespace PitsOfDespair.Targeting;
 
 /// <summary>
-/// Targeting handler for skills that target adjacent tiles (8 directions).
+/// Targeting handler for adjacent targeting (8 directions).
+/// Targets entities in adjacent tiles based on the filter.
 /// </summary>
-public class AdjacentTargeting : TargetingHandler
+public class AdjacentTargetingHandler : TargetingHandler
 {
     public override TargetingType TargetType => TargetingType.Adjacent;
 
@@ -24,7 +23,7 @@ public class AdjacentTargeting : TargetingHandler
 
     public override List<GridPosition> GetValidTargetPositions(
         BaseEntity caster,
-        SkillDefinition skill,
+        TargetingDefinition definition,
         ActionContext context)
     {
         var validPositions = new List<GridPosition>();
@@ -34,8 +33,7 @@ public class AdjacentTargeting : TargetingHandler
         {
             var checkPos = new GridPosition(casterPos.X + dx, casterPos.Y + dy);
 
-            // Check if there's a valid target at this position
-            if (IsValidTarget(caster, checkPos, skill, context))
+            if (IsValidTarget(caster, checkPos, definition, context))
             {
                 validPositions.Add(checkPos);
             }
@@ -47,19 +45,26 @@ public class AdjacentTargeting : TargetingHandler
     public override bool IsValidTarget(
         BaseEntity caster,
         GridPosition targetPosition,
-        SkillDefinition skill,
+        TargetingDefinition definition,
         ActionContext context)
     {
         var casterPos = caster.GridPosition;
 
-        // Check if position is adjacent (Chebyshev distance of 1)
+        // Must be adjacent (Chebyshev distance of 1)
         if (DistanceHelper.ChebyshevDistance(casterPos, targetPosition) != 1)
-        {
             return false;
-        }
 
-        // Check if there's an entity at the position
+        // Apply filter based on definition
         var entity = context.EntityManager.GetEntityAtPosition(targetPosition);
-        return entity != null;
+
+        return definition.Filter switch
+        {
+            TargetFilter.Enemy => entity != null && caster.Faction != entity.Faction,
+            TargetFilter.Ally => entity != null && caster.Faction == entity.Faction,
+            TargetFilter.Creature => entity != null,
+            TargetFilter.Tile => context.MapSystem.IsWalkable(targetPosition),
+            TargetFilter.Self => targetPosition == casterPos,
+            _ => entity != null
+        };
     }
 }

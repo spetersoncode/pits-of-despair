@@ -9,7 +9,8 @@ using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Skills;
 using PitsOfDespair.Skills;
-using PitsOfDespair.Skills.Targeting;
+using PitsOfDespair.Targeting;
+using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Debug.Commands;
 
@@ -291,7 +292,8 @@ public class SkillCommand : DebugCommand
         }
 
         // Resolve targets based on targeting type
-        var targetingHandler = TargetingHandler.CreateForType(skill.GetTargetingType());
+        var definition = TargetingDefinition.FromSkill(skill);
+        var targetingHandler = TargetingHandler.CreateForDefinition(definition);
         List<BaseEntity> targets;
 
         if (skill.GetTargetingType() == TargetingType.Self)
@@ -301,7 +303,7 @@ public class SkillCommand : DebugCommand
         else
         {
             // For debug, find nearest enemy for enemy-targeting skills
-            targets = FindDebugTargets(player, skill, targetingHandler, context);
+            targets = FindDebugTargets(player, skill, definition, targetingHandler, context);
         }
 
         if (targets.Count == 0 && skill.GetTargetingType() != TargetingType.Self)
@@ -335,10 +337,11 @@ public class SkillCommand : DebugCommand
     private List<BaseEntity> FindDebugTargets(
         BaseEntity player,
         SkillDefinition skill,
+        TargetingDefinition definition,
         TargetingHandler handler,
         DebugContext context)
     {
-        var validPositions = handler.GetValidTargetPositions(player, skill, context.ActionContext);
+        var validPositions = handler.GetValidTargetPositions(player, definition, context.ActionContext);
 
         if (validPositions.Count == 0)
             return new List<BaseEntity>();
@@ -355,7 +358,7 @@ public class SkillCommand : DebugCommand
             var entity = context.ActionContext.EntityManager.GetEntityAtPosition(pos);
             if (entity != null)
             {
-                return handler.GetAffectedEntities(player, pos, skill, context.ActionContext);
+                return handler.GetAffectedEntities(player, pos, definition, context.ActionContext);
             }
         }
 
@@ -364,7 +367,7 @@ public class SkillCommand : DebugCommand
         if (skill.GetTargetingType() == TargetingType.Tile && sortedPositions.Count > 0)
         {
             // For tile targeting without a target entity, still return the position's entities
-            return handler.GetAffectedEntities(player, sortedPositions[0], skill, context.ActionContext);
+            return handler.GetAffectedEntities(player, sortedPositions[0], definition, context.ActionContext);
         }
 
         return new List<BaseEntity>();

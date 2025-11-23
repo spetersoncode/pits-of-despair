@@ -214,6 +214,12 @@ public class ItemData
     public int WillBonus { get; set; } = 0;
 
     /// <summary>
+    /// Explicit targeting configuration for this item.
+    /// If null, smart defaults are used based on item type and effects.
+    /// </summary>
+    public ItemTargeting? Targeting { get; set; } = null;
+
+    /// <summary>
     /// Applies type-based defaults for properties not explicitly set in YAML.
     /// Should be called after deserialization.
     /// </summary>
@@ -562,4 +568,32 @@ public class EffectDefinition
     /// Condition type for apply_condition effects (e.g., "confusion", "armor_buff").
     /// </summary>
     public string? ConditionType { get; set; } = null;
+}
+
+/// <summary>
+/// Explicit targeting configuration for items.
+/// Allows items to specify how they select targets in YAML.
+/// </summary>
+public class ItemTargeting
+{
+    /// <summary>
+    /// Target type: "self", "enemy", "ally", "tile", "creature", "area".
+    /// </summary>
+    public string? Type { get; set; } = null;
+
+    /// <summary>
+    /// Targeting range in tiles. If 0, uses item's default range.
+    /// </summary>
+    public int Range { get; set; } = 0;
+
+    /// <summary>
+    /// Area size for AoE items.
+    /// </summary>
+    public int AreaSize { get; set; } = 0;
+
+    /// <summary>
+    /// Whether line-of-sight is required. Defaults to true.
+    /// </summary>
+    [YamlMember(Alias = "requiresLos")]
+    public bool RequiresLOS { get; set; } = true;
 }

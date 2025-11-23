@@ -7,8 +7,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
-using PitsOfDespair.Scripts.Skills;
-using PitsOfDespair.Skills.Targeting;
+using PitsOfDespair.Targeting;
 using PitsOfDespair.Systems.Input.Services;
 using PitsOfDespair.UI;
 
@@ -101,13 +100,8 @@ public class GameplayInputProcessor
         int range = GetRangedWeaponRange();
         if (range > 0)
         {
-            _cursorSystem.StartActionTargeting(
-                CursorTargetingSystem.TargetingMode.RangedAttack,
-                _player.GridPosition,
-                range,
-                requiresCreature: true,
-                useGridDistance: false // Use Euclidean (circular) distance for ranged attacks
-            );
+            var definition = TargetingDefinition.Ranged(range);
+            _cursorSystem.StartTargeting(_player, definition, _actionContext);
             _gameHUD.EnterTargetingMode();
         }
     }
@@ -117,7 +111,7 @@ public class GameplayInputProcessor
     /// </summary>
     public void StartItemTargeting(char itemKey)
     {
-        if (_player == null || _cursorSystem == null)
+        if (_player == null || _cursorSystem == null || _actionContext == null)
             return;
 
         _pendingItemKey = itemKey;
@@ -126,14 +120,8 @@ public class GameplayInputProcessor
         var slot = _player.GetInventorySlot(itemKey);
         if (slot != null)
         {
-            int range = slot.Item.Template.GetTargetingRange();
-            _cursorSystem.StartActionTargeting(
-                CursorTargetingSystem.TargetingMode.TargetedItem,
-                _player.GridPosition,
-                range,
-                requiresCreature: true,
-                useGridDistance: false // Use Euclidean (circular) distance for targeted items
-            );
+            var definition = TargetingDefinition.FromItem(slot.Item.Template);
+            _cursorSystem.StartTargeting(_player, definition, _actionContext);
         }
     }
 
@@ -142,7 +130,7 @@ public class GameplayInputProcessor
     /// </summary>
     public void StartReachAttackTargeting(char itemKey)
     {
-        if (_player == null || _cursorSystem == null)
+        if (_player == null || _cursorSystem == null || _actionContext == null)
             return;
 
         _pendingItemKey = itemKey;
@@ -152,13 +140,8 @@ public class GameplayInputProcessor
         if (slot != null && slot.Item.Template.Attack != null)
         {
             int range = slot.Item.Template.Attack.Range;
-            _cursorSystem.StartActionTargeting(
-                CursorTargetingSystem.TargetingMode.ReachAttack,
-                _player.GridPosition,
-                range,
-                requiresCreature: true,
-                useGridDistance: true // Use Chebyshev (grid) distance for reach attacks
-            );
+            var definition = TargetingDefinition.Reach(range);
+            _cursorSystem.StartTargeting(_player, definition, _actionContext);
         }
     }
 
@@ -167,7 +150,7 @@ public class GameplayInputProcessor
     /// </summary>
     public void StartSkillTargeting(string skillId)
     {
-        if (_player == null || _cursorSystem == null || string.IsNullOrEmpty(skillId))
+        if (_player == null || _cursorSystem == null || _actionContext == null || string.IsNullOrEmpty(skillId))
             return;
 
         // Look up skill from DataLoader
@@ -183,26 +166,9 @@ public class GameplayInputProcessor
         _pendingItemKey = null;
         _isReachAttack = false;
 
-        // Get the targeting handler for this skill
-        var handler = TargetingHandler.CreateForType(skill.GetTargetingType());
-        var validPositions = handler.GetValidTargetPositions(_player, skill, _actionContext);
-
-        // Determine if this targeting type requires a creature
-        var targetingType = skill.GetTargetingType();
-        bool requiresCreature = targetingType == TargetingType.Enemy ||
-                                targetingType == TargetingType.Ally ||
-                                targetingType == TargetingType.Adjacent;
-
-        int range = skill.Range > 0 ? skill.Range : 1;
-
-        _cursorSystem.StartActionTargeting(
-            CursorTargetingSystem.TargetingMode.TargetedItem, // Reuse targeted item mode
-            _player.GridPosition,
-            range,
-            requiresCreature: requiresCreature,
-            useGridDistance: true, // Skills use grid (Chebyshev) distance
-            validPositions: new HashSet<GridPosition>(validPositions)
-        );
+        // Create targeting definition from skill
+        var definition = TargetingDefinition.FromSkill(skill);
+        _cursorSystem.StartTargeting(_player, definition, _actionContext);
     }
 
     /// <summary>

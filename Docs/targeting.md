@@ -1,169 +1,241 @@
-# Cursor Targeting System
+# Targeting System
 
-The **Cursor Targeting System** provides unified tile selection for both non-action inspection (examine mode) and action targeting (ranged attacks, reach weapons, targeted items). It bridges player input and action execution through visual feedback and validated target selection.
+The **Targeting System** provides unified tile and entity selection for all player-initiated actions: skill activation, ranged/reach attacks, targeted items, and examination. It uses a handler-based architecture that bridges player input, validation logic, and action execution through visual feedback.
 
 ## Design Philosophy
 
-**Mode-Based Unification**: Single cursor implementation handles both passive observation (examine) and active targeting (combat/items) through mode switching, eliminating duplicate cursor logic.
+**Handler-Based Unification**: All targeting scenarios (skills, weapons, items) use the same handler pattern with pluggable implementations per targeting type. Eliminates separate code paths for skills vs items vs weapons.
 
-**Grid-Based Tactical**: Action targeting uses Chebyshev distance (square ranges) for clean diagonal mechanics and tactical grid gameplay. Examine mode uses vision-based validation (Euclidean) for natural exploration.
+**Data-Driven Configuration**: `TargetingDefinition` captures all targeting parameters (type, range, area size, LOS, distance metric, filter) allowing items and skills to define targeting through data rather than code.
 
-**Consistent Visuals**: All modes share the same cursor appearance (white border box, green fill on entities) with mode-specific overlays (range indicators, trace lines) for action feedback.
+**Grid-Based Tactical**: Action targeting uses Chebyshev distance (square ranges) for clean diagonal mechanics. Ranged weapons can use Euclidean distance for circular ranges when appropriate.
 
 **Creature-Centric Actions**: Action modes auto-select nearest valid target and provide Tab-cycling between creatures for efficient selection without manual cursor movement.
 
 ## Core Concepts
 
-### Targeting Modes
+### Targeting Types
 
-The system operates in four distinct modes:
+The system supports these targeting types via dedicated handlers:
 
-**Examine**: Read-only inspection of visible entities. Cursor moves freely within player vision, no range limits. Triggered by X key. Entity descriptions display in message log as cursor moves. No action execution—purely informational.
+| Type | Description | Selection Required |
+|------|-------------|-------------------|
+| **Self** | Targets the caster only | No |
+| **Adjacent** | Any tile within 1 Chebyshev distance | Yes |
+| **Tile** | Any tile within range | Yes |
+| **Enemy** | Hostile entities within range | Yes |
+| **Ally** | Friendly entities within range | Yes |
+| **Creature** | Any entity within range | Yes |
+| **Area** | Tile selection with AoE preview | Yes |
+| **Ranged** | Euclidean distance (circular range) | Yes |
+| **Reach** | Chebyshev distance (square range) | Yes |
 
-**RangedAttack**: Bow/crossbow targeting. FOV-based range calculation using weapon range and Chebyshev metric. Auto-targets nearest creature. Triggered by F key with ranged weapon equipped.
+### Target Filters
 
-**ReachAttack**: Melee weapons with range > 1 (spears, polearms). Square range based on weapon reach. Triggered by activating equipped reach weapon from inventory.
+Filters determine which entities are valid targets:
 
-**TargetedItem**: Items requiring target selection (scrolls, wands). Range determined by item properties. Triggered by activating targeted item from inventory.
-
-Mode selection determines validation logic (vision vs range), visual feedback (overlays, trace lines), and outcome (message display vs action execution).
+- **Self**: Only the caster
+- **Enemy**: Hostile entities
+- **Ally**: Friendly entities
+- **Creature**: Any entity (enemy or ally)
+- **Tile**: Position-based, no entity required
 
 ### Distance Metrics
 
-Targeting and vision use different distance calculations to serve distinct gameplay purposes:
+**Chebyshev**: Square-shaped ranges where diagonals cost same as orthogonal moves. Formula: `max(|dx|, |dy|)`. Creates 3x3, 5x5 grids. Used for reach weapons, most skills, and action targeting.
 
-**Chebyshev (Action Targeting)**: Square-shaped ranges where diagonals cost same as orthogonal moves. Formula: `max(|dx|, |dy|)`. Creates 3×3, 5×5, etc. grids. Used for all player-initiated targeting (weapons, items) to provide clean grid-based tactical mechanics.
+**Euclidean**: Circular-shaped ranges. Formula: `sqrt(dx² + dy²)`. Used for ranged weapons (bows, crossbows) and vision/FOV.
 
-**Euclidean (Vision/Examine)**: Circular-shaped ranges modeling realistic light propagation. Formula: `dx² + dy² <= range²`. Used for creature vision, FOV, and examine mode to simulate natural sight limitations.
+### Targeting Definition
 
-This separation creates intuitive gameplay: passive observation feels realistic (circular vision) while active targeting is tactically precise (square grids).
+`TargetingDefinition` is the unified configuration for all targeting:
 
-### Cursor Flow
+```csharp
+public class TargetingDefinition
+{
+    public TargetingType Type { get; init; }
+    public int Range { get; init; } = 1;
+    public int AreaSize { get; init; } = 0;
+    public bool RequiresLOS { get; init; } = true;
+    public DistanceMetric Metric { get; init; } = DistanceMetric.Chebyshev;
+    public TargetFilter Filter { get; init; } = TargetFilter.Enemy;
+    public bool RequiresSelection => Type != TargetingType.Self;
+}
+```
 
-**Initiation**: Player triggers mode via input (X for examine, F for ranged attack, A + item for targeted actions). System determines validation strategy: examine uses vision system, action modes calculate valid tiles using FOV with Chebyshev metric. Action modes auto-select nearest creature.
+Factory methods create definitions from data:
+- `TargetingDefinition.FromSkill(skill)` - Reads skill targeting properties
+- `TargetingDefinition.FromItem(item)` - Uses item targeting or smart defaults
+- Static factories: `Self()`, `Enemy(range)`, `Ally(range)`, `Area(range, size)`, `Ranged(range)`, `Reach(range)`
 
-**Selection**: Player uses arrow keys to move cursor freely within valid area or Tab/Shift+Tab to cycle between creatures (action modes only). Visual feedback adapts to mode: examine shows border only, action modes add range overlay and trace line.
+### Targeting Handlers
 
-**Resolution**: In examine mode, ESC or X exits. In action modes, Enter/Space/F confirms target position triggering corresponding action, or ESC cancels without consuming turn. Examine mode provides no-cost exploration; action modes lead to turn-consuming execution.
+Abstract `TargetingHandler` base with implementations per type:
+
+```csharp
+public abstract class TargetingHandler
+{
+    public abstract TargetingType TargetType { get; }
+    public abstract List<GridPosition> GetValidTargetPositions(...);
+    public abstract bool IsValidTarget(...);
+    public virtual List<BaseEntity> GetAffectedEntities(...);
+    public virtual List<GridPosition> GetAffectedPositions(...); // For AoE preview
+    public virtual bool RequiresSelection => true;
+}
+```
+
+Handlers are created via factory: `TargetingHandler.CreateForDefinition(definition)`.
+
+## Cursor Targeting System
+
+### Targeting Modes
+
+The cursor system operates in these modes:
+
+**Examine**: Read-only inspection. Cursor moves freely within player vision. Triggered by X key. No action execution.
+
+**RangedAttack**: Bow/crossbow targeting. Uses Euclidean distance within weapon range. Triggered by F key with ranged weapon equipped.
+
+**ReachAttack**: Melee weapons with range > 1. Uses Chebyshev distance. Triggered by activating equipped reach weapon.
+
+**TargetedItem**: Items requiring target selection. Range/type determined by item data. Triggered by activating targeted item.
+
+**SkillTargeting**: Skills requiring target selection. Configuration from skill definition. Triggered by activating targeted skill.
+
+### Unified StartTargeting
+
+All action targeting uses the unified entry point:
+
+```csharp
+public void StartTargeting(BaseEntity caster, TargetingDefinition definition, ActionContext context)
+```
+
+This replaces mode-specific start methods with a single data-driven approach.
+
+### Area Preview
+
+For AoE targeting, `AffectedPositions` property provides the list of tiles that will be affected by the current cursor position. UI renders these with distinct highlighting.
 
 ### Visual Feedback
 
-**White Border Box**: Solid 1-pixel white border always visible on cursor tile. Consistent across all modes for clear position tracking.
+**White Border Box**: Solid 1-pixel white border on cursor tile. Consistent across all modes.
 
-**Green Fill**: Pulsing green highlight appears only when cursor hovers over entity (any mode). Indicates inspectable/targetable content.
+**Green Fill**: Pulsing green highlight when cursor hovers over entity.
 
-**Range Overlay** (action modes only): Subtle blue highlight on all tiles within weapon/item range respecting line-of-sight. Uses same distance metric as action validation.
+**Range Overlay** (action modes): Subtle blue highlight on valid tiles within range respecting LOS.
 
-**Trace Line** (action modes only): Yellow line from player to cursor showing targeting direction and path.
+**Trace Line** (action modes): Yellow line from player to cursor.
 
-Visual layers: Range overlay → Trace line → Border box → Fill. Examine mode shows minimal feedback (border + fill), action modes show full tactical information.
+**Area Preview** (AoE skills): Additional highlight showing affected area around cursor.
 
 ## Architectural Patterns
 
-### Mode-Based Validation
+### Handler Registration
 
-Single cursor system branches validation logic based on current mode:
+Handlers register by type in static factory:
 
-**Examine Mode**: Queries vision system for tile visibility. No range calculation—anywhere player can see is valid. No creature filtering—empty tiles are valid targets (just less informative).
+```csharp
+TargetingHandler.CreateForType(TargetingType type) => type switch
+{
+    TargetingType.Self => new SelfTargetingHandler(),
+    TargetingType.Enemy => new EnemyTargetingHandler(),
+    TargetingType.Area => new AreaTargetingHandler(),
+    // ... etc
+};
+```
 
-**Action Modes**: Pre-calculate valid tiles using FOV with Chebyshev metric at targeting start. Build sorted list of targetable creatures within range. Validate cursor movement against pre-calculated set.
+### LOS Integration
 
-Shared infrastructure (cursor position, movement, signals) with mode-specific validation prevents code duplication while maintaining distinct behavior.
+Handlers check LOS via `FOVCalculator.HasLineOfSight()` when `RequiresLOS` is true. Area and Self handlers bypass LOS. Line and Cone handlers use custom LOS logic.
 
 ### Two-Phase Validation
 
-**Cursor System**: Pre-calculates valid tiles (action modes) or checks visibility (examine mode), provides visual feedback, handles input. Does not validate action legality—that's action responsibility.
+**Handler Phase**: `GetValidTargetPositions()` pre-calculates valid tiles at targeting start. Provides visual feedback and cursor constraints.
 
-**Action Validation**: Actions re-validate range, LOS, and target requirements in `CanExecute()`. Prevents desync between targeting initiation and action execution.
-
-Separation enables free cursor movement with visual guidance while ensuring actions validate current game state.
-
-### Mode-Aware Input Routing
-
-InputHandler switches between normal gameplay and cursor targeting mode. During targeting, behavior adapts to mode:
-
-**All Modes**: Movement keys control cursor instead of player. ESC cancels and returns to normal mode.
-
-**Examine Mode**: X also exits (toggle behavior). No confirmation key—examination is continuous until exit.
-
-**Action Modes**: Enter/Space/F confirms target, triggering action execution. Tab/Shift+Tab cycles between creature targets. Confirmation consumes turn if action succeeds.
-
-Mode tracking via flags (`_isReachAttack`, `_pendingItemKey`) routes confirmed position to correct action type.
+**Action Phase**: Actions re-validate in `CanExecute()` using same handler. Prevents desync between targeting and execution.
 
 ## Integration Points
 
-### Vision System Integration
+### Skill System Integration
 
-Examine mode leverages vision system for tile validation. If player can see tile, they can examine it. This ensures consistency: examine cursor follows same visibility rules as exploration.
+Skills define targeting in YAML:
 
-Action modes use FOV calculator for range validation but remain independent of vision updates—targeting represents momentary snapshot of reachable positions.
+```yaml
+targeting: enemy    # TargetingType
+range: 5           # Tile range
+area_size: 2       # For AoE skills
+```
 
-### FOV Calculator Integration
+`TargetingDefinition.FromSkill()` reads these properties. `PlayerActionHandler.ActivateSkill()` checks if targeting is required and either executes immediately (self-targeting) or starts cursor targeting.
 
-Action targeting leverages FOV's shadowcasting for line-of-sight calculation. Valid targeting tiles = visible tiles within range. This ensures consistency: if player can't see tile (blocked by walls), they can't target it.
+### Item System Integration
 
-FOV's dual distance metric support allows action targeting to use Chebyshev while vision uses Euclidean without separate algorithms.
+Items can define targeting in YAML:
+
+```yaml
+targeting:
+  type: enemy
+  range: 6
+  requires_los: true
+```
+
+If no targeting block, `TargetingDefinition.FromItem()` uses smart defaults based on item type (ranged attack, throwable, usable).
 
 ### Action System Integration
 
-**Reach Weapons**: Equipped melee weapons with range > 1 become activatable. Activation triggers ReachAttack mode using weapon's range. Confirmation creates `ReachAttackAction` with target position.
+Actions receive targets from cursor confirmation:
+- `UseSkillAction(skill, targets)` - Skill execution with resolved targets
+- `UseTargetedItemAction(itemKey, position, affectedEntities)` - Item usage with target info
+- `RangedAttackAction(target)` - Ranged weapon attack
+- `ReachAttackAction(target)` - Reach weapon attack
 
-**Ranged Weapons**: F key checks equipped ranged weapon, retrieves range, starts RangedAttack mode. Confirmation creates `RangedAttackAction`.
+## File Organization
 
-**Targeted Items**: Items marked `RequiresTargeting()` (e.g., Scroll of Confusion) enter TargetedItem mode on activation. Confirmation creates `UseTargetedItemAction`.
+```
+Scripts/Systems/Targeting/
+├── TargetingType.cs          # Enum: Self, Adjacent, Tile, Enemy, etc.
+├── TargetFilter.cs           # Enum: Self, Enemy, Ally, Creature, Tile
+├── TargetingDefinition.cs    # Configuration + factory methods
+├── TargetingHandler.cs       # Abstract base + factory
+└── Handlers/
+    ├── SelfTargetingHandler.cs
+    ├── AdjacentTargetingHandler.cs
+    ├── TileTargetingHandler.cs
+    ├── EnemyTargetingHandler.cs
+    ├── AllyTargetingHandler.cs
+    ├── CreatureTargetingHandler.cs
+    ├── AreaTargetingHandler.cs
+    ├── RangedTargetingHandler.cs
+    └── ReachTargetingHandler.cs
 
-Actions validate independently—targeting provides position, actions ensure legality.
+Scripts/Systems/
+└── CursorTargetingSystem.cs  # UI layer using handlers
+```
 
-### UI System Integration
+## Adding New Targeting Types
 
-GameHUD coordinates cursor state between InputHandler, CursorTargetingSystem, and visual renderer. Signals communicate mode start/stop, cursor movement, and cancellation:
-
-**Examine Signals**: `CursorStarted(mode)` displays help message, `CursorMoved(entity)` shows entity descriptions in message log, `CursorCanceled(mode)` displays exit message.
-
-**Action Signals**: `CursorStarted(mode)` enters targeting UI state, `TargetConfirmed(position)` triggers action execution, `CursorCanceled(mode)` exits targeting state and clears pending flags.
-
-Signal-based coordination enables synchronized UI updates (cursor display, overlay rendering, input mode switching, message log) without tight coupling.
+1. Add value to `TargetingType` enum
+2. Create handler class extending `TargetingHandler`
+3. Implement `GetValidTargetPositions()` and `IsValidTarget()`
+4. Override `GetAffectedEntities()` if entity filtering differs
+5. Override `GetAffectedPositions()` if area preview needed
+6. Register in `TargetingHandler.CreateForType()` factory
 
 ## Design Decisions & Trade-offs
 
-**Mode Unification**: Single cursor implementation with branching logic reduces duplication (~100 lines saved) and ensures consistent cursor behavior. Trade-off: single system handles multiple responsibilities, but mode enumeration keeps branches clear.
+**Handler Pattern**: Enables clean separation of targeting logic per type while sharing validation infrastructure. Trade-off: more files than switch-based approach, but better extensibility.
 
-**Chebyshev for Actions**: Square ranges provide clean diagonal mechanics (2 diagonal moves = 2 tiles, not ~2.8) and intuitive grid-based gameplay. Trade-off: less realistic than Euclidean, but better game feel for tactical combat.
+**Data-Driven Definitions**: Items and skills configure targeting through data rather than code. Trade-off: less flexibility than custom code, but enables designer iteration without programming.
 
-**Euclidean for Examine**: Circular vision ranges feel natural for passive observation. Trade-off: examine range shape differs from action ranges, but reinforces conceptual distinction (observation vs action).
+**Dual Distance Metrics**: Chebyshev for grid-based tactical feel, Euclidean for ranged weapons. Trade-off: slight inconsistency, but matches player expectations (bows feel "ranged", melee feels "grid").
 
-**Pre-calculated Valid Tiles**: FOV calculation at targeting start (action modes) provides instant visual feedback and prevents per-frame recalculation. Trade-off: tiles don't update if game state changes during targeting, but player can't move anyway in turn-based.
+**LOS in Handlers**: Each handler respects LOS requirements. Trade-off: duplicated LOS checks across handlers, but keeps validation co-located with targeting logic.
 
-**Auto-Select Nearest**: Cursor starts on closest creature (action modes) for common case (attack nearest threat). Trade-off: occasionally requires Tab cycling to farther targets, accepted for faster common-case targeting.
-
-**Minimal Examine Feedback**: No range overlay or trace line in examine mode keeps visuals clean for passive observation. Trade-off: less visual information than action modes, but examine doesn't need tactical feedback.
-
-**Consistent Cursor Appearance**: Same white border + green fill across all modes creates unified UX. Trade-off: examine mode loses distinct cyan color, but consistency improves learnability.
-
-## Conceptual Model
-
-```
-                CURSOR TARGETING SYSTEM FLOW
-
-Input Trigger      Cursor Layer           Output
-─────────────      ────────────           ──────
-
-X (Examine)   ──→  Vision-Based      ──→  Entity Descriptions
-                   Validation             (Message Log)
-                   White Border
-                   Green Fill
-
-F (Ranged)    ──→  FOV + Chebyshev   ──→  RangedAttackAction
-A + Spear     ──→  Pre-calc Range         ReachAttackAction
-A + Scroll    ──→  Auto-Select Cursor     UseTargetedItemAction
-                   Range Overlay
-                   Trace Line
-                   Confirm Target    ──→  Validate Range/LOS
-                                          Execute Action
-```
+**Pre-calculated Valid Tiles**: FOV calculation at targeting start prevents per-frame recalculation. Trade-off: tiles don't update if game state changes, acceptable in turn-based.
 
 ## Related Documentation
 
 - [actions.md](actions.md) - Action system that consumes targeting results
+- [skills.md](skills.md) - Skill system using targeting for activation
 - [effects.md](effects.md) - Item effects that may require targeting
 - [text-renderer.md](text-renderer.md) - Visual rendering of cursor overlays

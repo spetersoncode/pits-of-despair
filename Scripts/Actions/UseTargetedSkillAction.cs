@@ -3,9 +3,8 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Skills;
 using PitsOfDespair.Skills;
-using PitsOfDespair.Skills.Targeting;
+using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Actions;
 
@@ -44,17 +43,20 @@ public class UseTargetedSkillAction : Action
             return ActionResult.CreateFailure("No skill specified.");
         }
 
-        // Get the targeting handler for this skill
-        var handler = TargetingHandler.CreateForType(_skill.GetTargetingType());
+        // Create targeting definition from skill
+        var definition = TargetingDefinition.FromSkill(_skill);
+
+        // Get the targeting handler
+        var handler = TargetingHandler.CreateForDefinition(definition);
 
         // Validate the target position
-        if (!handler.IsValidTarget(actor, _targetPosition, _skill, context))
+        if (!handler.IsValidTarget(actor, _targetPosition, definition, context))
         {
             return ActionResult.CreateFailure("Invalid target.");
         }
 
         // Get affected entities at the target position
-        var targets = handler.GetAffectedEntities(actor, _targetPosition, _skill, context);
+        var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
 
         // For skills that require a target entity, ensure we have one
         var targetingType = _skill.GetTargetingType();

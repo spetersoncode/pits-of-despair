@@ -5,7 +5,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Skills;
-using PitsOfDespair.Skills.Targeting;
+using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Systems;
 
@@ -208,11 +208,11 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Get the targeting handler
-		var handler = TargetingHandler.CreateForType(skill.GetTargetingType());
+		// Create targeting definition from skill
+		var definition = TargetingDefinition.FromSkill(skill);
 
 		// Check if targeting is required
-		if (!handler.RequiresSelection)
+		if (!definition.RequiresSelection)
 		{
 			// Self-targeting skill - execute immediately
 			var action = new UseSkillAction(skill);
@@ -236,11 +236,11 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Get the targeting handler
-		var handler = TargetingHandler.CreateForType(skill.GetTargetingType());
+		// Create targeting definition from skill
+		var definition = TargetingDefinition.FromSkill(skill);
 
 		// Check if targeting is required
-		if (!handler.RequiresSelection)
+		if (!definition.RequiresSelection)
 		{
 			// Self-targeting skill - execute immediately
 			var action = new UseSkillAction(skill);

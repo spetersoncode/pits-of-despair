@@ -6,6 +6,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Skills;
 using PitsOfDespair.Skills.Effects;
+using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Skills;
 

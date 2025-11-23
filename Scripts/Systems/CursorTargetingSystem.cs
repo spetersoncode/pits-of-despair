@@ -1,9 +1,11 @@
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Systems;
 
@@ -72,6 +74,12 @@ public partial class CursorTargetingSystem : Node
 	private bool _requiresCreature = true;
 	private bool _useGridDistance = false;
 
+	// Unified targeting state
+	private TargetingDefinition? _targetingDefinition;
+	private TargetingHandler? _targetingHandler;
+	private BaseEntity? _caster;
+	private ActionContext? _actionContext;
+
 	// Dependencies
 	private PlayerVisionSystem _visionSystem;
 	private MapSystem _mapSystem;
@@ -107,6 +115,21 @@ public partial class CursorTargetingSystem : Node
 	/// Only relevant for action modes.
 	/// </summary>
 	public bool RequiresCreature => _requiresCreature;
+
+	/// <summary>
+	/// Gets the current targeting definition, if using unified targeting.
+	/// </summary>
+	public TargetingDefinition? TargetingDefinition => _targetingDefinition;
+
+	/// <summary>
+	/// Gets the current targeting handler, if using unified targeting.
+	/// </summary>
+	public TargetingHandler? TargetingHandler => _targetingHandler;
+
+	/// <summary>
+	/// Gets the current affected positions for area preview.
+	/// </summary>
+	public List<GridPosition>? AffectedPositions { get; private set; }
 
 	/// <summary>
 	/// Initializes the cursor targeting system with required dependencies.
@@ -220,6 +243,114 @@ public partial class CursorTargetingSystem : Node
 	}
 
 	/// <summary>
+	/// Starts targeting using the unified targeting system with a TargetingDefinition.
+	/// This is the preferred method for new code.
+	/// </summary>
+	/// <param name="caster">The entity doing the targeting</param>
+	/// <param name="definition">The targeting definition</param>
+	/// <param name="context">The action context for handler operations</param>
+	public void StartTargeting(BaseEntity caster, TargetingDefinition definition, ActionContext context)
+	{
+		if (!definition.RequiresSelection)
+		{
+			GD.PushWarning("StartTargeting called for targeting type that doesn't require selection");
+			return;
+		}
+
+		_caster = caster;
+		_targetingDefinition = definition;
+		_actionContext = context;
+		_targetingHandler = TargetingHandler.CreateForDefinition(definition);
+
+		_currentMode = TargetingMode.TargetedItem; // Use generic mode for unified targeting
+		_originPosition = caster.GridPosition;
+		_maxRange = definition.Range;
+		_requiresCreature = definition.Filter != TargetFilter.Tile;
+		_useGridDistance = definition.Metric == DistanceMetric.Chebyshev;
+		_isActive = true;
+
+		// Get valid positions from the handler
+		var validPositions = _targetingHandler.GetValidTargetPositions(caster, definition, context);
+		_validTiles = new HashSet<GridPosition>(validPositions);
+
+		// Build creature target list based on the filter
+		_validCreatureTargets = new List<BaseEntity>();
+		foreach (var tile in _validTiles)
+		{
+			if (tile == _originPosition)
+				continue;
+
+			var entity = _entityManager.GetEntityAtPosition(tile);
+			if (entity != null && IsEntityValidForFilter(caster, entity, definition.Filter))
+			{
+				_validCreatureTargets.Add(entity);
+			}
+		}
+
+		// Sort by distance and select initial target
+		if (_validCreatureTargets.Count > 0)
+		{
+			_validCreatureTargets = _useGridDistance
+				? _validCreatureTargets.OrderBy(e => DistanceHelper.ChebyshevDistance(_originPosition, e.GridPosition)).ToList()
+				: _validCreatureTargets.OrderBy(e => DistanceHelper.EuclideanDistance(_originPosition, e.GridPosition)).ToList();
+
+			_currentCreatureIndex = 0;
+			_cursorPosition = _validCreatureTargets[0].GridPosition;
+		}
+		else if (_validTiles.Count > 0)
+		{
+			// No creatures, start at nearest valid tile
+			_currentCreatureIndex = -1;
+			_cursorPosition = _validTiles.OrderBy(t => DistanceHelper.ChebyshevDistance(_originPosition, t)).First();
+		}
+		else
+		{
+			// No valid targets at all
+			_currentCreatureIndex = -1;
+			_cursorPosition = _originPosition;
+		}
+
+		// Update area preview if applicable
+		UpdateAffectedPositions();
+
+		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
+	}
+
+	/// <summary>
+	/// Checks if an entity is valid for the given target filter.
+	/// </summary>
+	private bool IsEntityValidForFilter(BaseEntity caster, BaseEntity target, TargetFilter filter)
+	{
+		if (target.GetNodeOrNull<Components.HealthComponent>("HealthComponent") == null)
+			return false;
+
+		return filter switch
+		{
+			TargetFilter.Enemy => caster.Faction != target.Faction,
+			TargetFilter.Ally => caster.Faction == target.Faction,
+			TargetFilter.Creature => true,
+			TargetFilter.Self => target == caster,
+			TargetFilter.Tile => true,
+			_ => caster.Faction != target.Faction // Default to enemy
+		};
+	}
+
+	/// <summary>
+	/// Updates the affected positions for area preview.
+	/// UI can access via the AffectedPositions property after CursorMoved signal.
+	/// </summary>
+	private void UpdateAffectedPositions()
+	{
+		if (_targetingHandler == null || _targetingDefinition == null || _caster == null || _actionContext == null)
+		{
+			AffectedPositions = null;
+			return;
+		}
+
+		AffectedPositions = _targetingHandler.GetAffectedPositions(_caster, _cursorPosition, _targetingDefinition, _actionContext);
+	}
+
+	/// <summary>
 	/// Stops targeting mode and clears all state.
 	/// </summary>
 	public void Stop()
@@ -228,6 +359,11 @@ public partial class CursorTargetingSystem : Node
 		_validTiles = null;
 		_validCreatureTargets = null;
 		_currentCreatureIndex = -1;
+		_targetingDefinition = null;
+		_targetingHandler = null;
+		_caster = null;
+		_actionContext = null;
+		AffectedPositions = null;
 	}
 
 	/// <summary>
@@ -256,6 +392,7 @@ public partial class CursorTargetingSystem : Node
 			if (_currentMode != TargetingMode.Examine)
 			{
 				UpdateCreatureIndexFromPosition();
+				UpdateAffectedPositions();
 			}
 
 			// Emit cursor moved signal
@@ -282,6 +419,8 @@ public partial class CursorTargetingSystem : Node
 		_currentCreatureIndex = (_currentCreatureIndex + 1) % _validCreatureTargets.Count;
 		_cursorPosition = _validCreatureTargets[_currentCreatureIndex].GridPosition;
 
+		UpdateAffectedPositions();
+
 		// Emit cursor moved signal
 		var entity = _validCreatureTargets[_currentCreatureIndex];
 		EmitSignal(SignalName.CursorMoved, entity);
@@ -303,6 +442,8 @@ public partial class CursorTargetingSystem : Node
 			_currentCreatureIndex = _validCreatureTargets.Count - 1;
 
 		_cursorPosition = _validCreatureTargets[_currentCreatureIndex].GridPosition;
+
+		UpdateAffectedPositions();
 
 		// Emit cursor moved signal
 		var entity = _validCreatureTargets[_currentCreatureIndex];
