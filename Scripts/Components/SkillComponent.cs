@@ -23,12 +23,27 @@ public partial class SkillComponent : Node
 
     #endregion
 
+    #region Signals
+
+    /// <summary>
+    /// Emitted when a skill key is rebound.
+    /// </summary>
+    [Signal]
+    public delegate void SkillKeyReboundEventHandler(char oldKey, char newKey, string skillName);
+
+    #endregion
+
     #region Properties
 
     /// <summary>
     /// List of learned skill IDs.
     /// </summary>
     private readonly List<string> _learnedSkills = new();
+
+    /// <summary>
+    /// Skill slot assignments (key -> skillId) for active skills only.
+    /// </summary>
+    private readonly Dictionary<char, string> _skillSlots = new();
 
     /// <summary>
     /// Number of skill points used (for tracking progression).
@@ -40,12 +55,18 @@ public partial class SkillComponent : Node
     /// </summary>
     public IReadOnlyList<string> LearnedSkills => _learnedSkills;
 
+    /// <summary>
+    /// Read-only access to skill slot assignments.
+    /// </summary>
+    public IReadOnlyDictionary<char, string> SkillSlots => _skillSlots;
+
     #endregion
 
     #region Skill Management
 
     /// <summary>
     /// Learns a skill by ID.
+    /// For active skills, auto-assigns the next available key slot.
     /// </summary>
     /// <param name="skillId">The skill ID to learn</param>
     /// <returns>True if the skill was learned, false if already known</returns>
@@ -59,8 +80,105 @@ public partial class SkillComponent : Node
 
         _learnedSkills.Add(skillId);
         SkillPointsUsed++;
+
+        // Auto-assign slot for active skills
+        var dataLoader = GetNode<DataLoader>("/root/DataLoader");
+        var skill = dataLoader?.GetSkill(skillId);
+        if (skill != null && skill.GetCategory() == SkillCategory.Active)
+        {
+            AssignNextAvailableSlot(skillId);
+        }
+
         EmitSignal(SignalName.SkillLearned, skillId);
         GD.Print($"SkillComponent: Learned skill '{skillId}'");
+        return true;
+    }
+
+    /// <summary>
+    /// Assigns the next available key slot (a-z) to a skill.
+    /// </summary>
+    private void AssignNextAvailableSlot(string skillId)
+    {
+        for (char key = 'a'; key <= 'z'; key++)
+        {
+            if (!_skillSlots.ContainsKey(key))
+            {
+                _skillSlots[key] = skillId;
+                return;
+            }
+        }
+        // No available slots (extremely rare - 26+ active skills)
+        GD.PushWarning($"SkillComponent: No available slot for skill '{skillId}'");
+    }
+
+    /// <summary>
+    /// Gets the assigned key for a skill.
+    /// </summary>
+    /// <param name="skillId">The skill ID</param>
+    /// <returns>The assigned key, or null if not assigned</returns>
+    public char? GetSkillKey(string skillId)
+    {
+        foreach (var kvp in _skillSlots)
+        {
+            if (kvp.Value == skillId)
+                return kvp.Key;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the skill ID assigned to a key.
+    /// </summary>
+    /// <param name="key">The key to look up</param>
+    /// <returns>The skill ID, or null if not assigned</returns>
+    public string? GetSkillAtKey(char key)
+    {
+        return _skillSlots.TryGetValue(char.ToLower(key), out var skillId) ? skillId : null;
+    }
+
+    /// <summary>
+    /// Rebinds a skill from one key to another.
+    /// If the target key is occupied, swaps the skills.
+    /// </summary>
+    /// <param name="oldKey">Current key</param>
+    /// <param name="newKey">Target key</param>
+    /// <returns>True if rebind was successful</returns>
+    public bool RebindSkillKey(char oldKey, char newKey)
+    {
+        oldKey = char.ToLower(oldKey);
+        newKey = char.ToLower(newKey);
+
+        if (!_skillSlots.TryGetValue(oldKey, out var skillId))
+            return false;
+
+        // Get skill name for signal
+        var dataLoader = GetNode<DataLoader>("/root/DataLoader");
+        var skill = dataLoader?.GetSkill(skillId);
+        string skillName = skill?.Name ?? skillId;
+
+        // Same key - no change needed
+        if (oldKey == newKey)
+        {
+            EmitSignal(SignalName.SkillKeyRebound, oldKey, newKey, skillName);
+            return true;
+        }
+
+        // Check if target key is occupied
+        if (_skillSlots.TryGetValue(newKey, out var swapSkillId))
+        {
+            // Swap: move the skill at newKey to oldKey
+            _skillSlots[oldKey] = swapSkillId;
+        }
+        else
+        {
+            // Target key is free - just remove from old
+            _skillSlots.Remove(oldKey);
+        }
+
+        // Assign skill to new key
+        _skillSlots[newKey] = skillId;
+
+        EmitSignal(SignalName.SkillKeyRebound, oldKey, newKey, skillName);
         return true;
     }
 

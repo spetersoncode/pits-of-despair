@@ -104,10 +104,12 @@ public class DamageEffect : Effect
         // Apply damage with caster as source for kill attribution
         int actualDamage = healthComponent.TakeDamage(damage, DamageType, context.Caster);
 
-        return EffectResult.CreateSuccess(
+        var result = EffectResult.CreateSuccess(
             $"{targetName} takes {actualDamage} damage!",
             Palette.ToHex(Palette.CombatDamage),
             target
         );
+        result.DamageDealt = actualDamage;
+        return result;
     }
 }

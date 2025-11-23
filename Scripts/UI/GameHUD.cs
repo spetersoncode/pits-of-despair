@@ -134,6 +134,7 @@ public partial class GameHUD : Control
             _skillsModal.ConnectToPlayer(player);
             _skillsModal.Connect(SkillsModal.SignalName.SkillSelected, Callable.From<string>(OnSkillSelected));
             _skillsModal.Connect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
+            _skillsModal.Connect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
         }
 
         _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
@@ -184,6 +185,7 @@ public partial class GameHUD : Control
         player.Connect(Player.SignalName.ItemDropped, Callable.From<string, bool, string>(OnItemDropped));
         player.Connect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
         player.Connect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
+        player.Connect(Player.SignalName.SkillUsed, Callable.From<string, bool, string>(OnSkillUsed));
 
         player.Connect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
 
@@ -219,6 +221,14 @@ public partial class GameHUD : Control
             _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorMoved, Callable.From<BaseEntity>(OnCursorMoved));
             _cursorSystem.Connect(CursorTargetingSystem.SignalName.CursorCanceled, Callable.From<int>(OnCursorCanceled));
         }
+    }
+
+    /// <summary>
+    /// Connects to the projectile system to display skill damage messages.
+    /// </summary>
+    public void ConnectToProjectileSystem(Systems.Projectiles.ProjectileSystem projectileSystem)
+    {
+        _messageLog.ConnectToProjectileSystem(projectileSystem);
     }
 
     /// <summary>
@@ -568,6 +578,38 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.None;
     }
 
+    private void OnSkillKeyRebound(char oldKey, char newKey)
+    {
+        // Delegate to SkillComponent
+        if (_playerSkills != null && _playerSkills.RebindSkillKey(oldKey, newKey))
+        {
+            // Get skill name for message
+            var skillId = _playerSkills.GetSkillAtKey(newKey);
+            var skillDef = skillId != null ? _dataLoader?.GetSkill(skillId) : null;
+            string skillName = skillDef?.Name ?? "Skill";
+
+            if (oldKey == newKey)
+            {
+                _messageLog.AddMessage($"{skillName} remains on [{newKey}].", Palette.ToHex(Palette.Success));
+            }
+            else
+            {
+                // Check if there was a swap
+                var swappedId = _playerSkills.GetSkillAtKey(oldKey);
+                if (swappedId != null)
+                {
+                    var swappedDef = _dataLoader?.GetSkill(swappedId);
+                    string swappedName = swappedDef?.Name ?? "Skill";
+                    _messageLog.AddMessage($"{skillName} rebound to [{newKey}] (swapped with {swappedName} on [{oldKey}]).", Palette.ToHex(Palette.Success));
+                }
+                else
+                {
+                    _messageLog.AddMessage($"{skillName} rebound to [{newKey}].", Palette.ToHex(Palette.Success));
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Closes all open menus and resets menu state.
     /// </summary>
@@ -613,6 +655,20 @@ public partial class GameHUD : Control
         if (success)
         {
             _messageLog.AddMessage(message, Palette.ToHex(Palette.Default));
+        }
+        else
+        {
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Disabled));
+        }
+    }
+
+    private void OnSkillUsed(string skillName, bool success, string message)
+    {
+        if (success)
+        {
+            // Success messages are handled by the skill system itself
+            // This is mainly for failure feedback
+            _messageLog.AddMessage(message, Palette.ToHex(Palette.Wizard));
         }
         else
         {
@@ -873,6 +929,7 @@ public partial class GameHUD : Control
         {
             _skillsModal.Disconnect(SkillsModal.SignalName.SkillSelected, Callable.From<string>(OnSkillSelected));
             _skillsModal.Disconnect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
+            _skillsModal.Disconnect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
         }
 
         if (_levelUpModal != null)
@@ -895,6 +952,7 @@ public partial class GameHUD : Control
             _player.Disconnect(Player.SignalName.ItemDropped, Callable.From<string, bool, string>(OnItemDropped));
             _player.Disconnect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
             _player.Disconnect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
+            _player.Disconnect(Player.SignalName.SkillUsed, Callable.From<string, bool, string>(OnSkillUsed));
             _player.Disconnect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
             _player.Disconnect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
         }

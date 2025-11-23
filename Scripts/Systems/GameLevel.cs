@@ -272,6 +272,7 @@ public partial class GameLevel : Node
             debugModeActive
         );
         _gameHUD.ConnectToCursorTargetingSystem(_cursorSystem);
+        _gameHUD.ConnectToProjectileSystem(_projectileSystem);
         _gameHUD.ConnectToAutoExploreSystem(_autoExploreSystem);
 
         // Initialize SidePanel with ViewModels

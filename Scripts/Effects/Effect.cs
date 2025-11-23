@@ -126,6 +126,12 @@ public class EffectResult
     /// </summary>
     public BaseEntity? AffectedEntity { get; set; }
 
+    /// <summary>
+    /// Amount of damage dealt (for damage effects).
+    /// Used by ProjectileSystem to emit damage signals.
+    /// </summary>
+    public int DamageDealt { get; set; }
+
     public EffectResult(bool success, string message, string? messageColor = null)
     {
         Success = success;

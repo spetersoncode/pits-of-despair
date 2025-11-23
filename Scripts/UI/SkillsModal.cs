@@ -25,15 +25,27 @@ public partial class SkillsModal : PanelContainer
     [Signal]
     public delegate void CancelledEventHandler();
 
+    [Signal]
+    public delegate void SkillKeyReboundEventHandler(char oldKey, char newKey);
+
+    private enum State
+    {
+        Viewing,
+        AwaitingRebind
+    }
+
     private RichTextLabel _skillsLabel;
     private Player _player;
     private SkillComponent _skillComponent;
     private WillpowerComponent _willpowerComponent;
     private DataLoader _dataLoader;
     private bool _isVisible = false;
+    private State _currentState = State.Viewing;
+    private char _rebindSourceKey;
+    private string _rebindSkillName;
 
-    // Currently displayed skills (for number key selection)
-    private List<SkillDefinition> _displayedSkills = new();
+    // Currently displayed skills (for key selection)
+    private Dictionary<char, SkillDefinition> _displayedSkills = new();
 
     public override void _Ready()
     {
@@ -68,6 +80,7 @@ public partial class SkillsModal : PanelContainer
     public void HideMenu()
     {
         _isVisible = false;
+        _currentState = State.Viewing;
         Hide();
     }
 
@@ -84,6 +97,19 @@ public partial class SkillsModal : PanelContainer
 
     private void HandleKeyInput(InputEventKey keyEvent)
     {
+        switch (_currentState)
+        {
+            case State.Viewing:
+                HandleViewingInput(keyEvent);
+                break;
+            case State.AwaitingRebind:
+                HandleRebindInput(keyEvent);
+                break;
+        }
+    }
+
+    private void HandleViewingInput(InputEventKey keyEvent)
+    {
         // Cancel on close key
         if (MenuInputProcessor.IsCloseKey(keyEvent))
         {
@@ -92,20 +118,70 @@ public partial class SkillsModal : PanelContainer
             return;
         }
 
+        // Enter rebind mode on '='
+        if (MenuInputProcessor.IsKey(keyEvent, Key.Equal))
+        {
+            // Find the first active skill to rebind (user will select which one)
+            if (_displayedSkills.Count > 0)
+            {
+                _currentState = State.AwaitingRebind;
+                _rebindSourceKey = '\0'; // Will be set when user selects a skill
+                UpdateDisplay();
+            }
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         // Check for letter key selection (a-z)
         if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {
-            int selectedIndex = char.ToLower(selectedKey) - 'a';
+            selectedKey = char.ToLower(selectedKey);
 
-            if (selectedIndex >= 0 && selectedIndex < _displayedSkills.Count)
+            if (_displayedSkills.TryGetValue(selectedKey, out var selectedSkill))
             {
-                var selectedSkill = _displayedSkills[selectedIndex];
-
                 // Only allow activating active skills
                 if (selectedSkill.GetCategory() == SkillCategory.Active)
                 {
                     EmitSignal(SignalName.SkillSelected, selectedSkill.Id);
                 }
+            }
+
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    private void HandleRebindInput(InputEventKey keyEvent)
+    {
+        // Cancel rebind on close key
+        if (MenuInputProcessor.IsCloseKey(keyEvent))
+        {
+            _currentState = State.Viewing;
+            UpdateDisplay();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Accept letter keys for rebinding
+        if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
+        {
+            selectedKey = char.ToLower(selectedKey);
+
+            // If we haven't selected a source skill yet, this is selecting which skill to rebind
+            if (_rebindSourceKey == '\0')
+            {
+                if (_displayedSkills.TryGetValue(selectedKey, out var skill))
+                {
+                    _rebindSourceKey = selectedKey;
+                    _rebindSkillName = skill.Name;
+                    UpdateDisplay();
+                }
+            }
+            else
+            {
+                // We have a source skill, this is the target key
+                EmitSignal(SignalName.SkillKeyRebound, _rebindSourceKey, selectedKey);
+                _currentState = State.Viewing;
+                UpdateDisplay();
             }
 
             GetViewport().SetInputAsHandled();
@@ -134,31 +210,45 @@ public partial class SkillsModal : PanelContainer
             .ToList();
 
         var sb = new StringBuilder();
-        sb.Append(BuildHeader());
+
+        // Show different header based on state
+        if (_currentState == State.AwaitingRebind)
+        {
+            sb.Append(BuildRebindHeader());
+        }
+        else
+        {
+            sb.Append(BuildHeader());
+        }
 
         // Group by category
-        var activeSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Active).OrderBy(s => s.Name).ToList();
+        var activeSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Active).ToList();
         var passiveSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Passive).OrderBy(s => s.Name).ToList();
         var reactiveSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Reactive).OrderBy(s => s.Name).ToList();
         var auraSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Aura).OrderBy(s => s.Name).ToList();
 
-        // Build displayed skills list (only active skills are selectable)
+        // Build displayed skills dictionary using persistent keys
         _displayedSkills.Clear();
-        _displayedSkills.AddRange(activeSkills);
+        foreach (var skill in activeSkills)
+        {
+            var key = _skillComponent.GetSkillKey(skill.Id);
+            if (key.HasValue)
+            {
+                _displayedSkills[key.Value] = skill;
+            }
+        }
 
-        int currentIndex = 0;
         int currentWP = _willpowerComponent?.CurrentWillpower ?? 0;
 
-        // Active Skills section
+        // Active Skills section - sort by key for display
         if (activeSkills.Count > 0)
         {
             sb.AppendLine($"\n[color={Palette.ToHex(Palette.Cyan)}][b]─── Active Skills ───[/b][/color]");
-            foreach (var skill in activeSkills)
+            foreach (var kvp in _displayedSkills.OrderBy(k => k.Key))
             {
-                char keyDisplay = (char)('a' + currentIndex);
+                var skill = kvp.Value;
                 bool canAfford = currentWP >= skill.WillpowerCost;
-                sb.AppendLine(FormatActiveSkill(skill, keyDisplay, canAfford));
-                currentIndex++;
+                sb.AppendLine(FormatActiveSkill(skill, kvp.Key, canAfford));
             }
         }
 
@@ -235,6 +325,22 @@ public partial class SkillsModal : PanelContainer
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
         int currentWP = _willpowerComponent?.CurrentWillpower ?? 0;
         int maxWP = _willpowerComponent?.MaxWillpower ?? 0;
-        return $"[center][b]Skills (a-z)[/b][/center]\n[center]WP: [color={Palette.ToHex(Palette.Wizard)}]{currentWP}/{maxWP}[/color] | ({closeKey} to close)[/center]";
+        return $"[center][b]Skills (a-z)[/b][/center]\n[center]WP: [color={Palette.ToHex(Palette.Wizard)}]{currentWP}/{maxWP}[/color] | [=] Rebind | ({closeKey} to close)[/center]";
+    }
+
+    private string BuildRebindHeader()
+    {
+        var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
+
+        if (_rebindSourceKey == '\0')
+        {
+            // First step: select which skill to rebind
+            return $"[center][b][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/b][/center]\n[center]Press [color={Palette.ToHex(Palette.Default)}]a-z[/color] to select skill to rebind | ({closeKey} to cancel)[/center]";
+        }
+        else
+        {
+            // Second step: select target key
+            return $"[center][b][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/b][/center]\n[center]Rebinding [color={Palette.ToHex(Palette.Wizard)}]{_rebindSkillName}[/color] from [{_rebindSourceKey}][/center]\n[center]Press [color={Palette.ToHex(Palette.Default)}]a-z[/color] to assign new key | ({closeKey} to cancel)[/center]";
+        }
     }
 }

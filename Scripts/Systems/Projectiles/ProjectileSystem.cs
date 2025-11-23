@@ -17,6 +17,12 @@ public partial class ProjectileSystem : Node
     [Signal]
     public delegate void AllProjectilesCompletedEventHandler();
 
+    /// <summary>
+    /// Emitted when a skill projectile deals damage.
+    /// </summary>
+    [Signal]
+    public delegate void SkillDamageDealtEventHandler(Entities.BaseEntity caster, Entities.BaseEntity target, int damage, string skillName);
+
     private List<ProjectileData> _activeProjectiles = new();
     private CombatSystem _combatSystem;
     private Player _player;
@@ -202,6 +208,18 @@ public partial class ProjectileSystem : Node
             return;
 
         var result = projectile.DeferredEffect.Apply(projectile.DeferredEffectContext);
+
+        // Emit damage signal for message log if damage was dealt
+        if (result.Success && result.DamageDealt > 0)
+        {
+            var context = projectile.DeferredEffectContext;
+            string skillName = context.Skill?.Name ?? "skill";
+
+            if (context.Caster != null && context.Target != null)
+            {
+                EmitSignal(SignalName.SkillDamageDealt, context.Caster, context.Target, result.DamageDealt, skillName);
+            }
+        }
 
         if (!string.IsNullOrEmpty(result.Message))
         {

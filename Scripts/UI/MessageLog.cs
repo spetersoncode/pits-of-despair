@@ -27,7 +27,9 @@ public partial class MessageLog : PanelContainer
 	private Entities.Player _player;
 	private Systems.EntityManager _entityManager;
 	private Systems.CombatSystem _combatSystem;
+	private Systems.Projectiles.ProjectileSystem _projectileSystem;
 	private readonly Dictionary<Entities.BaseEntity, Entities.BaseEntity> _lastAttacker = new();
+	private readonly Dictionary<Entities.BaseEntity, string> _lastDamageSourceName = new();
 	private readonly System.Collections.Generic.List<(Components.HealthComponent healthComponent, Entities.BaseEntity entity)> _healthConnections = new();
 
 	public override void _Ready()
@@ -69,6 +71,16 @@ public partial class MessageLog : PanelContainer
 	}
 
 	/// <summary>
+	/// Connects to the ProjectileSystem to receive skill damage events.
+	/// </summary>
+	public void ConnectToProjectileSystem(Systems.Projectiles.ProjectileSystem projectileSystem)
+	{
+		_projectileSystem = projectileSystem;
+		_projectileSystem.Connect(Systems.Projectiles.ProjectileSystem.SignalName.SkillDamageDealt,
+			Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnSkillDamageDealt));
+	}
+
+	/// <summary>
 	/// Connects to an entity's health component to receive death notifications and damage modifier events.
 	/// </summary>
 	public void ConnectToHealthComponent(Components.HealthComponent healthComponent, Entities.BaseEntity entity)
@@ -104,8 +116,9 @@ public partial class MessageLog : PanelContainer
 	/// </summary>
 	private void OnAttackHit(Entities.BaseEntity attacker, Entities.BaseEntity target, int damage, string attackName)
 	{
-		// Track the last attacker for death messages
+		// Track the last attacker and weapon name for death messages
 		_lastAttacker[target] = attacker;
+		_lastDamageSourceName[target] = attackName;
 
 		// Determine if this is the player taking or dealing damage
 		bool isPlayerAttacker = attacker.DisplayName == "Player";
@@ -127,6 +140,36 @@ public partial class MessageLog : PanelContainer
 		{
 			// NPC vs NPC combat
 			AddMessage($"The {attacker.DisplayName} hits the {target.DisplayName} with its {weaponDisplay} for {damage} damage.", color);
+		}
+	}
+
+	/// <summary>
+	/// Handles skill damage dealt by projectiles (e.g., Magic Missile).
+	/// </summary>
+	private void OnSkillDamageDealt(Entities.BaseEntity caster, Entities.BaseEntity target, int damage, string skillName)
+	{
+		// Track the last attacker and skill name for death messages
+		_lastAttacker[target] = caster;
+		_lastDamageSourceName[target] = skillName;
+
+		bool isCasterPlayer = caster.DisplayName == "Player";
+		bool isTargetPlayer = target.DisplayName == "Player";
+		string color = isTargetPlayer ? ColorCombatDamage : ColorDefault;
+
+		// Color the skill name in wizard color
+		string skillDisplay = $"[color={Palette.ToHex(Palette.Wizard)}]{skillName}[/color]";
+
+		if (isCasterPlayer)
+		{
+			AddMessage($"Your {skillDisplay} hits the {target.DisplayName} for {damage} damage.", color);
+		}
+		else if (isTargetPlayer)
+		{
+			AddMessage($"The {caster.DisplayName}'s {skillDisplay} hits you for {damage} damage.", color);
+		}
+		else
+		{
+			AddMessage($"The {caster.DisplayName}'s {skillDisplay} hits the {target.DisplayName} for {damage} damage.", color);
 		}
 	}
 
@@ -195,10 +238,20 @@ public partial class MessageLog : PanelContainer
 		{
 			bool killerIsPlayer = killer.DisplayName == "Player";
 
+			// Get the weapon/skill name if available
+			string? sourceDisplay = null;
+			if (_lastDamageSourceName.TryGetValue(victim, out var sourceName))
+			{
+				sourceDisplay = GetColoredSourceDisplay(killer, sourceName);
+			}
+
 			if (killerIsPlayer)
 			{
 				// Player killed someone
-				AddMessage($"You kill the {entityName}!", ColorDeath);
+				string killMessage = sourceDisplay != null
+					? $"You kill the {entityName} with {sourceDisplay}!"
+					: $"You kill the {entityName}!";
+				AddMessage(killMessage, ColorDeath);
 
 				// Add XP message if applicable
 				if (_entityManager != null)
@@ -213,22 +266,78 @@ public partial class MessageLog : PanelContainer
 			else if (isPlayer)
 			{
 				// Player was killed by something
-				AddMessage($"The {killer.DisplayName} kills you!", ColorDeath);
+				string killMessage = sourceDisplay != null
+					? $"The {killer.DisplayName} kills you with {sourceDisplay}!"
+					: $"The {killer.DisplayName} kills you!";
+				AddMessage(killMessage, ColorDeath);
 			}
 			else
 			{
 				// NPC vs NPC
-				AddMessage($"The {killer.DisplayName} kills the {entityName}!", ColorDeath);
+				string killMessage = sourceDisplay != null
+					? $"The {killer.DisplayName} kills the {entityName} with {sourceDisplay}!"
+					: $"The {killer.DisplayName} kills the {entityName}!";
+				AddMessage(killMessage, ColorDeath);
 			}
 
-			// Clean up the tracker
+			// Clean up the trackers
 			_lastAttacker.Remove(victim);
+			_lastDamageSourceName.Remove(victim);
 		}
 		else
 		{
 			// Fallback for unknown cause of death
 			AddMessage($"{entityName} dies!", ColorDeath);
 		}
+	}
+
+	/// <summary>
+	/// Gets a colored display string for the damage source (weapon or skill).
+	/// For player weapons, includes glyph and item color.
+	/// For skills, uses wizard color.
+	/// For NPC attacks, returns plain name.
+	/// </summary>
+	private string GetColoredSourceDisplay(Entities.BaseEntity attacker, string sourceName)
+	{
+		// Only colorize player weapons/skills
+		if (attacker.DisplayName != "Player" || _player == null)
+		{
+			return sourceName;
+		}
+
+		// Try to find a matching equipped weapon
+		var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		if (equipComponent != null)
+		{
+			// Check melee weapon
+			var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
+			if (meleeKey.HasValue)
+			{
+				var slot = _player.GetInventorySlot(meleeKey.Value);
+				if (slot != null && slot.Item.Template.Name == sourceName)
+				{
+					var color = slot.Item.Template.GetColor();
+					string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+					return $"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]";
+				}
+			}
+
+			// Check ranged weapon
+			var rangedKey = equipComponent.GetEquippedKey(EquipmentSlot.RangedWeapon);
+			if (rangedKey.HasValue)
+			{
+				var slot = _player.GetInventorySlot(rangedKey.Value);
+				if (slot != null && slot.Item.Template.Name == sourceName)
+				{
+					var color = slot.Item.Template.GetColor();
+					string colorHex = $"#{(int)(color.R * 255):X2}{(int)(color.G * 255):X2}{(int)(color.B * 255):X2}";
+					return $"[color={colorHex}]{slot.Item.Template.GetGlyph()} {slot.Item.Template.Name}[/color]";
+				}
+			}
+		}
+
+		// Not a weapon - assume it's a skill, use wizard color
+		return $"[color={Palette.ToHex(Palette.Wizard)}]{sourceName}[/color]";
 	}
 
 	/// <summary>
@@ -340,6 +449,13 @@ public partial class MessageLog : PanelContainer
 			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackBlocked, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackBlocked));
 			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackMissed, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackMissed));
 			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.ActionMessage, Callable.From<Entities.BaseEntity, string, string>(OnActionMessage));
+		}
+
+		// Disconnect from projectile system
+		if (_projectileSystem != null)
+		{
+			_projectileSystem.Disconnect(Systems.Projectiles.ProjectileSystem.SignalName.SkillDamageDealt,
+				Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnSkillDamageDealt));
 		}
 
 		// Disconnect from all health components

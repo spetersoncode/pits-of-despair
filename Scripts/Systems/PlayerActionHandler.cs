@@ -208,6 +208,14 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
+		// Check if skill can be executed (WP cost, etc.) before proceeding
+		if (!Skills.SkillExecutor.CanExecuteSkill(_player, skill, out string failureReason))
+		{
+			// Emit failure signal for UI feedback
+			_player.EmitSkillUsed(skill.Name, false, failureReason);
+			return;
+		}
+
 		// Create targeting definition from skill
 		var definition = TargetingDefinition.FromSkill(skill);
 
@@ -233,6 +241,14 @@ public partial class PlayerActionHandler : Node
 		if (skill == null)
 		{
 			GD.PushWarning("PlayerActionHandler: Cannot activate null skill.");
+			return;
+		}
+
+		// Check if skill can be executed (WP cost, etc.) before proceeding
+		if (!Skills.SkillExecutor.CanExecuteSkill(_player, skill, out string failureReason))
+		{
+			// Emit failure signal for UI feedback
+			_player.EmitSkillUsed(skill.Name, false, failureReason);
 			return;
 		}
 
