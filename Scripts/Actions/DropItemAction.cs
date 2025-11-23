@@ -97,7 +97,7 @@ public class DropItemAction : Action
 		var equipComponent = actor.GetNodeOrNull<EquipComponent>("EquipComponent");
 		if (equipComponent != null && equipComponent.IsEquipped(_itemKey))
 		{
-			var equipSlot = equipComponent.GetSlotForItem(_itemKey);
+			var equipSlot = equipComponent.GetEquippedSlotForItem(_itemKey);
 			equipComponent.Unequip(equipSlot);
 		}
 

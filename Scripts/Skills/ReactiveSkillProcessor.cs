@@ -23,7 +23,6 @@ public partial class ReactiveSkillProcessor : Node
     private StatsComponent? _statsComponent;
     private HealthComponent? _healthComponent;
     private WillpowerComponent? _willpowerComponent;
-    private ConditionComponent? _conditionComponent;
     private DataLoader? _dataLoader;
     private CombatSystem? _combatSystem;
 
@@ -52,7 +51,6 @@ public partial class ReactiveSkillProcessor : Node
         _statsComponent = _entity.GetNodeOrNull<StatsComponent>("StatsComponent");
         _healthComponent = _entity.GetNodeOrNull<HealthComponent>("HealthComponent");
         _willpowerComponent = _entity.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
-        _conditionComponent = _entity.GetNodeOrNull<ConditionComponent>("ConditionComponent");
 
         if (_skillComponent == null)
         {
@@ -284,7 +282,7 @@ public partial class ReactiveSkillProcessor : Node
     private void ExecuteReactiveEffect(SkillEffectDefinition effect, SkillDefinition skill,
         BaseEntity? triggerSource, int damageAmount)
     {
-        if (_entity == null || _conditionComponent == null) return;
+        if (_entity == null) return;
 
         switch (effect.Type?.ToLower())
         {
@@ -323,7 +321,7 @@ public partial class ReactiveSkillProcessor : Node
     /// </summary>
     private void ApplyConditionEffect(SkillEffectDefinition effect)
     {
-        if (_conditionComponent == null || string.IsNullOrEmpty(effect.ConditionType))
+        if (_entity == null || string.IsNullOrEmpty(effect.ConditionType))
             return;
 
         string duration = effect.Duration > 0 ? effect.Duration.ToString() : "1";
@@ -346,7 +344,7 @@ public partial class ReactiveSkillProcessor : Node
 
         if (condition != null)
         {
-            _conditionComponent.AddCondition(condition);
+            _entity.AddCondition(condition);
             GD.Print($"ReactiveSkillProcessor: Applied condition '{effect.ConditionType}'");
         }
         else

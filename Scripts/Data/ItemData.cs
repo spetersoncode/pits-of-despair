@@ -157,36 +157,10 @@ public class ItemData
     /// </summary>
     public AttackData? Attack { get; set; } = null;
 
-    // Equipment Stat Bonuses
-    /// <summary>
-    /// Armor value provided by this item (reduces incoming damage).
-    /// </summary>
-    public int ArmorValue { get; set; } = 0;
-
-    /// <summary>
-    /// Evasion penalty from this item (typically negative for heavy armor).
-    /// </summary>
-    public int EvasionPenalty { get; set; } = 0;
-
-    /// <summary>
-    /// Strength bonus from this item (e.g., Ring of Strength).
-    /// </summary>
-    public int StrengthBonus { get; set; } = 0;
-
-    /// <summary>
-    /// Agility bonus from this item (e.g., Ring of Agility).
-    /// </summary>
-    public int AgilityBonus { get; set; } = 0;
-
-    /// <summary>
-    /// Endurance bonus from this item (e.g., Amulet of Health).
-    /// </summary>
-    public int EnduranceBonus { get; set; } = 0;
-
-    /// <summary>
-    /// Will bonus from this item (e.g., Ring of Will).
-    /// </summary>
-    public int WillBonus { get; set; } = 0;
+    // NOTE: Equipment stat bonuses (ArmorValue, EvasionPenalty, StrengthBonus, etc.)
+    // have been removed. All equipment bonuses are now defined via the Effects array
+    // using apply_condition effects. This unifies all stat modifications through
+    // the Conditions system for cleaner architecture.
 
     /// <summary>
     /// Explicit targeting configuration for this item.
@@ -223,14 +197,6 @@ public class ItemData
                 Attack.Name = GetDisplayName();
             }
         }
-
-        // Validation: Warn if equippable item has Endurance bonus (design violation)
-        if (GetIsEquippable() && EnduranceBonus != 0)
-        {
-            GD.PushWarning($"ItemData: '{Name}' is equippable but has EnduranceBonus={EnduranceBonus}. " +
-                "Endurance bonuses on equippable items create healing exploits (equip/unequip cycling) and are prohibited. " +
-                "Use consumable potions with 'apply_status' effects for temporary END buffs instead.");
-        }
     }
 
     /// <summary>
@@ -260,12 +226,20 @@ public class ItemData
     /// <summary>
     /// Parses and returns the equipment slot for this item.
     /// Returns EquipmentSlot.None if not set or invalid.
+    /// Note: "Ring" maps to Ring1 by default - callers should use GetAvailableRingSlot()
+    /// for dynamic slot selection.
     /// </summary>
     public EquipmentSlot GetEquipmentSlot()
     {
         if (string.IsNullOrEmpty(EquipSlot))
         {
             return Scripts.Data.EquipmentSlot.None;
+        }
+
+        // Handle "Ring" specially - it maps to Ring1 (callers can check for Ring2 if needed)
+        if (EquipSlot.Equals("Ring", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return Scripts.Data.EquipmentSlot.Ring1;
         }
 
         if (System.Enum.TryParse<EquipmentSlot>(EquipSlot, ignoreCase: true, out var slot))
@@ -276,6 +250,11 @@ public class ItemData
         GD.PrintErr($"ItemData: Invalid equipment slot '{EquipSlot}' for item '{Name}'");
         return Scripts.Data.EquipmentSlot.None;
     }
+
+    /// <summary>
+    /// Returns true if this item is a ring (can go in Ring1 or Ring2).
+    /// </summary>
+    public bool IsRing => EquipSlot?.Equals("Ring", System.StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
     /// Calculates the maximum possible charges from dice notation.

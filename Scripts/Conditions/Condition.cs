@@ -12,7 +12,24 @@ public enum StatType
     Armor,
     Strength,
     Agility,
-    Endurance
+    Endurance,
+    Evasion,
+    Regen
+}
+
+/// <summary>
+/// Duration modes for conditions.
+/// </summary>
+public enum ConditionDuration
+{
+    /// <summary>Turn-based duration that decrements each turn (potions, scrolls).</summary>
+    Temporary,
+    /// <summary>Never expires automatically (passive skills).</summary>
+    Permanent,
+    /// <summary>Lasts while equipment is equipped, removed on unequip.</summary>
+    WhileEquipped,
+    /// <summary>Lasts while source is active, removed when deactivated (auras).</summary>
+    WhileActive
 }
 
 /// <summary>
@@ -52,13 +69,27 @@ public abstract class Condition
     /// <summary>
     /// Duration of this condition as dice notation (e.g., "10", "2d3", "1d4+2").
     /// Resolved via DiceRoller when the condition is applied.
+    /// Only used for Temporary conditions.
     /// </summary>
     public string Duration { get; set; } = "1";
 
     /// <summary>
     /// Remaining turns before this condition expires.
+    /// Only decremented for Temporary conditions.
     /// </summary>
     public int RemainingTurns { get; set; }
+
+    /// <summary>
+    /// Duration mode for this condition. Determines expiration behavior.
+    /// </summary>
+    public ConditionDuration DurationMode { get; set; } = ConditionDuration.Temporary;
+
+    /// <summary>
+    /// Optional source identifier for tracking condition origin.
+    /// Used by equipment/skills to identify their conditions for removal.
+    /// If null, a unique ID is generated on application.
+    /// </summary>
+    public string? SourceId { get; set; }
 
     /// <summary>
     /// Resolves the duration by rolling dice notation.

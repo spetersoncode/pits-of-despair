@@ -35,28 +35,35 @@ entries:
     #   damageType: Slashing
     #   ammoType: arrow   # For ranged weapons
 
-    # === ARMOR FIELDS ===
-    # armorValue: 3
-    # evasionPenalty: -1
-
-    # === CONSUMABLE FIELDS ===
+    # === EFFECTS (for equipment bonuses, consumables, etc.) ===
+    # All stat modifiers use apply_condition effects:
     # effects:
     #   - type: heal
     #     amount: 10
     #   - type: apply_condition
-    #     conditionType: strength_buff
+    #     conditionType: armor_buff      # Armor bonus
+    #     amount: 3
+    #   - type: apply_condition
+    #     conditionType: evasion_buff    # Evasion bonus (negative = penalty)
+    #     amount: -1
+    #   - type: apply_condition
+    #     conditionType: strength_buff   # Strength bonus
     #     amount: 2
-    #     duration: 10
+    #     duration: 10                   # Only for consumables (equipment is WhileEquipped)
+    #   - type: apply_condition
+    #     conditionType: agility_buff
+    #     amount: 1
+    #   - type: apply_condition
+    #     conditionType: regen_buff      # Regeneration (+80 = DCSS ring)
+    #     amount: 80
+    #
+    # Available condition types:
+    #   armor_buff, strength_buff, agility_buff, endurance_buff,
+    #   evasion_buff, regen_buff, confusion
 
     # === CHARGED ITEM FIELDS ===
     # charges: "1d6"      # Dice for initial charges
     # rechargeTurns: 0    # Turns per charge recovery
-
-    # === EQUIPMENT BONUSES ===
-    # strengthBonus: 0
-    # agilityBonus: 0
-    # enduranceBonus: 0   # Warning: can create exploits
-    # willBonus: 0
 
     # === TARGETING ===
     # targeting:

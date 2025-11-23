@@ -55,7 +55,6 @@ public partial class GameHUD : Control
     private AutoExploreSystem _autoExploreSystem;
     private Components.StatsComponent _playerStats;
     private Components.SkillComponent _playerSkills;
-    private Components.ConditionComponent _conditionComponent;
     private Systems.EntityManager _entityManager;
     private DataLoader _dataLoader;
 
@@ -191,11 +190,8 @@ public partial class GameHUD : Control
 
         player.Connect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
 
-        _conditionComponent = player.GetNodeOrNull<Components.ConditionComponent>("ConditionComponent");
-        if (_conditionComponent != null)
-        {
-            _conditionComponent.Connect(Components.ConditionComponent.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
-        }
+        // Connect to condition messages (now on BaseEntity directly)
+        player.Connect(Entities.BaseEntity.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
 
         // Show welcome message only on floor 1, descent message on subsequent floors
         if (_floorDepth == 1)
@@ -957,10 +953,10 @@ public partial class GameHUD : Control
             _player.Disconnect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
         }
 
-        // Disconnect from player components
-        if (_conditionComponent != null)
+        // Disconnect from condition messages (now on BaseEntity directly)
+        if (_player != null)
         {
-            _conditionComponent.Disconnect(Components.ConditionComponent.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
+            _player.Disconnect(Entities.BaseEntity.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
         // Disconnect from new systems

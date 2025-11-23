@@ -492,6 +492,25 @@ public static class Palette
 
     #endregion
 
+    #region Gems and Jewelry
+
+    /// <summary>Jade (soft green gemstone)</summary>
+    public static readonly Color Jade = new("#66BB6A");
+
+    /// <summary>Ruby (deep red gemstone)</summary>
+    public static readonly Color Ruby = new("#E53935");
+
+    /// <summary>Sapphire (deep blue gemstone)</summary>
+    public static readonly Color Sapphire = new("#1E88E5");
+
+    /// <summary>Emerald (vivid green gemstone)</summary>
+    public static readonly Color Emerald = new("#43A047");
+
+    /// <summary>Amethyst (purple gemstone)</summary>
+    public static readonly Color Amethyst = new("#8E24AA");
+
+    #endregion
+
     #region Utilities
 
     /// <summary>

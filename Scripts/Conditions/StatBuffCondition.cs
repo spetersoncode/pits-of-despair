@@ -7,8 +7,9 @@ using PitsOfDespair.Entities;
 namespace PitsOfDespair.Conditions;
 
 /// <summary>
-/// Generic condition that temporarily increases an entity's stats (Armor, Strength, Agility, or Endurance).
+/// Generic condition that modifies an entity's stats (Armor, Strength, Agility, Endurance, or Evasion).
 /// Uses a unified implementation to eliminate code duplication across stat-specific buff classes.
+/// Supports all duration modes: Temporary (potions), WhileEquipped (rings), Permanent (passive skills).
 /// </summary>
 public class StatBuffCondition : Condition
 {
@@ -23,12 +24,12 @@ public class StatBuffCondition : Condition
     public int Amount { get; set; }
 
     /// <summary>
-    /// Unique source identifier for this condition instance.
-    /// Used to track the modifier in StatsComponent.
+    /// Internal source ID used for modifier tracking.
+    /// Generated from SourceId or auto-generated if not set.
     /// </summary>
-    private string? _sourceId;
+    private string? _internalSourceId;
 
-    public override string Name => $"{Stat} Buff";
+    public override string Name => Stat == StatType.Evasion ? "Evasion Buff" : $"{Stat} Buff";
 
     public override string TypeId => $"{Stat.ToString().ToLower()}_buff";
 
@@ -48,11 +49,16 @@ public class StatBuffCondition : Condition
     /// <param name="stat">The stat type to buff.</param>
     /// <param name="amount">The amount to increase the stat by.</param>
     /// <param name="duration">Duration as dice notation (e.g., "10", "2d3").</param>
-    public StatBuffCondition(StatType stat, int amount, string duration)
+    /// <param name="durationMode">Duration mode (Temporary, Permanent, WhileEquipped, WhileActive).</param>
+    /// <param name="sourceId">Optional source identifier for tracking.</param>
+    public StatBuffCondition(StatType stat, int amount, string duration,
+        ConditionDuration durationMode = ConditionDuration.Temporary, string? sourceId = null)
     {
         Stat = stat;
         Amount = amount;
         Duration = duration;
+        DurationMode = durationMode;
+        SourceId = sourceId;
     }
 
     public override ConditionMessage OnApplied(BaseEntity target)
@@ -64,35 +70,51 @@ public class StatBuffCondition : Condition
             return ConditionMessage.Empty;
         }
 
-        // Create unique source ID for this condition instance
-        _sourceId = $"condition_{TypeId}_{Guid.NewGuid()}";
+        // Use provided SourceId or generate unique one
+        _internalSourceId = SourceId ?? $"condition_{TypeId}_{Guid.NewGuid()}";
+        SourceId = _internalSourceId; // Store back for condition tracking
 
         // Apply modifier based on stat type
         switch (Stat)
         {
             case StatType.Armor:
-                stats.AddArmorSource(_sourceId, Amount);
+                stats.AddArmorSource(_internalSourceId, Amount);
                 break;
             case StatType.Strength:
-                stats.AddStrengthModifier(_sourceId, Amount);
+                stats.AddStrengthModifier(_internalSourceId, Amount);
                 break;
             case StatType.Agility:
-                stats.AddAgilityModifier(_sourceId, Amount);
+                stats.AddAgilityModifier(_internalSourceId, Amount);
                 break;
             case StatType.Endurance:
-                stats.AddEnduranceModifier(_sourceId, Amount);
+                stats.AddEnduranceModifier(_internalSourceId, Amount);
+                break;
+            case StatType.Evasion:
+                // Positive evasion bonus (stored as negative penalty to add to evasion)
+                stats.AddEvasionPenaltySource(_internalSourceId, Amount);
                 break;
         }
 
-        return new ConditionMessage(
-            $"{Stat} increased by {Amount}!",
-            Palette.ToHex(Palette.StatusBuff)
-        );
+        // Generate appropriate message based on duration mode
+        string message = DurationMode switch
+        {
+            ConditionDuration.WhileEquipped => $"{GetStatDisplayName()} +{Amount}",
+            ConditionDuration.Permanent => $"{GetStatDisplayName()} permanently increased by {Amount}!",
+            _ => $"{GetStatDisplayName()} increased by {Amount}!"
+        };
+
+        return new ConditionMessage(message, Palette.ToHex(Palette.StatusBuff));
     }
+
+    private string GetStatDisplayName() => Stat switch
+    {
+        StatType.Evasion => "Evasion",
+        _ => Stat.ToString()
+    };
 
     public override ConditionMessage OnRemoved(BaseEntity target)
     {
-        if (string.IsNullOrEmpty(_sourceId))
+        if (string.IsNullOrEmpty(_internalSourceId))
         {
             return ConditionMessage.Empty;
         }
@@ -107,22 +129,29 @@ public class StatBuffCondition : Condition
         switch (Stat)
         {
             case StatType.Armor:
-                stats.RemoveArmorSource(_sourceId);
+                stats.RemoveArmorSource(_internalSourceId);
                 break;
             case StatType.Strength:
-                stats.RemoveStrengthModifier(_sourceId);
+                stats.RemoveStrengthModifier(_internalSourceId);
                 break;
             case StatType.Agility:
-                stats.RemoveAgilityModifier(_sourceId);
+                stats.RemoveAgilityModifier(_internalSourceId);
                 break;
             case StatType.Endurance:
-                stats.RemoveEnduranceModifier(_sourceId);
+                stats.RemoveEnduranceModifier(_internalSourceId);
+                break;
+            case StatType.Evasion:
+                stats.RemoveEvasionPenaltySource(_internalSourceId);
                 break;
         }
 
-        return new ConditionMessage(
-            $"{Stat} buff has worn off.",
-            Palette.ToHex(Palette.Default)
-        );
+        // Generate appropriate message based on duration mode
+        string message = DurationMode switch
+        {
+            ConditionDuration.WhileEquipped => $"{GetStatDisplayName()} bonus removed",
+            _ => $"{GetStatDisplayName()} buff has worn off."
+        };
+
+        return new ConditionMessage(message, Palette.ToHex(Palette.Default));
     }
 }

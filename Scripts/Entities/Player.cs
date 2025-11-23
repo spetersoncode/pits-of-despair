@@ -60,6 +60,8 @@ public partial class Player : BaseEntity
 
     public override void _Ready()
     {
+        // Set player-specific properties before base initialization
+        IsPlayerControlled = true;
         DisplayName = "Player";
         Description = "A condemned prisoner, exiled to die in these forsaken depths. Weary but determined to survive.";
         Glyph = "@";
@@ -117,14 +119,10 @@ public partial class Player : BaseEntity
         var equipComponent = new EquipComponent { Name = "EquipComponent" };
         AddChild(equipComponent);
 
-        var conditionComponent = new ConditionComponent
-        {
-            Name = "ConditionComponent",
-            IsPlayerControlled = true
-        };
-        AddChild(conditionComponent);
-
         Connect(SignalName.PositionChanged, Callable.From<int, int>(OnPositionChanged));
+
+        // Initialize base entity (sets up condition system with deferred TurnManager connection)
+        base._Ready();
     }
 
     /// <summary>

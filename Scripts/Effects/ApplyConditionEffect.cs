@@ -1,5 +1,4 @@
 using Godot;
-using PitsOfDespair.Components;
 using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
 
@@ -69,15 +68,6 @@ public class ApplyConditionEffect : Effect
     {
         var target = context.Target;
         var targetName = target.DisplayName;
-        var conditionComponent = target.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-
-        if (conditionComponent == null)
-        {
-            return EffectResult.CreateFailure(
-                $"{targetName} cannot receive conditions.",
-                Palette.ToHex(Palette.Disabled)
-            );
-        }
 
         // Calculate amount with scaling
         int finalAmount = CalculateScaledAmount(Amount, null, ScalingStat, ScalingMultiplier, context);
@@ -93,10 +83,10 @@ public class ApplyConditionEffect : Effect
             );
         }
 
-        // Add condition to target (message will be emitted via signal)
-        conditionComponent.AddCondition(condition);
+        // Add condition to target (conditions are now managed by BaseEntity directly)
+        target.AddCondition(condition);
 
-        // Return success - the actual message is emitted by ConditionComponent signal
+        // Return success - the actual message is emitted by BaseEntity's ConditionMessage signal
         return EffectResult.CreateSuccess(
             string.Empty,
             Palette.ToHex(Palette.StatusBuff),

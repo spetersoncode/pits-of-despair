@@ -148,12 +148,7 @@ public partial class EntityFactory : Node
         };
         entity.AddChild(statsComponent);
 
-        // Add ConditionComponent (required for buffs/debuffs)
-        var conditionComponent = new ConditionComponent
-        {
-            Name = "ConditionComponent"
-        };
-        entity.AddChild(conditionComponent);
+        // Conditions are now managed by BaseEntity directly (no separate component needed)
 
         // Add MovementComponent if entity can move
         if (data.HasMovement)
@@ -267,8 +262,8 @@ public partial class EntityFactory : Node
                         continue;
                     }
 
-                    // Get equipment slot from item
-                    var equipSlot = itemData.GetEquipmentSlot();
+                    // Get equipment slot from item (handles rings dynamically)
+                    var equipSlot = equipComponent.GetSlotForItem(itemData);
                     if (equipSlot == EquipmentSlot.None)
                     {
                         GD.PushWarning($"EntityFactory: Item '{itemId}' has no equipment slot for creature '{data.Name}'");
@@ -479,8 +474,8 @@ public partial class EntityFactory : Node
                 continue;
             }
 
-            // Auto-equip the item
-            var equipSlot = itemData.GetEquipmentSlot();
+            // Auto-equip the item (handles rings dynamically)
+            var equipSlot = equipComponent.GetSlotForItem(itemData);
             if (equipSlot != EquipmentSlot.None)
             {
                 equipComponent.Equip(key.Value, equipSlot);
@@ -526,10 +521,10 @@ public partial class EntityFactory : Node
                 continue;
             }
 
-            // Auto-equip if requested
+            // Auto-equip if requested (handles rings dynamically)
             if (autoEquip && equipComponent != null)
             {
-                var equipSlot = itemData.GetEquipmentSlot();
+                var equipSlot = equipComponent.GetSlotForItem(itemData);
                 if (equipSlot != EquipmentSlot.None)
                 {
                     equipComponent.Equip(key.Value, equipSlot);

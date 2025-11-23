@@ -154,12 +154,8 @@ public class PlayerState
 			state.EquippedSlots = GetPrivateDictionary<EquipmentSlot, char>(equipComponent, "_equippedSlots");
 		}
 
-		// Extract Conditions
-		var conditionComponent = player.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-		if (conditionComponent != null)
-		{
-			state.ActiveConditions = new List<Condition>(conditionComponent.GetActiveConditions());
-		}
+		// Extract Conditions (now managed directly by BaseEntity)
+		state.ActiveConditions = new List<Condition>(player.GetActiveConditions());
 
 		return state;
 	}
@@ -258,14 +254,10 @@ public class PlayerState
 			}
 		}
 
-		// Apply Conditions
-		var conditionComponent = player.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-		if (conditionComponent != null)
+		// Apply Conditions (now managed directly by BaseEntity)
+		foreach (var condition in ActiveConditions)
 		{
-			foreach (var condition in ActiveConditions)
-			{
-				conditionComponent.AddCondition(condition);
-			}
+			player.AddCondition(condition);
 		}
 	}
 

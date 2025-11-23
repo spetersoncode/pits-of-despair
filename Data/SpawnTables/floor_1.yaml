@@ -74,14 +74,14 @@ creaturePools:
         count:
           dice: "1d2" # Spawns 1-2 skeletons per occurrence
 
-      # Cat - neutral, joins player on sight
-      - type: single
-        creatureId: cat
-
   # Rare pool (5% weight) - Dangerous encounters
   - id: rare
     weight: 5
     entries:
+      # Cat - neutral, joins player on sight
+      - type: single
+        creatureId: cat
+
       # Goblin band - ruffian leader with goblin followers
       - type: band
         band:
@@ -141,3 +141,10 @@ itemPools:
       - itemId: armor_leather
 
       - itemId: armor_studded_leather
+
+      # Rings - powerful passive equipment
+      - itemId: ring_evasion
+        weight: 1
+
+      - itemId: ring_regeneration
+        weight: 1

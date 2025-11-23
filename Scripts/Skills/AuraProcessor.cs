@@ -276,9 +276,6 @@ public partial class AuraProcessor : Node
     /// </summary>
     private void ApplyAuraEffectToEntity(SkillDefinition skill, BaseEntity target)
     {
-        var conditionComponent = target.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-        if (conditionComponent == null) return;
-
         string source = GetAuraSource(skill.Id);
 
         foreach (var effect in skill.Effects)
@@ -291,57 +288,45 @@ public partial class AuraProcessor : Node
 
     /// <summary>
     /// Removes the aura's effects from an entity.
+    /// Uses condition system's source-based removal.
     /// </summary>
     private void RemoveAuraEffectFromEntity(SkillDefinition skill, BaseEntity target)
     {
-        var conditionComponent = target.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-        if (conditionComponent == null) return;
-
         string source = GetAuraSource(skill.Id);
 
-        // Remove aura-applied conditions by source
-        // Note: This requires the condition system to track sources
-        // For now, we'll remove by type ID matching our aura pattern
+        // Remove all conditions from this aura source (now on BaseEntity directly)
+        target.RemoveConditionsBySource(source);
+
+        // Also remove any direct will modifiers (not yet in condition system)
         var statsComponent = target.GetNodeOrNull<StatsComponent>("StatsComponent");
-        if (statsComponent != null)
-        {
-            statsComponent.RemoveStrengthModifier(source);
-            statsComponent.RemoveAgilityModifier(source);
-            statsComponent.RemoveEnduranceModifier(source);
-            statsComponent.RemoveWillModifier(source);
-            statsComponent.RemoveArmorSource(source);
-            statsComponent.RemoveEvasionPenaltySource(source);
-        }
+        statsComponent?.RemoveWillModifier(source);
 
         GD.Print($"AuraProcessor: Removed aura '{skill.Name}' from {target.DisplayName}");
     }
 
     /// <summary>
-    /// Applies a single aura effect to a target.
+    /// Applies a single aura effect to a target using WhileActive conditions.
     /// </summary>
     private void ApplyAuraEffect(SkillEffectDefinition effect, BaseEntity target, string source)
     {
-        var statsComponent = target.GetNodeOrNull<StatsComponent>("StatsComponent");
-        if (statsComponent == null) return;
-
         switch (effect.Type?.ToLower())
         {
             case "stat_bonus":
-                ApplyAuraStatBonus(effect, statsComponent, source);
+                ApplyAuraStatBonus(effect, target, source);
                 break;
 
             case "armor_bonus":
-                statsComponent.AddArmorSource(source, effect.Amount);
+                ApplyAuraCondition(target, "armor_buff", effect.Amount, source);
                 break;
 
             case "attack_bonus":
                 // Apply as strength modifier (affects melee attack)
-                statsComponent.AddStrengthModifier(source, effect.Amount);
+                ApplyAuraCondition(target, "strength_buff", effect.Amount, source);
                 break;
 
             case "debuff":
                 // Apply negative stat modifier
-                ApplyAuraDebuff(effect, statsComponent, source);
+                ApplyAuraDebuff(effect, target, source);
                 break;
 
             default:
@@ -351,61 +336,75 @@ public partial class AuraProcessor : Node
     }
 
     /// <summary>
-    /// Applies a stat bonus aura effect.
+    /// Applies a stat bonus aura effect using WhileActive conditions.
     /// </summary>
-    private void ApplyAuraStatBonus(SkillEffectDefinition effect, StatsComponent stats, string source)
+    private void ApplyAuraStatBonus(SkillEffectDefinition effect, BaseEntity target, string source)
     {
         string stat = effect.Stat?.ToLower() ?? string.Empty;
         int amount = effect.Amount;
 
-        switch (stat)
+        // Map stat names to condition types
+        string? conditionType = stat switch
         {
-            case "str":
-            case "strength":
-                stats.AddStrengthModifier(source, amount);
-                break;
-            case "agi":
-            case "agility":
-                stats.AddAgilityModifier(source, amount);
-                break;
-            case "end":
-            case "endurance":
-                stats.AddEnduranceModifier(source, amount);
-                break;
-            case "wil":
-            case "will":
-            case "willpower":
-                stats.AddWillModifier(source, amount);
-                break;
-            case "armor":
-                stats.AddArmorSource(source, amount);
-                break;
-            case "attack":
-                stats.AddStrengthModifier(source, amount);
-                break;
+            "str" or "strength" or "attack" => "strength_buff",
+            "agi" or "agility" => "agility_buff",
+            "end" or "endurance" => "endurance_buff",
+            "armor" => "armor_buff",
+            "evasion" => "evasion_buff",
+            _ => null
+        };
+
+        if (conditionType != null)
+        {
+            ApplyAuraCondition(target, conditionType, amount, source);
+            return;
+        }
+
+        // Handle will separately (not yet in condition system)
+        if (stat is "wil" or "will" or "willpower")
+        {
+            var statsComponent = target.GetNodeOrNull<StatsComponent>("StatsComponent");
+            statsComponent?.AddWillModifier(source, amount);
         }
     }
 
     /// <summary>
-    /// Applies an aura debuff (negative modifier).
+    /// Applies an aura debuff (negative modifier) using WhileActive conditions.
     /// </summary>
-    private void ApplyAuraDebuff(SkillEffectDefinition effect, StatsComponent stats, string source)
+    private void ApplyAuraDebuff(SkillEffectDefinition effect, BaseEntity target, string source)
     {
         string stat = effect.Stat?.ToLower() ?? "attack";
         int amount = -Mathf.Abs(effect.Amount); // Ensure negative
 
-        switch (stat)
+        string? conditionType = stat switch
         {
-            case "str":
-            case "strength":
-            case "attack":
-                stats.AddStrengthModifier(source, amount);
-                break;
-            case "agi":
-            case "agility":
-            case "defense":
-                stats.AddAgilityModifier(source, amount);
-                break;
+            "str" or "strength" or "attack" => "strength_buff",
+            "agi" or "agility" or "defense" => "agility_buff",
+            _ => null
+        };
+
+        if (conditionType != null)
+        {
+            ApplyAuraCondition(target, conditionType, amount, source);
+        }
+    }
+
+    /// <summary>
+    /// Helper to apply a WhileActive condition from an aura.
+    /// </summary>
+    private void ApplyAuraCondition(BaseEntity target, string conditionType, int amount, string source)
+    {
+        var condition = ConditionFactory.Create(
+            conditionType,
+            amount,
+            "1", // Duration doesn't matter for WhileActive
+            ConditionDuration.WhileActive,
+            source
+        );
+
+        if (condition != null)
+        {
+            target.AddCondition(condition);
         }
     }
 

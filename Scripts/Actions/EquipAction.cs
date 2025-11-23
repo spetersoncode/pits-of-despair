@@ -91,8 +91,8 @@ public class EquipAction : Action
             return ActionResult.CreateFailure($"You can't equip {itemTemplate.Name}.");
         }
 
-        // Get the equipment slot for this item
-        var equipSlot = itemTemplate.GetEquipmentSlot();
+        // Get the equipment slot for this item (handles rings dynamically)
+        var equipSlot = equipComponent.GetSlotForItem(itemTemplate);
         if (equipSlot == EquipmentSlot.None)
         {
             return ActionResult.CreateFailure($"{itemTemplate.Name} has no valid equipment slot.");
@@ -101,7 +101,7 @@ public class EquipAction : Action
         // Check if already equipped
         if (equipComponent.IsEquipped(_itemKey))
         {
-            var currentSlot = equipComponent.GetSlotForItem(_itemKey);
+            var currentSlot = equipComponent.GetEquippedSlotForItem(_itemKey);
             return ActionResult.CreateFailure($"{itemTemplate.Name} is already equipped in {currentSlot} slot.");
         }
 

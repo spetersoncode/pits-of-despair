@@ -56,12 +56,8 @@ public class CompanionState
             state.BaseMaxHP = healthComponent.BaseMaxHP;
         }
 
-        // Extract conditions
-        var conditionComponent = companion.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-        if (conditionComponent != null)
-        {
-            state.ActiveConditions = new List<Condition>(conditionComponent.GetActiveConditions());
-        }
+        // Extract conditions (now managed directly by BaseEntity)
+        state.ActiveConditions = new List<Condition>(companion.GetActiveConditions());
 
         return state;
     }
@@ -82,14 +78,10 @@ public class CompanionState
             SetPrivateProperty(healthComponent, nameof(HealthComponent.CurrentHP), CurrentHP);
         }
 
-        // Apply conditions
-        var conditionComponent = companion.GetNodeOrNull<ConditionComponent>("ConditionComponent");
-        if (conditionComponent != null)
+        // Apply conditions (now managed directly by BaseEntity)
+        foreach (var condition in ActiveConditions)
         {
-            foreach (var condition in ActiveConditions)
-            {
-                conditionComponent.AddCondition(condition);
-            }
+            companion.AddCondition(condition);
         }
     }
 

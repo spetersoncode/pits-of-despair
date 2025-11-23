@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.Components;
+using PitsOfDespair.Conditions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Skills;
@@ -152,42 +153,58 @@ public partial class PassiveSkillProcessor : Node
     }
 
     /// <summary>
-    /// Applies a stat bonus effect (str, agi, end, wil, max_hp, max_wp, armor, evasion).
+    /// Applies a stat bonus effect via Permanent conditions.
+    /// Supports: str, agi, end, wil, armor, evasion (via conditions)
+    /// Also supports: max_hp, max_wp (via direct modifiers)
     /// </summary>
     private void ApplyStatBonus(SkillEffectDefinition effect, string source)
     {
-        if (_statsComponent == null) return;
-
         // Use the Stat property from YAML (e.g., "stat: max_hp")
         string stat = effect.Stat?.ToLower() ?? string.Empty;
         int amount = effect.Amount;
 
+        // Map stat names to condition types
+        string? conditionType = stat switch
+        {
+            "str" or "strength" => "strength_buff",
+            "agi" or "agility" => "agility_buff",
+            "end" or "endurance" => "endurance_buff",
+            "wil" or "will" or "willpower" => null, // Will not yet in condition system
+            "armor" => "armor_buff",
+            "evasion" => "evasion_buff",
+            "max_hp" => null, // Special handling
+            "max_wp" => null, // Special handling
+            _ => null
+        };
+
+        // Handle stats via conditions
+        if (conditionType != null && _entity != null)
+        {
+            var condition = ConditionFactory.Create(
+                conditionType,
+                amount,
+                "1", // Duration doesn't matter for Permanent
+                ConditionDuration.Permanent,
+                source
+            );
+            if (condition != null)
+            {
+                _entity.AddCondition(condition);
+            }
+            return;
+        }
+
+        // Handle special cases that don't use conditions (yet)
         switch (stat)
         {
-            case "str":
-            case "strength":
-                _statsComponent.AddStrengthModifier(source, amount);
-                break;
-
-            case "agi":
-            case "agility":
-                _statsComponent.AddAgilityModifier(source, amount);
-                break;
-
-            case "end":
-            case "endurance":
-                _statsComponent.AddEnduranceModifier(source, amount);
-                break;
-
             case "wil":
             case "will":
             case "willpower":
-                _statsComponent.AddWillModifier(source, amount);
+                // Will modifier not yet in condition system, use direct call
+                _statsComponent?.AddWillModifier(source, amount);
                 break;
 
             case "max_hp":
-                // HP bonus through END modifier would be quadratic
-                // Instead, add direct HP bonus to HealthComponent
                 ApplyMaxHPBonus(source, amount);
                 break;
 
@@ -195,36 +212,53 @@ public partial class PassiveSkillProcessor : Node
                 ApplyMaxWPBonus(source, amount);
                 break;
 
-            case "armor":
-                _statsComponent.AddArmorSource(source, amount);
-                break;
-
-            case "evasion":
-                // Positive evasion = reduce penalty (since penalties are negative)
-                _statsComponent.AddEvasionPenaltySource(source, amount);
-                break;
-
             default:
-                GD.PushWarning($"PassiveSkillProcessor: Unknown stat type '{stat}' for stat_bonus");
+                if (conditionType == null)
+                {
+                    GD.PushWarning($"PassiveSkillProcessor: Unknown stat type '{stat}' for stat_bonus");
+                }
                 break;
         }
     }
 
     /// <summary>
-    /// Applies an armor bonus effect.
+    /// Applies an armor bonus effect via Permanent condition.
     /// </summary>
     private void ApplyArmorBonus(SkillEffectDefinition effect, string source)
     {
-        _statsComponent?.AddArmorSource(source, effect.Amount);
+        if (_entity == null) return;
+
+        var condition = ConditionFactory.Create(
+            "armor_buff",
+            effect.Amount,
+            "1",
+            ConditionDuration.Permanent,
+            source
+        );
+        if (condition != null)
+        {
+            _entity.AddCondition(condition);
+        }
     }
 
     /// <summary>
-    /// Applies an evasion bonus effect.
+    /// Applies an evasion bonus effect via Permanent condition.
     /// </summary>
     private void ApplyEvasionBonus(SkillEffectDefinition effect, string source)
     {
-        // Positive value improves evasion (counters penalties)
-        _statsComponent?.AddEvasionPenaltySource(source, effect.Amount);
+        if (_entity == null) return;
+
+        var condition = ConditionFactory.Create(
+            "evasion_buff",
+            effect.Amount,
+            "1",
+            ConditionDuration.Permanent,
+            source
+        );
+        if (condition != null)
+        {
+            _entity.AddCondition(condition);
+        }
     }
 
     /// <summary>
@@ -263,15 +297,15 @@ public partial class PassiveSkillProcessor : Node
 
     /// <summary>
     /// Removes all modifiers for a given source.
+    /// Uses conditions system for stats, direct removal for max_hp/max_wp/will.
     /// </summary>
     private void RemoveModifiersForSource(string source)
     {
-        _statsComponent?.RemoveStrengthModifier(source);
-        _statsComponent?.RemoveAgilityModifier(source);
-        _statsComponent?.RemoveEnduranceModifier(source);
+        // Remove conditions by source prefix
+        _entity?.RemoveConditionsBySource(source);
+
+        // Remove direct modifiers (for stats not yet in condition system)
         _statsComponent?.RemoveWillModifier(source);
-        _statsComponent?.RemoveArmorSource(source);
-        _statsComponent?.RemoveEvasionPenaltySource(source);
         _healthComponent?.RemoveMaxHPModifier(source);
         _willpowerComponent?.RemoveMaxWPModifier(source);
     }

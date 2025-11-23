@@ -100,11 +100,34 @@ public partial class HealthComponent : Node, IAIEventHandler
     private readonly Dictionary<string, int> _maxHPModifiers = new();
 
     /// <summary>
-    /// Base regeneration rate per turn (before modifiers).
-    /// Formula: 20 + MaxHP / 6
+    /// Multi-source regen rate modifiers from equipment, conditions, etc.
+    /// Key is source identifier (e.g., "equipped_ring1"), value is regen bonus.
+    /// DCSS formula: Ring of Regeneration adds +80 per instance.
+    /// </summary>
+    private readonly Dictionary<string, int> _regenModifiers = new();
+
+    /// <summary>
+    /// Total regeneration bonus from all modifier sources.
+    /// </summary>
+    public int TotalRegenBonus
+    {
+        get
+        {
+            int total = 0;
+            foreach (var value in _regenModifiers.Values)
+            {
+                total += value;
+            }
+            return total;
+        }
+    }
+
+    /// <summary>
+    /// Base regeneration rate per turn (including modifiers).
+    /// Formula: 20 + MaxHP / 6 + TotalRegenBonus
     /// At 100 points accumulated, heal 1 HP.
     /// </summary>
-    public int BaseRegenRate => 20 + MaxHP / 6;
+    public int BaseRegenRate => 20 + MaxHP / 6 + TotalRegenBonus;
 
     public override void _Ready()
     {
@@ -406,6 +429,31 @@ public partial class HealthComponent : Node, IAIEventHandler
             total += value;
         }
         return total;
+    }
+
+    #endregion
+
+    #region Regen Modifiers
+
+    /// <summary>
+    /// Adds a regen rate modifier from a named source.
+    /// Used by equipment (Ring of Regeneration), conditions, etc.
+    /// DCSS formula: +80 per instance adds roughly 1 HP per 1.25 turns.
+    /// </summary>
+    /// <param name="source">Source identifier (e.g., "equipped_ring1", "condition_regen")</param>
+    /// <param name="value">Regen bonus value (typically 80 for Ring of Regeneration)</param>
+    public void AddRegenModifier(string source, int value)
+    {
+        _regenModifiers[source] = value;
+    }
+
+    /// <summary>
+    /// Removes a regen rate modifier by source name.
+    /// </summary>
+    /// <param name="source">Source identifier to remove</param>
+    public void RemoveRegenModifier(string source)
+    {
+        _regenModifiers.Remove(source);
     }
 
     #endregion
