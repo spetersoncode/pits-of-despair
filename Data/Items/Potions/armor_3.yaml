@@ -3,7 +3,7 @@ type: potion
 color: PotionIronskin
 description: Metallic blue-gray fluid, cold to the touch. Your reflection warps in its surface.
 effects:
-  - type: apply_status
-    statusType: armor_buff
+  - type: apply_condition
+    conditionType: armor_buff
     amount: 3
     duration: 10

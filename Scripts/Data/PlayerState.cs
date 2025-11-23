@@ -4,7 +4,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
-using PitsOfDespair.Status;
+using PitsOfDespair.Conditions;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -63,12 +63,12 @@ public class PlayerState
 
 	#endregion
 
-	#region Status Effects State
+	#region Conditions State
 
 	/// <summary>
-	/// Active status effects with their remaining turns.
+	/// Active conditions with their remaining turns.
 	/// </summary>
-	public List<Status.Status> ActiveStatuses { get; set; } = new();
+	public List<Condition> ActiveConditions { get; set; } = new();
 
 	#endregion
 
@@ -137,11 +137,11 @@ public class PlayerState
 			state.EquippedSlots = GetPrivateDictionary<EquipmentSlot, char>(equipComponent, "_equippedSlots");
 		}
 
-		// Extract Status Effects
-		var statusComponent = player.GetNodeOrNull<StatusComponent>("StatusComponent");
-		if (statusComponent != null)
+		// Extract Conditions
+		var conditionComponent = player.GetNodeOrNull<ConditionComponent>("ConditionComponent");
+		if (conditionComponent != null)
 		{
-			state.ActiveStatuses = new List<Status.Status>(statusComponent.GetActiveStatuses());
+			state.ActiveConditions = new List<Condition>(conditionComponent.GetActiveConditions());
 		}
 
 		return state;
@@ -233,13 +233,13 @@ public class PlayerState
 			}
 		}
 
-		// Apply Status Effects
-		var statusComponent = player.GetNodeOrNull<StatusComponent>("StatusComponent");
-		if (statusComponent != null)
+		// Apply Conditions
+		var conditionComponent = player.GetNodeOrNull<ConditionComponent>("ConditionComponent");
+		if (conditionComponent != null)
 		{
-			foreach (var status in ActiveStatuses)
+			foreach (var condition in ActiveConditions)
 			{
-				statusComponent.AddStatus(status);
+				conditionComponent.AddCondition(condition);
 			}
 		}
 	}

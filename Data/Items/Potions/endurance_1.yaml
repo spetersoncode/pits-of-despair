@@ -3,7 +3,7 @@ type: potion
 color: PotionEnduranceMinor
 description: Dusty rose fluid, thick and warm. It pulses faintly like a sleeping heart.
 effects:
-  - type: apply_status
-    statusType: endurance_buff
+  - type: apply_condition
+    conditionType: endurance_buff
     amount: 1
     duration: 10

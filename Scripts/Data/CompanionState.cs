@@ -1,14 +1,14 @@
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Status;
+using PitsOfDespair.Conditions;
 using System.Collections.Generic;
 
 namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Captures companion state for persistence across floor transitions.
-/// Includes creature ID, health, and active status effects.
+/// Includes creature ID, health, and active conditions.
 /// </summary>
 public class CompanionState
 {
@@ -28,9 +28,9 @@ public class CompanionState
     public int BaseMaxHP { get; set; }
 
     /// <summary>
-    /// Active status effects with their remaining turns.
+    /// Active conditions with their remaining turns.
     /// </summary>
-    public List<Status.Status> ActiveStatuses { get; set; } = new();
+    public List<Condition> ActiveConditions { get; set; } = new();
 
     /// <summary>
     /// Extracts state from a companion entity.
@@ -56,11 +56,11 @@ public class CompanionState
             state.BaseMaxHP = healthComponent.BaseMaxHP;
         }
 
-        // Extract status effects
-        var statusComponent = companion.GetNodeOrNull<StatusComponent>("StatusComponent");
-        if (statusComponent != null)
+        // Extract conditions
+        var conditionComponent = companion.GetNodeOrNull<ConditionComponent>("ConditionComponent");
+        if (conditionComponent != null)
         {
-            state.ActiveStatuses = new List<Status.Status>(statusComponent.GetActiveStatuses());
+            state.ActiveConditions = new List<Condition>(conditionComponent.GetActiveConditions());
         }
 
         return state;
@@ -82,13 +82,13 @@ public class CompanionState
             SetPrivateProperty(healthComponent, nameof(HealthComponent.CurrentHP), CurrentHP);
         }
 
-        // Apply status effects
-        var statusComponent = companion.GetNodeOrNull<StatusComponent>("StatusComponent");
-        if (statusComponent != null)
+        // Apply conditions
+        var conditionComponent = companion.GetNodeOrNull<ConditionComponent>("ConditionComponent");
+        if (conditionComponent != null)
         {
-            foreach (var status in ActiveStatuses)
+            foreach (var condition in ActiveConditions)
             {
-                statusComponent.AddStatus(status);
+                conditionComponent.AddCondition(condition);
             }
         }
     }

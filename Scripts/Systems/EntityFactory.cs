@@ -148,12 +148,12 @@ public partial class EntityFactory : Node
         };
         entity.AddChild(statsComponent);
 
-        // Add StatusComponent (required for buffs/debuffs)
-        var statusComponent = new StatusComponent
+        // Add ConditionComponent (required for buffs/debuffs)
+        var conditionComponent = new ConditionComponent
         {
-            Name = "StatusComponent"
+            Name = "ConditionComponent"
         };
-        entity.AddChild(statusComponent);
+        entity.AddChild(conditionComponent);
 
         // Add MovementComponent if entity can move
         if (data.HasMovement)

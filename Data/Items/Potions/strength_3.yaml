@@ -3,7 +3,7 @@ type: potion
 color: PotionStrengthMajor
 description: Blazing orange radiance strains against the glass. Raw power made liquid.
 effects:
-  - type: apply_status
-    statusType: strength_buff
+  - type: apply_condition
+    conditionType: strength_buff
     amount: 3
     duration: 10

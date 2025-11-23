@@ -3,7 +3,7 @@ type: potion
 color: PotionWillMajor
 description: Radiant lavender hums with focus. Reality feels more defined in its presence.
 effects:
-  - type: apply_status
-    statusType: will_buff
+  - type: apply_condition
+    conditionType: will_buff
     amount: 3
     duration: 10

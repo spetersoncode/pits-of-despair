@@ -26,6 +26,6 @@ attack:
 # charges: "1d3"          # Dice notation for charges
 # rechargeTurns: 10       # Turns to recharge 1 charge
 # effects:
-#   - type: apply_status
-#     statusType: poison
+#   - type: apply_condition
+#     conditionType: poison
 #     durationDice: "2d3"

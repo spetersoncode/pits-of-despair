@@ -4,26 +4,26 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Status;
+namespace PitsOfDespair.Conditions;
 
 /// <summary>
-/// Generic status that temporarily increases an entity's stats (Armor, Strength, Agility, or Endurance).
+/// Generic condition that temporarily increases an entity's stats (Armor, Strength, Agility, or Endurance).
 /// Uses a unified implementation to eliminate code duplication across stat-specific buff classes.
 /// </summary>
-public class StatBuffStatus : Status
+public class StatBuffCondition : Condition
 {
     /// <summary>
-    /// Which stat this status buffs.
+    /// Which stat this condition buffs.
     /// </summary>
     public StatType Stat { get; set; }
 
     /// <summary>
-    /// Amount of stat bonus provided by this status.
+    /// Amount of stat bonus provided by this condition.
     /// </summary>
     public int Amount { get; set; }
 
     /// <summary>
-    /// Unique source identifier for this status instance.
+    /// Unique source identifier for this condition instance.
     /// Used to track the modifier in StatsComponent.
     /// </summary>
     private string? _sourceId;
@@ -35,7 +35,7 @@ public class StatBuffStatus : Status
     /// <summary>
     /// Parameterless constructor for deserialization.
     /// </summary>
-    public StatBuffStatus()
+    public StatBuffCondition()
     {
         Stat = StatType.Armor;
         Amount = 1;
@@ -48,24 +48,24 @@ public class StatBuffStatus : Status
     /// <param name="stat">The stat type to buff.</param>
     /// <param name="amount">The amount to increase the stat by.</param>
     /// <param name="duration">Duration as dice notation (e.g., "10", "2d3").</param>
-    public StatBuffStatus(StatType stat, int amount, string duration)
+    public StatBuffCondition(StatType stat, int amount, string duration)
     {
         Stat = stat;
         Amount = amount;
         Duration = duration;
     }
 
-    public override StatusMessage OnApplied(BaseEntity target)
+    public override ConditionMessage OnApplied(BaseEntity target)
     {
         var stats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
         if (stats == null)
         {
-            GD.PrintErr($"StatBuffStatus: {target.DisplayName} has no StatsComponent");
-            return StatusMessage.Empty;
+            GD.PrintErr($"StatBuffCondition: {target.DisplayName} has no StatsComponent");
+            return ConditionMessage.Empty;
         }
 
-        // Create unique source ID for this status instance
-        _sourceId = $"status_{TypeId}_{Guid.NewGuid()}";
+        // Create unique source ID for this condition instance
+        _sourceId = $"condition_{TypeId}_{Guid.NewGuid()}";
 
         // Apply modifier based on stat type
         switch (Stat)
@@ -84,23 +84,23 @@ public class StatBuffStatus : Status
                 break;
         }
 
-        return new StatusMessage(
+        return new ConditionMessage(
             $"{Stat} increased by {Amount}!",
             Palette.ToHex(Palette.StatusBuff)
         );
     }
 
-    public override StatusMessage OnRemoved(BaseEntity target)
+    public override ConditionMessage OnRemoved(BaseEntity target)
     {
         if (string.IsNullOrEmpty(_sourceId))
         {
-            return StatusMessage.Empty;
+            return ConditionMessage.Empty;
         }
 
         var stats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
         if (stats == null)
         {
-            return StatusMessage.Empty;
+            return ConditionMessage.Empty;
         }
 
         // Remove modifier based on stat type
@@ -120,7 +120,7 @@ public class StatBuffStatus : Status
                 break;
         }
 
-        return new StatusMessage(
+        return new ConditionMessage(
             $"{Stat} buff has worn off.",
             Palette.ToHex(Palette.Default)
         );

@@ -49,7 +49,7 @@ public partial class GameHUD : Control
     private CursorTargetingSystem _cursorSystem;
     private AutoExploreSystem _autoExploreSystem;
     private Components.StatsComponent _playerStats;
-    private Components.StatusComponent _statusComponent;
+    private Components.ConditionComponent _conditionComponent;
     private Systems.EntityManager _entityManager;
 
     // New systems for decoupling
@@ -167,10 +167,10 @@ public partial class GameHUD : Control
 
         player.Connect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));
 
-        _statusComponent = player.GetNodeOrNull<Components.StatusComponent>("StatusComponent");
-        if (_statusComponent != null)
+        _conditionComponent = player.GetNodeOrNull<Components.ConditionComponent>("ConditionComponent");
+        if (_conditionComponent != null)
         {
-            _statusComponent.Connect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
+            _conditionComponent.Connect(Components.ConditionComponent.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
         _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
@@ -765,9 +765,9 @@ public partial class GameHUD : Control
         }
 
         // Disconnect from player components
-        if (_statusComponent != null)
+        if (_conditionComponent != null)
         {
-            _statusComponent.Disconnect(Components.StatusComponent.SignalName.StatusMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
+            _conditionComponent.Disconnect(Components.ConditionComponent.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
         // Disconnect from new systems

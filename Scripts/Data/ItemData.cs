@@ -426,7 +426,7 @@ public class ItemData
 
     /// <summary>
     /// Determines if this item requires targeting when activated.
-    /// Currently, items with "confusion" status effects require targeting.
+    /// Currently, items with "confusion" condition effects require targeting.
     /// </summary>
     public bool RequiresTargeting()
     {
@@ -440,9 +440,9 @@ public class ItemData
                 return true;
             }
 
-            // apply_status with confusion requires targeting
-            if (effectType == "apply_status" &&
-                effectDef.StatusType?.ToLower() == "confusion")
+            // apply_condition with confusion requires targeting
+            if (effectType == "apply_condition" &&
+                effectDef.ConditionType?.ToLower() == "confusion")
             {
                 return true;
             }
@@ -499,21 +499,21 @@ public class ItemData
             case "blink":
                 return new BlinkEffect(definition.Range);
 
-            case "apply_status":
-                // Generic status effect - uses StatusType and duration from definition
-                string statusType = definition.StatusType ?? string.Empty;
+            case "apply_condition":
+                // Generic condition effect - uses ConditionType and duration from definition
+                string conditionType = definition.ConditionType ?? string.Empty;
                 // Coalesce: prefer DurationDice if set, otherwise use Duration as string
                 string duration = !string.IsNullOrEmpty(definition.DurationDice)
                     ? definition.DurationDice
                     : definition.Duration.ToString();
 
-                if (string.IsNullOrEmpty(statusType))
+                if (string.IsNullOrEmpty(conditionType))
                 {
-                    GD.PrintErr($"ItemData.CreateEffect: apply_status effect in item '{Name}' has no statusType specified");
+                    GD.PrintErr($"ItemData.CreateEffect: apply_condition effect in item '{Name}' has no conditionType specified");
                     return null;
                 }
 
-                return new ApplyStatusEffect(statusType, definition.Amount, duration);
+                return new ApplyConditionEffect(conditionType, definition.Amount, duration);
 
             case "teleport":
                 return new TeleportEffect();
@@ -534,7 +534,7 @@ public class ItemData
 public class EffectDefinition
 {
     /// <summary>
-    /// The type of effect (e.g., "heal", "damage", "teleport", "apply_status").
+    /// The type of effect (e.g., "heal", "damage", "teleport", "apply_condition").
     /// </summary>
     public string Type { get; set; } = string.Empty;
 
@@ -549,7 +549,7 @@ public class EffectDefinition
     public int Range { get; set; } = 0;
 
     /// <summary>
-    /// Duration parameter for status effects (in turns).
+    /// Duration parameter for condition effects (in turns).
     /// </summary>
     public int Duration { get; set; } = 0;
 
@@ -559,7 +559,7 @@ public class EffectDefinition
     public string? DurationDice { get; set; } = null;
 
     /// <summary>
-    /// Status type for apply_status effects (e.g., "confusion", "armor_buff").
+    /// Condition type for apply_condition effects (e.g., "confusion", "armor_buff").
     /// </summary>
-    public string? StatusType { get; set; } = null;
+    public string? ConditionType { get; set; } = null;
 }

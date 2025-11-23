@@ -3,7 +3,7 @@ type: potion
 color: PotionAgility
 description: Bright teal flows endlessly within itself. Holding it makes your fingers twitch.
 effects:
-  - type: apply_status
-    statusType: agility_buff
+  - type: apply_condition
+    conditionType: agility_buff
     amount: 2
     duration: 10

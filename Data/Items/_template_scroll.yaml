@@ -14,11 +14,11 @@ effects:
 
 # === OPTIONAL FIELDS ===
 # effects can have multiple entries:
-#   - type: heal / damage / apply_status / blink / teleport / summon / identify
+#   - type: heal / damage / apply_condition / blink / teleport / summon / identify
 #     amount: 8
 #     duration: 40
 #     durationDice: "2d3"
-#     statusType: confusion
+#     conditionType: confusion
 #     range: 8
 #     damageType: fire
 # isConsumable: true      # Always true for scrolls (default)

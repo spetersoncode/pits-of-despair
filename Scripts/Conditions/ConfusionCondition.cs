@@ -5,14 +5,14 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Status;
+namespace PitsOfDespair.Conditions;
 
 /// <summary>
-/// Status that causes an entity to wander randomly for a duration.
+/// Condition that causes an entity to wander randomly for a duration.
 /// Confused entities lose their current goal and move randomly like rats.
 /// Uses the goal stack system - clears the stack and only allows wandering.
 /// </summary>
-public class ConfusionStatus : Status
+public class ConfusionCondition : Condition
 {
 	public override string Name => "Confused";
 
@@ -21,7 +21,7 @@ public class ConfusionStatus : Status
 	/// <summary>
 	/// Parameterless constructor with default values.
 	/// </summary>
-	public ConfusionStatus()
+	public ConfusionCondition()
 	{
 		Duration = "4";
 	}
@@ -30,18 +30,18 @@ public class ConfusionStatus : Status
 	/// Parameterized constructor for creating confusion with specific duration.
 	/// </summary>
 	/// <param name="duration">Duration as dice notation (e.g., "4", "2d3").</param>
-	public ConfusionStatus(string duration)
+	public ConfusionCondition(string duration)
 	{
 		Duration = duration;
 	}
 
-	public override StatusMessage OnApplied(BaseEntity target)
+	public override ConditionMessage OnApplied(BaseEntity target)
 	{
 		var aiComponent = target.GetNodeOrNull<AIComponent>("AIComponent");
 		if (aiComponent == null)
 		{
-			GD.PrintErr($"ConfusionStatus: {target.DisplayName} has no AIComponent");
-			return StatusMessage.Empty;
+			GD.PrintErr($"ConfusionCondition: {target.DisplayName} has no AIComponent");
+			return ConditionMessage.Empty;
 		}
 
 		// Clear goal stack and push a wander-only goal
@@ -49,31 +49,31 @@ public class ConfusionStatus : Status
 		aiComponent.GoalStack.Clear();
 		aiComponent.GoalStack.Push(new ConfusedWanderGoal());
 
-		return new StatusMessage(
+		return new ConditionMessage(
 			$"{target.DisplayName} looks confused!",
 			Palette.ToHex(Palette.StatusDebuff)
 		);
 	}
 
-	public override StatusMessage OnTurnProcessed(BaseEntity target)
+	public override ConditionMessage OnTurnProcessed(BaseEntity target)
 	{
 		// No message during turn processing (only on apply/remove)
-		return StatusMessage.Empty;
+		return ConditionMessage.Empty;
 	}
 
-	public override StatusMessage OnRemoved(BaseEntity target)
+	public override ConditionMessage OnRemoved(BaseEntity target)
 	{
 		var aiComponent = target.GetNodeOrNull<AIComponent>("AIComponent");
 		if (aiComponent == null)
 		{
-			return StatusMessage.Empty;
+			return ConditionMessage.Empty;
 		}
 
 		// Reset goal stack to normal behavior (BoredGoal at bottom)
 		aiComponent.GoalStack.Clear();
 		aiComponent.GoalStack.Push(new BoredGoal());
 
-		return new StatusMessage(
+		return new ConditionMessage(
 			$"{target.DisplayName} is no longer confused.",
 			Palette.ToHex(Palette.Default)
 		);
@@ -81,14 +81,14 @@ public class ConfusionStatus : Status
 }
 
 /// <summary>
-/// Special goal used during confusion status.
+/// Special goal used during confusion condition.
 /// Never finishes, just wanders randomly each turn.
 /// </summary>
 internal class ConfusedWanderGoal : Goal
 {
 	public override bool IsFinished(AIContext context)
 	{
-		// Never finishes - confusion status controls when this is removed
+		// Never finishes - confusion condition controls when this is removed
 		return false;
 	}
 

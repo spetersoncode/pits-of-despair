@@ -97,12 +97,12 @@ public partial class Player : BaseEntity
         var equipComponent = new EquipComponent { Name = "EquipComponent" };
         AddChild(equipComponent);
 
-        var statusComponent = new StatusComponent
+        var conditionComponent = new ConditionComponent
         {
-            Name = "StatusComponent",
+            Name = "ConditionComponent",
             IsPlayerControlled = true
         };
-        AddChild(statusComponent);
+        AddChild(conditionComponent);
 
         Connect(SignalName.PositionChanged, Callable.From<int, int>(OnPositionChanged));
     }
