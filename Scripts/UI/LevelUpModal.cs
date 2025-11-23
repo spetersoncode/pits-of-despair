@@ -6,6 +6,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Skills;
 using PitsOfDespair.Systems.Input;
+using PitsOfDespair.Systems.Input.Processors;
 using PitsOfDespair.Systems.Input.Services;
 
 namespace PitsOfDespair.UI;
@@ -46,6 +47,7 @@ public partial class LevelUpModal : PanelContainer
     // Skills available for selection (populated after stat choice)
     private List<SkillDefinition> _availableSkills = new();
     private List<SkillDefinition> _newlyUnlockedSkills = new();
+    private Dictionary<char, SkillDefinition> _skillLetterMap = new();
 
     public override void _Ready()
     {
@@ -192,10 +194,10 @@ public partial class LevelUpModal : PanelContainer
 
         return statIndex switch
         {
-            0 => "+1 Melee Attack",  // STR
+            0 => "+1 Melee Attack, +1 Melee Damage",  // STR
             1 => "+1 Ranged Attack, +1 Evasion",  // AGI
             2 => GetHPPreview(),  // END
-            3 => "+5 Max WP",  // WIL
+            3 => "+5 Max Willpower",  // WIL
             _ => ""
         };
     }
@@ -205,7 +207,7 @@ public partial class LevelUpModal : PanelContainer
     /// </summary>
     private string GetHPPreview()
     {
-        if (_stats == null) return "+HP";
+        if (_stats == null) return "+? Max Hit Points";
 
         int currentEnd = _stats.TotalEndurance;
         int currentHPBonus = _stats.GetHPBonus();
@@ -215,7 +217,7 @@ public partial class LevelUpModal : PanelContainer
         int newHPBonus = (newEnd * newEnd + 9 * newEnd) / 2;
         int hpGain = newHPBonus - currentHPBonus;
 
-        return $"+{hpGain} HP";
+        return $"+{hpGain} Max Hit Points";
     }
 
     /// <summary>
@@ -403,21 +405,27 @@ public partial class LevelUpModal : PanelContainer
         content.AppendLine($"╚══════════════════════════════════════╝[/color][/center]");
         content.AppendLine();
 
+        // Build letter-to-skill mapping
+        _skillLetterMap.Clear();
+
         if (_availableSkills.Count == 0)
         {
             content.AppendLine($"[center][color={Palette.ToHex(Palette.Disabled)}]No skills available to learn.[/color][/center]");
         }
         else
         {
-            content.AppendLine($"[center][color={Palette.ToHex(Palette.Alert)}]Choose a skill (1-{System.Math.Min(_availableSkills.Count, 9)}):[/color][/center]");
+            char maxLetter = (char)('a' + System.Math.Min(_availableSkills.Count, 26) - 1);
+            content.AppendLine($"[center][color={Palette.ToHex(Palette.Alert)}]Choose a skill (a-{maxLetter}):[/color][/center]");
             content.AppendLine();
 
-            for (int i = 0; i < _availableSkills.Count && i < 9; i++)
+            for (int i = 0; i < _availableSkills.Count && i < 26; i++)
             {
                 var skill = _availableSkills[i];
+                char letter = (char)('a' + i);
+                _skillLetterMap[letter] = skill;
                 bool isNewlyUnlocked = _newlyUnlockedSkills.Contains(skill);
 
-                content.AppendLine(BuildSkillOption(i + 1, skill, isNewlyUnlocked));
+                content.AppendLine(BuildSkillOption(letter, skill, isNewlyUnlocked));
             }
         }
 
@@ -427,7 +435,7 @@ public partial class LevelUpModal : PanelContainer
     /// <summary>
     /// Builds a single skill option line for the skill selection UI.
     /// </summary>
-    private string BuildSkillOption(int number, SkillDefinition skill, bool isNewlyUnlocked)
+    private string BuildSkillOption(char letter, SkillDefinition skill, bool isNewlyUnlocked)
     {
         var line = new System.Text.StringBuilder();
 
@@ -436,12 +444,14 @@ public partial class LevelUpModal : PanelContainer
         string categoryColor = Palette.ToHex(Palette.Cyan);
         string costColor = skill.WillpowerCost > 0 ? Palette.ToHex(Palette.PotionWill) : Palette.ToHex(Palette.Disabled);
         string descColor = Palette.ToHex(Palette.Disabled);
-        string prereqColor = Palette.ToHex(Palette.Cyan);
 
-        // Number and name
-        line.Append($"  [color={keyColor}][{number}][/color] ");
+        // Spell out category
+        string category = skill.GetCategory() == Scripts.Skills.SkillCategory.Active ? "Active" : "Passive";
+
+        // Letter and name
+        line.Append($"  [color={keyColor}]{letter})[/color] ");
         line.Append($"[color={nameColor}]{skill.Name}[/color] ");
-        line.Append($"[color={categoryColor}]{skill.GetCategoryIndicator()}[/color]");
+        line.Append($"[color={categoryColor}]{category}[/color]");
 
         // WP cost if any
         if (skill.WillpowerCost > 0)
@@ -455,17 +465,8 @@ public partial class LevelUpModal : PanelContainer
             line.Append($" [color={Palette.ToHex(Palette.Success)}]*NEW*[/color]");
         }
 
-        line.AppendLine();
-
-        // Description
-        line.Append($"      [color={descColor}]{skill.Description}[/color]");
-
-        // Prerequisites (if any)
-        if (!skill.Prerequisites.IsUniversal())
-        {
-            line.AppendLine();
-            line.Append($"      [color={prereqColor}]Req: {skill.GetPrerequisiteString()}[/color]");
-        }
+        // Description inline
+        line.Append($" [color={descColor}]- {skill.Description}[/color]");
 
         return line.ToString();
     }
@@ -475,23 +476,16 @@ public partial class LevelUpModal : PanelContainer
     /// </summary>
     private void HandleSkillSelectionInput(InputEventKey keyEvent)
     {
-        // Check for number keys 1-9
-        int selectedIndex = -1;
+        // Check for letter key selection (a-z)
+        if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
+        {
+            selectedKey = char.ToLower(selectedKey);
 
-        if (keyEvent.Keycode >= Key.Key1 && keyEvent.Keycode <= Key.Key9)
-        {
-            selectedIndex = (int)(keyEvent.Keycode - Key.Key1);
-        }
-        else if (keyEvent.Keycode >= Key.Kp1 && keyEvent.Keycode <= Key.Kp9)
-        {
-            selectedIndex = (int)(keyEvent.Keycode - Key.Kp1);
-        }
-
-        if (selectedIndex >= 0 && selectedIndex < _availableSkills.Count)
-        {
-            var selectedSkill = _availableSkills[selectedIndex];
-            EmitSignal(SignalName.SkillChosen, selectedSkill.Id);
-            GetViewport().SetInputAsHandled();
+            if (_skillLetterMap.TryGetValue(selectedKey, out var selectedSkill))
+            {
+                EmitSignal(SignalName.SkillChosen, selectedSkill.Id);
+                GetViewport().SetInputAsHandled();
+            }
         }
     }
 
