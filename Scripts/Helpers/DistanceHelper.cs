@@ -44,12 +44,28 @@ public static class DistanceHelper
     /// - Modeling realistic sight/sound propagation
     ///
     /// Note: Returns squared distance for efficiency. To check if within range,
-    /// compare against range²: EuclideanDistance(a, b) <= range * range
+    /// use IsInEuclideanRange() or IsInRange() instead of manual comparison.
     /// </summary>
     public static int EuclideanDistance(GridPosition a, GridPosition b)
     {
         int dx = a.X - b.X;
         int dy = a.Y - b.Y;
         return dx * dx + dy * dy;
+    }
+
+    /// <summary>
+    /// Checks if two positions are within range using the specified distance metric.
+    /// Use this for range checks to ensure correct distance comparison.
+    /// </summary>
+    /// <param name="from">Starting position</param>
+    /// <param name="to">Target position</param>
+    /// <param name="range">Maximum range in tiles</param>
+    /// <param name="metric">Distance metric to use</param>
+    /// <returns>True if within range</returns>
+    public static bool IsInRange(GridPosition from, GridPosition to, int range, DistanceMetric metric)
+    {
+        return metric == DistanceMetric.Euclidean
+            ? EuclideanDistance(from, to) <= range * range
+            : ChebyshevDistance(from, to) <= range;
     }
 }

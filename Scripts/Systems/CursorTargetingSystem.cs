@@ -146,6 +146,34 @@ public partial class CursorTargetingSystem : Node
 		_visionSystem = visionSystem;
 		_mapSystem = mapSystem;
 		_entityManager = entityManager;
+
+		// Subscribe to entity removal to invalidate cached targets
+		_entityManager.Connect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));
+	}
+
+	/// <summary>
+	/// Handles entity removal by invalidating cached target references.
+	/// Prevents dead entities from persisting in the valid targets list.
+	/// </summary>
+	private void OnEntityRemoved(BaseEntity entity)
+	{
+		// Only process during active targeting
+		if (!_isActive || _validCreatureTargets == null || !_validCreatureTargets.Contains(entity))
+			return;
+
+		int removedIndex = _validCreatureTargets.IndexOf(entity);
+		_validCreatureTargets.Remove(entity);
+
+		// Adjust current creature index if needed
+		if (_validCreatureTargets.Count == 0)
+		{
+			_currentCreatureIndex = -1;
+		}
+		else if (removedIndex <= _currentCreatureIndex)
+		{
+			// If we removed the current target or one before it, adjust index
+			_currentCreatureIndex = Mathf.Max(0, _currentCreatureIndex - 1);
+		}
 	}
 
 	/// <summary>
@@ -564,5 +592,14 @@ public partial class CursorTargetingSystem : Node
 
 		// Cursor is not on a creature
 		_currentCreatureIndex = -1;
+	}
+
+	public override void _ExitTree()
+	{
+		// Disconnect from entity manager to prevent memory leaks
+		if (_entityManager != null && GodotObject.IsInstanceValid(_entityManager))
+		{
+			_entityManager.Disconnect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));
+		}
 	}
 }

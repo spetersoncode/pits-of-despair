@@ -221,10 +221,6 @@ public partial class ProjectileSystem : Node
             }
         }
 
-        if (!string.IsNullOrEmpty(result.Message))
-        {
-            GD.Print($"[ProjectileSystem] Effect applied: {result.Message}");
-        }
     }
 
     /// <summary>

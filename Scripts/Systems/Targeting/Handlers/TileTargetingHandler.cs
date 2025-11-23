@@ -38,7 +38,7 @@ public class TileTargetingHandler : TargetingHandler
                 var checkPos = new GridPosition(casterPos.X + dx, casterPos.Y + dy);
 
                 // Check range using the specified metric
-                if (!IsInRange(casterPos, checkPos, range, definition.Metric))
+                if (!DistanceHelper.IsInRange(casterPos, checkPos, range, definition.Metric))
                     continue;
 
                 // Check LOS if required
@@ -66,7 +66,7 @@ public class TileTargetingHandler : TargetingHandler
         int range = definition.Range > 0 ? definition.Range : 1;
 
         // Check range
-        if (!IsInRange(casterPos, targetPosition, range, definition.Metric))
+        if (!DistanceHelper.IsInRange(casterPos, targetPosition, range, definition.Metric))
             return false;
 
         // Check LOS if required
@@ -81,10 +81,4 @@ public class TileTargetingHandler : TargetingHandler
         return context.MapSystem.IsWalkable(targetPosition);
     }
 
-    protected bool IsInRange(GridPosition from, GridPosition to, int range, DistanceMetric metric)
-    {
-        return metric == DistanceMetric.Euclidean
-            ? DistanceHelper.EuclideanDistance(from, to) <= range
-            : DistanceHelper.ChebyshevDistance(from, to) <= range;
-    }
 }

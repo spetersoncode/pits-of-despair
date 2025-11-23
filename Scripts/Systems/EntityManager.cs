@@ -265,9 +265,14 @@ public partial class EntityManager : Node
 
     /// <summary>
     /// Updates position cache when an entity moves.
+    /// Ignores position changes from removed entities to prevent ghost cache entries.
     /// </summary>
     private void OnEntityPositionChanged(BaseEntity entity, GridPosition newPosition)
     {
+        // Ignore position changes from removed entities (prevents ghost entries)
+        if (!_entities.Contains(entity))
+            return;
+
         var oldPositionEntry = _positionCache.FirstOrDefault(kvp => kvp.Value == entity);
         if (oldPositionEntry.Value != null)
         {

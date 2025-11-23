@@ -44,7 +44,7 @@ public class CreatureTargetingHandler : TargetingHandler
             var entityPos = entity.GridPosition;
 
             // Check range
-            if (!IsInRange(casterPos, entityPos, range, definition.Metric))
+            if (!DistanceHelper.IsInRange(casterPos, entityPos, range, definition.Metric))
                 continue;
 
             // Check LOS if required
@@ -67,7 +67,7 @@ public class CreatureTargetingHandler : TargetingHandler
         int range = definition.Range > 0 ? definition.Range : 1;
 
         // Check range
-        if (!IsInRange(casterPos, targetPosition, range, definition.Metric))
+        if (!DistanceHelper.IsInRange(casterPos, targetPosition, range, definition.Metric))
             return false;
 
         // Check LOS if required
@@ -89,10 +89,4 @@ public class CreatureTargetingHandler : TargetingHandler
         return entity.GetNodeOrNull<HealthComponent>("HealthComponent") != null;
     }
 
-    private bool IsInRange(GridPosition from, GridPosition to, int range, DistanceMetric metric)
-    {
-        return metric == DistanceMetric.Euclidean
-            ? DistanceHelper.EuclideanDistance(from, to) <= range
-            : DistanceHelper.ChebyshevDistance(from, to) <= range;
-    }
 }

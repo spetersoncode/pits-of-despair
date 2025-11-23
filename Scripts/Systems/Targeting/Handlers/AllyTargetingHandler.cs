@@ -46,7 +46,7 @@ public class AllyTargetingHandler : TargetingHandler
             var entityPos = entity.GridPosition;
 
             // Check range
-            if (!IsInRange(casterPos, entityPos, range, definition.Metric))
+            if (!DistanceHelper.IsInRange(casterPos, entityPos, range, definition.Metric))
                 continue;
 
             // Check LOS if required
@@ -73,7 +73,7 @@ public class AllyTargetingHandler : TargetingHandler
             return true;
 
         // Check range
-        if (!IsInRange(casterPos, targetPosition, range, definition.Metric))
+        if (!DistanceHelper.IsInRange(casterPos, targetPosition, range, definition.Metric))
             return false;
 
         // Check LOS if required
@@ -95,10 +95,4 @@ public class AllyTargetingHandler : TargetingHandler
         return caster.Faction == target.Faction;
     }
 
-    private bool IsInRange(GridPosition from, GridPosition to, int range, DistanceMetric metric)
-    {
-        return metric == DistanceMetric.Euclidean
-            ? DistanceHelper.EuclideanDistance(from, to) <= range
-            : DistanceHelper.ChebyshevDistance(from, to) <= range;
-    }
 }

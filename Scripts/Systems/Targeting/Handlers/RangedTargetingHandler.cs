@@ -60,7 +60,7 @@ public class RangedTargetingHandler : TargetingHandler
         int range = definition.Range > 0 ? definition.Range : 1;
 
         // Check Euclidean range
-        if (DistanceHelper.EuclideanDistance(casterPos, targetPosition) > range)
+        if (!DistanceHelper.IsInRange(casterPos, targetPosition, range, DistanceMetric.Euclidean))
             return false;
 
         // Check LOS

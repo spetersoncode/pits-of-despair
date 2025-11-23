@@ -38,7 +38,7 @@ public class AreaTargetingHandler : TargetingHandler
                 var checkPos = new GridPosition(casterPos.X + dx, casterPos.Y + dy);
 
                 // Check range
-                if (!IsInRange(casterPos, checkPos, range, definition.Metric))
+                if (!DistanceHelper.IsInRange(casterPos, checkPos, range, definition.Metric))
                     continue;
 
                 // Check LOS if required
@@ -66,7 +66,7 @@ public class AreaTargetingHandler : TargetingHandler
         int range = definition.Range > 0 ? definition.Range : 1;
 
         // Check range
-        if (!IsInRange(casterPos, targetPosition, range, definition.Metric))
+        if (!DistanceHelper.IsInRange(casterPos, targetPosition, range, definition.Metric))
             return false;
 
         // Check LOS if required
@@ -128,10 +128,4 @@ public class AreaTargetingHandler : TargetingHandler
         return positions;
     }
 
-    private bool IsInRange(GridPosition from, GridPosition to, int range, DistanceMetric metric)
-    {
-        return metric == DistanceMetric.Euclidean
-            ? DistanceHelper.EuclideanDistance(from, to) <= range
-            : DistanceHelper.ChebyshevDistance(from, to) <= range;
-    }
 }

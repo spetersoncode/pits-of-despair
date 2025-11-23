@@ -90,7 +90,6 @@ public partial class SkillComponent : Node
         }
 
         EmitSignal(SignalName.SkillLearned, skillId);
-        GD.Print($"SkillComponent: Learned skill '{skillId}'");
         return true;
     }
 
