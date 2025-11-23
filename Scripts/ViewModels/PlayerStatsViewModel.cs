@@ -27,6 +27,7 @@ public partial class PlayerStatsViewModel : Node
 
 	private Player _player;
 	private HealthComponent _healthComponent;
+	private WillpowerComponent _willpowerComponent;
 	private StatsComponent _statsComponent;
 	private GoldManager _goldManager;
 
@@ -36,6 +37,13 @@ public partial class PlayerStatsViewModel : Node
 
 	public int CurrentHP { get; private set; }
 	public int MaxHP { get; private set; }
+
+	#endregion
+
+	#region Properties - Willpower
+
+	public int CurrentWP { get; private set; }
+	public int MaxWP { get; private set; }
 
 	#endregion
 
@@ -109,12 +117,18 @@ public partial class PlayerStatsViewModel : Node
 
 		// Get components
 		_healthComponent = _player.GetNodeOrNull<HealthComponent>("HealthComponent");
+		_willpowerComponent = _player.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
 		_statsComponent = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
 
 		if (_healthComponent == null)
 		{
 			GD.PushError("PlayerStatsViewModel: Player missing HealthComponent.");
 			return;
+		}
+
+		if (_willpowerComponent == null)
+		{
+			GD.PushWarning("PlayerStatsViewModel: Player missing WillpowerComponent. WP display will be disabled.");
 		}
 
 		if (_statsComponent == null)
@@ -154,6 +168,15 @@ public partial class PlayerStatsViewModel : Node
 			Callable.From<int, int>(OnHealthChanged)
 		);
 
+		// Willpower changes
+		if (_willpowerComponent != null)
+		{
+			_willpowerComponent.Connect(
+				WillpowerComponent.SignalName.WillpowerChanged,
+				Callable.From<int, int>(OnWillpowerChanged)
+			);
+		}
+
 		// Stat changes
 		_statsComponent.Connect(
 			StatsComponent.SignalName.StatsChanged,
@@ -188,6 +211,7 @@ public partial class PlayerStatsViewModel : Node
 	private void UpdateAllStats()
 	{
 		UpdateHealthStats();
+		UpdateWillpowerStats();
 		UpdateLevelAndXP();
 		UpdateBaseStats();
 		UpdateTotalStats();
@@ -199,6 +223,20 @@ public partial class PlayerStatsViewModel : Node
 	{
 		CurrentHP = _healthComponent.CurrentHP;
 		MaxHP = _healthComponent.MaxHP;
+	}
+
+	private void UpdateWillpowerStats()
+	{
+		if (_willpowerComponent != null)
+		{
+			CurrentWP = _willpowerComponent.CurrentWillpower;
+			MaxWP = _willpowerComponent.MaxWillpower;
+		}
+		else
+		{
+			CurrentWP = 0;
+			MaxWP = 0;
+		}
 	}
 
 	private void UpdateLevelAndXP()
@@ -247,6 +285,12 @@ public partial class PlayerStatsViewModel : Node
 		EmitSignal(SignalName.StatsUpdated);
 	}
 
+	private void OnWillpowerChanged(int current, int max)
+	{
+		UpdateWillpowerStats();
+		EmitSignal(SignalName.StatsUpdated);
+	}
+
 	private void OnStatsChanged()
 	{
 		UpdateLevelAndXP();
@@ -286,6 +330,14 @@ public partial class PlayerStatsViewModel : Node
 			_healthComponent.Disconnect(
 				HealthComponent.SignalName.HealthChanged,
 				Callable.From<int, int>(OnHealthChanged)
+			);
+		}
+
+		if (_willpowerComponent != null)
+		{
+			_willpowerComponent.Disconnect(
+				WillpowerComponent.SignalName.WillpowerChanged,
+				Callable.From<int, int>(OnWillpowerChanged)
 			);
 		}
 

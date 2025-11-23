@@ -20,9 +20,12 @@ public partial class SidePanel : PanelContainer
 	private static readonly Color HealthColorRed = Palette.HealthCritical;
 	private static readonly Color DefaultTextColor = Palette.Default;
 	private static readonly Color ExperienceBarColor = Palette.Gold;
+	private static readonly Color WillpowerBarColor = new Color(0.4f, 0.4f, 0.8f); // Blue-purple for willpower
 
 	private ProgressBar _healthBar;
 	private Label _healthLabel;
+	private ProgressBar _willpowerBar;
+	private Label _willpowerLabel;
 	private Label _levelLabel;
 	private ProgressBar _experienceBar;
 	private Label _experienceLabel;
@@ -43,6 +46,8 @@ public partial class SidePanel : PanelContainer
 	{
 		_healthBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/HealthBar");
 		_healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
+		_willpowerBar = GetNodeOrNull<ProgressBar>("MarginContainer/VBoxContainer/WillpowerBar");
+		_willpowerLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/WillpowerLabel");
 		_levelLabel = GetNode<Label>("MarginContainer/VBoxContainer/LevelLabel");
 		_experienceBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/ExperienceBar");
 		_experienceLabel = GetNode<Label>("MarginContainer/VBoxContainer/ExperienceLabel");
@@ -99,6 +104,7 @@ public partial class SidePanel : PanelContainer
 	private void UpdateAllDisplays()
 	{
 		UpdateHealthDisplay();
+		UpdateWillpowerDisplay();
 		UpdateLevelAndXPDisplay();
 		UpdateFloorDisplay();
 		UpdateGoldDisplay();
@@ -114,6 +120,7 @@ public partial class SidePanel : PanelContainer
 	private void OnStatsUpdated()
 	{
 		UpdateHealthDisplay();
+		UpdateWillpowerDisplay();
 		UpdateLevelAndXPDisplay();
 		UpdateFloorDisplay();
 		UpdateGoldDisplay();
@@ -177,6 +184,28 @@ public partial class SidePanel : PanelContainer
 		{
 			return HealthColorRed;
 		}
+	}
+
+	private void UpdateWillpowerDisplay()
+	{
+		if (_willpowerBar == null || _willpowerLabel == null || _statsViewModel == null)
+			return;
+
+		int current = _statsViewModel.CurrentWP;
+		int max = _statsViewModel.MaxWP;
+
+		// Update progress bar
+		_willpowerBar.MaxValue = max;
+		_willpowerBar.Value = current;
+
+		// Create StyleBoxFlat for the progress bar fill
+		var styleBox = new StyleBoxFlat();
+		styleBox.BgColor = WillpowerBarColor;
+		_willpowerBar.AddThemeStyleboxOverride("fill", styleBox);
+
+		// Update text label
+		_willpowerLabel.Text = $"WP: {current}/{max}";
+		_willpowerLabel.AddThemeColorOverride("font_color", WillpowerBarColor);
 	}
 
 	private void UpdateFloorDisplay()

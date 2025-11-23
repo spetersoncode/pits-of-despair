@@ -45,6 +45,16 @@ public class PlayerState
 
 	#endregion
 
+	#region Willpower State
+
+	/// <summary>
+	/// Current willpower at time of extraction.
+	/// Note: On floor transitions, WP is fully restored after state is applied.
+	/// </summary>
+	public int CurrentWillpower { get; set; }
+
+	#endregion
+
 	#region Inventory State
 
 	/// <summary>
@@ -112,6 +122,13 @@ public class PlayerState
 			state.Immunities = new List<DamageType>(healthComponent.Immunities);
 			state.Resistances = new List<DamageType>(healthComponent.Resistances);
 			state.Vulnerabilities = new List<DamageType>(healthComponent.Vulnerabilities);
+		}
+
+		// Extract Willpower
+		var willpowerComponent = player.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
+		if (willpowerComponent != null)
+		{
+			state.CurrentWillpower = willpowerComponent.CurrentWillpower;
 		}
 
 		// Extract Inventory
@@ -197,6 +214,14 @@ public class PlayerState
 
 			// Set CurrentHP using reflection to access private setter
 			SetPrivateProperty(healthComponent, "CurrentHP", CurrentHP);
+		}
+
+		// Apply Willpower (fully restore on floor transitions per design)
+		var willpowerComponent = player.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
+		if (willpowerComponent != null)
+		{
+			// Floor transitions grant full WP restore
+			willpowerComponent.FullRestore();
 		}
 
 		// Apply Inventory

@@ -35,6 +35,16 @@ show_percentage = false
 layout_mode = 2
 text = "HP: 20/20"
 
+[node name="WillpowerBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+value = 100.0
+show_percentage = false
+
+[node name="WillpowerLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "WP: 10/10"
+
 [node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Level: 1"

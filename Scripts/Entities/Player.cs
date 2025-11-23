@@ -89,6 +89,9 @@ public partial class Player : BaseEntity
         };
         AddChild(healthComponent);
 
+        var willpowerComponent = new WillpowerComponent { Name = "WillpowerComponent" };
+        AddChild(willpowerComponent);
+
         _inventoryComponent = new InventoryComponent { Name = "InventoryComponent" };
         AddChild(_inventoryComponent);
 

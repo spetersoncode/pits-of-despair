@@ -10,6 +10,15 @@ namespace PitsOfDespair.Components;
 /// </summary>
 public partial class StatsComponent : Node
 {
+	#region Constants
+
+	/// <summary>
+	/// Maximum value for any single stat (STR, AGI, END, WIL).
+	/// </summary>
+	public const int STAT_CAP = 12;
+
+	#endregion
+
 	#region Signals
 
 	/// <summary>
@@ -312,6 +321,40 @@ public partial class StatsComponent : Node
 	public int GetDamageBonus(bool isMelee)
 	{
 		return isMelee ? TotalStrength : 0;
+	}
+
+	/// <summary>
+	/// Checks if a stat is at the cap and cannot be increased.
+	/// </summary>
+	/// <param name="statIndex">0=STR, 1=AGI, 2=END, 3=WIL</param>
+	/// <returns>True if the stat is at or above STAT_CAP</returns>
+	public bool IsStatAtCap(int statIndex)
+	{
+		return statIndex switch
+		{
+			0 => BaseStrength >= STAT_CAP,
+			1 => BaseAgility >= STAT_CAP,
+			2 => BaseEndurance >= STAT_CAP,
+			3 => BaseWill >= STAT_CAP,
+			_ => true
+		};
+	}
+
+	/// <summary>
+	/// Gets the base value of a stat by index.
+	/// </summary>
+	/// <param name="statIndex">0=STR, 1=AGI, 2=END, 3=WIL</param>
+	/// <returns>The base stat value</returns>
+	public int GetBaseStat(int statIndex)
+	{
+		return statIndex switch
+		{
+			0 => BaseStrength,
+			1 => BaseAgility,
+			2 => BaseEndurance,
+			3 => BaseWill,
+			_ => 0
+		};
 	}
 
 	/// <summary>
