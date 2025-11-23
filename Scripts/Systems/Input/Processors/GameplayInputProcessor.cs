@@ -150,7 +150,9 @@ public class GameplayInputProcessor
     /// <summary>
     /// Called when user requests to target a skill.
     /// </summary>
-    public void StartSkillTargeting(string skillId)
+    /// <param name="skillId">The skill ID to target</param>
+    /// <param name="key">The key that was pressed to activate this skill (for spam targeting)</param>
+    public void StartSkillTargeting(string skillId, char key)
     {
         if (_player == null || _cursorSystem == null || _actionContext == null || string.IsNullOrEmpty(skillId))
             return;
@@ -170,7 +172,10 @@ public class GameplayInputProcessor
 
         // Create targeting definition from skill
         var definition = TargetingDefinition.FromSkill(skill);
-        _cursorSystem.StartTargeting(_player, definition, _actionContext);
+
+        // Convert char to Key for initiating key (enables spam targeting with same key)
+        var initiatingKey = key != '\0' ? CharToKey(key) : null;
+        _cursorSystem.StartTargeting(_player, definition, _actionContext, initiatingKey);
     }
 
     /// <summary>

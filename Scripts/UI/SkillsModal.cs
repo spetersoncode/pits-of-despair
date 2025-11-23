@@ -20,7 +20,7 @@ namespace PitsOfDespair.UI;
 public partial class SkillsModal : PanelContainer
 {
     [Signal]
-    public delegate void SkillSelectedEventHandler(string skillId);
+    public delegate void SkillSelectedEventHandler(string skillId, char key);
 
     [Signal]
     public delegate void CancelledEventHandler();
@@ -142,7 +142,7 @@ public partial class SkillsModal : PanelContainer
                 // Only allow activating active skills
                 if (selectedSkill.GetCategory() == SkillCategory.Active)
                 {
-                    EmitSignal(SignalName.SkillSelected, selectedSkill.Id);
+                    EmitSignal(SignalName.SkillSelected, selectedSkill.Id, selectedKey);
                 }
             }
 

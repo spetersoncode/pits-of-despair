@@ -35,7 +35,7 @@ public partial class GameHUD : Control
     public delegate void StartReachAttackTargetingEventHandler(char itemKey);
 
     [Signal]
-    public delegate void StartSkillTargetingEventHandler(string skillId);
+    public delegate void StartSkillTargetingEventHandler(string skillId, char key);
 
     private SidePanel _sidePanel;
     private MessageLog _messageLog;
@@ -132,7 +132,7 @@ public partial class GameHUD : Control
         if (_skillsModal != null)
         {
             _skillsModal.ConnectToPlayer(player);
-            _skillsModal.Connect(SkillsModal.SignalName.SkillSelected, Callable.From<string>(OnSkillSelected));
+            _skillsModal.Connect(SkillsModal.SignalName.SkillSelected, Callable.From<string, char>(OnSkillSelected));
             _skillsModal.Connect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
             _skillsModal.Connect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
         }
@@ -149,7 +149,7 @@ public partial class GameHUD : Control
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
-        _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartSkillTargeting, Callable.From<string>(OnStartSkillTargeting));
+        _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartSkillTargeting, Callable.From<string, char>(OnStartSkillTargeting));
 
         // Keep reference to player components and DataLoader for level-up modal
         _playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
@@ -509,9 +509,9 @@ public partial class GameHUD : Control
     /// <summary>
     /// Called when PlayerActionHandler signals that skill targeting should start.
     /// </summary>
-    private void OnStartSkillTargeting(string skillId)
+    private void OnStartSkillTargeting(string skillId, char key)
     {
-        EmitSignal(SignalName.StartSkillTargeting, skillId);
+        EmitSignal(SignalName.StartSkillTargeting, skillId, key);
         EnterTargetingMode();
     }
 
@@ -557,7 +557,7 @@ public partial class GameHUD : Control
         // No turn is consumed, no menu state to reset
     }
 
-    private void OnSkillSelected(string skillId)
+    private void OnSkillSelected(string skillId, char key)
     {
         if (_skillsModal != null)
         {
@@ -566,7 +566,7 @@ public partial class GameHUD : Control
         _currentMenuState = MenuState.None;
 
         // Delegate to PlayerActionHandler
-        _actionHandler.ActivateSkill(skillId);
+        _actionHandler.ActivateSkill(skillId, key);
     }
 
     private void OnSkillsCancelled()
@@ -927,7 +927,7 @@ public partial class GameHUD : Control
 
         if (_skillsModal != null)
         {
-            _skillsModal.Disconnect(SkillsModal.SignalName.SkillSelected, Callable.From<string>(OnSkillSelected));
+            _skillsModal.Disconnect(SkillsModal.SignalName.SkillSelected, Callable.From<string, char>(OnSkillSelected));
             _skillsModal.Disconnect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
             _skillsModal.Disconnect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
         }
@@ -976,7 +976,7 @@ public partial class GameHUD : Control
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
-            _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartSkillTargeting, Callable.From<string>(OnStartSkillTargeting));
+            _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartSkillTargeting, Callable.From<string, char>(OnStartSkillTargeting));
         }
 
         if (_autoExploreSystem != null)

@@ -41,10 +41,10 @@ public partial class PlayerActionHandler : Node
 
 	/// <summary>
 	/// Emitted when a skill requires targeting before activation.
-	/// Parameter: skill ID
+	/// Parameters: skill ID, key that activated the skill
 	/// </summary>
 	[Signal]
-	public delegate void StartSkillTargetingEventHandler(string skillId);
+	public delegate void StartSkillTargetingEventHandler(string skillId, char key);
 
 	#endregion
 
@@ -179,7 +179,8 @@ public partial class PlayerActionHandler : Node
 	/// Determines if targeting is required or if the skill can be used directly.
 	/// </summary>
 	/// <param name="skillId">ID of the skill to activate</param>
-	public void ActivateSkill(string skillId)
+	/// <param name="key">The key that was pressed to activate this skill (for targeting confirmation)</param>
+	public void ActivateSkill(string skillId, char key)
 	{
 		if (_skillComponent == null || _dataLoader == null)
 		{
@@ -228,12 +229,13 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Requires targeting - emit signal
-		EmitSignal(SignalName.StartSkillTargeting, skill.Id);
+		// Requires targeting - emit signal with key for spam targeting
+		EmitSignal(SignalName.StartSkillTargeting, skill.Id, key);
 	}
 
 	/// <summary>
 	/// Activates a skill directly from a SkillDefinition.
+	/// Used for programmatic skill activation (not via skill modal).
 	/// </summary>
 	/// <param name="skill">The skill to activate</param>
 	public void ActivateSkill(SkillDefinition skill)
@@ -264,8 +266,8 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Requires targeting - emit signal
-		EmitSignal(SignalName.StartSkillTargeting, skill.Id);
+		// Requires targeting - emit signal (no initiating key for programmatic activation)
+		EmitSignal(SignalName.StartSkillTargeting, skill.Id, '\0');
 	}
 
 	#endregion

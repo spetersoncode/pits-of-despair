@@ -65,7 +65,7 @@ public class TargetingDefinition
         Type = TargetingType.Enemy,
         Range = range,
         RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Chebyshev,
+        Metric = DistanceMetric.Euclidean,
         Filter = TargetFilter.Enemy
     };
 
@@ -77,7 +77,7 @@ public class TargetingDefinition
         Type = TargetingType.Ally,
         Range = range,
         RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Chebyshev,
+        Metric = DistanceMetric.Euclidean,
         Filter = TargetFilter.Ally
     };
 
@@ -89,7 +89,7 @@ public class TargetingDefinition
         Type = TargetingType.Tile,
         Range = range,
         RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Chebyshev,
+        Metric = DistanceMetric.Euclidean,
         Filter = TargetFilter.Tile
     };
 
@@ -102,7 +102,7 @@ public class TargetingDefinition
         Range = range,
         AreaSize = areaSize,
         RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Chebyshev,
+        Metric = DistanceMetric.Euclidean,
         Filter = TargetFilter.Tile
     };
 
@@ -220,7 +220,7 @@ public class TargetingDefinition
                 Type = TargetingType.Creature,
                 Range = range,
                 RequiresLOS = los,
-                Metric = DistanceMetric.Chebyshev,
+                Metric = DistanceMetric.Euclidean,
                 Filter = TargetFilter.Creature
             },
             "area" => Area(range, targeting.AreaSize, los),

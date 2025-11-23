@@ -100,7 +100,7 @@ public partial class InputHandler : Node
         {
             _gameHUD.Connect(GameHUD.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
             _gameHUD.Connect(GameHUD.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
-            _gameHUD.Connect(GameHUD.SignalName.StartSkillTargeting, Callable.From<string>(OnStartSkillTargeting));
+            _gameHUD.Connect(GameHUD.SignalName.StartSkillTargeting, Callable.From<string, char>(OnStartSkillTargeting));
         }
     }
 
@@ -329,9 +329,9 @@ public partial class InputHandler : Node
         _gameplayProcessor.StartReachAttackTargeting(itemKey);
     }
 
-    private void OnStartSkillTargeting(string skillId)
+    private void OnStartSkillTargeting(string skillId, char key)
     {
-        _gameplayProcessor.StartSkillTargeting(skillId);
+        _gameplayProcessor.StartSkillTargeting(skillId, key);
     }
 
     private void OnTargetConfirmed(Vector2I targetPosition)
