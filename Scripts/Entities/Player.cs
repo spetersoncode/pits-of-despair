@@ -61,7 +61,7 @@ public partial class Player : BaseEntity
     public override void _Ready()
     {
         DisplayName = "Player";
-        Description = "A condemned prisoner, exiled to die in these forsaken depths. Weary but determined.";
+        Description = "A condemned prisoner, exiled to die in these forsaken depths. Weary but determined to survive.";
         Glyph = "@";
         GlyphColor = Palette.Player;
         Faction = Faction.Player;
