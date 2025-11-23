@@ -202,6 +202,7 @@ public partial class GameLevel : Node
         _inputHandler.Connect(InputHandler.SignalName.DropItemRequested, Callable.From(_gameHUD.ShowDropMenu));
         _inputHandler.Connect(InputHandler.SignalName.EquipMenuRequested, Callable.From(_gameHUD.ShowEquipMenu));
         _inputHandler.Connect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
+        _inputHandler.Connect(InputHandler.SignalName.SkillsMenuRequested, Callable.From(_gameHUD.ShowSkillsMenu));
         _inputHandler.Connect(InputHandler.SignalName.DebugModeToggled, Callable.From(_gameHUD.ToggleDebugMode));
         _inputHandler.Connect(InputHandler.SignalName.DebugConsoleRequested, Callable.From(_gameHUD.RequestDebugConsole));
         _inputHandler.Connect(InputHandler.SignalName.OpenLevelUpRequested, Callable.From(_gameHUD.RequestLevelUp));
@@ -367,6 +368,7 @@ public partial class GameLevel : Node
             _inputHandler.Disconnect(InputHandler.SignalName.DropItemRequested, Callable.From(_gameHUD.ShowDropMenu));
             _inputHandler.Disconnect(InputHandler.SignalName.EquipMenuRequested, Callable.From(_gameHUD.ShowEquipMenu));
             _inputHandler.Disconnect(InputHandler.SignalName.HelpRequested, Callable.From(_gameHUD.ShowHelp));
+            _inputHandler.Disconnect(InputHandler.SignalName.SkillsMenuRequested, Callable.From(_gameHUD.ShowSkillsMenu));
             _inputHandler.Disconnect(InputHandler.SignalName.DebugModeToggled, Callable.From(_gameHUD.ToggleDebugMode));
             _inputHandler.Disconnect(InputHandler.SignalName.DebugConsoleRequested, Callable.From(_gameHUD.RequestDebugConsole));
             _inputHandler.Disconnect(InputHandler.SignalName.OpenLevelUpRequested, Callable.From(_gameHUD.RequestLevelUp));

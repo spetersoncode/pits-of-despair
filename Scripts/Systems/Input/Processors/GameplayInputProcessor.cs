@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
@@ -6,6 +7,8 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills.Targeting;
 using PitsOfDespair.Systems.Input.Services;
 using PitsOfDespair.UI;
 
@@ -24,6 +27,7 @@ public class GameplayInputProcessor
     private GameHUD _gameHUD;
     private char? _pendingItemKey = null;
     private bool _isReachAttack = false;
+    private SkillDefinition _pendingSkill = null;
 
     public GameplayInputProcessor(KeybindingService keybindingService)
     {
@@ -159,6 +163,49 @@ public class GameplayInputProcessor
     }
 
     /// <summary>
+    /// Called when user requests to target a skill.
+    /// </summary>
+    public void StartSkillTargeting(string skillId)
+    {
+        if (_player == null || _cursorSystem == null || string.IsNullOrEmpty(skillId))
+            return;
+
+        // Look up skill from DataLoader
+        var dataLoader = ((SceneTree)Engine.GetMainLoop()).Root.GetNode<DataLoader>("/root/DataLoader");
+        if (dataLoader == null)
+            return;
+
+        var skill = dataLoader.GetSkill(skillId);
+        if (skill == null)
+            return;
+
+        _pendingSkill = skill;
+        _pendingItemKey = null;
+        _isReachAttack = false;
+
+        // Get the targeting handler for this skill
+        var handler = TargetingHandler.CreateForType(skill.GetTargetingType());
+        var validPositions = handler.GetValidTargetPositions(_player, skill, _actionContext);
+
+        // Determine if this targeting type requires a creature
+        var targetingType = skill.GetTargetingType();
+        bool requiresCreature = targetingType == TargetingType.Enemy ||
+                                targetingType == TargetingType.Ally ||
+                                targetingType == TargetingType.Adjacent;
+
+        int range = skill.Range > 0 ? skill.Range : 1;
+
+        _cursorSystem.StartActionTargeting(
+            CursorTargetingSystem.TargetingMode.TargetedItem, // Reuse targeted item mode
+            _player.GridPosition,
+            range,
+            requiresCreature: requiresCreature,
+            useGridDistance: true, // Skills use grid (Chebyshev) distance
+            validPositions: new HashSet<GridPosition>(validPositions)
+        );
+    }
+
+    /// <summary>
     /// Called when targeting is confirmed. Executes the appropriate action.
     /// </summary>
     public void OnTargetConfirmed(Vector2I targetPosition)
@@ -166,7 +213,12 @@ public class GameplayInputProcessor
         if (_player == null || _actionContext == null)
             return;
 
-        if (_pendingItemKey.HasValue)
+        if (_pendingSkill != null)
+        {
+            ExecuteTargetedSkill(targetPosition);
+            _pendingSkill = null;
+        }
+        else if (_pendingItemKey.HasValue)
         {
             if (_isReachAttack)
             {
@@ -193,6 +245,16 @@ public class GameplayInputProcessor
     {
         _pendingItemKey = null;
         _isReachAttack = false;
+        _pendingSkill = null;
+    }
+
+    private void ExecuteTargetedSkill(Vector2I targetPosition)
+    {
+        if (_pendingSkill == null)
+            return;
+
+        var skillAction = new UseTargetedSkillAction(_pendingSkill, GridPosition.FromVector2I(targetPosition));
+        _player.ExecuteAction(skillAction, _actionContext);
     }
 
     private void ExecuteReachAttack(Vector2I targetPosition)

@@ -39,6 +39,9 @@ public partial class InputHandler : Node
     [Signal]
     public delegate void OpenLevelUpRequestedEventHandler();
 
+    [Signal]
+    public delegate void SkillsMenuRequestedEventHandler();
+
     // Core dependencies
     private Player _player;
     private TurnManager _turnManager;
@@ -92,11 +95,12 @@ public partial class InputHandler : Node
         _gameHUD = gameHUD;
         _gameplayProcessor.SetGameHUD(gameHUD);
 
-        // Connect to item targeting signals
+        // Connect to targeting signals
         if (_gameHUD != null)
         {
             _gameHUD.Connect(GameHUD.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
             _gameHUD.Connect(GameHUD.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
+            _gameHUD.Connect(GameHUD.SignalName.StartSkillTargeting, Callable.From<string>(OnStartSkillTargeting));
         }
     }
 
@@ -264,6 +268,11 @@ public partial class InputHandler : Node
                 GetViewport().SetInputAsHandled();
                 return true;
 
+            case InputAction.ToggleSkills:
+                EmitSignal(SignalName.SkillsMenuRequested);
+                GetViewport().SetInputAsHandled();
+                return true;
+
             default:
                 return false;
         }
@@ -318,6 +327,11 @@ public partial class InputHandler : Node
     private void OnStartReachAttackTargeting(char itemKey)
     {
         _gameplayProcessor.StartReachAttackTargeting(itemKey);
+    }
+
+    private void OnStartSkillTargeting(string skillId)
+    {
+        _gameplayProcessor.StartSkillTargeting(skillId);
     }
 
     private void OnTargetConfirmed(Vector2I targetPosition)

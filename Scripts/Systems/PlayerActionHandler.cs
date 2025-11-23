@@ -4,6 +4,8 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills.Targeting;
 
 namespace PitsOfDespair.Systems;
 
@@ -37,6 +39,13 @@ public partial class PlayerActionHandler : Node
 	[Signal]
 	public delegate void ItemReboundEventHandler(string message);
 
+	/// <summary>
+	/// Emitted when a skill requires targeting before activation.
+	/// Parameter: skill ID
+	/// </summary>
+	[Signal]
+	public delegate void StartSkillTargetingEventHandler(string skillId);
+
 	#endregion
 
 	#region State
@@ -45,6 +54,8 @@ public partial class PlayerActionHandler : Node
 	private ActionContext _actionContext;
 	private InventoryComponent _inventoryComponent;
 	private EquipComponent _equipComponent;
+	private SkillComponent _skillComponent;
+	private DataLoader _dataLoader;
 
 	#endregion
 
@@ -74,6 +85,10 @@ public partial class PlayerActionHandler : Node
 
 		_inventoryComponent = _player.GetNodeOrNull<InventoryComponent>("InventoryComponent");
 		_equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+		_skillComponent = _player.GetNodeOrNull<SkillComponent>("SkillComponent");
+
+		// Get DataLoader singleton
+		_dataLoader = ((SceneTree)Engine.GetMainLoop()).Root.GetNode<DataLoader>("/root/DataLoader");
 
 		if (_inventoryComponent == null)
 		{
@@ -83,6 +98,11 @@ public partial class PlayerActionHandler : Node
 		if (_equipComponent == null)
 		{
 			GD.PushWarning("PlayerActionHandler: Player missing EquipComponent.");
+		}
+
+		if (_skillComponent == null)
+		{
+			GD.PushWarning("PlayerActionHandler: Player missing SkillComponent.");
 		}
 	}
 
@@ -148,6 +168,88 @@ public partial class PlayerActionHandler : Node
 	{
 		var action = new EquipAction(key);
 		_player.ExecuteAction(action, _actionContext);
+	}
+
+	#endregion
+
+	#region Skill Actions
+
+	/// <summary>
+	/// Activates a skill from the player's learned skills.
+	/// Determines if targeting is required or if the skill can be used directly.
+	/// </summary>
+	/// <param name="skillId">ID of the skill to activate</param>
+	public void ActivateSkill(string skillId)
+	{
+		if (_skillComponent == null || _dataLoader == null)
+		{
+			GD.PushWarning("PlayerActionHandler: Cannot activate skill, missing SkillComponent or DataLoader.");
+			return;
+		}
+
+		// Check if skill is learned
+		if (!_skillComponent.HasSkill(skillId))
+		{
+			GD.PushWarning($"PlayerActionHandler: Skill '{skillId}' not learned.");
+			return;
+		}
+
+		var skill = _dataLoader.GetSkill(skillId);
+		if (skill == null)
+		{
+			GD.PushWarning($"PlayerActionHandler: Unknown skill '{skillId}'.");
+			return;
+		}
+
+		// Check if skill is active type
+		if (skill.GetCategory() != SkillCategory.Active)
+		{
+			GD.PushWarning($"PlayerActionHandler: Skill '{skillId}' is not an active skill.");
+			return;
+		}
+
+		// Get the targeting handler
+		var handler = TargetingHandler.CreateForType(skill.GetTargetingType());
+
+		// Check if targeting is required
+		if (!handler.RequiresSelection)
+		{
+			// Self-targeting skill - execute immediately
+			var action = new UseSkillAction(skill);
+			_player.ExecuteAction(action, _actionContext);
+			return;
+		}
+
+		// Requires targeting - emit signal
+		EmitSignal(SignalName.StartSkillTargeting, skill.Id);
+	}
+
+	/// <summary>
+	/// Activates a skill directly from a SkillDefinition.
+	/// </summary>
+	/// <param name="skill">The skill to activate</param>
+	public void ActivateSkill(SkillDefinition skill)
+	{
+		if (skill == null)
+		{
+			GD.PushWarning("PlayerActionHandler: Cannot activate null skill.");
+			return;
+		}
+
+		// Get the targeting handler
+		var handler = TargetingHandler.CreateForType(skill.GetTargetingType());
+
+		// Check if targeting is required
+		if (!handler.RequiresSelection)
+		{
+			// Self-targeting skill - execute immediately
+			var action = new UseSkillAction(skill);
+			_player.ExecuteAction(action, _actionContext);
+			return;
+		}
+
+		// Requires targeting - emit signal
+		EmitSignal(SignalName.StartSkillTargeting, skill.Id);
 	}
 
 	#endregion

@@ -50,6 +50,7 @@ public enum InputAction
     ToggleEquip,
     ToggleExamine,
     ToggleHelp,
+    ToggleSkills,
 
     // Debug
     ToggleDebug,

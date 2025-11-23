@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PitsOfDespair.Data;
 using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Components;
 
@@ -159,6 +160,62 @@ public partial class SkillComponent : Node
         }
 
         return skills;
+    }
+
+    /// <summary>
+    /// Gets all learned active skills (skills that can be manually activated).
+    /// </summary>
+    /// <param name="dataLoader">DataLoader to get skill definitions</param>
+    /// <returns>List of active skill definitions</returns>
+    public List<SkillDefinition> GetLearnedActiveSkills(DataLoader dataLoader)
+    {
+        return GetLearnedSkillDefinitions(dataLoader)
+            .Where(s => s.GetCategory() == SkillCategory.Active)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Checks if a skill can be used (learned and WP available).
+    /// </summary>
+    /// <param name="skillId">The skill ID to check</param>
+    /// <param name="dataLoader">DataLoader to get skill definition</param>
+    /// <returns>True if the skill can be used</returns>
+    public bool CanUseSkill(string skillId, DataLoader dataLoader)
+    {
+        if (!HasSkill(skillId))
+            return false;
+
+        var skill = dataLoader.GetSkill(skillId);
+        if (skill == null)
+            return false;
+
+        // Only active skills can be used
+        if (skill.GetCategory() != SkillCategory.Active)
+            return false;
+
+        // Check WP cost
+        var parent = GetParent<BaseEntity>();
+        var willpower = parent?.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
+        if (willpower == null)
+            return false;
+
+        return willpower.CurrentWillpower >= skill.WillpowerCost;
+    }
+
+    /// <summary>
+    /// Gets skills that can currently be used (learned, active, sufficient WP).
+    /// </summary>
+    /// <param name="dataLoader">DataLoader to get skill definitions</param>
+    /// <returns>List of usable skill definitions</returns>
+    public List<SkillDefinition> GetUsableSkills(DataLoader dataLoader)
+    {
+        var parent = GetParent<BaseEntity>();
+        var willpower = parent?.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
+        int currentWP = willpower?.CurrentWillpower ?? 0;
+
+        return GetLearnedActiveSkills(dataLoader)
+            .Where(s => s.WillpowerCost <= currentWP)
+            .ToList();
     }
 
     #endregion

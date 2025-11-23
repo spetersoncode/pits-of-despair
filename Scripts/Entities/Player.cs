@@ -48,6 +48,9 @@ public partial class Player : BaseEntity
     [Signal]
     public delegate void RangedAttackRequestedEventHandler(Vector2I origin, Vector2I target, BaseEntity targetEntity, int attackIndex);
 
+    [Signal]
+    public delegate void SkillUsedEventHandler(string skillName, bool success, string message);
+
     private MovementComponent? _movementComponent;
     private InventoryComponent? _inventoryComponent;
     private GridPosition _previousPosition;
@@ -407,5 +410,14 @@ public partial class Player : BaseEntity
     public void EmitItemDropped(string itemName, bool success, string message)
     {
         EmitSignal(SignalName.ItemDropped, itemName, success, message);
+    }
+
+    /// <summary>
+    /// Emits skill usage feedback signals.
+    /// Used by UseSkillAction to maintain consistent event signaling.
+    /// </summary>
+    public void EmitSkillUsed(string skillName, bool success, string message)
+    {
+        EmitSignal(SignalName.SkillUsed, skillName, success, message);
     }
 }

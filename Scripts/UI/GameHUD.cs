@@ -19,7 +19,8 @@ public enum MenuState
     Drop,
     Equip,
     ItemDetail,
-    LevelUpChoice
+    LevelUpChoice,
+    Skills
 }
 
 /// <summary>
@@ -33,6 +34,9 @@ public partial class GameHUD : Control
     [Signal]
     public delegate void StartReachAttackTargetingEventHandler(char itemKey);
 
+    [Signal]
+    public delegate void StartSkillTargetingEventHandler(string skillId);
+
     private SidePanel _sidePanel;
     private MessageLog _messageLog;
     private InventoryModal _inventoryPanel;
@@ -44,6 +48,7 @@ public partial class GameHUD : Control
     private EntityDetailModal _entityDetailModal;
     private DebugConsoleModal _debugConsoleModal;
     private LevelUpModal _levelUpModal;
+    private SkillsModal _skillsModal;
     private Player _player;
     private MenuState _currentMenuState = MenuState.None;
     private CursorTargetingSystem _cursorSystem;
@@ -72,6 +77,7 @@ public partial class GameHUD : Control
         _entityDetailModal = GetNode<EntityDetailModal>("EntityDetailModal");
         _debugConsoleModal = GetNode<DebugConsoleModal>("DebugConsoleModal");
         _levelUpModal = GetNode<LevelUpModal>("LevelUpModal");
+        _skillsModal = GetNodeOrNull<SkillsModal>("SkillsModal");
     }
 
     /// <summary>
@@ -123,6 +129,13 @@ public partial class GameHUD : Control
         _equipPanel.Connect(EquipModal.SignalName.Cancelled, Callable.From(OnEquipItemCancelled));
         _helpModal.Connect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
 
+        if (_skillsModal != null)
+        {
+            _skillsModal.ConnectToPlayer(player);
+            _skillsModal.Connect(SkillsModal.SignalName.SkillSelected, Callable.From<string>(OnSkillSelected));
+            _skillsModal.Connect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
+        }
+
         _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
         _levelUpModal.Connect(LevelUpModal.SignalName.SkillChosen, Callable.From<string>(OnSkillChosen));
 
@@ -135,6 +148,7 @@ public partial class GameHUD : Control
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
         _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
+        _actionHandler.Connect(Systems.PlayerActionHandler.SignalName.StartSkillTargeting, Callable.From<string>(OnStartSkillTargeting));
 
         // Keep reference to player components and DataLoader for level-up modal
         _playerStats = player.GetNodeOrNull<Components.StatsComponent>("StatsComponent");
@@ -332,6 +346,25 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
+    /// Shows the skills menu.
+    /// Called by InputHandler when 'Z' is pressed.
+    /// </summary>
+    public void ShowSkillsMenu()
+    {
+        if (_skillsModal == null)
+            return;
+
+        // Close any open menus first
+        if (_currentMenuState != MenuState.None && _currentMenuState != MenuState.Skills)
+        {
+            CloseAllMenus();
+        }
+
+        _skillsModal.ShowMenu();
+        _currentMenuState = MenuState.Skills;
+    }
+
+    /// <summary>
     /// Shows the help modal, or hides it if already visible.
     /// Called by InputHandler when '?' is pressed.
     /// </summary>
@@ -463,6 +496,15 @@ public partial class GameHUD : Control
         EnterTargetingMode();
     }
 
+    /// <summary>
+    /// Called when PlayerActionHandler signals that skill targeting should start.
+    /// </summary>
+    private void OnStartSkillTargeting(string skillId)
+    {
+        EmitSignal(SignalName.StartSkillTargeting, skillId);
+        EnterTargetingMode();
+    }
+
     private void OnActivateItemCancelled()
     {
         _activateItemPanel.HideMenu();
@@ -505,6 +547,27 @@ public partial class GameHUD : Control
         // No turn is consumed, no menu state to reset
     }
 
+    private void OnSkillSelected(string skillId)
+    {
+        if (_skillsModal != null)
+        {
+            _skillsModal.HideMenu();
+        }
+        _currentMenuState = MenuState.None;
+
+        // Delegate to PlayerActionHandler
+        _actionHandler.ActivateSkill(skillId);
+    }
+
+    private void OnSkillsCancelled()
+    {
+        if (_skillsModal != null)
+        {
+            _skillsModal.HideMenu();
+        }
+        _currentMenuState = MenuState.None;
+    }
+
     /// <summary>
     /// Closes all open menus and resets menu state.
     /// </summary>
@@ -515,6 +578,7 @@ public partial class GameHUD : Control
         _dropItemPanel.HideMenu();
         _equipPanel.HideMenu();
         _itemDetailModal.HideMenu();
+        _skillsModal?.HideMenu();
         _currentMenuState = MenuState.None;
     }
 
@@ -805,6 +869,12 @@ public partial class GameHUD : Control
             _helpModal.Disconnect(HelpModal.SignalName.Cancelled, Callable.From(OnHelpCancelled));
         }
 
+        if (_skillsModal != null)
+        {
+            _skillsModal.Disconnect(SkillsModal.SignalName.SkillSelected, Callable.From<string>(OnSkillSelected));
+            _skillsModal.Disconnect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
+        }
+
         if (_levelUpModal != null)
         {
             _levelUpModal.Disconnect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
@@ -848,6 +918,7 @@ public partial class GameHUD : Control
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.ItemRebound, Callable.From<string>(OnItemReboundMessage));
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartItemTargeting, Callable.From<char>(OnStartItemTargeting));
             _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartReachAttackTargeting, Callable.From<char>(OnStartReachAttackTargeting));
+            _actionHandler.Disconnect(Systems.PlayerActionHandler.SignalName.StartSkillTargeting, Callable.From<string>(OnStartSkillTargeting));
         }
 
         if (_autoExploreSystem != null)

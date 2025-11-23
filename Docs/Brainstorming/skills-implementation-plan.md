@@ -105,60 +105,60 @@ Checklist document for implementing the Skills system. Each phase builds on the 
 
 ---
 
-## Phase 4: Active Skill Execution
+## Phase 4: Active Skill Execution ✓
 
 ### Session 4A: Skill Action Framework
-- [ ] `SkillAction.cs` - **CREATE** (extends Action)
-  - [ ] Constructor takes skill ID + target info
-  - [ ] `CanExecute()`: skill learned, WP available, target valid
-  - [ ] `Execute()`: spend WP, run effects, return result
-- [ ] `SkillExecutor.cs` - **CREATE** central execution logic
-  - [ ] Resolve targeting
-  - [ ] Apply all effects in sequence
-  - [ ] Handle success/failure messaging
+- [x] `SkillAction.cs` - **CREATE** (extends Action)
+  - [x] Constructor takes skill ID + target info
+  - [x] `CanExecute()`: skill learned, WP available, target valid
+  - [x] `Execute()`: spend WP, run effects, return result
+- [x] `SkillExecutor.cs` - **CREATE** central execution logic
+  - [x] Resolve targeting
+  - [x] Apply all effects in sequence
+  - [x] Handle success/failure messaging
 
 ### Session 4B: Effect System
-- [ ] `Scripts/Skills/Effects/` directory - **CREATE**
-- [ ] `SkillEffect.cs` - **CREATE** base class
-  - [ ] `Apply(caster, targets, context)` abstract method
-- [ ] `DamageEffect.cs` - Deal damage (flat, dice, scaled)
-- [ ] `HealEffect.cs` - Restore HP
-- [ ] `ApplyConditionEffect.cs` - Apply status condition
-- [ ] `TeleportEffect.cs` - Move entity to tile
-- [ ] `KnockbackEffect.cs` - Push target away
-- [ ] `ModifyStatEffect.cs` - Temporary stat change
-- [ ] `MultiTargetEffect.cs` - Wrapper for hitting multiple targets
-- [ ] `AreaEffect.cs` - Affect all entities in radius
+- [x] `Scripts/Skills/Effects/` directory - **CREATE**
+- [x] `SkillEffect.cs` - **CREATE** base class
+  - [x] `Apply(caster, targets, context)` abstract method
+- [x] `DamageEffect.cs` - Deal damage (flat, dice, scaled)
+- [x] `HealEffect.cs` - Restore HP
+- [x] `ApplyConditionEffect.cs` - Apply status condition
+- [x] `TeleportEffect.cs` - Move entity to tile
+- [x] `KnockbackEffect.cs` - Push target away
+- [ ] `ModifyStatEffect.cs` - Temporary stat change (deferred)
+- [ ] `MultiTargetEffect.cs` - Wrapper for hitting multiple targets (deferred)
+- [ ] `AreaEffect.cs` - Affect all entities in radius (deferred)
 
 ### Session 4C: Targeting System
-- [ ] `Scripts/Skills/Targeting/` directory - **CREATE**
-- [ ] `TargetingHandler.cs` - **CREATE** base class
-  - [ ] `GetValidTargets(caster, context)` → list
-  - [ ] `IsValidTarget(caster, target, context)` → bool
-- [ ] `SelfTargeting.cs` - No selection, targets caster
-- [ ] `AdjacentTargeting.cs` - 8 adjacent tiles
-- [ ] `TileTargeting.cs` - Any tile in range
-- [ ] `EnemyTargeting.cs` - Enemy entities in range
-- [ ] `AllyTargeting.cs` - Allied entities in range
-- [ ] `AreaTargeting.cs` - Select center, affect radius
-- [ ] Targeting overlay UI (highlight valid tiles)
-- [ ] Input mode: switch to targeting, click/key to confirm, Escape to cancel
+- [x] `Scripts/Skills/Targeting/` directory - **CREATE**
+- [x] `TargetingHandler.cs` - **CREATE** base class
+  - [x] `GetValidTargets(caster, context)` → list
+  - [x] `IsValidTarget(caster, target, context)` → bool
+- [x] `SelfTargeting.cs` - No selection, targets caster
+- [x] `AdjacentTargeting.cs` - 8 adjacent tiles
+- [x] `TileTargeting.cs` - Any tile in range
+- [x] `EnemyTargeting.cs` - Enemy entities in range
+- [x] `AllyTargeting.cs` - Allied entities in range
+- [x] `AreaTargeting.cs` - Select center, affect radius
+- [x] Targeting overlay UI (highlight valid tiles)
+- [x] Input mode: switch to targeting, click/key to confirm, Escape to cancel
 
 ---
 
-## Phase 5: Skill Menu UI
+## Phase 5: Skill Menu UI (In Progress)
 
 ### Session 5: Skill Menu
-- [ ] `SkillMenu.cs` - **CREATE**
-- [ ] `Scenes/UI/SkillMenu.tscn` - **CREATE**
-- [ ] Z key opens/closes menu
-- [ ] Sections: Active / Passive / Reactive / Auras
-- [ ] For each skill: name, WP cost, type indicator, description
-- [ ] Keyboard navigation (arrow keys, number keys)
-- [ ] Select active skill → close menu → enter targeting mode
-- [ ] Show "Always Active" for passives
-- [ ] Show trigger condition for reactives
-- [ ] Escape closes menu
+- [x] `SkillsModal.cs` - **CREATE**
+- [ ] `Scenes/UI/SkillsModal.tscn` - **CREATE** (needs scene in Godot editor)
+- [x] Z key opens/closes menu
+- [x] Sections: Active / Passive / Reactive / Auras
+- [x] For each skill: name, WP cost, type indicator, description
+- [x] Keyboard navigation (number keys 1-9, 0)
+- [x] Select active skill → close menu → enter targeting mode
+- [x] Show "Always Active" for passives
+- [x] Show trigger condition for reactives
+- [x] Escape closes menu
 
 ---
 

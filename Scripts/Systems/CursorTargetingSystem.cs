@@ -150,7 +150,8 @@ public partial class CursorTargetingSystem : Node
 	/// <param name="range">Maximum targeting range</param>
 	/// <param name="requiresCreature">Whether targeting requires a creature (shows warning on empty tiles)</param>
 	/// <param name="useGridDistance">Use Chebyshev (grid) distance instead of Euclidean</param>
-	public void StartActionTargeting(TargetingMode mode, GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false)
+	/// <param name="validPositions">Optional pre-calculated valid positions (overrides FOV calculation if provided)</param>
+	public void StartActionTargeting(TargetingMode mode, GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false, HashSet<GridPosition> validPositions = null)
 	{
 		if (mode == TargetingMode.Examine)
 		{
@@ -165,9 +166,16 @@ public partial class CursorTargetingSystem : Node
 		_useGridDistance = useGridDistance;
 		_isActive = true;
 
-		// Calculate valid tiles using FOV with appropriate distance metric
-		var distanceMetric = useGridDistance ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean;
-		_validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem, distanceMetric);
+		// Use provided valid positions or calculate using FOV
+		if (validPositions != null)
+		{
+			_validTiles = validPositions;
+		}
+		else
+		{
+			var distanceMetric = useGridDistance ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean;
+			_validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem, distanceMetric);
+		}
 
 		// Find all creatures in valid tiles
 		_validCreatureTargets = new List<BaseEntity>();

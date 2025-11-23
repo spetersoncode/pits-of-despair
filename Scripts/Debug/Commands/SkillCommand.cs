@@ -5,21 +5,25 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills;
+using PitsOfDespair.Skills.Targeting;
 
 namespace PitsOfDespair.Debug.Commands;
 
 /// <summary>
 /// Debug command for managing skills.
-/// Subcommands: learn, list, available
+/// Subcommands: learn, list, available, use
 /// </summary>
 public class SkillCommand : DebugCommand
 {
     public override string Name => "skill";
     public override string Description => "Manage player skills";
-    public override string Usage => "skill [learn|list|available] [skillId]";
+    public override string Usage => "skill [learn|list|available|use] [skillId]";
 
-    private static readonly string[] Subcommands = { "learn", "list", "available" };
+    private static readonly string[] Subcommands = { "learn", "list", "available", "use" };
 
     public override IReadOnlyList<string> GetArgumentSuggestions(int argIndex, string currentValue)
     {
@@ -66,8 +70,9 @@ public class SkillCommand : DebugCommand
             "learn" => ExecuteLearn(context, args),
             "list" => ExecuteList(context),
             "available" => ExecuteAvailable(context),
+            "use" => ExecuteUse(context, args),
             _ => DebugCommandResult.CreateFailure(
-                $"Unknown subcommand: {subcommand}. Use learn, list, or available.",
+                $"Unknown subcommand: {subcommand}. Use learn, list, available, or use.",
                 Palette.ToHex(Palette.Danger)
             )
         };
@@ -224,5 +229,144 @@ public class SkillCommand : DebugCommand
             string.Join("\n", lines),
             Palette.ToHex(Palette.Default)
         );
+    }
+
+    private DebugCommandResult ExecuteUse(DebugContext context, string[] args)
+    {
+        if (args.Length < 2)
+        {
+            return DebugCommandResult.CreateFailure(
+                "Usage: skill use [skillId]",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        string skillId = args[1];
+        var player = context.ActionContext.Player;
+        var skillComponent = player.GetNodeOrNull<SkillComponent>("SkillComponent");
+        var willpowerComponent = player.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
+
+        if (skillComponent == null)
+        {
+            return DebugCommandResult.CreateFailure(
+                "Player has no SkillComponent!",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        var dataLoader = ((SceneTree)Engine.GetMainLoop()).Root.GetNode<DataLoader>("/root/DataLoader");
+        if (dataLoader == null)
+        {
+            return DebugCommandResult.CreateFailure(
+                "DataLoader not found!",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        var skill = dataLoader.GetSkill(skillId);
+        if (skill == null)
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Unknown skill ID: {skillId}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        // Check if skill is learned
+        if (!skillComponent.HasSkill(skillId))
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Skill not learned: {skill.Name}. Use 'skill learn {skillId}' first.",
+                Palette.ToHex(Palette.Caution)
+            );
+        }
+
+        // Check WP cost
+        if (willpowerComponent != null && willpowerComponent.CurrentWillpower < skill.WillpowerCost)
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Not enough WP ({skill.WillpowerCost} required, have {willpowerComponent.CurrentWillpower}).",
+                Palette.ToHex(Palette.Caution)
+            );
+        }
+
+        // Resolve targets based on targeting type
+        var targetingHandler = TargetingHandler.CreateForType(skill.GetTargetingType());
+        List<BaseEntity> targets;
+
+        if (skill.GetTargetingType() == TargetingType.Self)
+        {
+            targets = new List<BaseEntity> { player };
+        }
+        else
+        {
+            // For debug, find nearest enemy for enemy-targeting skills
+            targets = FindDebugTargets(player, skill, targetingHandler, context);
+        }
+
+        if (targets.Count == 0 && skill.GetTargetingType() != TargetingType.Self)
+        {
+            return DebugCommandResult.CreateFailure(
+                $"No valid targets found for {skill.Name}.",
+                Palette.ToHex(Palette.Caution)
+            );
+        }
+
+        // Execute the skill
+        var result = SkillExecutor.ExecuteSkill(player, skill, targets, context.ActionContext);
+
+        if (result.Success)
+        {
+            string targetInfo = targets.Count > 0 ? $" on {string.Join(", ", targets.Select(t => t.DisplayName))}" : "";
+            return DebugCommandResult.CreateSuccess(
+                $"Used [b]{skill.Name}[/b]{targetInfo}\n{result.GetCombinedMessage()}",
+                Palette.ToHex(Palette.Success)
+            );
+        }
+        else
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Failed to use {skill.Name}: {result.GetCombinedMessage()}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+    }
+
+    private List<BaseEntity> FindDebugTargets(
+        BaseEntity player,
+        SkillDefinition skill,
+        TargetingHandler handler,
+        DebugContext context)
+    {
+        var validPositions = handler.GetValidTargetPositions(player, skill, context.ActionContext);
+
+        if (validPositions.Count == 0)
+            return new List<BaseEntity>();
+
+        // Sort by distance and return entities at closest valid positions
+        var playerPos = player.GridPosition;
+        var sortedPositions = validPositions
+            .OrderBy(p => DistanceHelper.ChebyshevDistance(playerPos, p))
+            .ToList();
+
+        // For enemy targeting, find the closest enemy
+        foreach (var pos in sortedPositions)
+        {
+            var entity = context.ActionContext.EntityManager.GetEntityAtPosition(pos);
+            if (entity != null)
+            {
+                return handler.GetAffectedEntities(player, pos, skill, context.ActionContext);
+            }
+        }
+
+        // If no entity found but positions exist (e.g., tile targeting), return empty
+        // or handle based on targeting type
+        if (skill.GetTargetingType() == TargetingType.Tile && sortedPositions.Count > 0)
+        {
+            // For tile targeting without a target entity, still return the position's entities
+            return handler.GetAffectedEntities(player, sortedPositions[0], skill, context.ActionContext);
+        }
+
+        return new List<BaseEntity>();
     }
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://dhxcfbllslpbg"]
+[gd_scene load_steps=14 format=3 uid="uid://dhxcfbllslpbg"]
 
 [ext_resource type="Script" uid="uid://bea0co2ut1ptd" path="res://Scripts/UI/GameHUD.cs" id="1"]
 [ext_resource type="PackedScene" uid="uid://cr4kky5x07a1s" path="res://Scenes/UI/SidePanel.tscn" id="2"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://7cfusfi6fop6" path="res://Scenes/UI/DebugConsoleModal.tscn" id="11"]
 [ext_resource type="PackedScene" uid="uid://d2v4e3hq07e5b" path="res://Scenes/UI/LevelUpModal.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/EntityDetailModal.tscn" id="13"]
+[ext_resource type="PackedScene" uid="uid://cj6u6eje7c2ms" path="res://Scenes/UI/SkillsModal.tscn" id="14"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -76,4 +77,7 @@ layout_mode = 1
 layout_mode = 1
 
 [node name="EntityDetailModal" parent="." instance=ExtResource("13")]
+layout_mode = 1
+
+[node name="SkillsModal" parent="." instance=ExtResource("14")]
 layout_mode = 1

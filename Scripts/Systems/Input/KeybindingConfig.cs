@@ -56,6 +56,7 @@ public static class KeybindingConfig
         { InputAction.ToggleDrop, new() { Key.D } },
         { InputAction.ToggleEquip, new() { Key.E } },
         { InputAction.ToggleExamine, new() { Key.X } },
+        { InputAction.ToggleSkills, new() { Key.Z } },
         // Note: Help uses Shift+Slash, handled via ModifierKeybindings
 
         // Debug
