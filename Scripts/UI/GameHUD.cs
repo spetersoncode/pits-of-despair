@@ -55,6 +55,7 @@ public partial class GameHUD : Control
     // New systems for decoupling
     private Systems.LevelUpSystem _levelUpSystem;
     private Systems.PlayerActionHandler _actionHandler;
+    private int _floorDepth;
 
     public override void _Ready()
     {
@@ -90,6 +91,7 @@ public partial class GameHUD : Control
         _player = player;
         _levelUpSystem = levelUpSystem;
         _actionHandler = actionHandler;
+        _floorDepth = floorDepth;
 
         // Note: SidePanel is now initialized separately in GameLevel
 
@@ -173,7 +175,15 @@ public partial class GameHUD : Control
             _conditionComponent.Connect(Components.ConditionComponent.SignalName.ConditionMessage, Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color)));
         }
 
-        _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
+        // Show welcome message only on floor 1, descent message on subsequent floors
+        if (_floorDepth == 1)
+        {
+            _messageLog.AddMessage("Welcome to the Pits of Despair. Don't even think about trying to escape. (? for help)");
+        }
+        else
+        {
+            _messageLog.AddMessage($"You descend to floor {_floorDepth}. The darkness grows deeper...");
+        }
     }
 
     /// <summary>

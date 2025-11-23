@@ -150,6 +150,15 @@ public partial class PlayerVisionSystem : Node
     }
 
     /// <summary>
+    /// Forces vision recalculation from current player position.
+    /// Used by debug commands and other systems that bypass normal turn flow.
+    /// </summary>
+    public void ForceRecalculateVision()
+    {
+        CalculateVision();
+    }
+
+    /// <summary>
     /// Toggles reveal mode debug feature.
     /// When enabled, reveals the entire map.
     /// </summary>
