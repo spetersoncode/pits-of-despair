@@ -500,9 +500,12 @@ public class ItemData
                 return new BlinkEffect(definition.Range);
 
             case "apply_status":
-                // Generic status effect - uses StatusType and DurationDice from definition
+                // Generic status effect - uses StatusType and duration from definition
                 string statusType = definition.StatusType ?? string.Empty;
-                string durationDice = definition.DurationDice ?? string.Empty;
+                // Coalesce: prefer DurationDice if set, otherwise use Duration as string
+                string duration = !string.IsNullOrEmpty(definition.DurationDice)
+                    ? definition.DurationDice
+                    : definition.Duration.ToString();
 
                 if (string.IsNullOrEmpty(statusType))
                 {
@@ -510,7 +513,7 @@ public class ItemData
                     return null;
                 }
 
-                return new ApplyStatusEffect(statusType, definition.Amount, definition.Duration, durationDice);
+                return new ApplyStatusEffect(statusType, definition.Amount, duration);
 
             case "teleport":
                 return new TeleportEffect();

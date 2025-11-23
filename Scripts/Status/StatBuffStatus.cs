@@ -39,13 +39,16 @@ public class StatBuffStatus : Status
     {
         Stat = StatType.Armor;
         Amount = 1;
-        Duration = 10;
+        Duration = "10";
     }
 
     /// <summary>
     /// Parameterized constructor for creating specific stat buffs.
     /// </summary>
-    public StatBuffStatus(StatType stat, int amount, int duration)
+    /// <param name="stat">The stat type to buff.</param>
+    /// <param name="amount">The amount to increase the stat by.</param>
+    /// <param name="duration">Duration as dice notation (e.g., "10", "2d3").</param>
+    public StatBuffStatus(StatType stat, int amount, string duration)
     {
         Stat = stat;
         Amount = amount;

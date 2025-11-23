@@ -1,6 +1,7 @@
 using PitsOfDespair.Actions;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Core;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Status;
 
@@ -50,14 +51,24 @@ public abstract class Status
     public abstract string TypeId { get; }
 
     /// <summary>
-    /// Total duration of this status in turns.
+    /// Duration of this status as dice notation (e.g., "10", "2d3", "1d4+2").
+    /// Resolved via DiceRoller when the status is applied.
     /// </summary>
-    public int Duration { get; set; }
+    public string Duration { get; set; } = "1";
 
     /// <summary>
     /// Remaining turns before this status expires.
     /// </summary>
     public int RemainingTurns { get; set; }
+
+    /// <summary>
+    /// Resolves the duration by rolling dice notation.
+    /// Called by StatusComponent when adding this status.
+    /// </summary>
+    public int ResolveDuration()
+    {
+        return DiceRoller.Roll(Duration);
+    }
 
     /// <summary>
     /// Called when this status is first applied to an entity.
@@ -91,16 +102,16 @@ public abstract class Status
     }
 
     /// <summary>
-    /// Refreshes the duration of this status.
+    /// Refreshes the remaining turns of this status.
     /// Used when the same status type is applied again.
+    /// Only extends if the new duration is longer than remaining.
     /// </summary>
-    /// <param name="newDuration">The new duration to set.</param>
+    /// <param name="newDuration">The resolved duration to compare/set.</param>
     public void RefreshDuration(int newDuration)
     {
         if (newDuration > RemainingTurns)
         {
             RemainingTurns = newDuration;
-            Duration = newDuration;
         }
     }
 }

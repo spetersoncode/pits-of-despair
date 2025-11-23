@@ -23,14 +23,14 @@ public class ConfusionStatus : Status
 	/// </summary>
 	public ConfusionStatus()
 	{
-		// Duration will be set by the effect (2d3)
-		Duration = 4;
+		Duration = "4";
 	}
 
 	/// <summary>
 	/// Parameterized constructor for creating confusion with specific duration.
 	/// </summary>
-	public ConfusionStatus(int duration)
+	/// <param name="duration">Duration as dice notation (e.g., "4", "2d3").</param>
+	public ConfusionStatus(string duration)
 	{
 		Duration = duration;
 	}

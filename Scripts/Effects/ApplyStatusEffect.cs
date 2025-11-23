@@ -3,7 +3,6 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Helpers;
 using PitsOfDespair.Status;
 
 namespace PitsOfDespair.Effects;
@@ -24,14 +23,10 @@ public class ApplyStatusEffect : Effect
     public int Amount { get; set; }
 
     /// <summary>
-    /// Duration of the status in turns.
+    /// Duration as dice notation (e.g., "10", "2d3").
+    /// Resolved by the Status when applied.
     /// </summary>
-    public int Duration { get; set; }
-
-    /// <summary>
-    /// Dice notation for duration (e.g., "2d3"). Overrides Duration if specified.
-    /// </summary>
-    public string DurationDice { get; set; }
+    public string Duration { get; set; }
 
     public override string Name => "Apply Status";
 
@@ -39,16 +34,14 @@ public class ApplyStatusEffect : Effect
     {
         StatusType = string.Empty;
         Amount = 0;
-        Duration = 0;
-        DurationDice = string.Empty;
+        Duration = "1";
     }
 
-    public ApplyStatusEffect(string statusType, int amount, int duration, string durationDice = "")
+    public ApplyStatusEffect(string statusType, int amount, string duration)
     {
         StatusType = statusType;
         Amount = amount;
         Duration = duration;
-        DurationDice = durationDice;
     }
 
     public override EffectResult Apply(BaseEntity target, ActionContext context)
@@ -65,15 +58,9 @@ public class ApplyStatusEffect : Effect
             );
         }
 
-        // Determine actual duration (roll dice if specified, otherwise use Duration)
-        int actualDuration = Duration;
-        if (!string.IsNullOrEmpty(DurationDice))
-        {
-            actualDuration = DiceRoller.Roll(DurationDice);
-        }
-
         // Create the appropriate status based on type
-        var status = CreateStatus(StatusType, Amount, actualDuration);
+        // Duration resolution is handled by the Status itself via StatusComponent
+        var status = CreateStatus(StatusType, Amount, Duration);
         if (status == null)
         {
             GD.PrintErr($"ApplyStatusEffect: Unknown status type '{StatusType}'");
@@ -98,7 +85,7 @@ public class ApplyStatusEffect : Effect
     /// <summary>
     /// Factory method to create Status instances from type string.
     /// </summary>
-    private Status.Status? CreateStatus(string statusType, int amount, int duration)
+    private Status.Status? CreateStatus(string statusType, int amount, string duration)
     {
         switch (statusType.ToLower())
         {

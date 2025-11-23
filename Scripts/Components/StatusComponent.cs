@@ -133,15 +133,16 @@ public partial class StatusComponent : Node
         if (existingStatus != null)
         {
             // Refresh duration instead of stacking
-            existingStatus.RefreshDuration(status.Duration);
-            var refreshMessage = $"{status.Name} duration refreshed to {status.Duration} turns.";
+            var resolvedDuration = status.ResolveDuration();
+            existingStatus.RefreshDuration(resolvedDuration);
+            var refreshMessage = $"{status.Name} duration refreshed to {resolvedDuration} turns.";
             EmitSignal(SignalName.StatusMessage, refreshMessage, Core.Palette.ToHex(Core.Palette.StatusNeutral));
             return;
         }
 
         // Add new status
         _activeStatuses.Add(status);
-        status.RemainingTurns = status.Duration;
+        status.RemainingTurns = status.ResolveDuration();
 
         // Apply status effects and get message
         var target = GetParent() as Entities.BaseEntity;
