@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems;
 using System.Collections.Generic;
 
 namespace PitsOfDespair.Components;
@@ -83,6 +84,21 @@ public partial class HealthComponent : Node, IAIEventHandler
 
     private BaseEntity? _entity;
     private StatsComponent? _stats;
+    private TurnManager? _turnManager;
+    private bool _turnSignalConnected = false;
+
+    /// <summary>
+    /// Accumulated regeneration points. At 100 points, heal 1 HP.
+    /// Uses DCSS-style regeneration system.
+    /// </summary>
+    private int _regenPoints = 0;
+
+    /// <summary>
+    /// Base regeneration rate per turn (before modifiers).
+    /// Formula: 20 + MaxHP / 6
+    /// At 100 points accumulated, heal 1 HP.
+    /// </summary>
+    public int BaseRegenRate => 20 + MaxHP / 6;
 
     public override void _Ready()
     {
@@ -97,6 +113,101 @@ public partial class HealthComponent : Node, IAIEventHandler
         if (_stats != null)
         {
             _stats.Connect(StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
+        }
+
+        // Connect to turn signals for passive regeneration
+        ConnectToTurnManager();
+    }
+
+    /// <summary>
+    /// Connects to TurnManager for passive regeneration.
+    /// Player entities connect to PlayerTurnStarted, creatures to CreatureTurnsStarted.
+    /// </summary>
+    private void ConnectToTurnManager()
+    {
+        if (_turnSignalConnected)
+            return;
+
+        // Find TurnManager by traversing up to GameLevel
+        Node current = this;
+        while (current != null)
+        {
+            if (current.Name == "GameLevel")
+            {
+                _turnManager = current.GetNodeOrNull<TurnManager>("TurnManager");
+                break;
+            }
+            current = current.GetParent();
+        }
+
+        if (_turnManager == null)
+        {
+            // TurnManager not found - entity may be outside game context (e.g., editor preview)
+            return;
+        }
+
+        // Connect to appropriate turn signal based on entity type
+        bool isPlayer = _entity is Player;
+        if (isPlayer)
+        {
+            _turnManager.Connect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnTurnStarted));
+        }
+        else
+        {
+            _turnManager.Connect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnTurnStarted));
+        }
+
+        _turnSignalConnected = true;
+    }
+
+    public override void _ExitTree()
+    {
+        // Clean up turn signal connections
+        if (_turnManager != null && _turnSignalConnected)
+        {
+            bool isPlayer = _entity is Player;
+            if (isPlayer)
+            {
+                _turnManager.Disconnect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnTurnStarted));
+            }
+            else
+            {
+                _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnTurnStarted));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called at the start of each turn. Processes passive regeneration.
+    /// </summary>
+    private void OnTurnStarted()
+    {
+        ProcessRegeneration();
+    }
+
+    /// <summary>
+    /// Processes passive regeneration using DCSS-style accumulating points.
+    /// Each turn adds BaseRegenRate to accumulated points.
+    /// At 100 points, heals 1 HP (excess carries over).
+    /// </summary>
+    private void ProcessRegeneration()
+    {
+        // Don't regenerate if dead or at full health
+        if (!IsAlive() || CurrentHP >= MaxHP)
+        {
+            // Reset regen points when at full health to avoid stockpiling
+            _regenPoints = 0;
+            return;
+        }
+
+        // Accumulate regeneration points
+        _regenPoints += BaseRegenRate;
+
+        // Heal 1 HP for every 100 points accumulated
+        while (_regenPoints >= 100 && CurrentHP < MaxHP)
+        {
+            Heal(1);
+            _regenPoints -= 100;
         }
     }
 

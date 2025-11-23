@@ -1,11 +1,10 @@
-using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Actions;
 
 /// <summary>
 /// Action for waiting/resting for one turn.
-/// Heals the actor by 1 HP if they have a HealthComponent.
+/// Simply passes the turn - regeneration happens passively via HealthComponent.
 /// </summary>
 public class WaitAction : Action
 {
@@ -24,12 +23,8 @@ public class WaitAction : Action
             return ActionResult.CreateFailure("Cannot wait.");
         }
 
-        // Heal the actor if they have health
-        var healthComponent = actor.GetNodeOrNull<HealthComponent>("HealthComponent");
-        if (healthComponent != null)
-        {
-            healthComponent.Heal(1);
-        }
+        // Regeneration now happens passively each turn via HealthComponent.
+        // Wait action simply passes the turn.
 
         // Emit feedback for player
         if (actor is Player player)

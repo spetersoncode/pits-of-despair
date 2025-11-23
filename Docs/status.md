@@ -16,7 +16,7 @@ The status system manages temporary, turn-based conditions (buffs, debuffs, pers
 
 **OnApplied**: Fires when status first added to entity. Used for one-time setup—register stat modifiers with unique source IDs, initialize visual effects, emit application messages. Returns message string for UI display. Component queries happen here to cache references.
 
-**OnTurnProcessed**: Optional hook executing each turn while status active. Used for recurring effects—damage over time, healing, random effects. Returns message string for per-turn feedback. Not all statuses implement this (simple buffs skip it).
+**OnTurnProcessed**: Optional hook executing each turn while status active. Used for recurring effects—damage over time, regeneration boosts, random effects. Returns message string for per-turn feedback. Not all statuses implement this (simple buffs skip it).
 
 **OnRemoved**: Fires on expiration or manual removal. Used for cleanup—unregister stat modifiers by source ID, restore original state, emit expiration messages. Returns message string. Critical for preventing orphaned modifiers.
 
@@ -86,7 +86,7 @@ Current implementations demonstrate patterns for common effect types.
 
 **ArmorBuffStatus**: Temporary armor increase with configurable amount and duration. OnApplied generates source ID, queries StatsComponent, calls AddArmorSource. OnRemoved calls RemoveArmorSource with same ID. No OnTurnProcessed—simple buff without recurring effect. Shows multi-source modifier pattern.
 
-**Future Implementations**: Poison (OnTurnProcessed damages health per turn), Regeneration (OnTurnProcessed heals per turn), Haste (OnApplied modifies speed stat), Slow (speed penalty), Paralysis (prevents actions), Confusion (randomizes movement), Invisibility (modifies visibility flag).
+**Future Implementations**: Poison (OnTurnProcessed damages health per turn), Regeneration boost (adds to base regen rate via HealthComponent modifier—base passive regeneration already exists), Haste (OnApplied modifies speed stat), Slow (speed penalty), Paralysis (prevents actions), Confusion (randomizes movement), Invisibility (modifies visibility flag).
 
 ## Data Configuration
 
@@ -122,7 +122,7 @@ Current implementations demonstrate patterns for common effect types.
 
 **Step 4 - Test Integration**: Verify application message, turn processing, expiration message. Check stat modifiers applied and removed cleanly. Confirm non-stacking behavior with duplicate applications. Validate UI feedback.
 
-**Component Integration**: Query required components in lifecycle hooks. HealthComponent for damage/healing, StatsComponent for modifiers, MovementComponent for speed changes. Return empty string if component missing (silent failure). Component presence determines applicability.
+**Component Integration**: Query required components in lifecycle hooks. HealthComponent for damage/regen boosts, StatsComponent for modifiers, MovementComponent for speed changes. Return empty string if component missing (silent failure). Component presence determines applicability.
 
 **Design Considerations**: Choose TypeId carefully—controls stacking. Generate unique source IDs for modifiers. Handle missing components gracefully. Write clear messages for application and removal. Consider reapplication behavior (duration refresh makes sense for most statuses).
 
@@ -132,7 +132,7 @@ Current implementations demonstrate patterns for common effect types.
 
 **Triggered Effects**: Status reacting to events subscribes to signals in OnApplied. Damage reflection subscribes to HealthComponent.DamageTaken. OnTurnProcessed checks flag set by signal handler. OnRemoved disconnects signals. Lifecycle management critical for preventing signal leaks.
 
-**Conditional Processing**: OnTurnProcessed checks conditions before applying effects. Poison only damages if health above threshold. Regeneration heals if below max. Status can query multiple components for decision logic.
+**Conditional Processing**: OnTurnProcessed checks conditions before applying effects. Poison only damages if health above threshold. Regen boost status would add points to HealthComponent's accumulator if below max. Status can query multiple components for decision logic.
 
 **Stacking Variants**: Custom stacking behavior overrides default by checking in ApplyStatusEffect before adding. Accumulating poison adds damage per turn rather than refreshing duration. Requires tracking accumulated value. Non-standard pattern—use sparingly.
 

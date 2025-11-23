@@ -25,6 +25,8 @@ Components fall into distinct conceptual categories based on their role:
 ### State Components
 Track entity state and emit change notifications. Calculate derived values (MaxHP from Endurance), emit signals on changes, respond to modifications. Others listen to change signals.
 
+**HealthComponent**: Manages HP, damage, healing, and passive regeneration. MaxHP calculated from BaseMaxHP + Endurance bonus. Passive regeneration uses DCSS-style accumulating points system—each turn adds `20 + MaxHP/6` points, healing 1 HP per 100 points accumulated (excess carries over). Subscribes to TurnManager signals for automatic per-turn processing. Emits HealthChanged, DamageTaken, Died signals.
+
 ### Behavior Components
 Request actions without executing them. Emit "request" signals (move, attack) that systems process and fulfill. Separates intent from execution.
 

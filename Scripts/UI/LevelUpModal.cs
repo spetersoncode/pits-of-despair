@@ -62,20 +62,6 @@ public partial class LevelUpModal : PanelContainer
     /// </summary>
     private void UpdateContent()
     {
-        // Calculate HP gain for next point of endurance
-        // Formula is (END^2 + 9*END)/2, so marginal gain is 4 + END
-        // If we add 1 to END, the new gain is 4 + (END+1) = 5 + END
-        // Wait, let's check the math in StatsComponent.cs
-        // GetHPBonus: (endurance * endurance + 9 * endurance) / 2
-        // Gain from END to END+1:
-        // ((E+1)^2 + 9(E+1))/2 - (E^2 + 9E)/2
-        // (E^2 + 2E + 1 + 9E + 9 - E^2 - 9E) / 2
-        // (2E + 10) / 2 = E + 5
-        // So if current endurance is _currentEndurance, adding 1 gives (_currentEndurance + 1) + 4 = _currentEndurance + 5 HP.
-        // Example: END=0 -> Gain=5. END=1 -> Gain=6.
-
-        int hpGain = _currentEndurance + 5;
-
         _contentLabel.Text = $@"[center][color={Palette.ToHex(Palette.Player)}]╔══════════════════════════════╗
 ║         LEVEL UP!            ║
 ╚══════════════════════════════╝[/color][/center]
@@ -85,8 +71,8 @@ public partial class LevelUpModal : PanelContainer
 [center][color={Palette.ToHex(Palette.Alert)}]Choose a stat to increase:[/color][/center]
 
   [color={Palette.ToHex(Palette.Default)}][S] Strength[/color]  - Melee damage and accuracy
-  [color={Palette.ToHex(Palette.Default)}][A] Agility[/color]   - Ranged damage and accuracy
-  [color={Palette.ToHex(Palette.Default)}][E] Endurance[/color] - +{hpGain} hit points (gain increases every level)
+  [color={Palette.ToHex(Palette.Default)}][A] Agility[/color]   - Ranged accuracy and evasion
+  [color={Palette.ToHex(Palette.Default)}][E] Endurance[/color] - Hit points and regeneration+
   [color={Palette.ToHex(Palette.Default)}][W] Will[/color]      - Reserved for future magic";
     }
 
