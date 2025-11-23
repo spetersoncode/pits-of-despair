@@ -52,4 +52,17 @@ public static class DebugCommandFactory
     {
         return _commandRegistry.Values.Select(factory => factory()).OrderBy(cmd => cmd.Name);
     }
+
+    /// <summary>
+    /// Get argument suggestions for a command.
+    /// </summary>
+    /// <param name="commandName">Name of the command</param>
+    /// <param name="argIndex">Index of the argument (0-based)</param>
+    /// <param name="currentValue">Current partial value being typed</param>
+    /// <returns>List of suggestions, or null if none available</returns>
+    public static IReadOnlyList<string> GetArgumentSuggestions(string commandName, int argIndex, string currentValue)
+    {
+        var command = CreateCommand(commandName);
+        return command?.GetArgumentSuggestions(argIndex, currentValue);
+    }
 }

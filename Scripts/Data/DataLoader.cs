@@ -59,6 +59,14 @@ public partial class DataLoader : Node
     }
 
     /// <summary>
+    /// Gets all loaded item IDs.
+    /// </summary>
+    public IEnumerable<string> GetAllItemIds()
+    {
+        return _items.Keys;
+    }
+
+    /// <summary>
     /// Gets item data by ID (filename without extension).
     /// </summary>
     public ItemData GetItem(string itemId)

@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 
 namespace PitsOfDespair.Debug.Commands;
 
@@ -12,6 +16,31 @@ public class GiveCommand : DebugCommand
     public override string Name => "give";
     public override string Description => "Spawn an item in player inventory";
     public override string Usage => "give [itemId]";
+
+    public override IReadOnlyList<string> GetArgumentSuggestions(int argIndex, string currentValue)
+    {
+        // Only provide suggestions for the first argument (itemId)
+        if (argIndex != 0)
+        {
+            return null;
+        }
+
+        var dataLoader = ((SceneTree)Engine.GetMainLoop()).Root.GetNode<DataLoader>("/root/DataLoader");
+        if (dataLoader == null)
+        {
+            return null;
+        }
+
+        var allItems = dataLoader.GetAllItemIds().OrderBy(id => id).ToList();
+
+        if (string.IsNullOrEmpty(currentValue))
+        {
+            return allItems;
+        }
+
+        var lowerValue = currentValue.ToLower();
+        return allItems.Where(id => id.StartsWith(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
 
     public override DebugCommandResult Execute(DebugContext context, string[] args)
     {

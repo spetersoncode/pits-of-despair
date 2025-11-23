@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PitsOfDespair.Debug;
 
 /// <summary>
@@ -27,4 +29,16 @@ public abstract class DebugCommand
     /// <param name="args">Command arguments (not including command name)</param>
     /// <returns>Result indicating success/failure and message to display</returns>
     public abstract DebugCommandResult Execute(DebugContext context, string[] args);
+
+    /// <summary>
+    /// Get autocomplete suggestions for a command argument.
+    /// Override in commands that accept arguments to provide contextual suggestions.
+    /// </summary>
+    /// <param name="argIndex">The argument index (0-based)</param>
+    /// <param name="currentValue">The current partial value being typed</param>
+    /// <returns>List of suggestions, or null if no suggestions available</returns>
+    public virtual IReadOnlyList<string> GetArgumentSuggestions(int argIndex, string currentValue)
+    {
+        return null;
+    }
 }

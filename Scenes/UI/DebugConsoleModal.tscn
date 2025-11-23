@@ -81,14 +81,15 @@ mouse_filter = 2
 [node name="SuggestionList" type="ItemList" parent="PanelContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 150)
+custom_maximum_size = Vector2(0, 150)
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_colors/font_selected_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hovered_color = Color(0.93, 0.87, 0.47, 1)
 theme_override_colors/guide_color = Color(0.2, 0.2, 0.2, 1)
 allow_reselect = true
-auto_height = true
 max_columns = 1
 
 [node name="HelpLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/VBoxContainer"]

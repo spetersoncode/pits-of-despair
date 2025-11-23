@@ -23,6 +23,7 @@ public partial class DebugConsoleModal : CenterContainer
 
     private IReadOnlyList<string> _currentSuggestions = new List<string>();
     private int _selectedIndex = -1;
+    private DebugAutocomplete.AutocompleteContext _currentContext;
 
     public bool IsDebugModeActive => _debugModeActive;
 
@@ -148,16 +149,17 @@ public partial class DebugConsoleModal : CenterContainer
         // Strip leading slash for matching
         var cleanInput = input.StartsWith('/') ? input.Substring(1) : input;
 
-        // Don't show suggestions if input contains spaces (already typing args)
-        if (cleanInput.Contains(' '))
+        if (string.IsNullOrEmpty(cleanInput))
         {
             ClearAutocomplete();
             return;
         }
 
+        // Parse the context to understand what we're completing
+        _currentContext = DebugAutocomplete.ParseContext(cleanInput);
         _currentSuggestions = DebugAutocomplete.GetSuggestions(cleanInput);
 
-        if (_currentSuggestions.Count == 0 || string.IsNullOrEmpty(cleanInput))
+        if (_currentSuggestions.Count == 0)
         {
             ClearAutocomplete();
             return;
@@ -167,7 +169,10 @@ public partial class DebugConsoleModal : CenterContainer
         _suggestionList.Clear();
         foreach (var suggestion in _currentSuggestions)
         {
-            _suggestionList.AddItem("/" + suggestion);
+            // For command context, prefix with /
+            // For argument context, show just the argument value
+            var displayText = _currentContext.IsArgumentContext ? suggestion : "/" + suggestion;
+            _suggestionList.AddItem(displayText);
         }
 
         // Select first item by default
@@ -187,14 +192,13 @@ public partial class DebugConsoleModal : CenterContainer
             return;
         }
 
-        var selectedCommand = _selectedIndex >= 0 && _selectedIndex < _currentSuggestions.Count
+        var selectedSuggestion = _selectedIndex >= 0 && _selectedIndex < _currentSuggestions.Count
             ? _currentSuggestions[_selectedIndex]
             : null;
 
-        var suffix = DebugAutocomplete.GetCompletionSuffix(input, selectedCommand);
+        var suffix = DebugAutocomplete.GetCompletionSuffix(input, selectedSuggestion);
 
-        // Ghost text shows the input + the completion suffix
-        // Position it to align with user input (including leading slash if present)
+        // Ghost text shows the full line with completion
         var prefix = _commandInput.Text.StartsWith('/') ? "/" : "";
         _ghostText.Text = prefix + input + suffix;
     }
@@ -244,8 +248,25 @@ public partial class DebugConsoleModal : CenterContainer
             return;
         }
 
-        var command = _currentSuggestions[_selectedIndex];
-        _commandInput.Text = "/" + command;
+        var suggestion = _currentSuggestions[_selectedIndex];
+        var currentText = _commandInput.Text;
+        var cleanInput = currentText.StartsWith('/') ? currentText.Substring(1) : currentText;
+
+        string newText;
+        if (_currentContext.IsArgumentContext)
+        {
+            // Replace just the current argument being typed
+            // Find where the current value starts and replace from there
+            var beforeCurrentValue = cleanInput.Substring(0, cleanInput.Length - _currentContext.CurrentValue.Length);
+            newText = "/" + beforeCurrentValue + suggestion;
+        }
+        else
+        {
+            // Replace the whole command
+            newText = "/" + suggestion;
+        }
+
+        _commandInput.Text = newText;
         _commandInput.CaretColumn = _commandInput.Text.Length;
         ClearAutocomplete();
     }
