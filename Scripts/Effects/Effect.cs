@@ -51,13 +51,13 @@ public abstract class Effect
     {
         return definition.Type?.ToLower() switch
         {
-            "heal" => new HealEffect(definition),
+            "heal" or "modify_health" => new ModifyHealthEffect(definition),
             "damage" => new DamageEffect(definition),
             "apply_condition" => new ApplyConditionEffect(definition),
             "teleport" => new TeleportEffect(definition),
             "blink" => new BlinkEffect(definition),
             "knockback" => new KnockbackEffect(definition),
-            "restore_willpower" => new RestoreWillpowerEffect(definition),
+            "restore_willpower" or "modify_willpower" => new ModifyWillpowerEffect(definition),
             "charm" => new CharmEffect(),
             _ => null
         };
