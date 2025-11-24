@@ -100,7 +100,7 @@ public abstract class TargetingHandler
             TargetingType.Ranged => new RangedTargetingHandler(),
             TargetingType.Reach => new ReachTargetingHandler(),
             TargetingType.Line => new LineTargetingHandler(),
-            TargetingType.Cone => new TileTargetingHandler(), // Fallback for now
+            TargetingType.Cone => new ConeTargetingHandler(),
             _ => new SelfTargetingHandler()
         };
     }

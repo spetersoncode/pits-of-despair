@@ -241,6 +241,16 @@ public class TargetingDefinition
             },
             "area" => Area(range, targeting.Radius, los),
             "line" => Line(range, los),
+            "adjacent" => Adjacent(TargetFilter.Creature),
+            "cone" => new TargetingDefinition
+            {
+                Type = TargetingType.Cone,
+                Range = range,
+                Radius = targeting.Radius,
+                RequiresLOS = los,
+                Metric = DistanceMetric.Euclidean,
+                Filter = TargetFilter.Tile
+            },
             _ => Enemy(range, los)
         };
     }

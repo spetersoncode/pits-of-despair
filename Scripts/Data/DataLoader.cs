@@ -260,6 +260,7 @@ public partial class DataLoader : Node
                 else
                 {
                     _items[id] = item;
+                    GD.Print($"DataLoader: Loaded item '{id}'");
                 }
             }
         });

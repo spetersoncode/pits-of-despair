@@ -70,6 +70,11 @@ public class EffectDefinition
     public int Radius { get; set; } = 0;
 
     /// <summary>
+    /// Hazard type for create_hazard effects (e.g., "poison_cloud", "fire").
+    /// </summary>
+    public string? HazardType { get; set; } = null;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -113,7 +118,9 @@ public class EffectDefinition
             DurationDice = itemEffect.DurationDice,
             ConditionType = itemEffect.ConditionType,
             Dice = itemEffect.Dice,
-            Radius = itemEffect.Radius
+            Radius = itemEffect.Radius,
+            DamageType = itemEffect.DamageType,
+            HazardType = itemEffect.HazardType
         };
     }
 }

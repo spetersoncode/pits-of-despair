@@ -18,15 +18,6 @@ entries:
     effects:
       - type: teleport
 
-  confusion:
-    name: confusion
-    color: ScrollConfusion
-    description: Twisted symbols that hurt to look at dance across the page. Even a glance makes your thoughts scatter like frightened birds.
-    effects:
-      - type: apply_condition
-        conditionType: confusion
-        durationDice: 2d3
-
   charm:
     name: charm
     color: ScrollCharm

@@ -66,10 +66,12 @@ public class GiveCommand : DebugCommand
 
         // Get item data to check type for quantity
         var itemData = context.DataLoader?.GetItem(itemId);
+        GD.Print($"GiveCommand: Got itemData for '{itemId}': {(itemData != null ? "found" : "null")}");
         int quantity = itemData?.Type?.ToLower() == "ammo" ? 50 : 1;
 
         // Create item at player's position with appropriate quantity
         var item = context.ActionContext.EntityFactory.CreateItem(itemId, player.GridPosition, quantity);
+        GD.Print($"GiveCommand: CreateItem returned: {(item != null ? "entity" : "null")}");
 
         if (item == null)
         {
@@ -79,8 +81,10 @@ public class GiveCommand : DebugCommand
             );
         }
 
+        GD.Print($"GiveCommand: item.ItemData is {(item.ItemData != null ? "present" : "null")}");
         // Add to inventory (use out parameter for message)
         var key = inventory.AddItem(item.ItemData, out string message, excludeEquipped: true);
+        GD.Print($"GiveCommand: AddItem returned key={key}, message={message}");
 
         if (key != null)
         {

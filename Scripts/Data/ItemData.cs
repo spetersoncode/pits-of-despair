@@ -505,6 +505,16 @@ public class EffectDefinition
     public string? Dice { get; set; } = null;
 
     /// <summary>
+    /// Damage type for damage effects (e.g., "fire", "cold", "poison").
+    /// </summary>
+    public string? DamageType { get; set; } = null;
+
+    /// <summary>
+    /// Hazard type for create_hazard effects (e.g., "poison_cloud", "fire").
+    /// </summary>
+    public string? HazardType { get; set; } = null;
+
+    /// <summary>
     /// Area radius for AOE effects (in tiles).
     /// </summary>
     [YamlMember(Alias = "radius")]

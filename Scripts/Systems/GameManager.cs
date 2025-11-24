@@ -171,18 +171,25 @@ public partial class GameManager : Node
 	/// Handles descending to the next floor.
 	/// Called by DescendAction when player uses stairs.
 	/// </summary>
-	public void DescendToNextFloor()
+	/// <returns>Tuple of (success, message) for the action result.</returns>
+	public (bool Success, string Message) DescendToNextFloor()
 	{
 		if (_currentGameLevel == null)
 		{
 			GD.PrintErr("GameManager.DescendToNextFloor: No current game level");
-			return;
+			return (false, "Cannot descend: system error.");
 		}
 
 		if (CurrentFloorDepth >= MaxFloorDepth)
 		{
 			GD.PrintErr($"GameManager.DescendToNextFloor: Already at max floor depth ({MaxFloorDepth})");
-			return;
+			return (false, "You have reached the deepest level.");
+		}
+
+		// Temporary floor limit during development
+		if (CurrentFloorDepth >= 3)
+		{
+			return (false, "Under construction... come back later.");
 		}
 
 		// Extract player state
@@ -214,6 +221,8 @@ public partial class GameManager : Node
 
 		// Emit signal
 		EmitSignal(SignalName.FloorChanged, oldFloor, newFloor);
+
+		return (true, "You descend the stairs into darkness...");
 	}
 
 	/// <summary>

@@ -53,7 +53,7 @@ public class VisualEffectData
     public GridPosition? TargetPosition { get; }
 
     /// <summary>
-    /// Rotation angle in radians for beam effects.
+    /// Rotation angle in radians for beam and cone effects.
     /// </summary>
     public float Rotation { get; }
 
@@ -61,6 +61,16 @@ public class VisualEffectData
     /// Length of the beam in pixels.
     /// </summary>
     public float BeamLength { get; }
+
+    /// <summary>
+    /// Half-angle of cone effects in radians.
+    /// </summary>
+    public float ConeAngle { get; }
+
+    /// <summary>
+    /// Length of cone effects in pixels.
+    /// </summary>
+    public float ConeLength { get; }
 
     /// <summary>
     /// Whether this effect has completed its animation.
@@ -135,6 +145,8 @@ public class VisualEffectData
         TargetPosition = null;
         Rotation = 0.0f;
         BeamLength = 0.0f;
+        ConeAngle = 0.0f;
+        ConeLength = 0.0f;
         // Projectile defaults
         MaxTrailLength = 0;
         Speed = 0.0f;
@@ -163,6 +175,8 @@ public class VisualEffectData
         Radius = 0.0f;
         BeamLength = beamLength;
         Rotation = rotation;
+        ConeAngle = 0.0f;
+        ConeLength = 0.0f;
         Progress = 0.0f;
         // Projectile defaults
         MaxTrailLength = 0;
@@ -190,6 +204,8 @@ public class VisualEffectData
         Radius = 0.0f;
         BeamLength = 0.0f;
         Rotation = 0.0f;
+        ConeAngle = 0.0f;
+        ConeLength = 0.0f;
         Progress = 0.0f;
         // Projectile properties
         MaxTrailLength = definition.TrailLength;
@@ -197,6 +213,36 @@ public class VisualEffectData
         Size = definition.Size;
         Definition = definition;
         OnCompleteCallback = onCompleteCallback;
+    }
+
+    /// <summary>
+    /// Creates a cone effect emanating from origin toward target direction.
+    /// </summary>
+    public VisualEffectData(
+        GridPosition origin,
+        GridPosition target,
+        VisualEffectDefinition definition,
+        float coneLength,
+        float coneAngle,
+        float rotation)
+    {
+        Type = VisualEffectType.Cone;
+        Position = origin;
+        TargetPosition = target;
+        Duration = definition.Duration;
+        PrimaryColor = definition.InnerColor;
+        SecondaryColor = definition.MidColor;
+        Radius = 0.0f;
+        BeamLength = 0.0f;
+        Rotation = rotation;
+        ConeAngle = coneAngle;
+        ConeLength = coneLength;
+        Progress = 0.0f;
+        // Non-projectile defaults
+        MaxTrailLength = 0;
+        Speed = 0.0f;
+        Size = 1.0f;
+        Definition = definition;
     }
 
     /// <summary>

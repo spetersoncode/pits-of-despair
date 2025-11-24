@@ -48,9 +48,10 @@ public class DescendAction : Action
 		}
 
 		// Trigger floor transition
-		gameManager.DescendToNextFloor();
+		var (success, message) = gameManager.DescendToNextFloor();
 
-		// Return success (this action consumes a turn)
-		return ActionResult.CreateSuccess("You descend the stairs into darkness...");
+		return success
+			? ActionResult.CreateSuccess(message)
+			: ActionResult.CreateFailure(message);
 	}
 }

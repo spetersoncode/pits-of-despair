@@ -33,5 +33,10 @@ public enum VisualEffectType
     /// <summary>
     /// Moving projectile effect from origin to target (fireballs, arrows, magic missiles, etc.)
     /// </summary>
-    Projectile
+    Projectile,
+
+    /// <summary>
+    /// Cone-shaped blast effect emanating from origin toward target direction (cone of cold, dragon breath, etc.)
+    /// </summary>
+    Cone
 }

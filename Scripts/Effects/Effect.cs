@@ -61,6 +61,10 @@ public abstract class Effect
             "charm" => new CharmEffect(),
             "fireball" => new FireballEffect(definition),
             "tunneling" => new TunnelingEffect(definition),
+            "vampiric_touch" => new VampiricTouchEffect(definition),
+            "create_hazard" => new CreateHazardEffect(definition),
+            "clone" => new CloneEffect(definition),
+            "cone_of_cold" => new ConeOfColdEffect(definition),
             _ => null
         };
     }

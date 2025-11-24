@@ -16,3 +16,71 @@ entries:
       range: 6
       radius: 2
       requiresLos: true
+
+  vampiric_touch:
+    name: vampiric touch
+    color: Crimson
+    description: A pale wand carved from bone, cold to the touch. Dark veins pulse beneath its surface, hungry for life essence.
+    charges: 2d4
+    effects:
+      - type: vampiric_touch
+        dice: 2d6
+    targeting:
+      type: adjacent
+      requiresLos: false
+
+  poison_cloud:
+    name: poison cloud
+    color: Poison
+    description: A gnarled wand that weeps a sickly green vapor. The air around it smells of decay and bitter almonds.
+    charges: 2d3
+    effects:
+      - type: create_hazard
+        hazardType: poison_cloud
+        amount: 2
+        duration: 5
+        damageType: poison
+    targeting:
+      type: tile
+      range: 5
+      requiresLos: true
+
+  cloning:
+    name: cloning
+    color: Arcane
+    description: A crystalline wand that refracts light into impossible angles. Looking through it reveals doubled images.
+    charges: 1d3
+    effects:
+      - type: clone
+    targeting:
+      type: creature
+      range: 4
+      requiresLos: true
+
+  cone_of_cold:
+    name: cone of cold
+    color: Ice
+    description: A wand of frozen crystal that numbs the hand. Frost perpetually rimes its surface, crackling with each movement.
+    charges: 2d3
+    effects:
+      - type: cone_of_cold
+        dice: 2d8
+    targeting:
+      type: cone
+      range: 4
+      radius: 3
+      requiresLos: true
+
+  confusion:
+    name: confusion
+    color: ScrollConfusion
+    description: Twisted symbols that hurt to look at dance across this wand. Even a glance makes your thoughts scatter like frightened birds.
+    charges: 2d4
+    effects:
+      - type: apply_condition
+        conditionType: confusion
+        durationDice: 2d3
+    targeting:
+      type: enemy
+      range: 5
+      requiresLos: true

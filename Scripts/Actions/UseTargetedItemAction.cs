@@ -127,6 +127,16 @@ public class UseTargetedItemAction : Action
 			// AOE item: apply effects to all entities in the area
 			anyEffectSucceeded = ApplyAreaEffects(actor, effects, context, messages);
 		}
+		else if (targetingType == "cone")
+		{
+			// Cone-targeted item (cone of cold, fire breath, etc.)
+			anyEffectSucceeded = ApplyConeEffects(actor, effects, context, messages);
+		}
+		else if (targetingType == "tile")
+		{
+			// Tile-targeted item (poison cloud, etc.) - doesn't require entity
+			anyEffectSucceeded = ApplyTileEffects(actor, effects, context, messages);
+		}
 		else
 		{
 			// Single-target item: require entity at target position
@@ -371,6 +381,145 @@ public class UseTargetedItemAction : Action
 		{
 			messages.AppendLine("The effect dissipates harmlessly.");
 			anySucceeded = true;
+		}
+
+		return anySucceeded;
+	}
+
+	/// <summary>
+	/// Applies effects in a cone from caster toward target position.
+	/// Handles cone of cold and other cone-based effects.
+	/// </summary>
+	private bool ApplyConeEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	{
+		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+		var slot = inventory?.GetSlot(_itemKey);
+		if (slot == null) return false;
+
+		var definition = TargetingDefinition.FromItem(slot.Item.Template);
+		bool anySucceeded = false;
+
+		foreach (var effect in effects)
+		{
+			if (effect is ConeOfColdEffect coneEffect)
+			{
+				// Use targeting definition values
+				coneEffect.Range = definition.Range > 0 ? definition.Range : coneEffect.Range;
+				coneEffect.Radius = definition.Radius > 0 ? definition.Radius : coneEffect.Radius;
+
+				var results = coneEffect.ApplyToCone(actor, _targetPosition, context);
+				foreach (var result in results)
+				{
+					if (result.Success)
+					{
+						anySucceeded = true;
+					}
+					if (!string.IsNullOrEmpty(result.Message))
+					{
+						messages.AppendLine(result.Message);
+					}
+				}
+
+				if (results.Count == 0)
+				{
+					messages.AppendLine("The freezing blast hits nothing.");
+					anySucceeded = true;
+				}
+
+				// Spawn cone of cold visual effect
+				context.VisualEffectSystem?.SpawnConeOfCold(
+					actor.GridPosition,
+					_targetPosition,
+					coneEffect.Range,
+					coneEffect.Radius);
+			}
+			else
+			{
+				// Generic cone effect - get affected entities via handler
+				var handler = new ConeTargetingHandler();
+				var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
+
+				foreach (var target in targets)
+				{
+					var effectContext = EffectContext.ForItem(target, actor, context);
+					var effectResult = effect.Apply(effectContext);
+					if (effectResult.Success)
+					{
+						anySucceeded = true;
+					}
+					if (!string.IsNullOrEmpty(effectResult.Message))
+					{
+						messages.AppendLine(effectResult.Message);
+					}
+				}
+
+				if (targets.Count == 0)
+				{
+					anySucceeded = true;
+				}
+			}
+		}
+
+		return anySucceeded;
+	}
+
+	/// <summary>
+	/// Applies effects to a tile position (doesn't require an entity).
+	/// Used for tile hazards like poison cloud.
+	/// </summary>
+	private bool ApplyTileEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	{
+		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+		var slot = inventory?.GetSlot(_itemKey);
+		if (slot == null) return false;
+
+		var definition = TargetingDefinition.FromItem(slot.Item.Template);
+		bool anySucceeded = false;
+
+		foreach (var effect in effects)
+		{
+			if (effect is CreateHazardEffect hazardEffect)
+			{
+				// Set target position and radius from targeting definition
+				hazardEffect.TargetPosition = _targetPosition;
+				hazardEffect.Radius = definition.Radius > 0 ? definition.Radius : hazardEffect.Radius;
+
+				// Create a dummy context with no specific target
+				var effectContext = EffectContext.ForItem(actor, actor, context);
+				var effectResult = hazardEffect.Apply(effectContext);
+
+				if (effectResult.Success)
+				{
+					anySucceeded = true;
+				}
+				if (!string.IsNullOrEmpty(effectResult.Message))
+				{
+					messages.AppendLine(effectResult.Message);
+				}
+			}
+			else
+			{
+				// Other tile effects - apply to any entity at position if present
+				var targetEntity = context.EntityManager.GetEntityAtPosition(_targetPosition);
+				if (targetEntity != null)
+				{
+					var effectContext = EffectContext.ForItem(targetEntity, actor, context);
+					var effectResult = effect.Apply(effectContext);
+					if (effectResult.Success)
+					{
+						anySucceeded = true;
+					}
+					if (!string.IsNullOrEmpty(effectResult.Message))
+					{
+						messages.AppendLine(effectResult.Message);
+					}
+				}
+				else
+				{
+					// No entity at tile - effect still "succeeds" for tile-targeting
+					anySucceeded = true;
+				}
+			}
 		}
 
 		return anySucceeded;

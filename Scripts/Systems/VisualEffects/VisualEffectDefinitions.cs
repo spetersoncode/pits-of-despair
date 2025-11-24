@@ -11,8 +11,11 @@ namespace PitsOfDespair.Systems.VisualEffects;
 /// </summary>
 public static class VisualEffectDefinitions
 {
-    // Shader paths - Impacts
-    private const string FireballImpactShader = "res://Resources/Shaders/Impacts/fireball.gdshader";
+    // Shader paths - Areas
+    private const string FireballImpactShader = "res://Resources/Shaders/Areas/fireball.gdshader";
+
+    // Shader paths - Cones
+    private const string ConeOfColdShader = "res://Resources/Shaders/Cones/cone_of_cold.gdshader";
 
     // Shader paths - Beams
     private const string TunnelingBeamShader = "res://Resources/Shaders/Beams/tunneling.gdshader";
@@ -48,6 +51,23 @@ public static class VisualEffectDefinitions
             Palette.Fire.B * 0.5f,
             1.0f),  // Bright orange
         outerColor: new Color(0.85f, 0.15f, 0.05f, 1.0f)  // Deep red/crimson
+    );
+
+    #endregion
+
+    #region Cone Effects
+
+    /// <summary>
+    /// Cone of Cold - icy blast spreading from caster toward target.
+    /// </summary>
+    public static readonly VisualEffectDefinition ConeOfCold = new(
+        id: "cone_of_cold",
+        type: VisualEffectType.Cone,
+        shaderPath: ConeOfColdShader,
+        duration: 0.7f,
+        innerColor: new Color(1.0f, 1.0f, 1.0f, 1.0f),      // Bright white core
+        midColor: Palette.Ice,                               // Ice blue
+        outerColor: new Color(0.2f, 0.4f, 0.8f, 1.0f)       // Deep cold blue
     );
 
     #endregion
@@ -265,6 +285,8 @@ public static class VisualEffectDefinitions
         {
             // Impact effects
             "fireball_impact" => Fireball,
+            // Cone effects
+            "cone_of_cold" => ConeOfCold,
             // Beam effects
             "tunneling" => Tunneling,
             // Projectiles - Physical
@@ -296,6 +318,8 @@ public static class VisualEffectDefinitions
     {
         // Impact effects
         yield return Fireball;
+        // Cone effects
+        yield return ConeOfCold;
         // Beam effects
         yield return Tunneling;
         // Projectiles
