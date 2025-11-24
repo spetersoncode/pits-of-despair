@@ -1,6 +1,6 @@
 shader_type canvas_item;
 
-// Tunneling beam visual effect shader
+// Tunneling Beam - Beam Effect
 // Creates a solid beam that flashes bright then fades out
 
 uniform float progress : hint_range(0.0, 1.0) = 0.0;

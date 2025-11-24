@@ -86,6 +86,17 @@ public class ProjectileData
     public bool HasImpactCallback => OnImpactCallback != null;
 
     /// <summary>
+    /// The visual node used for shader-based rendering.
+    /// Managed by ProjectileSystem.
+    /// </summary>
+    public ColorRect? ShaderNode { get; set; }
+
+    /// <summary>
+    /// The shader material applied to this projectile.
+    /// </summary>
+    public ShaderMaterial? Material { get; set; }
+
+    /// <summary>
     /// Creates a projectile for skill/effect with deferred effect application.
     /// </summary>
     public ProjectileData(

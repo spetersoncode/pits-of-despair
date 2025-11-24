@@ -1,22 +1,7 @@
 using Godot;
+using System.Collections.Generic;
 
 namespace PitsOfDespair.Systems.Projectiles;
-
-/// <summary>
-/// Visual shape types for projectile rendering.
-/// All shapes use Godot drawing primitives for smooth sub-tile positioning.
-/// </summary>
-public enum ProjectileShape
-{
-    /// <summary>Line segment with optional trail (arrows, beams, rays)</summary>
-    Line,
-    /// <summary>Filled circle (fireballs, orbs, energy balls)</summary>
-    Circle,
-    /// <summary>Diamond/rhombus shape (magic bolts, shards)</summary>
-    Diamond,
-    /// <summary>Triangle pointing in direction of travel (directional projectiles)</summary>
-    Triangle
-}
 
 /// <summary>
 /// Defines the visual and behavioral properties of a projectile type.
@@ -30,17 +15,17 @@ public class ProjectileDefinition
     public string Id { get; }
 
     /// <summary>
-    /// The visual shape used to render the projectile head.
+    /// Path to the shader resource file.
     /// </summary>
-    public ProjectileShape Shape { get; }
+    public string ShaderPath { get; }
 
     /// <summary>
-    /// Color of the projectile head (leading edge).
+    /// Primary color of the projectile (head/core).
     /// </summary>
     public Color HeadColor { get; }
 
     /// <summary>
-    /// Color of the projectile trail (fades from this color).
+    /// Color of the projectile trail.
     /// If null, uses HeadColor with reduced alpha.
     /// </summary>
     public Color? TrailColor { get; }
@@ -51,40 +36,39 @@ public class ProjectileDefinition
     public float Speed { get; }
 
     /// <summary>
-    /// Number of trail segments to render behind the projectile head.
+    /// Number of trail segments for the shader to render.
     /// 0 = no trail, higher = longer trail.
     /// </summary>
     public int TrailLength { get; }
 
     /// <summary>
-    /// Size of the projectile shape in pixels.
-    /// Interpretation varies by shape (radius for circle, side length for diamond/triangle).
+    /// Size multiplier for the projectile visual.
     /// </summary>
     public float Size { get; }
 
     /// <summary>
-    /// Line thickness for Line shape projectiles.
+    /// Additional shader parameters specific to this projectile type.
     /// </summary>
-    public float LineWidth { get; }
+    public IReadOnlyDictionary<string, Variant> ShaderParams { get; }
 
     public ProjectileDefinition(
         string id,
-        ProjectileShape shape,
+        string shaderPath,
         Color headColor,
         Color? trailColor = null,
         float speed = 25.0f,
         int trailLength = 3,
-        float size = 6.0f,
-        float lineWidth = 3.0f)
+        float size = 1.0f,
+        Dictionary<string, Variant>? shaderParams = null)
     {
         Id = id;
-        Shape = shape;
+        ShaderPath = shaderPath;
         HeadColor = headColor;
         TrailColor = trailColor;
         Speed = speed;
         TrailLength = trailLength;
         Size = size;
-        LineWidth = lineWidth;
+        ShaderParams = shaderParams ?? new Dictionary<string, Variant>();
     }
 
     /// <summary>

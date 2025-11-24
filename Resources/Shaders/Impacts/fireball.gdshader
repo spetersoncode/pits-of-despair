@@ -1,6 +1,6 @@
 shader_type canvas_item;
 
-// Explosion visual effect shader
+// Fireball Blast - Impact Effect
 // Creates a dramatic filled radial burst with animated fire-like noise
 
 uniform float progress : hint_range(0.0, 1.0) = 0.0;

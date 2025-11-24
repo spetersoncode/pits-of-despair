@@ -16,8 +16,7 @@ public partial class VisualEffectSystem : Node
 
     private List<VisualEffectData> _activeEffects = new();
     private TextRenderer _renderer;
-    private Shader? _explosionShader;
-    private Shader? _beamShader;
+    private Dictionary<string, Shader> _loadedShaders = new();
     private int _tileSize = 18;
 
     /// <summary>
@@ -32,19 +31,44 @@ public partial class VisualEffectSystem : Node
 
     public override void _Ready()
     {
-        // Load the explosion shader
-        _explosionShader = GD.Load<Shader>("res://Resources/Shaders/explosion.gdshader");
-        if (_explosionShader == null)
+        // Pre-load shaders for all defined effects
+        foreach (var definition in VisualEffectDefinitions.GetAll())
         {
-            GD.PrintErr("VisualEffectSystem: Failed to load explosion shader");
+            LoadShader(definition.ShaderPath);
+        }
+    }
+
+    /// <summary>
+    /// Loads and caches a shader from the given path.
+    /// </summary>
+    private Shader? LoadShader(string shaderPath)
+    {
+        if (_loadedShaders.TryGetValue(shaderPath, out var cached))
+        {
+            return cached;
         }
 
-        // Load the beam shader
-        _beamShader = GD.Load<Shader>("res://Resources/Shaders/beam.gdshader");
-        if (_beamShader == null)
+        var shader = GD.Load<Shader>(shaderPath);
+        if (shader == null)
         {
-            GD.PrintErr("VisualEffectSystem: Failed to load beam shader");
+            GD.PrintErr($"VisualEffectSystem: Failed to load shader: {shaderPath}");
+            return null;
         }
+
+        _loadedShaders[shaderPath] = shader;
+        return shader;
+    }
+
+    /// <summary>
+    /// Gets a cached shader or loads it if not yet cached.
+    /// </summary>
+    private Shader? GetShader(string shaderPath)
+    {
+        if (_loadedShaders.TryGetValue(shaderPath, out var shader))
+        {
+            return shader;
+        }
+        return LoadShader(shaderPath);
     }
 
     /// <summary>
@@ -59,106 +83,85 @@ public partial class VisualEffectSystem : Node
         }
     }
 
+    #region Public Spawn Methods
+
+    /// <summary>
+    /// Spawns a visual effect using a definition ID.
+    /// </summary>
+    /// <param name="definitionId">The ID of the effect definition to use.</param>
+    /// <param name="position">Center position in grid coordinates.</param>
+    /// <param name="radius">Radius in tiles (for radial effects).</param>
+    /// <param name="target">Target position (for beam effects).</param>
+    /// <param name="durationOverride">Optional duration override.</param>
+    public void SpawnEffect(
+        string definitionId,
+        GridPosition position,
+        float radius = 1.0f,
+        GridPosition? target = null,
+        float? durationOverride = null)
+    {
+        var definition = VisualEffectDefinitions.GetById(definitionId);
+        if (definition == null)
+        {
+            GD.PrintErr($"VisualEffectSystem: Unknown effect definition: {definitionId}");
+            return;
+        }
+
+        SpawnEffect(definition, position, radius, target, durationOverride);
+    }
+
+    /// <summary>
+    /// Spawns a visual effect using a definition.
+    /// </summary>
+    public void SpawnEffect(
+        VisualEffectDefinition definition,
+        GridPosition position,
+        float radius = 1.0f,
+        GridPosition? target = null,
+        float? durationOverride = null)
+    {
+        if (_renderer == null) return;
+
+        float duration = durationOverride ?? definition.Duration;
+
+        if (definition.Type == VisualEffectType.Beam && target.HasValue)
+        {
+            SpawnBeamEffect(definition, position, target.Value, duration);
+        }
+        else
+        {
+            SpawnRadialEffect(definition, position, radius, duration);
+        }
+    }
+
+    /// <summary>
+    /// Spawns a fireball impact at the specified position.
+    /// </summary>
+    public void SpawnFireballImpact(GridPosition position, float radius, float? duration = null)
+    {
+        SpawnEffect(VisualEffectDefinitions.Fireball, position, radius, null, duration);
+    }
+
+    /// <summary>
+    /// Spawns a tunneling beam from origin to target.
+    /// </summary>
+    public void SpawnTunnelingBeam(GridPosition origin, GridPosition target, float? duration = null)
+    {
+        SpawnEffect(VisualEffectDefinitions.Tunneling, origin, 1.0f, target, duration);
+    }
+
     /// <summary>
     /// Spawns an explosion effect at the specified position.
-    /// Creates a shader-based visual for maximum impact.
+    /// Legacy method - prefer SpawnFireball.
     /// </summary>
-    /// <param name="position">Center of the explosion in grid coordinates.</param>
-    /// <param name="radius">Radius of the explosion in tiles.</param>
-    /// <param name="color">Color of the explosion (defaults to Fire palette).</param>
-    /// <param name="duration">Duration of the effect in seconds.</param>
     public void SpawnExplosion(GridPosition position, float radius, Color? color = null, float duration = 0.6f)
     {
-        var effectColor = color ?? Palette.Fire;
-        var effect = new VisualEffectData(
-            VisualEffectType.Explosion,
-            position,
-            duration,
-            effectColor,
-            effectColor.Darkened(0.6f),
-            radius);
-
-        // Create shader-based visual node
-        CreateShaderNode(effect);
-
-        _activeEffects.Add(effect);
-        AnimateEffect(effect);
-    }
-
-    /// <summary>
-    /// Creates a ColorRect with the explosion shader for GPU-accelerated rendering.
-    /// </summary>
-    private void CreateShaderNode(VisualEffectData effect)
-    {
-        if (_explosionShader == null || _renderer == null) return;
-
-        // Create shader material
-        var material = new ShaderMaterial();
-        material.Shader = _explosionShader;
-
-        // Set initial uniforms
-        material.SetShaderParameter("progress", 0.0f);
-        material.SetShaderParameter("radius", effect.Radius * _tileSize);
-
-        // Set colors based on effect palette - dramatic fire colors
-        // Hot inner color (bright white-yellow core)
-        material.SetShaderParameter("inner_color", new Color(1.0f, 1.0f, 0.85f, 1.0f));
-        // Mid color (bright orange - use primary with boosted saturation)
-        var midColor = effect.PrimaryColor;
-        midColor = new Color(
-            Mathf.Min(midColor.R * 1.2f, 1.0f),
-            midColor.G,
-            midColor.B * 0.5f,
-            1.0f);
-        material.SetShaderParameter("mid_color", midColor);
-        // Outer color (deep red/crimson)
-        material.SetShaderParameter("outer_color", new Color(0.85f, 0.15f, 0.05f, 1.0f));
-
-        // Create the visual node
-        var colorRect = new ColorRect();
-        colorRect.Material = material;
-
-        // Size the rect to match the explosion area
-        // Diameter is (radius * 2 + 1) tiles, with small padding for edge effects
-        // The +1 accounts for the center tile
-        float sizePixels = (effect.Radius * 2 + 1) * _tileSize * 1.2f;
-        colorRect.Size = new Vector2(sizePixels, sizePixels);
-
-        // Position will be updated in UpdateShaderNodePosition
-        colorRect.ZIndex = 100; // Render above game elements
-
-        // Store references
-        effect.ShaderNode = colorRect;
-        effect.Material = material;
-
-        // Add to renderer as child so it renders in the same coordinate space
-        _renderer.AddChild(colorRect);
-
-        // Update position initially
-        UpdateShaderNodePosition(effect);
-    }
-
-    /// <summary>
-    /// Updates the shader node position based on camera/scroll offset.
-    /// </summary>
-    private void UpdateShaderNodePosition(VisualEffectData effect)
-    {
-        if (effect.ShaderNode == null || _renderer == null) return;
-
-        // Get position using renderer's centralized conversion
-        var offset = _renderer.GetRenderOffset();
-        var tileCenter = _renderer.GridToTileCenter(effect.Position);
-
-        // Position the rect so its center is at the effect position
-        float halfSize = effect.ShaderNode.Size.X / 2.0f;
-        effect.ShaderNode.Position = new Vector2(
-            offset.X + tileCenter.X - halfSize,
-            offset.Y + tileCenter.Y - halfSize
-        );
+        SpawnEffect(VisualEffectDefinitions.Fireball, position, radius, null, duration);
     }
 
     /// <summary>
     /// Spawns an explosion effect from a Vector2I position.
+    /// Legacy method.
     /// </summary>
     public void SpawnExplosion(Vector2I position, float radius, Color? color = null, float duration = 0.6f)
     {
@@ -167,17 +170,41 @@ public partial class VisualEffectSystem : Node
 
     /// <summary>
     /// Spawns a beam effect traveling from origin to target.
-    /// Creates a shader-based visual for dramatic beam/tunneling effects.
+    /// Legacy method - prefer SpawnTunneling.
     /// </summary>
-    /// <param name="origin">Starting position in grid coordinates.</param>
-    /// <param name="target">End position in grid coordinates.</param>
-    /// <param name="color">Color of the beam (defaults to Ochre for earth/tunneling).</param>
-    /// <param name="duration">Duration of the effect in seconds.</param>
     public void SpawnBeam(GridPosition origin, GridPosition target, Color? color = null, float duration = 0.5f)
     {
-        if (_renderer == null) return;
+        SpawnEffect(VisualEffectDefinitions.Tunneling, origin, 1.0f, target, duration);
+    }
 
-        var effectColor = color ?? Palette.Ochre;
+    #endregion
+
+    #region Effect Creation
+
+    /// <summary>
+    /// Spawns a radial effect (explosion, impact, etc.).
+    /// </summary>
+    private void SpawnRadialEffect(VisualEffectDefinition definition, GridPosition position, float radius, float duration)
+    {
+        var effect = new VisualEffectData(
+            definition.Type,
+            position,
+            duration,
+            definition.MidColor,
+            definition.OuterColor,
+            radius);
+
+        CreateRadialShaderNode(effect, definition);
+        _activeEffects.Add(effect);
+        AnimateEffect(effect);
+    }
+
+    /// <summary>
+    /// Spawns a beam effect from origin to target.
+    /// </summary>
+    private void SpawnBeamEffect(VisualEffectDefinition definition, GridPosition origin, GridPosition target, float duration)
+    {
+        if (_renderer == null) return;
 
         // Calculate beam geometry
         var originCenter = _renderer.GridToTileCenter(origin);
@@ -190,62 +217,119 @@ public partial class VisualEffectSystem : Node
             origin,
             target,
             duration,
-            effectColor,
-            effectColor.Darkened(0.4f),
+            definition.MidColor,
+            definition.OuterColor,
             beamLength,
             rotation);
 
-        // Create shader-based visual node
-        CreateBeamShaderNode(effect);
-
+        CreateBeamShaderNode(effect, definition);
         _activeEffects.Add(effect);
         AnimateEffect(effect);
     }
 
     /// <summary>
-    /// Creates a ColorRect with the beam shader for GPU-accelerated rendering.
+    /// Creates a ColorRect with a radial shader for GPU-accelerated rendering.
     /// </summary>
-    private void CreateBeamShaderNode(VisualEffectData effect)
+    private void CreateRadialShaderNode(VisualEffectData effect, VisualEffectDefinition definition)
     {
-        if (_beamShader == null || _renderer == null) return;
+        var shader = GetShader(definition.ShaderPath);
+        if (shader == null || _renderer == null) return;
 
-        // Create shader material
         var material = new ShaderMaterial();
-        material.Shader = _beamShader;
+        material.Shader = shader;
 
-        // Set initial uniforms
+        // Set uniforms from definition
         material.SetShaderParameter("progress", 0.0f);
-        material.SetShaderParameter("beam_length", effect.BeamLength);
-        material.SetShaderParameter("beam_width", 6.0f);
+        material.SetShaderParameter("radius", effect.Radius * _tileSize);
+        material.SetShaderParameter("inner_color", definition.InnerColor);
+        material.SetShaderParameter("mid_color", definition.MidColor);
+        material.SetShaderParameter("outer_color", definition.OuterColor);
 
-        // Set colors - tunneling uses earthy tones
-        material.SetShaderParameter("core_color", new Color(1.0f, 0.9f, 0.7f, 1.0f));
-        material.SetShaderParameter("mid_color", effect.PrimaryColor);
-        material.SetShaderParameter("outer_color", effect.SecondaryColor);
+        // Apply any additional shader parameters
+        foreach (var param in definition.ShaderParams)
+        {
+            material.SetShaderParameter(param.Key, param.Value);
+        }
 
-        // Create the visual node
         var colorRect = new ColorRect();
         colorRect.Material = material;
 
-        // Size the rect: width is beam length, height is beam width with extra for particles
-        float beamWidth = 24.0f; // Height for beam and debris particles
-        colorRect.Size = new Vector2(effect.BeamLength + 20.0f, beamWidth);
+        // Size the rect to match the effect area
+        float sizePixels = (effect.Radius * 2 + 1) * _tileSize * 1.2f;
+        colorRect.Size = new Vector2(sizePixels, sizePixels);
+        colorRect.ZIndex = 100;
 
-        // Apply rotation around origin
-        colorRect.PivotOffset = new Vector2(0, beamWidth / 2.0f);
-        colorRect.Rotation = effect.Rotation;
-
-        colorRect.ZIndex = 100; // Render above game elements
-
-        // Store references
         effect.ShaderNode = colorRect;
         effect.Material = material;
 
-        // Add to renderer
         _renderer.AddChild(colorRect);
+        UpdateRadialNodePosition(effect);
+    }
 
-        // Update position initially
+    /// <summary>
+    /// Creates a ColorRect with a beam shader for GPU-accelerated rendering.
+    /// </summary>
+    private void CreateBeamShaderNode(VisualEffectData effect, VisualEffectDefinition definition)
+    {
+        var shader = GetShader(definition.ShaderPath);
+        if (shader == null || _renderer == null) return;
+
+        var material = new ShaderMaterial();
+        material.Shader = shader;
+
+        // Set uniforms from definition
+        material.SetShaderParameter("progress", 0.0f);
+        material.SetShaderParameter("beam_length", effect.BeamLength);
+        material.SetShaderParameter("beam_width", 6.0f);
+        material.SetShaderParameter("core_color", definition.InnerColor);
+        material.SetShaderParameter("mid_color", definition.MidColor);
+        material.SetShaderParameter("outer_color", definition.OuterColor);
+
+        // Apply any additional shader parameters
+        foreach (var param in definition.ShaderParams)
+        {
+            material.SetShaderParameter(param.Key, param.Value);
+        }
+
+        var colorRect = new ColorRect();
+        colorRect.Material = material;
+
+        // Size the rect: width is beam length, height is beam width with extra for glow
+        float beamHeight = 24.0f;
+        colorRect.Size = new Vector2(effect.BeamLength + 20.0f, beamHeight);
+
+        // Apply rotation around origin
+        colorRect.PivotOffset = new Vector2(0, beamHeight / 2.0f);
+        colorRect.Rotation = effect.Rotation;
+        colorRect.ZIndex = 100;
+
+        effect.ShaderNode = colorRect;
+        effect.Material = material;
+
+        _renderer.AddChild(colorRect);
         UpdateBeamNodePosition(effect);
+    }
+
+    #endregion
+
+    #region Position Updates
+
+    /// <summary>
+    /// Updates the radial shader node position based on camera/scroll offset.
+    /// </summary>
+    private void UpdateRadialNodePosition(VisualEffectData effect)
+    {
+        if (effect.ShaderNode == null || _renderer == null) return;
+
+        var offset = _renderer.GetRenderOffset();
+        var tileCenter = _renderer.GridToTileCenter(effect.Position);
+
+        // Position the rect so its center is at the effect position
+        float halfSize = effect.ShaderNode.Size.X / 2.0f;
+        effect.ShaderNode.Position = new Vector2(
+            offset.X + tileCenter.X - halfSize,
+            offset.Y + tileCenter.Y - halfSize
+        );
     }
 
     /// <summary>
@@ -265,6 +349,10 @@ public partial class VisualEffectSystem : Node
             offset.Y + originCenter.Y - halfHeight
         );
     }
+
+    #endregion
+
+    #region Animation
 
     /// <summary>
     /// Animates an effect using a tween.
@@ -300,7 +388,7 @@ public partial class VisualEffectSystem : Node
         }
         else
         {
-            UpdateShaderNodePosition(effect);
+            UpdateRadialNodePosition(effect);
         }
 
         _renderer?.QueueRedraw();
@@ -311,7 +399,6 @@ public partial class VisualEffectSystem : Node
     /// </summary>
     private void OnEffectComplete(VisualEffectData effect)
     {
-        // Clean up shader node
         if (effect.ShaderNode != null)
         {
             effect.ShaderNode.QueueFree();
@@ -327,6 +414,10 @@ public partial class VisualEffectSystem : Node
             EmitSignal(SignalName.AllEffectsCompleted);
         }
     }
+
+    #endregion
+
+    #region Cleanup
 
     /// <summary>
     /// Clears all active effects (useful for scene transitions).
@@ -346,58 +437,5 @@ public partial class VisualEffectSystem : Node
         _renderer?.QueueRedraw();
     }
 
-    /// <summary>
-    /// Gets rendering data for an explosion effect.
-    /// Returns multiple rings with calculated radii and alpha values.
-    /// </summary>
-    /// <param name="effect">The explosion effect data.</param>
-    /// <param name="tileSize">Size of a tile in pixels.</param>
-    /// <returns>List of (radius, color) tuples for each ring to draw.</returns>
-    public static List<(float radius, Color color)> GetExplosionRings(VisualEffectData effect, float tileSize)
-    {
-        var rings = new List<(float radius, Color color)>();
-
-        // Eased progress for smoother animation
-        float easedProgress = EaseOutQuad(effect.Progress);
-
-        // Calculate max radius in pixels
-        float maxRadiusPixels = effect.Radius * tileSize;
-
-        // Create 3 expanding rings
-        int ringCount = 3;
-        for (int i = 0; i < ringCount; i++)
-        {
-            // Each ring starts slightly later and expands at different rate
-            float ringDelay = i * 0.1f;
-            float ringProgress = Mathf.Clamp((easedProgress - ringDelay) / (1.0f - ringDelay), 0.0f, 1.0f);
-
-            // Ring expands from 0 to max radius
-            float ringRadius = ringProgress * maxRadiusPixels * (1.0f - i * 0.2f);
-
-            // Alpha fades out as ring expands
-            float baseAlpha = 0.6f - (i * 0.15f);
-            float alpha = baseAlpha * (1.0f - easedProgress);
-
-            if (alpha > 0.01f && ringRadius > 0)
-            {
-                Color ringColor = new Color(
-                    Mathf.Lerp(effect.PrimaryColor.R, effect.SecondaryColor.R, ringProgress),
-                    Mathf.Lerp(effect.PrimaryColor.G, effect.SecondaryColor.G, ringProgress),
-                    Mathf.Lerp(effect.PrimaryColor.B, effect.SecondaryColor.B, ringProgress),
-                    alpha);
-
-                rings.Add((ringRadius, ringColor));
-            }
-        }
-
-        return rings;
-    }
-
-    /// <summary>
-    /// Quadratic ease-out function for smooth animation.
-    /// </summary>
-    private static float EaseOutQuad(float t)
-    {
-        return 1.0f - (1.0f - t) * (1.0f - t);
-    }
+    #endregion
 }

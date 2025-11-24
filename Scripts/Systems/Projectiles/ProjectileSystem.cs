@@ -10,7 +10,7 @@ namespace PitsOfDespair.Systems.Projectiles;
 
 /// <summary>
 /// Manages projectiles in flight.
-/// Handles spawning, animation, trail updates, impact resolution, and effect application.
+/// Handles spawning, animation, shader-based rendering, impact resolution, and effect application.
 /// </summary>
 public partial class ProjectileSystem : Node
 {
@@ -24,9 +24,11 @@ public partial class ProjectileSystem : Node
     public delegate void SkillDamageDealtEventHandler(Entities.BaseEntity caster, Entities.BaseEntity target, int damage, string skillName);
 
     private List<ProjectileData> _activeProjectiles = new();
+    private Dictionary<string, Shader> _loadedShaders = new();
     private CombatSystem _combatSystem;
     private Player _player;
     private TextRenderer _renderer;
+    private int _tileSize = 18;
 
     /// <summary>
     /// Gets all currently active projectiles for rendering.
@@ -56,12 +58,55 @@ public partial class ProjectileSystem : Node
     }
 
     /// <summary>
-    /// Sets the text renderer reference for forcing visual updates.
+    /// Sets the text renderer reference for positioning and coordinate conversion.
     /// </summary>
     public void SetTextRenderer(TextRenderer renderer)
     {
         _renderer = renderer;
+        if (renderer != null)
+        {
+            _tileSize = renderer.TileSize;
+        }
     }
+
+    #region Shader Management
+
+    /// <summary>
+    /// Loads and caches a shader from the given path.
+    /// </summary>
+    private Shader? LoadShader(string shaderPath)
+    {
+        if (_loadedShaders.TryGetValue(shaderPath, out var cached))
+        {
+            return cached;
+        }
+
+        var shader = GD.Load<Shader>(shaderPath);
+        if (shader == null)
+        {
+            GD.PrintErr($"ProjectileSystem: Failed to load shader: {shaderPath}");
+            return null;
+        }
+
+        _loadedShaders[shaderPath] = shader;
+        return shader;
+    }
+
+    /// <summary>
+    /// Gets a cached shader or loads it if not yet cached.
+    /// </summary>
+    private Shader? GetShader(string shaderPath)
+    {
+        if (_loadedShaders.TryGetValue(shaderPath, out var shader))
+        {
+            return shader;
+        }
+        return LoadShader(shaderPath);
+    }
+
+    #endregion
+
+    #region Spawn Methods
 
     /// <summary>
     /// Spawns a projectile when a ranged attack is requested via player signal.
@@ -96,6 +141,7 @@ public partial class ProjectileSystem : Node
             targetEntity,
             attackIndex);
 
+        CreateShaderNode(projectile);
         _activeProjectiles.Add(projectile);
         AnimateProjectile(projectile);
     }
@@ -129,6 +175,7 @@ public partial class ProjectileSystem : Node
             effect,
             effectContext);
 
+        CreateShaderNode(projectile);
         _activeProjectiles.Add(projectile);
         AnimateProjectile(projectile);
     }
@@ -148,6 +195,7 @@ public partial class ProjectileSystem : Node
             definition,
             caster);
 
+        CreateShaderNode(projectile);
         _activeProjectiles.Add(projectile);
         AnimateProjectile(projectile);
     }
@@ -172,9 +220,77 @@ public partial class ProjectileSystem : Node
             OnImpactCallback = onImpactCallback
         };
 
+        CreateShaderNode(projectile);
         _activeProjectiles.Add(projectile);
         AnimateProjectile(projectile);
     }
+
+    #endregion
+
+    #region Shader Node Creation
+
+    /// <summary>
+    /// Creates a ColorRect with the projectile shader for GPU-accelerated rendering.
+    /// </summary>
+    private void CreateShaderNode(ProjectileData projectile)
+    {
+        var shader = GetShader(projectile.Definition.ShaderPath);
+        if (shader == null || _renderer == null) return;
+
+        var material = new ShaderMaterial();
+        material.Shader = shader;
+
+        // Set uniforms from definition
+        material.SetShaderParameter("progress", 0.0f);
+        material.SetShaderParameter("head_color", projectile.Definition.HeadColor);
+        material.SetShaderParameter("trail_color", projectile.Definition.GetTrailColor());
+        material.SetShaderParameter("size", projectile.Definition.Size);
+        material.SetShaderParameter("trail_length", projectile.Definition.TrailLength);
+        material.SetShaderParameter("direction", projectile.GetDirection());
+
+        // Apply any additional shader parameters
+        foreach (var param in projectile.Definition.ShaderParams)
+        {
+            material.SetShaderParameter(param.Key, param.Value);
+        }
+
+        var colorRect = new ColorRect();
+        colorRect.Material = material;
+
+        // Size for the projectile visual - enough to show projectile and trail
+        float visualSize = _tileSize * 2.5f * projectile.Definition.Size;
+        colorRect.Size = new Vector2(visualSize, visualSize);
+        colorRect.ZIndex = 100;
+
+        projectile.ShaderNode = colorRect;
+        projectile.Material = material;
+
+        _renderer.AddChild(colorRect);
+        UpdateShaderNodePosition(projectile);
+    }
+
+    /// <summary>
+    /// Updates the shader node position based on current progress.
+    /// </summary>
+    private void UpdateShaderNodePosition(ProjectileData projectile)
+    {
+        if (projectile.ShaderNode == null || _renderer == null) return;
+
+        var offset = _renderer.GetRenderOffset();
+        var currentPos = projectile.GetCurrentPosition();
+        var screenPos = _renderer.TilePosToCenter(currentPos);
+
+        // Center the rect on the current position
+        float halfSize = projectile.ShaderNode.Size.X / 2.0f;
+        projectile.ShaderNode.Position = new Vector2(
+            offset.X + screenPos.X - halfSize,
+            offset.Y + screenPos.Y - halfSize
+        );
+    }
+
+    #endregion
+
+    #region Animation
 
     /// <summary>
     /// Animates a projectile from origin to target.
@@ -198,13 +314,27 @@ public partial class ProjectileSystem : Node
     }
 
     /// <summary>
-    /// Updates projectile progress and trail during animation.
+    /// Updates projectile progress, shader uniforms, and position during animation.
     /// </summary>
     private void UpdateProjectileProgress(ProjectileData projectile, float progress)
     {
         projectile.Progress = progress;
         projectile.UpdateTrail();
+
+        // Update shader uniforms
+        if (projectile.Material != null)
+        {
+            projectile.Material.SetShaderParameter("progress", progress);
+            projectile.Material.SetShaderParameter("direction", projectile.GetDirection());
+        }
+
+        // Update position
+        UpdateShaderNodePosition(projectile);
     }
+
+    #endregion
+
+    #region Impact Handling
 
     /// <summary>
     /// Handles projectile impact - applies effects/damage and cleans up.
@@ -249,7 +379,6 @@ public partial class ProjectileSystem : Node
                 EmitSignal(SignalName.SkillDamageDealt, context.Caster, context.Target, result.DamageDealt, skillName);
             }
         }
-
     }
 
     /// <summary>
@@ -264,11 +393,23 @@ public partial class ProjectileSystem : Node
         attackComponent?.RequestAttack(projectile.TargetEntity, projectile.AttackIndex);
     }
 
+    #endregion
+
+    #region Cleanup
+
     /// <summary>
     /// Removes a projectile from the active list.
     /// </summary>
     private void RemoveProjectile(ProjectileData projectile)
     {
+        // Clean up shader node
+        if (projectile.ShaderNode != null)
+        {
+            projectile.ShaderNode.QueueFree();
+            projectile.ShaderNode = null;
+        }
+        projectile.Material = null;
+
         _activeProjectiles.Remove(projectile);
         _renderer?.QueueRedraw();
 
@@ -283,6 +424,15 @@ public partial class ProjectileSystem : Node
     /// </summary>
     public void ClearAllProjectiles()
     {
+        foreach (var projectile in _activeProjectiles)
+        {
+            if (projectile.ShaderNode != null)
+            {
+                projectile.ShaderNode.QueueFree();
+                projectile.ShaderNode = null;
+            }
+            projectile.Material = null;
+        }
         _activeProjectiles.Clear();
         _renderer?.QueueRedraw();
     }
@@ -296,4 +446,6 @@ public partial class ProjectileSystem : Node
 
         ClearAllProjectiles();
     }
+
+    #endregion
 }

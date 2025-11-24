@@ -413,16 +413,10 @@ public partial class TextRenderer : Control
 		// Draw the player last (should be at viewport center, on top of everything)
 		DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
 
-		// Draw projectiles as animated lines (on top of player)
-		if (_projectileSystem != null)
-		{
-			foreach (var projectile in _projectileSystem.ActiveProjectiles)
-			{
-				DrawProjectileLine(projectile, offset);
-			}
-		}
+		// Note: Projectiles and visual effects render via shader nodes (ColorRect children)
+		// They don't need explicit drawing here - they render themselves
 
-		// Draw visual effects (explosions, etc.) on top of projectiles
+		// Draw visual effects (fallback for non-shader effects)
 		if (_visualEffectSystem != null)
 		{
 			foreach (var effect in _visualEffectSystem.ActiveEffects)
@@ -524,175 +518,14 @@ public partial class TextRenderer : Control
 	}
 
 	/// <summary>
-	/// Draws an animated projectile with shape and trail support.
-	/// </summary>
-	private void DrawProjectileLine(ProjectileData projectile, Vector2 offset)
-	{
-		Vector2 currentPos = projectile.GetCurrentPosition();
-		Vector2 currentDrawPos = GetProjectileDrawPosition(currentPos, offset);
-		Vector2 direction = projectile.GetDirection();
-
-		// Draw trail first (behind the head)
-		if (projectile.TrailPositions.Count > 0)
-		{
-			DrawProjectileTrail(projectile, offset);
-		}
-
-		// Draw projectile head
-		DrawProjectileShape(projectile.Definition, currentDrawPos, direction);
-	}
-
-	/// <summary>
-	/// Converts a tile position to screen draw position for projectiles.
-	/// </summary>
-	private Vector2 GetProjectileDrawPosition(Vector2 tilePos, Vector2 offset)
-	{
-		return offset + TilePosToCenter(tilePos);
-	}
-
-	/// <summary>
-	/// Draws the projectile trail (fading segments behind the head).
-	/// </summary>
-	private void DrawProjectileTrail(ProjectileData projectile, Vector2 offset)
-	{
-		var definition = projectile.Definition!;
-		var trailPositions = projectile.TrailPositions;
-
-		for (int i = 0; i < trailPositions.Count; i++)
-		{
-			Vector2 trailDrawPos = GetProjectileDrawPosition(trailPositions[i], offset);
-			Color trailColor = definition.GetTrailColorAtSegment(i, trailPositions.Count);
-
-			// Draw smaller version of shape for trail
-			float trailScale = 1.0f - ((float)i / trailPositions.Count) * 0.5f;
-			float trailSize = definition.Size * trailScale;
-
-			switch (definition.Shape)
-			{
-				case ProjectileShape.Circle:
-					DrawCircle(trailDrawPos, trailSize * 0.7f, trailColor);
-					break;
-				case ProjectileShape.Diamond:
-					DrawDiamond(trailDrawPos, trailSize * 0.7f, trailColor);
-					break;
-				case ProjectileShape.Triangle:
-					DrawTriangle(trailDrawPos, trailSize * 0.7f, projectile.GetDirection(), trailColor);
-					break;
-				case ProjectileShape.Line:
-					// Line trails are just dots
-					DrawCircle(trailDrawPos, 2.0f, trailColor);
-					break;
-			}
-		}
-	}
-
-	/// <summary>
-	/// Draws the projectile head based on its shape definition.
-	/// </summary>
-	private void DrawProjectileShape(ProjectileDefinition definition, Vector2 position, Vector2 direction)
-	{
-		Color headColor = new Color(definition.HeadColor.R, definition.HeadColor.G, definition.HeadColor.B, 0.9f);
-
-		switch (definition.Shape)
-		{
-			case ProjectileShape.Circle:
-				DrawCircle(position, definition.Size, headColor);
-				break;
-
-			case ProjectileShape.Diamond:
-				DrawDiamond(position, definition.Size, headColor);
-				break;
-
-			case ProjectileShape.Triangle:
-				DrawTriangle(position, definition.Size, direction, headColor);
-				break;
-
-			case ProjectileShape.Line:
-				DrawProjectileLineShape(position, direction, definition.Size, definition.LineWidth, headColor);
-				break;
-		}
-	}
-
-	/// <summary>
-	/// Draws a diamond shape at the given position.
-	/// </summary>
-	private void DrawDiamond(Vector2 center, float size, Color color)
-	{
-		Vector2[] points = new Vector2[]
-		{
-			center + new Vector2(0, -size),      // Top
-			center + new Vector2(size, 0),       // Right
-			center + new Vector2(0, size),       // Bottom
-			center + new Vector2(-size, 0)       // Left
-		};
-		DrawPolygon(points, new Color[] { color });
-	}
-
-	/// <summary>
-	/// Draws a triangle pointing in the given direction.
-	/// </summary>
-	private void DrawTriangle(Vector2 center, float size, Vector2 direction, Color color)
-	{
-		// Calculate perpendicular vector for triangle base
-		Vector2 perp = new Vector2(-direction.Y, direction.X);
-
-		// Triangle points: tip in direction of travel, base behind
-		Vector2 tip = center + direction * size;
-		Vector2 baseLeft = center - direction * size * 0.5f + perp * size * 0.6f;
-		Vector2 baseRight = center - direction * size * 0.5f - perp * size * 0.6f;
-
-		Vector2[] points = new Vector2[] { tip, baseLeft, baseRight };
-		DrawPolygon(points, new Color[] { color });
-	}
-
-	/// <summary>
-	/// Draws a line segment projectile shape.
-	/// </summary>
-	private void DrawProjectileLineShape(Vector2 center, Vector2 direction, float length, float width, Color color)
-	{
-		Vector2 halfSegment = direction * (length * TileSize / 12.0f);
-		Vector2 lineStart = center - halfSegment;
-		Vector2 lineEnd = center + halfSegment;
-		DrawLine(lineStart, lineEnd, color, width);
-	}
-
-	/// <summary>
 	/// Draws a visual effect (explosion, heal glow, etc.).
-	/// Effects with shader nodes are skipped as they render themselves.
+	/// Effects with shader nodes render themselves via ColorRect children.
 	/// </summary>
 	private void DrawVisualEffect(VisualEffectData effect, Vector2 offset)
 	{
-		// Skip effects that use shader-based rendering
-		if (effect.ShaderNode != null)
-		{
-			return;
-		}
-
-		// Calculate center position in screen coordinates
-		Vector2 effectCenter = offset + GridToTileCenter(effect.Position);
-
-		switch (effect.Type)
-		{
-			case VisualEffectType.Explosion:
-				DrawExplosionEffect(effect, effectCenter);
-				break;
-			// Future effect types can be added here
-		}
-	}
-
-	/// <summary>
-	/// Draws an explosion effect as expanding concentric rings.
-	/// Fallback for when shader-based rendering is not available.
-	/// </summary>
-	private void DrawExplosionEffect(VisualEffectData effect, Vector2 center)
-	{
-		var rings = VisualEffectSystem.GetExplosionRings(effect, TileSize);
-
-		foreach (var (radius, color) in rings)
-		{
-			// Draw ring as a circle outline
-			DrawArc(center, radius, 0, Mathf.Tau, 32, color, 3.0f);
-		}
+		// All effects now use shader-based rendering via ColorRect children
+		// This method exists for potential future non-shader effects
+		// Currently, all effects should have a ShaderNode and render themselves
 	}
 
 	public override void _ExitTree()

@@ -44,6 +44,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 
 **Rendering & Presentation**:
 - **[text-renderer.md](text-renderer.md)**: Tile-based glyph rendering with fog-of-war and layered display
+- **[visual-effects.md](visual-effects.md)**: Shader-based projectiles and impact effects
 
 **Visual Design**:
 - **[color.md](color.md)**: Color theming and visual feedback patterns
