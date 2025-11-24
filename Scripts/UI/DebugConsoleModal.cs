@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Debug;
@@ -85,7 +86,35 @@ public partial class DebugConsoleModal : CenterContainer
         Show();
         _commandInput.Clear();
         _commandInput.GrabFocus();
-        ClearAutocomplete();
+
+        // Always show all commands when opening the console
+        ShowAllCommands();
+    }
+
+    /// <summary>
+    /// Display all available commands in the suggestion list.
+    /// </summary>
+    private void ShowAllCommands()
+    {
+        _currentSuggestions = DebugCommandFactory.GetRegisteredCommands().ToList();
+        _currentContext = new DebugAutocomplete.AutocompleteContext
+        {
+            IsArgumentContext = false,
+            CommandName = string.Empty,
+            ArgIndex = 0,
+            CurrentValue = string.Empty
+        };
+
+        _suggestionList.Clear();
+        foreach (var suggestion in _currentSuggestions)
+        {
+            _suggestionList.AddItem(suggestion);
+        }
+
+        _selectedIndex = 0;
+        _suggestionList.Select(0);
+        _suggestionList.Show();
+        _ghostText.Text = string.Empty;
     }
 
     /// <summary>
@@ -120,29 +149,114 @@ public partial class DebugConsoleModal : CenterContainer
         }
     }
 
+    private const int PageSize = 5;
+
     private bool HandleAutocompleteInput(InputEventKey keyEvent)
     {
-        if (_currentSuggestions.Count == 0)
+        switch (keyEvent.Keycode)
+        {
+            case Key.Tab:
+                // Always consume Tab to prevent focus cycling
+                if (_currentSuggestions.Count > 0)
+                {
+                    AcceptCurrentSuggestion();
+                }
+                return true;
+
+            case Key.Enter:
+            case Key.KpEnter:
+                // If suggestions are visible and command is incomplete, accept suggestion
+                if (_currentSuggestions.Count > 0 && !IsCommandComplete(_commandInput.Text))
+                {
+                    AcceptCurrentSuggestion();
+                    return true;
+                }
+                return false;
+
+            case Key.Up:
+            case Key.Kp8: // Numpad 8
+                if (_currentSuggestions.Count > 0)
+                {
+                    NavigateSuggestions(-1);
+                    return true;
+                }
+                return false;
+
+            case Key.Down:
+            case Key.Kp2: // Numpad 2
+                if (_currentSuggestions.Count > 0)
+                {
+                    NavigateSuggestions(1);
+                    return true;
+                }
+                return false;
+
+            case Key.Pageup:
+            case Key.Kp9: // Numpad 9
+                if (_currentSuggestions.Count > 0)
+                {
+                    NavigateSuggestions(-PageSize);
+                    return true;
+                }
+                return false;
+
+            case Key.Pagedown:
+            case Key.Kp3: // Numpad 3
+                if (_currentSuggestions.Count > 0)
+                {
+                    NavigateSuggestions(PageSize);
+                    return true;
+                }
+                return false;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if the current input represents a complete, valid command.
+    /// A command is complete if it has a valid command name and all required arguments.
+    /// </summary>
+    private bool IsCommandComplete(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
         {
             return false;
         }
 
-        switch (keyEvent.Keycode)
+        // Strip leading slash for backward compatibility
+        var cleanInput = input.StartsWith('/') ? input.Substring(1) : input;
+        if (string.IsNullOrWhiteSpace(cleanInput))
         {
-            case Key.Tab:
-                AcceptCurrentSuggestion();
-                return true;
-
-            case Key.Up:
-                NavigateSuggestions(-1);
-                return true;
-
-            case Key.Down:
-                NavigateSuggestions(1);
-                return true;
+            return false;
         }
 
-        return false;
+        var parts = cleanInput.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return false;
+        }
+
+        var commandName = parts[0];
+        var command = DebugCommandFactory.CreateCommand(commandName);
+
+        if (command == null)
+        {
+            return false;
+        }
+
+        // Check if command expects arguments and none provided
+        var argSuggestions = DebugCommandFactory.GetArgumentSuggestions(commandName, 0, "");
+        bool commandExpectsArgs = argSuggestions != null && argSuggestions.Count > 0;
+        bool hasArgs = parts.Length > 1;
+
+        // If command expects arguments and none provided, it's incomplete
+        if (commandExpectsArgs && !hasArgs)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void OnTextChanged(string newText)
@@ -152,18 +266,16 @@ public partial class DebugConsoleModal : CenterContainer
 
     private void UpdateSuggestions(string input)
     {
-        // Strip leading slash for matching
-        var cleanInput = input.StartsWith('/') ? input.Substring(1) : input;
-
-        if (string.IsNullOrEmpty(cleanInput))
+        if (string.IsNullOrEmpty(input))
         {
-            ClearAutocomplete();
+            // Show all commands when input is empty
+            ShowAllCommands();
             return;
         }
 
         // Parse the context to understand what we're completing
-        _currentContext = DebugAutocomplete.ParseContext(cleanInput);
-        _currentSuggestions = DebugAutocomplete.GetSuggestions(cleanInput);
+        _currentContext = DebugAutocomplete.ParseContext(input);
+        _currentSuggestions = DebugAutocomplete.GetSuggestions(input);
 
         if (_currentSuggestions.Count == 0)
         {
@@ -171,14 +283,11 @@ public partial class DebugConsoleModal : CenterContainer
             return;
         }
 
-        // Populate suggestion list
+        // Populate suggestion list (no / prefix)
         _suggestionList.Clear();
         foreach (var suggestion in _currentSuggestions)
         {
-            // For command context, prefix with /
-            // For argument context, show just the argument value
-            var displayText = _currentContext.IsArgumentContext ? suggestion : "/" + suggestion;
-            _suggestionList.AddItem(displayText);
+            _suggestionList.AddItem(suggestion);
         }
 
         // Select first item by default
@@ -187,7 +296,7 @@ public partial class DebugConsoleModal : CenterContainer
         _suggestionList.Show();
 
         // Update ghost text
-        UpdateGhostText(cleanInput);
+        UpdateGhostText(input);
     }
 
     private void UpdateGhostText(string input)
@@ -204,9 +313,8 @@ public partial class DebugConsoleModal : CenterContainer
 
         var suffix = DebugAutocomplete.GetCompletionSuffix(input, selectedSuggestion);
 
-        // Ghost text shows the full line with completion
-        var prefix = _commandInput.Text.StartsWith('/') ? "/" : "";
-        _ghostText.Text = prefix + input + suffix;
+        // Ghost text shows the full line with completion (no / prefix)
+        _ghostText.Text = input + suffix;
     }
 
     private void NavigateSuggestions(int direction)
@@ -218,33 +326,37 @@ public partial class DebugConsoleModal : CenterContainer
 
         _selectedIndex += direction;
 
-        // Wrap around
-        if (_selectedIndex < 0)
+        // For single-step movement, wrap around; for page jumps, clamp
+        bool isPageJump = System.Math.Abs(direction) > 1;
+        if (isPageJump)
         {
-            _selectedIndex = _currentSuggestions.Count - 1;
+            // Clamp to valid range for page jumps
+            _selectedIndex = System.Math.Clamp(_selectedIndex, 0, _currentSuggestions.Count - 1);
         }
-        else if (_selectedIndex >= _currentSuggestions.Count)
+        else
         {
-            _selectedIndex = 0;
+            // Wrap around for single steps
+            if (_selectedIndex < 0)
+            {
+                _selectedIndex = _currentSuggestions.Count - 1;
+            }
+            else if (_selectedIndex >= _currentSuggestions.Count)
+            {
+                _selectedIndex = 0;
+            }
         }
 
         _suggestionList.Select(_selectedIndex);
         _suggestionList.EnsureCurrentIsVisible();
 
         // Update ghost text to match new selection
-        var cleanInput = _commandInput.Text.StartsWith('/')
-            ? _commandInput.Text.Substring(1)
-            : _commandInput.Text;
-        UpdateGhostText(cleanInput);
+        UpdateGhostText(_commandInput.Text);
     }
 
     private void OnSuggestionSelected(long index)
     {
         _selectedIndex = (int)index;
-        var cleanInput = _commandInput.Text.StartsWith('/')
-            ? _commandInput.Text.Substring(1)
-            : _commandInput.Text;
-        UpdateGhostText(cleanInput);
+        UpdateGhostText(_commandInput.Text);
     }
 
     private void AcceptCurrentSuggestion()
@@ -256,7 +368,6 @@ public partial class DebugConsoleModal : CenterContainer
 
         var suggestion = _currentSuggestions[_selectedIndex];
         var currentText = _commandInput.Text;
-        var cleanInput = currentText.StartsWith('/') ? currentText.Substring(1) : currentText;
 
         string newText;
         string commandName;
@@ -266,15 +377,15 @@ public partial class DebugConsoleModal : CenterContainer
         {
             // Replace just the current argument being typed
             // Find where the current value starts and replace from there
-            var beforeCurrentValue = cleanInput.Substring(0, cleanInput.Length - _currentContext.CurrentValue.Length);
-            newText = "/" + beforeCurrentValue + suggestion;
+            var beforeCurrentValue = currentText.Substring(0, currentText.Length - _currentContext.CurrentValue.Length);
+            newText = beforeCurrentValue + suggestion;
             commandName = _currentContext.CommandName;
             nextArgIndex = _currentContext.ArgIndex + 1;
         }
         else
         {
             // Replace the whole command
-            newText = "/" + suggestion;
+            newText = suggestion;
             commandName = suggestion;
             nextArgIndex = 0;
         }
@@ -288,7 +399,9 @@ public partial class DebugConsoleModal : CenterContainer
 
         _commandInput.Text = newText;
         _commandInput.CaretColumn = _commandInput.Text.Length;
-        ClearAutocomplete();
+
+        // Update suggestions for the new input
+        UpdateSuggestions(newText);
     }
 
     private void ClearAutocomplete()
@@ -308,6 +421,14 @@ public partial class DebugConsoleModal : CenterContainer
             return;
         }
 
+        // Silently prevent invalid command submission
+        if (!IsCommandComplete(input))
+        {
+            // Don't submit - if there are suggestions, the _Input handler should have caught this
+            // This is a fallback safety check
+            return;
+        }
+
         ProcessCommand(input.Trim());
         HideConsole();
     }
@@ -324,7 +445,7 @@ public partial class DebugConsoleModal : CenterContainer
             return;
         }
 
-        _messageLog?.AddMessage($"> /{input}", Palette.ToHex(Palette.Alert));
+        _messageLog?.AddMessage($"> {input}", Palette.ToHex(Palette.Alert));
 
         string[] parts = input.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
@@ -340,7 +461,7 @@ public partial class DebugConsoleModal : CenterContainer
         if (command == null)
         {
             _messageLog?.AddMessage(
-                $"Unknown command: {commandName}. Type 'help' for available commands.",
+                $"Unknown command: {commandName}",
                 Palette.ToHex(Palette.Danger)
             );
             return;

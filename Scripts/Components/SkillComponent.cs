@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using PitsOfDespair.Data;
-using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Components;

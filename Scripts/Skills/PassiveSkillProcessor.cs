@@ -4,7 +4,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Conditions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Skills;
+
 
 namespace PitsOfDespair.Skills;
 

@@ -4,7 +4,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills;
 using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Systems;

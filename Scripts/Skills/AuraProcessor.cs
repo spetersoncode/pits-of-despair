@@ -7,7 +7,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Skills;
+
 using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Skills;

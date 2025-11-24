@@ -1,4 +1,4 @@
-namespace PitsOfDespair.Scripts.Skills;
+namespace PitsOfDespair.Skills;
 
 /// <summary>
 /// Defines the categories of skills available in the game.

@@ -11,7 +11,7 @@ namespace PitsOfDespair.Systems;
 /// - Coordinates stat choice UI
 /// - Applies chosen stat increases
 /// - Queues multiple level-ups for discrete processing
-/// Note: HP gains come purely from Endurance stat investment (no automatic HP per level).
+/// Note: Health gains come purely from Endurance stat investment (no automatic Health per level).
 /// </summary>
 public partial class LevelUpSystem : Node
 {

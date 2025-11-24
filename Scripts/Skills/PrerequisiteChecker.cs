@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 
-namespace PitsOfDespair.Scripts.Skills;
+namespace PitsOfDespair.Skills;
 
 /// <summary>
 /// Utility class for checking skill prerequisites against entity stats.

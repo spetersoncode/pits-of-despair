@@ -64,8 +64,12 @@ public class GiveCommand : DebugCommand
             );
         }
 
-        // Create item at player's position
-        var item = context.ActionContext.EntityFactory.CreateItem(itemId, player.GridPosition);
+        // Get item data to check type for quantity
+        var itemData = context.DataLoader?.GetItem(itemId);
+        int quantity = itemData?.Type?.ToLower() == "ammo" ? 50 : 1;
+
+        // Create item at player's position with appropriate quantity
+        var item = context.ActionContext.EntityFactory.CreateItem(itemId, player.GridPosition, quantity);
 
         if (item == null)
         {
@@ -84,7 +88,7 @@ public class GiveCommand : DebugCommand
             context.ActionContext.EntityManager.RemoveEntity(item);
             item.QueueFree();
 
-            string itemName = item.ItemData.Template.GetDisplayName(1);
+            string itemName = item.ItemData.Template.GetDisplayName(quantity);
             return DebugCommandResult.CreateSuccess(
                 $"Spawned [b]{itemName}[/b] in inventory.",
                 Palette.ToHex(Palette.Success)

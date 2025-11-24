@@ -67,10 +67,11 @@ public class CreatureData
     public int Level { get; set; } = 1;
 
     /// <summary>
-    /// Base MaxHP before Endurance modifiers.
-    /// Actual MaxHP will be: MaxHP + (Endurance × Level)
+    /// Base MaxHealth before Endurance modifiers.
+    /// Actual MaxHealth will be: MaxHealth + (Endurance × Level)
     /// </summary>
-    public int MaxHP { get; set; } = 1;
+    [YamlDotNet.Serialization.YamlMember(Alias = "health")]
+    public int MaxHealth { get; set; } = 1;
 
     public int VisionRange { get; set; } = 10;
 

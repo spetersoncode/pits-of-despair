@@ -96,6 +96,6 @@ max_columns = 1
 custom_minimum_size = Vector2(0, 25)
 layout_mode = 2
 bbcode_enabled = true
-text = "[center][color=#888888]ESC to close | Type 'help' for commands[/color][/center]"
+text = "[center][color=#888888]ESC to close | Tab/Enter to select | ↑↓/PgUp/PgDn to navigate[/color][/center]"
 fit_content = true
 scroll_active = false

@@ -15,7 +15,6 @@ public static class DebugCommandFactory
     {
         { "ally", () => new AllyCommand() },
         { "give", () => new GiveCommand() },
-        { "help", () => new HelpCommand() },
         { "level", () => new LevelCommand() },
         { "reveal", () => new RevealCommand() },
         { "skill", () => new SkillCommand() },

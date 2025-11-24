@@ -1,6 +1,6 @@
 using Godot;
 using System.Collections.Generic;
-using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Data;
