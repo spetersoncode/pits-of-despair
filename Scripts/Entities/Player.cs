@@ -17,7 +17,7 @@ namespace PitsOfDespair.Entities;
 public partial class Player : BaseEntity
 {
     [Signal]
-    public delegate void TurnCompletedEventHandler();
+    public delegate void TurnCompletedEventHandler(int delayCost);
 
     [Signal]
     public delegate void WaitedEventHandler();
@@ -77,6 +77,9 @@ public partial class Player : BaseEntity
 
         var attackComponent = new AttackComponent { Name = "AttackComponent" };
         AddChild(attackComponent);
+
+        var speedComponent = new SpeedComponent { Name = "SpeedComponent" };
+        AddChild(speedComponent);
 
         var statsComponent = new StatsComponent
         {
@@ -169,11 +172,16 @@ public partial class Player : BaseEntity
     {
         var result = base.ExecuteAction(action, context);
 
-        // If action consumed a turn, process recharging and emit turn completed signal
-        if (result.ConsumesTurn)
+        // If action costs time, process recharging and emit turn completed signal with delay
+        if (result.CostsTime)
         {
             ProcessItemRecharging();
-            EmitSignal(SignalName.TurnCompleted);
+
+            // Get the player's speed component to calculate actual delay
+            var speedComponent = GetNodeOrNull<SpeedComponent>("SpeedComponent");
+            int actualDelay = speedComponent?.CalculateDelay(result.DelayCost) ?? result.DelayCost;
+
+            EmitSignal(SignalName.TurnCompleted, actualDelay);
         }
 
         return result;

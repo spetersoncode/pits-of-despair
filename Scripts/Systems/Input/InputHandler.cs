@@ -67,7 +67,7 @@ public partial class InputHandler : Node
         // Disconnect from old player
         if (_player != null)
         {
-            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
         }
 
         _player = player;
@@ -76,7 +76,7 @@ public partial class InputHandler : Node
         // Connect to new player
         if (_player != null)
         {
-            _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+            _player.Connect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
         }
     }
 
@@ -134,7 +134,7 @@ public partial class InputHandler : Node
     {
         if (_player != null)
         {
-            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
         }
     }
 
@@ -348,9 +348,9 @@ public partial class InputHandler : Node
 
     // Signal handlers
 
-    private void OnPlayerTurnCompleted()
+    private void OnPlayerTurnCompleted(int delayCost)
     {
-        _turnManager?.EndPlayerTurn();
+        _turnManager?.EndPlayerTurn(delayCost);
     }
 
     private void OnStartItemTargeting(char itemKey)

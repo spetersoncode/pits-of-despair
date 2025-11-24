@@ -54,7 +54,7 @@ public partial class PlayerVisionSystem : Node
         _exploredTiles = new bool[_mapWidth, _mapHeight];
 
         // Connect to player turn completion
-        _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+        _player.Connect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
 
         // Calculate initial vision
         CalculateVision();
@@ -64,7 +64,7 @@ public partial class PlayerVisionSystem : Node
     /// Called when the player completes a turn (usually after moving).
     /// Recalculates field-of-view from player's new position.
     /// </summary>
-    private void OnPlayerTurnCompleted()
+    private void OnPlayerTurnCompleted(int delayCost)
     {
         CalculateVision();
     }
@@ -202,7 +202,7 @@ public partial class PlayerVisionSystem : Node
         // Cleanup signal connections
         if (_player != null)
         {
-            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
         }
     }
 }

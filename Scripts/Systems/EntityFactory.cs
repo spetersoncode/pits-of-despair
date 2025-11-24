@@ -172,6 +172,14 @@ public partial class EntityFactory : Node
             entity.AddChild(visionComponent);
         }
 
+        // Add SpeedComponent for energy-based turn system
+        var speedComponent = new SpeedComponent
+        {
+            Name = "SpeedComponent",
+            BaseSpeed = data.Speed
+        };
+        entity.AddChild(speedComponent);
+
         // Add HealthComponent if max HP is specified
         if (data.MaxHealth > 0)
         {

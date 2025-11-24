@@ -77,6 +77,13 @@ public class CreatureData
     public int MaxHealth { get; set; } = 1;
 
     public int VisionRange { get; set; } = 10;
+    
+    /// <summary>
+    /// Base speed stat. 10 = average speed.
+    /// Higher values = faster actions, lower values = slower actions.
+    /// Delay = 100 / Speed, so speed 10 = 10 aut delay.
+    /// </summary>
+    public int Speed { get; set; } = 10;
 
     public bool HasMovement { get; set; } = true;
 

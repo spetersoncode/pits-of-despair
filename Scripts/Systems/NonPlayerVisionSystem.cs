@@ -30,7 +30,7 @@ public partial class NonPlayerVisionSystem : Node
         _combatSystem = combatSystem;
 
         // Connect to player turn completion
-        _player.Connect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+        _player.Connect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
 
         // Check initial vision
         CheckNonPlayerVision();
@@ -40,7 +40,7 @@ public partial class NonPlayerVisionSystem : Node
     /// Called when the player completes a turn.
     /// Checks if any non-player entities can see the player.
     /// </summary>
-    private void OnPlayerTurnCompleted()
+    private void OnPlayerTurnCompleted(int delayCost)
     {
         CheckNonPlayerVision();
     }
@@ -96,7 +96,7 @@ public partial class NonPlayerVisionSystem : Node
         // Cleanup signal connections
         if (_player != null)
         {
-            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From(OnPlayerTurnCompleted));
+            _player.Disconnect(Player.SignalName.TurnCompleted, Callable.From<int>(OnPlayerTurnCompleted));
         }
     }
 }

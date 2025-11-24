@@ -86,7 +86,7 @@ public class UseSkillAction : Action
             {
                 Success = true,
                 Message = result.GetCombinedMessage(),
-                ConsumesTurn = _skill.ConsumesTurn
+                DelayCost = _skill.DelayCost
             };
         }
         else

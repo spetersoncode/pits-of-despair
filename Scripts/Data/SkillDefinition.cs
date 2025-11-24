@@ -111,10 +111,11 @@ public class SkillDefinition
     public bool HasProjectile => !string.IsNullOrEmpty(Projectile);
 
     /// <summary>
-    /// Whether using this skill consumes the actor's turn.
-    /// Set to false for buff skills that should be combined with another action.
+    /// The delay cost of using this skill in aut (action time units).
+    /// Standard actions cost 10 aut. Set to 0 for free/instant skills.
+    /// Can be set higher for slow skills or lower for fast skills.
     /// </summary>
-    public bool ConsumesTurn { get; set; } = true;
+    public int DelayCost { get; set; } = 10; // ActionDelay.Standard
 
     /// <summary>
     /// Gets the skill category as an enum value.

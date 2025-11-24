@@ -578,10 +578,10 @@ public partial class DebugConsoleModal : CenterContainer
                 _debugContext.ActionContext.CombatSystem?.RegisterAttackComponent(attackComponent);
             }
 
-            var aiComponent = creature.GetNodeOrNull<Components.AIComponent>("AIComponent");
-            if (aiComponent != null)
+            var speedComponent = creature.GetNodeOrNull<Components.SpeedComponent>("SpeedComponent");
+            if (speedComponent != null)
             {
-                _debugContext.AISystem?.RegisterAIComponent(aiComponent);
+                _debugContext.TimeSystem?.RegisterCreature(speedComponent);
             }
 
             string allyText = request.MakeAlly ? " as ally" : "";

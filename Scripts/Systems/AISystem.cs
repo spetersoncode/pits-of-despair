@@ -13,7 +13,7 @@ namespace PitsOfDespair.Systems;
 
 /// <summary>
 /// Manages AI behavior for non-player entities.
-/// Processes creature turns, updates AI state, and commands movement.
+/// Processes individual creature turns based on energy scheduling.
 /// Uses the action system for all creature actions.
 /// </summary>
 public partial class AISystem : Node
@@ -21,12 +21,10 @@ public partial class AISystem : Node
     private MapSystem _mapSystem;
     private Player _player;
     private EntityManager _entityManager;
-    private TurnManager _turnManager;
     private CombatSystem _combatSystem;
     private EntityFactory _entityFactory;
     private VisualEffectSystem _visualEffectSystem;
     private ActionContext _actionContext;
-    private List<AIComponent> _aiComponents = new List<AIComponent>();
 
     /// <summary>
     /// Sets the map system dependency.
@@ -46,36 +44,10 @@ public partial class AISystem : Node
 
     /// <summary>
     /// Sets the entity manager dependency.
-    /// Subscribes to EntityAdded to automatically register AI components for dynamically spawned entities.
     /// </summary>
     public void SetEntityManager(EntityManager entityManager)
     {
-        // Disconnect from old entity manager if exists
-        if (_entityManager != null)
-        {
-            _entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
-        }
-
         _entityManager = entityManager;
-
-        // Connect to new entity manager
-        if (_entityManager != null)
-        {
-            _entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
-        }
-    }
-
-    /// <summary>
-    /// Called when a new entity is added to the world.
-    /// Automatically registers AI components for dynamically spawned entities (e.g., clones, summons).
-    /// </summary>
-    private void OnEntityAdded(BaseEntity entity)
-    {
-        var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
-        if (aiComponent != null)
-        {
-            RegisterAIComponent(aiComponent);
-        }
     }
 
     /// <summary>
@@ -118,74 +90,37 @@ public partial class AISystem : Node
     }
 
     /// <summary>
-    /// Sets the turn manager and subscribes to creature turn events.
+    /// Processes a single creature's turn.
+    /// Called by TurnManager when the creature has enough energy to act.
     /// </summary>
-    public void SetTurnManager(TurnManager turnManager)
+    /// <param name="speedComponent">The speed component of the creature to process.</param>
+    /// <returns>The delay cost of the action taken.</returns>
+    public int ProcessSingleCreatureTurn(SpeedComponent speedComponent)
     {
-        // Disconnect from old turn manager if exists
-        if (_turnManager != null)
+        // Get the entity from the speed component
+        BaseEntity entity = speedComponent.GetParent<BaseEntity>();
+        if (entity == null || entity.IsDead)
         {
-            _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
+            return ActionDelay.Standard; // Default delay for invalid/dead entities
         }
 
-        _turnManager = turnManager;
-
-        // Connect to new turn manager
-        if (_turnManager != null)
+        // Get the AI component
+        var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+        if (aiComponent == null)
         {
-            _turnManager.Connect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
-        }
-    }
-
-    /// <summary>
-    /// Registers an AI component for processing.
-    /// </summary>
-    public void RegisterAIComponent(AIComponent component)
-    {
-        if (!_aiComponents.Contains(component))
-        {
-            _aiComponents.Add(component);
-        }
-    }
-
-    /// <summary>
-    /// Called when creature turns start.
-    /// Processes all creatures with AI components.
-    /// </summary>
-    private void OnCreatureTurnsStarted()
-    {
-        // Process each creature's AI
-        foreach (AIComponent ai in _aiComponents)
-        {
-            // Skip if component or entity no longer valid
-            if (!IsInstanceValid(ai) || ai.GetParent() == null)
-            {
-                continue;
-            }
-
-            ProcessCreatureTurn(ai);
-        }
-
-        // End creature turns after all have been processed
-        _turnManager?.EndCreatureTurns();
-    }
-
-    /// <summary>
-    /// Processes a single creature's turn using goal stack-based AI.
-    /// </summary>
-    private void ProcessCreatureTurn(AIComponent ai)
-    {
-        BaseEntity entity = ai.GetEntity();
-        if (entity == null)
-        {
-            return;
+            return ActionDelay.Standard; // No AI, default delay
         }
 
         // Build AI context
-        var context = BuildAIContext(ai, entity);
+        var context = BuildAIContext(aiComponent, entity);
 
-        // Process the goal stack
-        ProcessGoalStack(ai, context);
+        // Process the goal stack and get the action result
+        var result = ProcessGoalStack(aiComponent, context);
+
+        // Calculate the actual delay based on the creature's speed
+        int actualDelay = speedComponent.CalculateDelay(result.DelayCost);
+
+        return actualDelay;
     }
 
     /// <summary>
@@ -194,7 +129,8 @@ public partial class AISystem : Node
     /// Goals that only push sub-goals don't consume a turn - we continue executing
     /// until a goal performs an actual action (movement, attack, etc.) or we hit a safety limit.
     /// </summary>
-    private void ProcessGoalStack(AIComponent ai, AIContext context)
+    /// <returns>The action result from the executed goal.</returns>
+    private ActionResult ProcessGoalStack(AIComponent ai, AIContext context)
     {
         var stack = ai.GoalStack;
         const int maxIterations = 10; // Safety limit to prevent infinite loops
@@ -231,6 +167,10 @@ public partial class AISystem : Node
             }
             // Stack grew - a sub-goal was pushed, loop to execute it immediately
         }
+
+        // Return default action result (goals currently don't return results directly)
+        // The action has already been executed, this is just for delay calculation
+        return ActionResult.CreateSuccess();
     }
 
     /// <summary>
@@ -279,16 +219,4 @@ public partial class AISystem : Node
         return visiblePositions.Contains(playerPos);
     }
 
-    public override void _ExitTree()
-    {
-        if (_turnManager != null)
-        {
-            _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
-        }
-
-        if (_entityManager != null)
-        {
-            _entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
-        }
-    }
 }

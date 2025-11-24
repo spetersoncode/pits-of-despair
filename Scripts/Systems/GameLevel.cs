@@ -61,6 +61,7 @@ public partial class GameLevel : Node
     private AutoRestSystem _autoRestSystem;
     private MessageSystem _messageSystem;
     private TileHazardManager _tileHazardManager;
+    private TimeSystem _timeSystem;
 
     public override void _Ready()
     {
@@ -122,6 +123,9 @@ public partial class GameLevel : Node
 
         _tileHazardManager = new TileHazardManager { Name = "TileHazardManager" };
         AddChild(_tileHazardManager);
+
+        _timeSystem = new TimeSystem { Name = "TimeSystem" };
+        AddChild(_timeSystem);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -199,6 +203,12 @@ public partial class GameLevel : Node
         // Connect turn manager to message system for message sequencing
         _turnManager.SetMessageSystem(_messageSystem);
 
+        // Connect turn manager to time system for energy-based scheduling
+        _turnManager.SetTimeSystem(_timeSystem);
+
+        // Connect turn manager to AI system for creature processing
+        _turnManager.SetAISystem(_aiSystem);
+
         // Initialize tile hazard manager
         _tileHazardManager.SetDependencies(_entityManager, _turnManager, _renderer);
 
@@ -231,7 +241,6 @@ public partial class GameLevel : Node
         _aiSystem.SetMapSystem(_mapSystem);
         _aiSystem.SetPlayer(_player);
         _aiSystem.SetEntityManager(_entityManager);
-        _aiSystem.SetTurnManager(_turnManager);
         _aiSystem.SetCombatSystem(_combatSystem);
         _aiSystem.SetEntityFactory(_entityFactory);
         _aiSystem.SetVisualEffectSystem(_visualEffectSystem);
@@ -252,10 +261,18 @@ public partial class GameLevel : Node
                 _combatSystem.RegisterAttackComponent(attack);
             }
 
-            var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
-            if (aiComponent != null)
+            var speedComponent = entity.GetNodeOrNull<SpeedComponent>("SpeedComponent");
+            if (speedComponent != null)
             {
-                _aiSystem.RegisterAIComponent(aiComponent);
+                // Register player separately for special handling
+                if (entity == _player)
+                {
+                    _timeSystem.RegisterPlayer(speedComponent);
+                }
+                else
+                {
+                    _timeSystem.RegisterCreature(speedComponent);
+                }
             }
         }
 
@@ -277,7 +294,8 @@ public partial class GameLevel : Node
             _cursorSystem,
             dataLoader,
             _aiSystem,
-            _movementSystem
+            _movementSystem,
+            _timeSystem
         );
 
         // Get persistent debug mode state from GameManager (if it exists)

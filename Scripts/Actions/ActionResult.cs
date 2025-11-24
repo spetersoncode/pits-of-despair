@@ -1,6 +1,15 @@
 namespace PitsOfDespair.Actions;
 
 /// <summary>
+/// Standard delay cost for actions (in aut - action time units).
+/// 10 aut = average speed action.
+/// </summary>
+public static class ActionDelay
+{
+    public const int Standard = 10;
+}
+
+/// <summary>
 /// Represents the result of executing an action.
 /// </summary>
 public class ActionResult
@@ -16,25 +25,33 @@ public class ActionResult
     public string Message { get; set; } = string.Empty;
 
     /// <summary>
-    /// Whether this action consumes a turn. Currently fixed at true for all actions.
+    /// The delay cost of this action in aut (action time units).
+    /// 0 means no time passes (failed actions, free actions).
+    /// Default is standard delay (10 aut).
     /// </summary>
-    public bool ConsumesTurn { get; set; } = true;
+    public int DelayCost { get; set; } = ActionDelay.Standard;
 
     /// <summary>
-    /// Creates a successful action result.
+    /// Whether this action costs time (has a delay > 0).
     /// </summary>
-    public static ActionResult CreateSuccess(string message = "")
+    public bool CostsTime => DelayCost > 0;
+
+    /// <summary>
+    /// Creates a successful action result with the standard delay cost.
+    /// </summary>
+    public static ActionResult CreateSuccess(string message = "", int delayCost = ActionDelay.Standard)
     {
         return new ActionResult
         {
             Success = true,
             Message = message,
-            ConsumesTurn = true
+            DelayCost = delayCost
         };
     }
 
     /// <summary>
-    /// Creates a failed action result that doesn't consume a turn.
+    /// Creates a failed action result that doesn't cost time.
+    /// Failed actions allow the player to retry without penalty.
     /// </summary>
     public static ActionResult CreateFailure(string message = "")
     {
@@ -42,7 +59,7 @@ public class ActionResult
         {
             Success = false,
             Message = message,
-            ConsumesTurn = false
+            DelayCost = 0
         };
     }
 }

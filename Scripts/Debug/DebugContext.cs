@@ -53,6 +53,11 @@ public class DebugContext
     /// </summary>
     public MovementSystem MovementSystem { get; }
 
+    /// <summary>
+    /// Time system for registering spawned creature speed components.
+    /// </summary>
+    public TimeSystem TimeSystem { get; }
+
     public DebugContext(
         ActionContext actionContext,
         TurnManager turnManager,
@@ -60,7 +65,8 @@ public class DebugContext
         CursorTargetingSystem targetingSystem,
         DataLoader dataLoader,
         AISystem aiSystem,
-        MovementSystem movementSystem)
+        MovementSystem movementSystem,
+        TimeSystem timeSystem)
     {
         ActionContext = actionContext;
         TurnManager = turnManager;
@@ -69,5 +75,6 @@ public class DebugContext
         DataLoader = dataLoader;
         AISystem = aiSystem;
         MovementSystem = movementSystem;
+        TimeSystem = timeSystem;
     }
 }
