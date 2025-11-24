@@ -32,6 +32,11 @@ public partial class MessageLog : PanelContainer
 	private readonly Dictionary<Entities.BaseEntity, string> _lastDamageSourceName = new();
 	private readonly System.Collections.Generic.List<(Components.HealthComponent healthComponent, Entities.BaseEntity entity)> _healthConnections = new();
 
+	// Message coalescing - track the last raw message and its repeat count
+	private string? _lastRawMessage = null;
+	private string? _lastMessageColor = null;
+	private int _lastMessageCount = 0;
+
 	public override void _Ready()
 	{
 		_logLabel = GetNode<RichTextLabel>("MarginContainer/LogLabel");
@@ -94,10 +99,28 @@ public partial class MessageLog : PanelContainer
 
 	/// <summary>
 	/// Adds a message to the log with optional color.
+	/// Consecutive identical messages are coalesced (e.g., "You wait. x3").
 	/// </summary>
 	public void AddMessage(string message, string? color = null)
 	{
-		var coloredMessage = $"[color={color ?? ColorDefault}]{message}[/color]";
+		color ??= ColorDefault;
+
+		// Check if this is a repeat of the last message
+		if (message == _lastRawMessage && color == _lastMessageColor && _messageHistory.Count > 0)
+		{
+			_lastMessageCount++;
+			// Update the last message in the queue with the new count
+			UpdateLastMessageWithCount();
+			UpdateDisplay();
+			return;
+		}
+
+		// New message - reset coalescing state
+		_lastRawMessage = message;
+		_lastMessageColor = color;
+		_lastMessageCount = 1;
+
+		var coloredMessage = $"[color={color}]{message}[/color]";
 
 		_messageHistory.Enqueue(coloredMessage);
 
@@ -108,6 +131,26 @@ public partial class MessageLog : PanelContainer
 		}
 
 		UpdateDisplay();
+	}
+
+	/// <summary>
+	/// Updates the last message in the queue with the current repeat count.
+	/// </summary>
+	private void UpdateLastMessageWithCount()
+	{
+		if (_lastRawMessage == null || _lastMessageColor == null || _messageHistory.Count == 0)
+			return;
+
+		// Convert queue to array, modify last element, rebuild queue
+		var messages = _messageHistory.ToArray();
+		var countSuffix = $" [color={Palette.ToHex(Palette.Disabled)}]x{_lastMessageCount}[/color]";
+		messages[messages.Length - 1] = $"[color={_lastMessageColor}]{_lastRawMessage}[/color]{countSuffix}";
+
+		_messageHistory.Clear();
+		foreach (var msg in messages)
+		{
+			_messageHistory.Enqueue(msg);
+		}
 	}
 
 	/// <summary>

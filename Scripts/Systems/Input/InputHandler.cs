@@ -49,6 +49,7 @@ public partial class InputHandler : Node
     private GameHUD _gameHUD;
     private CursorTargetingSystem _cursorSystem;
     private AutoExploreSystem _autoExploreSystem;
+    private AutoRestSystem _autoRestSystem;
 
     // Input processors
     private readonly KeybindingService _keybindingService = KeybindingService.Instance;
@@ -124,6 +125,11 @@ public partial class InputHandler : Node
         _autoExploreSystem = autoExploreSystem;
     }
 
+    public void SetAutoRestSystem(AutoRestSystem autoRestSystem)
+    {
+        _autoRestSystem = autoRestSystem;
+    }
+
     public override void _ExitTree()
     {
         if (_player != null)
@@ -158,6 +164,23 @@ public partial class InputHandler : Node
 
             // Any other key cancels autoexplore
             _autoExploreSystem.OnAnyKeyPressed();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // If auto-rest is active, any keypress cancels it (except the one that starts a new auto-rest)
+        if (_autoRestSystem != null && _autoRestSystem.IsActive)
+        {
+            // Check if this is the auto-rest key - if so, let it toggle off naturally
+            if (_keybindingService.TryGetAction(keyEvent, out var action) && action == InputAction.AutoRest)
+            {
+                _autoRestSystem.Stop();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            // Any other key cancels auto-rest
+            _autoRestSystem.OnAnyKeyPressed();
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -293,11 +316,22 @@ public partial class InputHandler : Node
             return false;
 
         // Check for autoexplore action
-        if (_keybindingService.TryGetAction(keyEvent, out var action) && action == InputAction.AutoExplore)
+        if (_keybindingService.TryGetAction(keyEvent, out var action))
         {
-            if (_autoExploreSystem != null)
+            if (action == InputAction.AutoExplore && _autoExploreSystem != null)
             {
+                // Stop auto-rest if active before starting autoexplore
+                _autoRestSystem?.Stop();
                 _autoExploreSystem.Start();
+                GetViewport().SetInputAsHandled();
+                return true;
+            }
+
+            if (action == InputAction.AutoRest && _autoRestSystem != null)
+            {
+                // Stop autoexplore if active before starting auto-rest
+                _autoExploreSystem?.Stop();
+                _autoRestSystem.Start();
                 GetViewport().SetInputAsHandled();
                 return true;
             }

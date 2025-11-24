@@ -46,6 +46,7 @@ public static class KeybindingConfig
         { InputAction.Pickup, new() { Key.G } },
         // Descend handled via modifier keybinding (Shift+Period)
         { InputAction.AutoExplore, new() { Key.O, Key.Kp0 } },
+        { InputAction.AutoRest, new() { Key.R, Key.KpPeriod } },
 
         // Combat
         { InputAction.FireRanged, new() { Key.F } },

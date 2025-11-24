@@ -58,6 +58,7 @@ public partial class GameLevel : Node
     private ViewModels.EquipmentViewModel _equipmentViewModel;
     private NearbyEntitiesTracker _nearbyEntitiesTracker;
     private AutoExploreSystem _autoExploreSystem;
+    private AutoRestSystem _autoRestSystem;
 
     public override void _Ready()
     {
@@ -110,6 +111,9 @@ public partial class GameLevel : Node
 
         _autoExploreSystem = new AutoExploreSystem { Name = "AutoExploreSystem" };
         AddChild(_autoExploreSystem);
+
+        _autoRestSystem = new AutoRestSystem { Name = "AutoRestSystem" };
+        AddChild(_autoRestSystem);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -197,6 +201,10 @@ public partial class GameLevel : Node
         // Initialize autoexplore system
         _autoExploreSystem.Initialize(_player, _mapSystem, _entityManager, _visionSystem, _turnManager, actionContext);
         _inputHandler.SetAutoExploreSystem(_autoExploreSystem);
+
+        // Initialize auto-rest system
+        _autoRestSystem.Initialize(_player, _entityManager, _visionSystem, _turnManager, actionContext);
+        _inputHandler.SetAutoRestSystem(_autoRestSystem);
 
         _inputHandler.Connect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
         _inputHandler.Connect(InputHandler.SignalName.ActivateItemRequested, Callable.From(_gameHUD.ShowActivateMenu));
