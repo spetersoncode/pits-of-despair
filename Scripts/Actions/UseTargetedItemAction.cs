@@ -3,7 +3,6 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Systems.Projectiles;
 using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.Targeting;
 using System.Text;
@@ -303,7 +302,7 @@ public class UseTargetedItemAction : Action
 		}
 
 		// For fireball, spawn a projectile with callback
-		if (fireballEffect != null && context.ProjectileSystem != null)
+		if (fireballEffect != null && context.VisualEffectSystem != null)
 		{
 			// Use targeting definition's radius, falling back to effect's default
 			int radius = definition.Radius > 0 ? definition.Radius : fireballEffect.Radius;
@@ -334,13 +333,12 @@ public class UseTargetedItemAction : Action
 				context.VisualEffectSystem?.SpawnExplosion(_targetPosition, radius, Palette.Fire);
 			};
 
-			// Spawn the fireball projectile
-			context.ProjectileSystem.SpawnProjectileWithCallback(
+			// Spawn the fireball projectile via VFX system
+			context.VisualEffectSystem.SpawnProjectile(
+				VisualEffectDefinitions.FireballProjectile,
 				actor.GridPosition,
 				_targetPosition,
-				ProjectileDefinitions.Fireball,
-				onImpact,
-				actor);
+				onImpact);
 
 			// Projectile spawned successfully - damage will be applied on impact
 			return true;

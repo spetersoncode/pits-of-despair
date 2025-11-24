@@ -1,5 +1,5 @@
 using Godot;
-using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Systems;
 
@@ -22,28 +22,28 @@ public partial class TurnManager : Node
     public delegate void CreatureTurnsEndedEventHandler();
 
     private bool _isPlayerTurn = true;
-    private bool _waitingForProjectiles = false;
-    private ProjectileSystem _projectileSystem;
+    private bool _waitingForEffects = false;
+    private VisualEffectSystem _visualEffectSystem;
 
     public bool IsPlayerTurn => _isPlayerTurn;
 
     /// <summary>
-    /// Sets the projectile system reference for turn coordination.
+    /// Sets the visual effect system reference for turn coordination.
     /// </summary>
-    public void SetProjectileSystem(ProjectileSystem projectileSystem)
+    public void SetVisualEffectSystem(VisualEffectSystem visualEffectSystem)
     {
         // Disconnect from old system if exists
-        if (_projectileSystem != null)
+        if (_visualEffectSystem != null)
         {
-            _projectileSystem.Disconnect(ProjectileSystem.SignalName.AllProjectilesCompleted, Callable.From(OnAllProjectilesCompleted));
+            _visualEffectSystem.Disconnect(VisualEffectSystem.SignalName.AllEffectsCompleted, Callable.From(OnAllEffectsCompleted));
         }
 
-        _projectileSystem = projectileSystem;
+        _visualEffectSystem = visualEffectSystem;
 
         // Connect to new system
-        if (_projectileSystem != null)
+        if (_visualEffectSystem != null)
         {
-            _projectileSystem.Connect(ProjectileSystem.SignalName.AllProjectilesCompleted, Callable.From(OnAllProjectilesCompleted));
+            _visualEffectSystem.Connect(VisualEffectSystem.SignalName.AllEffectsCompleted, Callable.From(OnAllEffectsCompleted));
         }
     }
 
@@ -58,7 +58,7 @@ public partial class TurnManager : Node
 
     /// <summary>
     /// Called when the player completes their action.
-    /// Transitions to creature turns, potentially waiting for projectiles to complete.
+    /// Transitions to creature turns, potentially waiting for effects to complete.
     /// </summary>
     public void EndPlayerTurn()
     {
@@ -68,28 +68,28 @@ public partial class TurnManager : Node
             return;
         }
 
-        // Check if we need to wait for projectile animations
-        if (_projectileSystem != null && _projectileSystem.HasActiveProjectiles)
+        // Check if we need to wait for visual effect animations (including projectiles)
+        if (_visualEffectSystem != null && _visualEffectSystem.HasActiveEffects)
         {
-            _waitingForProjectiles = true;
-            // Don't transition yet - wait for AllProjectilesCompleted signal
+            _waitingForEffects = true;
+            // Don't transition yet - wait for AllEffectsCompleted signal
         }
         else
         {
-            // No projectiles, transition immediately
+            // No effects, transition immediately
             TransitionToCreatureTurns();
         }
     }
 
     /// <summary>
-    /// Called when all projectiles have completed their animations.
+    /// Called when all visual effects have completed their animations.
     /// Completes the turn transition if we were waiting.
     /// </summary>
-    private void OnAllProjectilesCompleted()
+    private void OnAllEffectsCompleted()
     {
-        if (_waitingForProjectiles)
+        if (_waitingForEffects)
         {
-            _waitingForProjectiles = false;
+            _waitingForEffects = false;
             TransitionToCreatureTurns();
         }
     }
@@ -123,10 +123,10 @@ public partial class TurnManager : Node
 
     public override void _ExitTree()
     {
-        // Disconnect from projectile system
-        if (_projectileSystem != null)
+        // Disconnect from visual effect system
+        if (_visualEffectSystem != null)
         {
-            _projectileSystem.Disconnect(ProjectileSystem.SignalName.AllProjectilesCompleted, Callable.From(OnAllProjectilesCompleted));
+            _visualEffectSystem.Disconnect(VisualEffectSystem.SignalName.AllEffectsCompleted, Callable.From(OnAllEffectsCompleted));
         }
     }
 }

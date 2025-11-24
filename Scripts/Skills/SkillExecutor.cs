@@ -5,8 +5,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
-
-using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Systems.VisualEffects;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Skills;
@@ -138,8 +137,8 @@ public static class SkillExecutor
         ActionContext context,
         SkillResult result)
     {
-        var projectileDef = ProjectileDefinitions.GetById(skillDef.Projectile!);
-        if (projectileDef == null)
+        var projectileDef = VisualEffectDefinitions.GetById(skillDef.Projectile!);
+        if (projectileDef == null || projectileDef.Type != VisualEffectType.Projectile)
         {
             GD.PrintErr($"SkillExecutor: Unknown projectile type '{skillDef.Projectile}' in skill '{skillDef.Id}'");
             return ExecuteImmediateSkill(caster, skillDef, targets, context, result);
@@ -159,16 +158,27 @@ public static class SkillExecutor
                 }
 
                 var effectContext = EffectContext.ForSkill(target, caster, context, skillDef);
+                var capturedTarget = target;
 
-                // Spawn projectile - effect will be applied on impact
-                context.ProjectileSystem.SpawnSkillProjectile(
+                // Spawn projectile - effect will be applied on impact via callback
+                context.VisualEffectSystem.SpawnProjectile(
+                    projectileDef,
                     caster.GridPosition,
                     target.GridPosition,
-                    projectileDef,
-                    effect,
-                    effectContext,
-                    caster,
-                    target);
+                    () =>
+                    {
+                        var effectResult = effect.Apply(effectContext);
+                        // Emit damage signal for message log if damage was dealt
+                        if (effectResult.Success && effectResult.DamageDealt > 0)
+                        {
+                            string skillName = effectContext.Skill?.Name ?? "skill";
+                            context.CombatSystem?.EmitSkillDamageDealt(
+                                caster,
+                                capturedTarget,
+                                effectResult.DamageDealt,
+                                skillName);
+                        }
+                    });
 
                 result.AddAffectedEntity(target);
             }

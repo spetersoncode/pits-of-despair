@@ -2,7 +2,6 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Systems.Projectiles;
 using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Systems;
@@ -20,7 +19,6 @@ public partial class TextRenderer : Control
 	private EntityManager? _entityManager;
 	private PlayerVisionSystem _visionSystem;
 	private CursorTargetingSystem _cursorSystem;
-	private ProjectileSystem _projectileSystem;
 	private VisualEffectSystem _visualEffectSystem;
 	private Font _font;
 	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
@@ -136,13 +134,6 @@ public partial class TextRenderer : Control
 		_cursorSystem = cursorSystem;
 	}
 
-	/// <summary>
-	/// Sets the projectile system for rendering active projectiles.
-	/// </summary>
-	public void SetProjectileSystem(ProjectileSystem projectileSystem)
-	{
-		_projectileSystem = projectileSystem;
-	}
 
 	/// <summary>
 	/// Sets the visual effect system for rendering explosions and other effects.
@@ -269,11 +260,7 @@ public partial class TextRenderer : Control
 		}
 		_wasCursorActive = isCursorActive;
 
-		if (_projectileSystem != null && _projectileSystem.ActiveProjectiles.Count > 0)
-		{
-			needsRedraw = true;
-		}
-
+		// Redraw while visual effects (including projectiles) are animating
 		if (_visualEffectSystem != null && _visualEffectSystem.HasActiveEffects)
 		{
 			needsRedraw = true;

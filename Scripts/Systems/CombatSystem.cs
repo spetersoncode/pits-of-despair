@@ -49,6 +49,13 @@ public partial class CombatSystem : Node
     public delegate void ActionMessageEventHandler(BaseEntity actor, string message, string color);
 
     /// <summary>
+    /// Emitted when a skill deals damage (caster, target, damage, skillName)
+    /// Used for message log display of skill damage.
+    /// </summary>
+    [Signal]
+    public delegate void SkillDamageDealtEventHandler(BaseEntity caster, BaseEntity target, int damage, string skillName);
+
+    /// <summary>
     /// Register an AttackComponent to listen for attack requests.
     /// Called by GameLevel or EntityManager when entities with AttackComponents are created.
     /// </summary>
@@ -196,6 +203,15 @@ public partial class CombatSystem : Node
     {
         color ??= Palette.ToHex(Palette.Default);
         EmitSignal(SignalName.ActionMessage, actor, message, color);
+    }
+
+    /// <summary>
+    /// Emit skill damage feedback for the message log.
+    /// Used by skill effects to report damage dealt via projectiles or other delayed effects.
+    /// </summary>
+    public void EmitSkillDamageDealt(BaseEntity caster, BaseEntity target, int damage, string skillName)
+    {
+        EmitSignal(SignalName.SkillDamageDealt, caster, target, damage, skillName);
     }
 
     public override void _ExitTree()

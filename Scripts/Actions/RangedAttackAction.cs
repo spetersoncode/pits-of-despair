@@ -6,6 +6,7 @@ using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Systems.VisualEffects;
 using System.Linq;
 
 namespace PitsOfDespair.Actions;
@@ -114,20 +115,28 @@ public class RangedAttackAction : Action
             }
         }
 
-        // Spawn projectile for all entities (player and NPCs) - it will handle the combat on impact
-        if (actor is Player player)
+        // Spawn projectile via VFX system with callback for damage application
+        var projectileTarget = target != null ? target.GridPosition : _targetPosition;
+        var capturedTarget = target;
+        var capturedActor = actor;
+        var capturedAttackIndex = _attackIndex;
+
+        // Create callback to apply damage when projectile arrives
+        System.Action onImpact = () =>
         {
-            // Player uses signal-based approach for consistency with existing system
-            var projectileTarget = target != null ? target.GridPosition : _targetPosition;
-            player.EmitSignal(Player.SignalName.RangedAttackRequested,
-                actor.GridPosition.ToVector2I(), projectileTarget.ToVector2I(), target, _attackIndex);
-        }
-        else
-        {
-            // NPCs use direct projectile spawning
-            var projectileTarget = target != null ? target.GridPosition : _targetPosition;
-            context.ProjectileSystem.SpawnProjectile(actor.GridPosition, projectileTarget, target, actor, _attackIndex);
-        }
+            if (capturedTarget != null && capturedActor != null)
+            {
+                var attackComp = capturedActor.GetNodeOrNull<AttackComponent>("AttackComponent");
+                attackComp?.RequestAttack(capturedTarget, capturedAttackIndex);
+            }
+        };
+
+        // Spawn arrow projectile via VFX system
+        context.VisualEffectSystem.SpawnProjectile(
+            VisualEffectDefinitions.Arrow,
+            actor.GridPosition,
+            projectileTarget,
+            onImpact);
 
         return ActionResult.CreateSuccess();
     }

@@ -220,14 +220,6 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
-    /// Connects to the projectile system to display skill damage messages.
-    /// </summary>
-    public void ConnectToProjectileSystem(Systems.Projectiles.ProjectileSystem projectileSystem)
-    {
-        _messageLog.ConnectToProjectileSystem(projectileSystem);
-    }
-
-    /// <summary>
     /// Connects to the autoexplore system to display status messages.
     /// </summary>
     public void ConnectToAutoExploreSystem(AutoExploreSystem autoExploreSystem)

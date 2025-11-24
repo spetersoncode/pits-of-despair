@@ -27,7 +27,6 @@ public partial class MessageLog : PanelContainer
 	private Entities.Player _player;
 	private Systems.EntityManager _entityManager;
 	private Systems.CombatSystem _combatSystem;
-	private Systems.Projectiles.ProjectileSystem _projectileSystem;
 	private readonly Dictionary<Entities.BaseEntity, Entities.BaseEntity> _lastAttacker = new();
 	private readonly Dictionary<Entities.BaseEntity, string> _lastDamageSourceName = new();
 	private readonly System.Collections.Generic.List<(Components.HealthComponent healthComponent, Entities.BaseEntity entity)> _healthConnections = new();
@@ -45,7 +44,7 @@ public partial class MessageLog : PanelContainer
 	}
 
 	/// <summary>
-	/// Connects to the CombatSystem to receive attack events and action messages.
+	/// Connects to the CombatSystem to receive attack events, action messages, and skill damage events.
 	/// </summary>
 	public void ConnectToCombatSystem(Systems.CombatSystem combatSystem)
 	{
@@ -55,8 +54,8 @@ public partial class MessageLog : PanelContainer
 		_combatSystem.Connect(Systems.CombatSystem.SignalName.AttackHit, Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnAttackHit));
 		_combatSystem.Connect(Systems.CombatSystem.SignalName.AttackBlocked, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackBlocked));
 		_combatSystem.Connect(Systems.CombatSystem.SignalName.AttackMissed, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackMissed));
-
 		_combatSystem.Connect(Systems.CombatSystem.SignalName.ActionMessage, Callable.From<Entities.BaseEntity, string, string>(OnActionMessage));
+		_combatSystem.Connect(Systems.CombatSystem.SignalName.SkillDamageDealt, Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnSkillDamageDealt));
 	}
 
 	/// <summary>
@@ -73,16 +72,6 @@ public partial class MessageLog : PanelContainer
 	public void SetEntityManager(Systems.EntityManager entityManager)
 	{
 		_entityManager = entityManager;
-	}
-
-	/// <summary>
-	/// Connects to the ProjectileSystem to receive skill damage events.
-	/// </summary>
-	public void ConnectToProjectileSystem(Systems.Projectiles.ProjectileSystem projectileSystem)
-	{
-		_projectileSystem = projectileSystem;
-		_projectileSystem.Connect(Systems.Projectiles.ProjectileSystem.SignalName.SkillDamageDealt,
-			Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnSkillDamageDealt));
 	}
 
 	/// <summary>
@@ -492,13 +481,7 @@ public partial class MessageLog : PanelContainer
 			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackBlocked, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackBlocked));
 			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.AttackMissed, Callable.From<Entities.BaseEntity, Entities.BaseEntity, string>(OnAttackMissed));
 			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.ActionMessage, Callable.From<Entities.BaseEntity, string, string>(OnActionMessage));
-		}
-
-		// Disconnect from projectile system
-		if (_projectileSystem != null)
-		{
-			_projectileSystem.Disconnect(Systems.Projectiles.ProjectileSystem.SignalName.SkillDamageDealt,
-				Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnSkillDamageDealt));
+			_combatSystem.Disconnect(Systems.CombatSystem.SignalName.SkillDamageDealt, Callable.From<Entities.BaseEntity, Entities.BaseEntity, int, string>(OnSkillDamageDealt));
 		}
 
 		// Disconnect from all health components

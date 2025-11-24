@@ -130,7 +130,7 @@ public class EffectResult
 
     /// <summary>
     /// Amount of damage dealt (for damage effects).
-    /// Used by ProjectileSystem to emit damage signals.
+    /// Used by callers to emit damage signals for message log.
     /// </summary>
     public int DamageDealt { get; set; }
 

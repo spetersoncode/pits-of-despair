@@ -1,12 +1,15 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 using PitsOfDespair.Core;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Systems.VisualEffects;
 
 /// <summary>
-/// Manages visual effects like explosions, healing glows, and other animated overlays.
-/// Effects are purely visual and don't affect gameplay.
+/// Manages visual effects including stationary effects (explosions, beams) and moving effects (projectiles).
+/// Effects are purely visual and don't affect gameplay directly.
+/// Game logic is triggered via completion callbacks.
 /// Uses GPU shaders for high-impact visual effects.
 /// </summary>
 public partial class VisualEffectSystem : Node
@@ -179,6 +182,76 @@ public partial class VisualEffectSystem : Node
 
     #endregion
 
+    #region Projectile Spawn Methods
+
+    /// <summary>
+    /// Spawns a projectile effect from origin to target.
+    /// </summary>
+    /// <param name="definitionId">The ID of the projectile definition to use.</param>
+    /// <param name="origin">Starting grid position.</param>
+    /// <param name="target">Target grid position.</param>
+    /// <param name="onComplete">Optional callback when projectile reaches target.</param>
+    public void SpawnProjectile(
+        string definitionId,
+        GridPosition origin,
+        GridPosition target,
+        Action? onComplete = null)
+    {
+        var definition = VisualEffectDefinitions.GetById(definitionId);
+        if (definition == null)
+        {
+            GD.PrintErr($"VisualEffectSystem: Unknown projectile definition: {definitionId}");
+            onComplete?.Invoke();
+            return;
+        }
+
+        SpawnProjectile(definition, origin, target, onComplete);
+    }
+
+    /// <summary>
+    /// Spawns a projectile effect from origin to target using a definition.
+    /// </summary>
+    /// <param name="definition">The projectile definition to use.</param>
+    /// <param name="origin">Starting grid position.</param>
+    /// <param name="target">Target grid position.</param>
+    /// <param name="onComplete">Optional callback when projectile reaches target.</param>
+    public void SpawnProjectile(
+        VisualEffectDefinition definition,
+        GridPosition origin,
+        GridPosition target,
+        Action? onComplete = null)
+    {
+        if (_renderer == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        if (definition.Type != VisualEffectType.Projectile)
+        {
+            GD.PrintErr($"VisualEffectSystem: Definition '{definition.Id}' is not a projectile type");
+            onComplete?.Invoke();
+            return;
+        }
+
+        // Calculate duration from distance and speed
+        int distance = DistanceHelper.ChebyshevDistance(origin, target);
+        float duration = distance / definition.Speed;
+
+        var effect = new VisualEffectData(
+            origin,
+            target,
+            definition,
+            duration,
+            onComplete);
+
+        CreateProjectileShaderNode(effect, definition);
+        _activeEffects.Add(effect);
+        AnimateProjectile(effect);
+    }
+
+    #endregion
+
     #region Effect Creation
 
     /// <summary>
@@ -225,6 +298,46 @@ public partial class VisualEffectSystem : Node
         CreateBeamShaderNode(effect, definition);
         _activeEffects.Add(effect);
         AnimateEffect(effect);
+    }
+
+    /// <summary>
+    /// Creates a ColorRect with a projectile shader for GPU-accelerated rendering.
+    /// </summary>
+    private void CreateProjectileShaderNode(VisualEffectData effect, VisualEffectDefinition definition)
+    {
+        var shader = GetShader(definition.ShaderPath);
+        if (shader == null || _renderer == null) return;
+
+        var material = new ShaderMaterial();
+        material.Shader = shader;
+
+        // Set uniforms from definition
+        material.SetShaderParameter("progress", 0.0f);
+        material.SetShaderParameter("head_color", definition.InnerColor);
+        material.SetShaderParameter("trail_color", definition.GetTrailColor());
+        material.SetShaderParameter("size", definition.Size);
+        material.SetShaderParameter("trail_length", definition.TrailLength);
+        material.SetShaderParameter("direction", effect.GetDirection());
+
+        // Apply any additional shader parameters
+        foreach (var param in definition.ShaderParams)
+        {
+            material.SetShaderParameter(param.Key, param.Value);
+        }
+
+        var colorRect = new ColorRect();
+        colorRect.Material = material;
+
+        // Size for the projectile visual - enough to show projectile and trail
+        float visualSize = _tileSize * 2.5f * definition.Size;
+        colorRect.Size = new Vector2(visualSize, visualSize);
+        colorRect.ZIndex = 100;
+
+        effect.ShaderNode = colorRect;
+        effect.Material = material;
+
+        _renderer.AddChild(colorRect);
+        UpdateProjectileNodePosition(effect);
     }
 
     /// <summary>
@@ -350,12 +463,31 @@ public partial class VisualEffectSystem : Node
         );
     }
 
+    /// <summary>
+    /// Updates the projectile shader node position based on current progress.
+    /// </summary>
+    private void UpdateProjectileNodePosition(VisualEffectData effect)
+    {
+        if (effect.ShaderNode == null || _renderer == null) return;
+
+        var offset = _renderer.GetRenderOffset();
+        var currentPos = effect.GetCurrentPosition();
+        var screenPos = _renderer.TilePosToCenter(currentPos);
+
+        // Center the rect on the current position
+        float halfSize = effect.ShaderNode.Size.X / 2.0f;
+        effect.ShaderNode.Position = new Vector2(
+            offset.X + screenPos.X - halfSize,
+            offset.Y + screenPos.Y - halfSize
+        );
+    }
+
     #endregion
 
     #region Animation
 
     /// <summary>
-    /// Animates an effect using a tween.
+    /// Animates a stationary effect (radial, beam) using a tween.
     /// </summary>
     private void AnimateEffect(VisualEffectData effect)
     {
@@ -369,7 +501,23 @@ public partial class VisualEffectSystem : Node
     }
 
     /// <summary>
-    /// Updates the progress of an effect during animation.
+    /// Animates a projectile from origin to target.
+    /// </summary>
+    private void AnimateProjectile(VisualEffectData effect)
+    {
+        var tween = CreateTween();
+        tween.TweenMethod(
+            Callable.From<float>(progress => UpdateProjectileProgress(effect, progress)),
+            0.0f,
+            1.0f,
+            effect.Duration);
+        tween.SetTrans(Tween.TransitionType.Linear);
+        tween.SetEase(Tween.EaseType.InOut);
+        tween.TweenCallback(Callable.From(() => OnEffectComplete(effect)));
+    }
+
+    /// <summary>
+    /// Updates the progress of a stationary effect during animation.
     /// </summary>
     private void UpdateEffectProgress(VisualEffectData effect, float progress)
     {
@@ -395,10 +543,35 @@ public partial class VisualEffectSystem : Node
     }
 
     /// <summary>
+    /// Updates the progress of a projectile during animation.
+    /// </summary>
+    private void UpdateProjectileProgress(VisualEffectData effect, float progress)
+    {
+        effect.Progress = progress;
+        effect.UpdateTrail();
+
+        // Update shader uniforms
+        if (effect.Material != null)
+        {
+            effect.Material.SetShaderParameter("progress", progress);
+            effect.Material.SetShaderParameter("direction", effect.GetDirection());
+        }
+
+        // Update position
+        UpdateProjectileNodePosition(effect);
+        _renderer?.QueueRedraw();
+    }
+
+    /// <summary>
     /// Called when an effect completes its animation.
+    /// Executes any completion callback and cleans up resources.
     /// </summary>
     private void OnEffectComplete(VisualEffectData effect)
     {
+        // Execute completion callback first (for game logic)
+        effect.OnCompleteCallback?.Invoke();
+
+        // Clean up shader node
         if (effect.ShaderNode != null)
         {
             effect.ShaderNode.QueueFree();

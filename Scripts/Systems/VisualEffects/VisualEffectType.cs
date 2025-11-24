@@ -28,5 +28,10 @@ public enum VisualEffectType
     /// <summary>
     /// Line/beam effect traveling from origin to target (tunneling, lightning, etc.)
     /// </summary>
-    Beam
+    Beam,
+
+    /// <summary>
+    /// Moving projectile effect from origin to target (fireballs, arrows, magic missiles, etc.)
+    /// </summary>
+    Projectile
 }
