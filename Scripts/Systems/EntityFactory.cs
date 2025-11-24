@@ -389,6 +389,7 @@ public partial class EntityFactory : Node
             "JoinPlayerOnSightComponent" => new Components.AI.JoinPlayerOnSightComponent(),
             "WanderingComponent" => new Components.AI.WanderingComponent(),
             "ItemCollectorComponent" => new Components.AI.ItemCollectorComponent(),
+            "PatrolComponent" => new Components.AI.PatrolComponent(),
             _ => null
         };
 
