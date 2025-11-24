@@ -176,6 +176,7 @@ public class TargetingDefinition
             "area" => Area(range, skill.Radius, requiresLOS: true),
             "line" => Tile(range, requiresLOS: true), // Fallback for now
             "cone" => Tile(range, requiresLOS: true), // Fallback for now
+            "reach" => Reach(range), // For melee skills that should use weapon reach
             _ => Self()
         };
     }

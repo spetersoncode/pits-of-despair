@@ -17,7 +17,8 @@ public enum ItemDisplayOptions
     ShowCharges = 1 << 1,
     ShowSlot = 1 << 2,
     ShowEquipped = 1 << 3,
-    IsDisabled = 1 << 4
+    IsDisabled = 1 << 4,
+    ShowChargeBrackets = 1 << 5
 }
 
 /// <summary>
@@ -70,11 +71,20 @@ public static class ItemFormatter
         }
         string name = $"[color={itemColor}]{displayName}[/color]";
 
-        // Charges (currently hidden as per user requirement)
+        // Charges display
         string charges = "";
-        if (options.HasFlag(ItemDisplayOptions.ShowCharges) && itemTemplate.GetMaxCharges() > 0)
+        int maxCharges = itemTemplate.GetMaxCharges();
+        if (maxCharges > 0)
         {
-            charges = $" [color={itemColor}][{slot.Item.CurrentCharges}/{itemTemplate.GetMaxCharges()}][/color]";
+            if (options.HasFlag(ItemDisplayOptions.ShowCharges))
+            {
+                charges = $" [color={itemColor}][{slot.Item.CurrentCharges}/{maxCharges}][/color]";
+            }
+            else if (options.HasFlag(ItemDisplayOptions.ShowChargeBrackets))
+            {
+                string bracket = GetChargeBracket(slot.Item.CurrentCharges, maxCharges);
+                charges = $" [color={itemColor}][{bracket}][/color]";
+            }
         }
 
         // Slot indicator for equippable items
@@ -97,5 +107,25 @@ public static class ItemFormatter
         }
 
         return $"{key} {glyph} {name}{charges}{slotIndicator}{equippedIndicator}";
+    }
+
+    /// <summary>
+    /// Gets a descriptive bracket for charge level (used by Attunement skill).
+    /// </summary>
+    /// <param name="current">Current charges.</param>
+    /// <param name="max">Maximum charges.</param>
+    /// <returns>Charge level bracket: Full, Half, Low, or Almost Empty.</returns>
+    public static string GetChargeBracket(int current, int max)
+    {
+        if (max <= 0) return "Empty";
+
+        float percent = (float)current / max * 100f;
+        return percent switch
+        {
+            >= 75f => "Full",
+            >= 50f => "Half",
+            >= 25f => "Low",
+            _ => "Almost Empty"
+        };
     }
 }

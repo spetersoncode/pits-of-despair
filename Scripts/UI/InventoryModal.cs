@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
@@ -101,10 +102,16 @@ public partial class InventoryModal : ItemSelectionModal
         sb.AppendLine("[center][b]Inventory (a-z, A-Z)[/b][/center]\n");
 
         var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        var skillComponent = _player.GetNodeOrNull<SkillComponent>("SkillComponent");
+        bool hasAttunement = skillComponent?.HasSkill("attunement") ?? false;
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
             var options = ItemDisplayOptions.ShowCount | ItemDisplayOptions.ShowSlot | ItemDisplayOptions.ShowEquipped;
+            if (hasAttunement)
+            {
+                options |= ItemDisplayOptions.ShowChargeBrackets;
+            }
             string line = ItemFormatter.FormatItemLine(slot, options, equipComponent);
             sb.AppendLine(line);
         }

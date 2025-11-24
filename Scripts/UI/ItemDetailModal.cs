@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -205,11 +206,19 @@ public partial class ItemDetailModal : CenterContainer
 			countInfo = $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Item.Quantity})[/color]";
 		}
 
-		// Charges for charged items
+		// Charges for charged items (only shown with Attunement skill)
 		string chargesInfo = "";
-		if (itemTemplate.GetMaxCharges() > 0)
+		int maxCharges = itemTemplate.GetMaxCharges();
+		if (maxCharges > 0)
 		{
-			chargesInfo = $"\n[color={Palette.ToHex(Palette.Disabled)}]Charges:[/color] [color={itemTemplate.Color}]{_currentSlot.Item.CurrentCharges}/{itemTemplate.GetMaxCharges()}[/color]";
+			var skillComponent = _player?.GetNodeOrNull<SkillComponent>("SkillComponent");
+			bool hasAttunement = skillComponent?.HasSkill("attunement") ?? false;
+
+			if (hasAttunement)
+			{
+				string bracket = ItemFormatter.GetChargeBracket(_currentSlot.Item.CurrentCharges, maxCharges);
+				chargesInfo = $"\n[color={Palette.ToHex(Palette.Disabled)}]Charges:[/color] [color={itemTemplate.Color}]{bracket}[/color]";
+			}
 		}
 
 		// Equipment slot info

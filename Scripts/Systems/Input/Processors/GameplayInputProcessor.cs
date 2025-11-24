@@ -173,6 +173,16 @@ public class GameplayInputProcessor
         // Create targeting definition from skill
         var definition = TargetingDefinition.FromSkill(skill);
 
+        // For reach targeting skills, use weapon reach if available
+        if (skill.Targeting?.ToLower() == "reach")
+        {
+            int weaponReach = GetEquippedMeleeWeaponReach();
+            if (weaponReach > definition.Range)
+            {
+                definition = TargetingDefinition.Reach(weaponReach);
+            }
+        }
+
         // Convert char to Key for initiating key (enables spam targeting with same key)
         var initiatingKey = key != '\0' ? CharToKey(key) : null;
         _cursorSystem.StartTargeting(_player, definition, _actionContext, initiatingKey);
@@ -303,6 +313,31 @@ public class GameplayInputProcessor
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Gets the reach of the equipped melee weapon (default 1 for adjacent attacks).
+    /// </summary>
+    private int GetEquippedMeleeWeaponReach()
+    {
+        if (_player == null)
+            return 1;
+
+        var attackComponent = _player.GetNodeOrNull<AttackComponent>("AttackComponent");
+        if (attackComponent == null)
+            return 1;
+
+        // Find the first melee attack and return its range
+        for (int i = 0; i < attackComponent.Attacks.Count; i++)
+        {
+            var attack = attackComponent.Attacks[i];
+            if (attack != null && attack.Type == AttackType.Melee)
+            {
+                return attack.Range > 0 ? attack.Range : 1;
+            }
+        }
+
+        return 1;
     }
 
     /// <summary>

@@ -75,12 +75,10 @@ This ensures:
 
 **Hybrid system (multiple levers to tune):**
 - **Passive:** Regenerate 1 Willpower every 5 turns
-- **On Kill:** +3 Willpower per enemy killed
 - **Floor Descent:** Full Willpower restored
 - **Items:** Potions, food, scrolls can restore Willpower
 
 This creates:
-- Aggressive play rewarded (kills restore WP)
 - Natural attrition in long fights
 - Strategic resource management
 - Floor transitions as recovery points

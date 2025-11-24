@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -33,6 +34,8 @@ public partial class ActivateItemModal : ItemSelectionModal
         sb.Append(BuildHeader("Activate which item?"));
 
         var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        var skillComponent = _player.GetNodeOrNull<SkillComponent>("SkillComponent");
+        bool hasAttunement = skillComponent?.HasSkill("attunement") ?? false;
 
         foreach (var slot in inventory.OrderBy(s => s.Key))
         {
@@ -59,6 +62,10 @@ public partial class ActivateItemModal : ItemSelectionModal
 
             // Determine display options
             var options = ItemDisplayOptions.ShowCount | ItemDisplayOptions.ShowSlot | ItemDisplayOptions.ShowEquipped;
+            if (hasAttunement)
+            {
+                options |= ItemDisplayOptions.ShowChargeBrackets;
+            }
             if (!isActivatable)
             {
                 options |= ItemDisplayOptions.IsDisabled;

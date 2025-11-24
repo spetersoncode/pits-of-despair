@@ -21,9 +21,9 @@ entries:
         dice: 2d4
         autoHit: true
 
-  arcane_focus:
-    name: Arcane Focus
-    description: +5 max Willpower.
+  attunement:
+    name: Attunement
+    description: Sense charge levels on wands and staves.
     category: passive
     targeting: self
     willpowerCost: 0
@@ -32,11 +32,7 @@ entries:
       wil: 2
     tags:
       - magic
-      - willpower
-    effects:
-      - type: stat_bonus
-        stat: max_wp
-        amount: 5
+      - utility
 
   minor_heal:
     name: Minor Heal
