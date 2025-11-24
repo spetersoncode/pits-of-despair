@@ -34,6 +34,7 @@ public static class ItemFormatter
         {
             EquipmentSlot.MeleeWeapon => "Melee",
             EquipmentSlot.RangedWeapon => "Ranged",
+            EquipmentSlot.Ammo => "Ammo",
             EquipmentSlot.Armor => "Armor",
             EquipmentSlot.Ring1 => "Ring1",
             EquipmentSlot.Ring2 => "Ring2",
