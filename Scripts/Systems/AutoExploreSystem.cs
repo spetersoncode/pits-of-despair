@@ -95,9 +95,10 @@ public partial class AutoExploreSystem : Node
             return;
 
         // Check for immediate interrupts before starting - don't start if enemies visible
-        if (CheckForVisibleEnemies())
+        var visibleEnemy = GetVisibleEnemy();
+        if (visibleEnemy != null)
         {
-            _actionContext.CombatSystem.EmitActionMessage(_player, "Autoexplore blocked: Enemy in view.", Palette.ToHex(Palette.Caution));
+            _actionContext.CombatSystem.EmitActionMessage(_player, $"You spotted a {visibleEnemy.DisplayName}.", Palette.ToHex(Palette.Caution));
             return;
         }
 
@@ -141,8 +142,10 @@ public partial class AutoExploreSystem : Node
             return;
 
         // Check for interrupts each turn
-        if (CheckForVisibleEnemies())
+        var visibleEnemy = GetVisibleEnemy();
+        if (visibleEnemy != null)
         {
+            _actionContext.CombatSystem.EmitActionMessage(_player, $"You spotted a {visibleEnemy.DisplayName}.", Palette.ToHex(Palette.Caution));
             Stop();
             return;
         }
@@ -163,8 +166,10 @@ public partial class AutoExploreSystem : Node
             return;
 
         // Re-check for enemies after delay (they may have moved)
-        if (CheckForVisibleEnemies())
+        var visibleEnemy = GetVisibleEnemy();
+        if (visibleEnemy != null)
         {
+            _actionContext.CombatSystem.EmitActionMessage(_player, $"You spotted a {visibleEnemy.DisplayName}.", Palette.ToHex(Palette.Caution));
             Stop();
             return;
         }
@@ -366,9 +371,10 @@ public partial class AutoExploreSystem : Node
 
     /// <summary>
     /// Checks if any hostile creatures are visible to the player.
+    /// Returns the first visible hostile entity found, or null if none.
     /// Only considers actual creatures (non-walkable entities), not items.
     /// </summary>
-    private bool CheckForVisibleEnemies()
+    private BaseEntity? GetVisibleEnemy()
     {
         foreach (var entity in _entityManager.GetAllEntities())
         {
@@ -387,11 +393,11 @@ public partial class AutoExploreSystem : Node
             // Check if visible
             if (_visionSystem.IsVisible(entity.GridPosition))
             {
-                return true;
+                return entity;
             }
         }
 
-        return false;
+        return null;
     }
 
     /// <summary>
