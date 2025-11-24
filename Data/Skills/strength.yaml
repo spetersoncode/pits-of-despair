@@ -3,10 +3,11 @@ type: strength
 entries:
   power_attack:
     name: Power Attack
-    description: Next melee attack deals +3 damage.
+    description: Your next melee attack gains +3 to hit and damage.
     category: active
     targeting: self
     willpowerCost: 3
+    consumesTurn: false
     tier: 1
     prerequisites:
       str: 1
@@ -16,7 +17,8 @@ entries:
       - buff
     effects:
       - type: apply_condition
-        conditionType: power_attack
+        conditionType: strength_modifier
+        amount: 3
         duration: 1
 
   mighty_thews:

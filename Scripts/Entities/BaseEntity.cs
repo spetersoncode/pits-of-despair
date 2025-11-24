@@ -132,7 +132,7 @@ public partial class BaseEntity : Node2D
 
     /// <summary>
     /// Whether this entity is player-controlled.
-    /// Player conditions process on PlayerTurnStarted, creature conditions on CreatureTurnsStarted.
+    /// Player conditions process on PlayerTurnEnded, creature conditions on CreatureTurnsEnded.
     /// </summary>
     public bool IsPlayerControlled { get; set; } = false;
 
@@ -247,13 +247,14 @@ public partial class BaseEntity : Node2D
         }
 
         // Connect to appropriate turn signal based on entity type
+        // Process conditions at END of turn so duration 1 effects last through the turn they're applied
         if (IsPlayerControlled)
         {
-            _turnManager.Connect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnConditionTurnStarted));
+            _turnManager.Connect(TurnManager.SignalName.PlayerTurnEnded, Callable.From(OnConditionTurnEnded));
         }
         else
         {
-            _turnManager.Connect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnConditionTurnStarted));
+            _turnManager.Connect(TurnManager.SignalName.CreatureTurnsEnded, Callable.From(OnConditionTurnEnded));
         }
 
         _conditionSignalsConnected = true;
@@ -266,11 +267,11 @@ public partial class BaseEntity : Node2D
         {
             if (IsPlayerControlled)
             {
-                _turnManager.Disconnect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnConditionTurnStarted));
+                _turnManager.Disconnect(TurnManager.SignalName.PlayerTurnEnded, Callable.From(OnConditionTurnEnded));
             }
             else
             {
-                _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnConditionTurnStarted));
+                _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsEnded, Callable.From(OnConditionTurnEnded));
             }
             _conditionSignalsConnected = false;
         }
@@ -403,10 +404,11 @@ public partial class BaseEntity : Node2D
     #region Turn Processing
 
     /// <summary>
-    /// Called at the start of each turn for this entity.
+    /// Called at the end of each turn for this entity.
     /// Processes all active conditions and removes expired ones.
+    /// Processing at turn end ensures duration 1 effects last through the turn they're applied.
     /// </summary>
-    private void OnConditionTurnStarted()
+    private void OnConditionTurnEnded()
     {
         // Process each condition and collect expired ones
         var expiredConditions = new List<Condition>();

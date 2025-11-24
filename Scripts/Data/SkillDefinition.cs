@@ -111,6 +111,12 @@ public class SkillDefinition
     public bool HasProjectile => !string.IsNullOrEmpty(Projectile);
 
     /// <summary>
+    /// Whether using this skill consumes the actor's turn.
+    /// Set to false for buff skills that should be combined with another action.
+    /// </summary>
+    public bool ConsumesTurn { get; set; } = true;
+
+    /// <summary>
     /// Gets the skill category as an enum value.
     /// </summary>
     public SkillCategory GetCategory()

@@ -76,7 +76,12 @@ public class UseTargetedSkillAction : Action
                 player.EmitSkillUsed(_skill.Name, true, result.GetCombinedMessage());
             }
 
-            return ActionResult.CreateSuccess(result.GetCombinedMessage());
+            return new ActionResult
+            {
+                Success = true,
+                Message = result.GetCombinedMessage(),
+                ConsumesTurn = _skill.ConsumesTurn
+            };
         }
         else
         {
