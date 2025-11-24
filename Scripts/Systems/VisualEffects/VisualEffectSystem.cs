@@ -180,6 +180,59 @@ public partial class VisualEffectSystem : Node
         SpawnEffect(VisualEffectDefinitions.Tunneling, origin, 1.0f, target, duration);
     }
 
+    /// <summary>
+    /// Spawns a cone effect emanating from origin toward target direction.
+    /// </summary>
+    /// <param name="definition">The cone effect definition to use.</param>
+    /// <param name="origin">Starting grid position (where cone emanates from).</param>
+    /// <param name="target">Target grid position (defines cone direction).</param>
+    /// <param name="range">Length of the cone in tiles.</param>
+    /// <param name="spreadRadius">Width of the cone at max range in tiles.</param>
+    public void SpawnConeEffect(
+        VisualEffectDefinition definition,
+        GridPosition origin,
+        GridPosition target,
+        int range,
+        int spreadRadius)
+    {
+        if (_renderer == null) return;
+
+        if (definition.Type != VisualEffectType.Cone)
+        {
+            GD.PrintErr($"VisualEffectSystem: Definition '{definition.Id}' is not a cone type");
+            return;
+        }
+
+        // Calculate direction angle from origin to target
+        float dirX = target.X - origin.X;
+        float dirY = target.Y - origin.Y;
+        float rotation = Mathf.Atan2(dirY, dirX);
+
+        // Calculate cone geometry
+        float coneLength = range * _tileSize;
+        float coneAngle = Mathf.Atan2(spreadRadius, range); // Half-angle based on spread
+
+        var effect = new VisualEffectData(
+            origin,
+            target,
+            definition,
+            coneLength,
+            coneAngle,
+            rotation);
+
+        CreateConeShaderNode(effect, definition);
+        _activeEffects.Add(effect);
+        AnimateEffect(effect);
+    }
+
+    /// <summary>
+    /// Spawns a cone of cold effect.
+    /// </summary>
+    public void SpawnConeOfCold(GridPosition origin, GridPosition target, int range, int spreadRadius)
+    {
+        SpawnConeEffect(VisualEffectDefinitions.ConeOfCold, origin, target, range, spreadRadius);
+    }
+
     #endregion
 
     #region Projectile Spawn Methods
@@ -423,6 +476,58 @@ public partial class VisualEffectSystem : Node
         UpdateBeamNodePosition(effect);
     }
 
+    /// <summary>
+    /// Creates a ColorRect with a cone shader for GPU-accelerated rendering.
+    /// </summary>
+    private void CreateConeShaderNode(VisualEffectData effect, VisualEffectDefinition definition)
+    {
+        var shader = GetShader(definition.ShaderPath);
+        if (shader == null || _renderer == null) return;
+
+        var material = new ShaderMaterial();
+        material.Shader = shader;
+
+        // Set uniforms from definition
+        material.SetShaderParameter("progress", 0.0f);
+        material.SetShaderParameter("inner_color", definition.InnerColor);
+        material.SetShaderParameter("mid_color", definition.MidColor);
+        material.SetShaderParameter("outer_color", definition.OuterColor);
+
+        // Apply any additional shader parameters
+        foreach (var param in definition.ShaderParams)
+        {
+            material.SetShaderParameter(param.Key, param.Value);
+        }
+
+        var colorRect = new ColorRect();
+        colorRect.Material = material;
+
+        // Size the rect to encompass the full cone area
+        // Width needs to cover cone length, height needs to cover spread at max range
+        float coneWidth = effect.ConeLength * 1.2f;
+        float coneSpreadHeight = effect.ConeLength * Mathf.Tan(effect.ConeAngle) * 2.0f;
+        float coneHeight = coneSpreadHeight * 1.2f;
+        coneHeight = Mathf.Max(coneHeight, _tileSize * 2); // Minimum height
+
+        // Calculate cone_half_width for shader: what fraction of rect height the cone fills at tip
+        // The cone spread at tip in UV space is (coneSpreadHeight / coneHeight) / 2 = half-width
+        float coneHalfWidth = (coneSpreadHeight / coneHeight) * 0.5f;
+        material.SetShaderParameter("cone_half_width", coneHalfWidth);
+
+        colorRect.Size = new Vector2(coneWidth, coneHeight);
+
+        // Pivot at the origin of the cone (left-center)
+        colorRect.PivotOffset = new Vector2(0, coneHeight / 2.0f);
+        colorRect.Rotation = effect.Rotation;
+        colorRect.ZIndex = 100;
+
+        effect.ShaderNode = colorRect;
+        effect.Material = material;
+
+        _renderer.AddChild(colorRect);
+        UpdateConeNodePosition(effect);
+    }
+
     #endregion
 
     #region Position Updates
@@ -482,6 +587,24 @@ public partial class VisualEffectSystem : Node
         );
     }
 
+    /// <summary>
+    /// Updates the cone shader node position based on camera/scroll offset.
+    /// </summary>
+    private void UpdateConeNodePosition(VisualEffectData effect)
+    {
+        if (effect.ShaderNode == null || _renderer == null) return;
+
+        var offset = _renderer.GetRenderOffset();
+        var originCenter = _renderer.GridToTileCenter(effect.Position);
+
+        // Position at cone origin, centered vertically (pivot handles rotation)
+        float halfHeight = effect.ShaderNode.Size.Y / 2.0f;
+        effect.ShaderNode.Position = new Vector2(
+            offset.X + originCenter.X,
+            offset.Y + originCenter.Y - halfHeight
+        );
+    }
+
     #endregion
 
     #region Animation
@@ -533,6 +656,10 @@ public partial class VisualEffectSystem : Node
         if (effect.Type == VisualEffectType.Beam)
         {
             UpdateBeamNodePosition(effect);
+        }
+        else if (effect.Type == VisualEffectType.Cone)
+        {
+            UpdateConeNodePosition(effect);
         }
         else
         {
