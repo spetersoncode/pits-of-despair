@@ -45,9 +45,9 @@ public class SkillDefinition
     public int Range { get; set; } = 0;
 
     /// <summary>
-    /// Size of the affected area for AoE skills.
+    /// Radius of the affected area for AoE skills (in tiles).
     /// </summary>
-    public int AreaSize { get; set; } = 0;
+    public int Radius { get; set; } = 0;
 
     /// <summary>
     /// Willpower cost to use this skill.

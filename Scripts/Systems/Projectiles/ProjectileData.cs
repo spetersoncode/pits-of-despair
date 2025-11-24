@@ -76,6 +76,16 @@ public class ProjectileData
     public bool HasDeferredEffect => DeferredEffect != null && DeferredEffectContext != null;
 
     /// <summary>
+    /// Callback to execute on impact (for AOE effects that need custom handling).
+    /// </summary>
+    public System.Action? OnImpactCallback { get; set; }
+
+    /// <summary>
+    /// Whether this projectile has an impact callback.
+    /// </summary>
+    public bool HasImpactCallback => OnImpactCallback != null;
+
+    /// <summary>
     /// Creates a projectile for skill/effect with deferred effect application.
     /// </summary>
     public ProjectileData(

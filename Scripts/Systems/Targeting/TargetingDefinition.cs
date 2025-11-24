@@ -20,9 +20,9 @@ public class TargetingDefinition
     public int Range { get; init; } = 1;
 
     /// <summary>
-    /// For Area targeting, the radius of the effect around the target point.
+    /// For Area targeting, the radius of the effect around the target point (in tiles).
     /// </summary>
-    public int AreaSize { get; init; } = 0;
+    public int Radius { get; init; } = 0;
 
     /// <summary>
     /// Whether line-of-sight is required for valid targets.
@@ -96,11 +96,11 @@ public class TargetingDefinition
     /// <summary>
     /// Creates a targeting definition for area-of-effect targeting.
     /// </summary>
-    public static TargetingDefinition Area(int range, int areaSize, bool requiresLOS = true) => new()
+    public static TargetingDefinition Area(int range, int radius, bool requiresLOS = true) => new()
     {
         Type = TargetingType.Area,
         Range = range,
-        AreaSize = areaSize,
+        Radius = radius,
         RequiresLOS = requiresLOS,
         Metric = DistanceMetric.Euclidean,
         Filter = TargetFilter.Tile
@@ -157,7 +157,7 @@ public class TargetingDefinition
             "tile" => Tile(range, requiresLOS: true),
             "enemy" => Enemy(range, requiresLOS: true),
             "ally" => Ally(range, requiresLOS: true),
-            "area" => Area(range, skill.AreaSize, requiresLOS: true),
+            "area" => Area(range, skill.Radius, requiresLOS: true),
             "line" => Tile(range, requiresLOS: true), // Fallback for now
             "cone" => Tile(range, requiresLOS: true), // Fallback for now
             _ => Self()
@@ -223,7 +223,7 @@ public class TargetingDefinition
                 Metric = DistanceMetric.Euclidean,
                 Filter = TargetFilter.Creature
             },
-            "area" => Area(range, targeting.AreaSize, los),
+            "area" => Area(range, targeting.Radius, los),
             _ => Enemy(range, los)
         };
     }

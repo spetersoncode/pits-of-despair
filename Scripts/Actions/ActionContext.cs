@@ -1,6 +1,7 @@
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Actions;
 
@@ -40,13 +41,19 @@ public class ActionContext
     /// </summary>
     public ProjectileSystem ProjectileSystem { get; }
 
+    /// <summary>
+    /// The visual effect system for spawning explosions and other visual effects.
+    /// </summary>
+    public VisualEffectSystem VisualEffectSystem { get; }
+
     public ActionContext(
         MapSystem mapSystem,
         EntityManager entityManager,
         Player player,
         CombatSystem combatSystem,
         EntityFactory entityFactory,
-        ProjectileSystem projectileSystem)
+        ProjectileSystem projectileSystem,
+        VisualEffectSystem visualEffectSystem)
     {
         MapSystem = mapSystem;
         EntityManager = entityManager;
@@ -54,5 +61,6 @@ public class ActionContext
         CombatSystem = combatSystem;
         EntityFactory = entityFactory;
         ProjectileSystem = projectileSystem;
+        VisualEffectSystem = visualEffectSystem;
     }
 }

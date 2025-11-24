@@ -88,7 +88,7 @@ public class AreaTargetingHandler : TargetingHandler
         ActionContext context)
     {
         var entities = new List<BaseEntity>();
-        int areaSize = definition.AreaSize > 0 ? definition.AreaSize : 1;
+        int radius = definition.Radius > 0 ? definition.Radius : 1;
 
         foreach (var pos in GetAffectedPositions(caster, targetPosition, definition, context))
         {
@@ -109,16 +109,16 @@ public class AreaTargetingHandler : TargetingHandler
         ActionContext context)
     {
         var positions = new List<GridPosition>();
-        int areaSize = definition.AreaSize > 0 ? definition.AreaSize : 1;
+        int radius = definition.Radius > 0 ? definition.Radius : 1;
 
-        for (int dx = -areaSize; dx <= areaSize; dx++)
+        for (int dx = -radius; dx <= radius; dx++)
         {
-            for (int dy = -areaSize; dy <= areaSize; dy++)
+            for (int dy = -radius; dy <= radius; dy++)
             {
                 var checkPos = new GridPosition(targetPosition.X + dx, targetPosition.Y + dy);
 
-                // Check area radius (Chebyshev distance for square area)
-                if (DistanceHelper.ChebyshevDistance(targetPosition, checkPos) > areaSize)
+                // Check area radius (Euclidean distance for circular area)
+                if (!DistanceHelper.IsInEuclideanRange(targetPosition, checkPos, radius))
                     continue;
 
                 positions.Add(checkPos);

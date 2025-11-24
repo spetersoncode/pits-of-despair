@@ -8,6 +8,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Systems;
 
@@ -25,6 +26,7 @@ public partial class AISystem : Node
     private CombatSystem _combatSystem;
     private EntityFactory _entityFactory;
     private ProjectileSystem _projectileSystem;
+    private VisualEffectSystem _visualEffectSystem;
     private ActionContext _actionContext;
     private List<AIComponent> _aiComponents = new List<AIComponent>();
 
@@ -80,14 +82,23 @@ public partial class AISystem : Node
     }
 
     /// <summary>
+    /// Sets the visual effect system dependency.
+    /// </summary>
+    public void SetVisualEffectSystem(VisualEffectSystem visualEffectSystem)
+    {
+        _visualEffectSystem = visualEffectSystem;
+        UpdateActionContext();
+    }
+
+    /// <summary>
     /// Updates the cached action context when dependencies change.
     /// </summary>
     private void UpdateActionContext()
     {
         // Only create context if all dependencies are set
-        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null && _entityFactory != null && _projectileSystem != null)
+        if (_mapSystem != null && _entityManager != null && _player != null && _combatSystem != null && _entityFactory != null && _projectileSystem != null && _visualEffectSystem != null)
         {
-            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem);
+            _actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem, _visualEffectSystem);
         }
     }
 

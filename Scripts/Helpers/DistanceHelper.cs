@@ -54,8 +54,33 @@ public static class DistanceHelper
     }
 
     /// <summary>
+    /// Checks if two positions are within range using Chebyshev distance (square-shaped).
+    /// </summary>
+    /// <param name="from">Starting position</param>
+    /// <param name="to">Target position</param>
+    /// <param name="range">Maximum range in tiles</param>
+    /// <returns>True if within range</returns>
+    public static bool IsInChebyshevRange(GridPosition from, GridPosition to, int range)
+    {
+        return ChebyshevDistance(from, to) <= range;
+    }
+
+    /// <summary>
+    /// Checks if two positions are within range using Euclidean distance (circular-shaped).
+    /// Handles squared distance comparison internally.
+    /// </summary>
+    /// <param name="from">Starting position</param>
+    /// <param name="to">Target position</param>
+    /// <param name="range">Maximum range in tiles (radius)</param>
+    /// <returns>True if within range</returns>
+    public static bool IsInEuclideanRange(GridPosition from, GridPosition to, int range)
+    {
+        return EuclideanDistance(from, to) <= range * range;
+    }
+
+    /// <summary>
     /// Checks if two positions are within range using the specified distance metric.
-    /// Use this for range checks to ensure correct distance comparison.
+    /// Prefer IsInChebyshevRange() or IsInEuclideanRange() when the metric is known.
     /// </summary>
     /// <param name="from">Starting position</param>
     /// <param name="to">Target position</param>
@@ -65,7 +90,7 @@ public static class DistanceHelper
     public static bool IsInRange(GridPosition from, GridPosition to, int range, DistanceMetric metric)
     {
         return metric == DistanceMetric.Euclidean
-            ? EuclideanDistance(from, to) <= range * range
-            : ChebyshevDistance(from, to) <= range;
+            ? IsInEuclideanRange(from, to, range)
+            : IsInChebyshevRange(from, to, range);
     }
 }

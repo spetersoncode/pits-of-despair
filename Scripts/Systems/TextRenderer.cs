@@ -3,6 +3,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Systems;
 
@@ -20,6 +21,7 @@ public partial class TextRenderer : Control
 	private PlayerVisionSystem _visionSystem;
 	private CursorTargetingSystem _cursorSystem;
 	private ProjectileSystem _projectileSystem;
+	private VisualEffectSystem _visualEffectSystem;
 	private Font _font;
 	private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
 	private readonly System.Collections.Generic.HashSet<GridPosition> _discoveredItemPositions = new();
@@ -142,6 +144,77 @@ public partial class TextRenderer : Control
 		_projectileSystem = projectileSystem;
 	}
 
+	/// <summary>
+	/// Sets the visual effect system for rendering explosions and other effects.
+	/// </summary>
+	public void SetVisualEffectSystem(VisualEffectSystem visualEffectSystem)
+	{
+		_visualEffectSystem = visualEffectSystem;
+	}
+
+	/// <summary>
+	/// Gets the current render offset used to center the view on the player.
+	/// Used by visual effect system to position shader-based effects.
+	/// </summary>
+	public Vector2 GetRenderOffset()
+	{
+		if (_player == null)
+		{
+			return Vector2.Zero;
+		}
+
+		Vector2 viewportSize = GetViewportRect().Size;
+		Vector2 viewportCenter = viewportSize / 2;
+
+		// Player's world position in pixels
+		Vector2 playerWorldPos = new Vector2(
+			_player.CurrentPosition.X * TileSize,
+			_player.CurrentPosition.Y * TileSize
+		);
+
+		// Offset needed to center player on screen
+		return viewportCenter - playerWorldPos;
+	}
+
+	/// <summary>
+	/// Converts a grid position to screen coordinates for overlay rendering.
+	/// Accounts for baseline text positioning offset.
+	/// </summary>
+	/// <param name="gridPos">The grid position to convert.</param>
+	/// <returns>Screen position for the top-left corner of the tile overlay.</returns>
+	public Vector2 GridToOverlayPosition(GridPosition gridPos)
+	{
+		return new Vector2(
+			gridPos.X * TileSize - 2.0f,
+			gridPos.Y * TileSize - TileSize + 4.0f);
+	}
+
+	/// <summary>
+	/// Converts a grid position to screen coordinates for the tile center.
+	/// Used for effects, projectiles, trace lines, and other centered visuals.
+	/// </summary>
+	/// <param name="gridPos">The grid position to convert.</param>
+	/// <returns>Screen position for the center of the tile.</returns>
+	public Vector2 GridToTileCenter(GridPosition gridPos)
+	{
+		return new Vector2(
+			gridPos.X * TileSize + TileSize / 2.0f - 2.0f,
+			gridPos.Y * TileSize - TileSize / 2.0f + 2.0f);
+	}
+
+	/// <summary>
+	/// Converts a fractional tile position to screen coordinates for the center.
+	/// Used for smooth projectile movement between tiles.
+	/// </summary>
+	/// <param name="tilePos">The tile position (can be fractional).</param>
+	/// <returns>Screen position for the center.</returns>
+	public Vector2 TilePosToCenter(Vector2 tilePos)
+	{
+		return new Vector2(
+			tilePos.X * TileSize + TileSize / 2.0f - 2.0f,
+			tilePos.Y * TileSize - TileSize / 2.0f + 2.0f);
+	}
+
 	private void OnMapChanged()
 	{
 		QueueRedraw();
@@ -197,6 +270,11 @@ public partial class TextRenderer : Control
 		_wasCursorActive = isCursorActive;
 
 		if (_projectileSystem != null && _projectileSystem.ActiveProjectiles.Count > 0)
+		{
+			needsRedraw = true;
+		}
+
+		if (_visualEffectSystem != null && _visualEffectSystem.HasActiveEffects)
 		{
 			needsRedraw = true;
 		}
@@ -344,15 +422,20 @@ public partial class TextRenderer : Control
 			}
 		}
 
+		// Draw visual effects (explosions, etc.) on top of projectiles
+		if (_visualEffectSystem != null)
+		{
+			foreach (var effect in _visualEffectSystem.ActiveEffects)
+			{
+				DrawVisualEffect(effect, offset);
+			}
+		}
+
 		// Draw cursor targeting overlay (examine and action modes)
 		if (_cursorSystem != null && _cursorSystem.IsActive)
 		{
 			GridPosition cursorPos = _cursorSystem.CursorPosition;
-			Vector2 cursorWorldPos = new Vector2(
-				cursorPos.X * TileSize - 2.0f,
-				cursorPos.Y * TileSize - TileSize + 4.0f
-			);
-			Vector2 cursorDrawPos = offset + cursorWorldPos;
+			Vector2 cursorDrawPos = offset + GridToOverlayPosition(cursorPos);
 
 			// Check if there's an entity/creature at cursor position
 			var cursorEntity = _entityManager?.GetEntityAtPosition(cursorPos);
@@ -370,12 +453,24 @@ public partial class TextRenderer : Control
 				{
 					foreach (var tile in _cursorSystem.ValidTiles)
 					{
-						Vector2 tileWorldPos = new Vector2(tile.X * TileSize, tile.Y * TileSize - TileSize);
-						Vector2 tileDrawPos = offset + tileWorldPos;
-
+						Vector2 tileDrawPos = offset + GridToOverlayPosition(tile);
 						Color baseColor = Palette.TargetingRangeOverlay;
 						Color highlightColor = new Color(baseColor.R, baseColor.G, baseColor.B, 0.3f);
 						DrawRect(new Rect2(tileDrawPos, new Vector2(TileSize, TileSize)), highlightColor, true);
+					}
+				}
+
+				// Draw AOE blast radius preview (red flashing overlay)
+				if (_cursorSystem.AffectedPositions != null && _cursorSystem.AffectedPositions.Count > 0)
+				{
+					// Slow pulsing red overlay for blast radius
+					float flashPulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 300.0) * 0.15 + 0.25);
+					Color aoeColor = new Color(Palette.Danger.R, Palette.Danger.G, Palette.Danger.B, flashPulse);
+
+					foreach (var affectedPos in _cursorSystem.AffectedPositions)
+					{
+						Vector2 aoeDrawPos = offset + GridToOverlayPosition(affectedPos);
+						DrawRect(new Rect2(aoeDrawPos, new Vector2(TileSize, TileSize)), aoeColor, true);
 					}
 				}
 
@@ -420,12 +515,7 @@ public partial class TextRenderer : Control
 		Vector2 originDrawPos = viewportCenter + new Vector2(TileSize / 2.0f - 2.0f, -TileSize / 4.0f + 2.0f);
 
 		// Target: center of target glyph/entity
-		// All entities use DrawString with baseline positioning, fine-tuned adjustment
-		Vector2 targetWorldPos = new Vector2(
-			target.X * TileSize + TileSize / 2.0f - 2.0f,
-			target.Y * TileSize - TileSize / 2.0f + 2.0f
-		);
-		Vector2 targetDrawPos = offset + targetWorldPos;
+		Vector2 targetDrawPos = offset + GridToTileCenter(target);
 
 		// Draw line from origin to target
 		Color baseColor = Palette.TargetingLine;
@@ -457,10 +547,7 @@ public partial class TextRenderer : Control
 	/// </summary>
 	private Vector2 GetProjectileDrawPosition(Vector2 tilePos, Vector2 offset)
 	{
-		return offset + new Vector2(
-			tilePos.X * TileSize + TileSize / 2.0f - 2.0f,
-			tilePos.Y * TileSize - TileSize / 2.0f + 2.0f
-		);
+		return offset + TilePosToCenter(tilePos);
 	}
 
 	/// <summary>
@@ -567,6 +654,45 @@ public partial class TextRenderer : Control
 		Vector2 lineStart = center - halfSegment;
 		Vector2 lineEnd = center + halfSegment;
 		DrawLine(lineStart, lineEnd, color, width);
+	}
+
+	/// <summary>
+	/// Draws a visual effect (explosion, heal glow, etc.).
+	/// Effects with shader nodes are skipped as they render themselves.
+	/// </summary>
+	private void DrawVisualEffect(VisualEffectData effect, Vector2 offset)
+	{
+		// Skip effects that use shader-based rendering
+		if (effect.ShaderNode != null)
+		{
+			return;
+		}
+
+		// Calculate center position in screen coordinates
+		Vector2 effectCenter = offset + GridToTileCenter(effect.Position);
+
+		switch (effect.Type)
+		{
+			case VisualEffectType.Explosion:
+				DrawExplosionEffect(effect, effectCenter);
+				break;
+			// Future effect types can be added here
+		}
+	}
+
+	/// <summary>
+	/// Draws an explosion effect as expanding concentric rings.
+	/// Fallback for when shader-based rendering is not available.
+	/// </summary>
+	private void DrawExplosionEffect(VisualEffectData effect, Vector2 center)
+	{
+		var rings = VisualEffectSystem.GetExplosionRings(effect, TileSize);
+
+		foreach (var (radius, color) in rings)
+		{
+			// Draw ring as a circle outline
+			DrawArc(center, radius, 0, Mathf.Tau, 32, color, 3.0f);
+		}
 	}
 
 	public override void _ExitTree()

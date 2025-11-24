@@ -59,6 +59,7 @@ public abstract class Effect
             "knockback" => new KnockbackEffect(definition),
             "restore_willpower" or "modify_willpower" => new ModifyWillpowerEffect(definition),
             "charm" => new CharmEffect(),
+            "fireball" => new FireballEffect(definition),
             _ => null
         };
     }

@@ -9,6 +9,7 @@ using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Projectiles;
 using PitsOfDespair.Systems.Spawning;
+using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.UI;
 using System.Collections.Generic;
 
@@ -49,6 +50,7 @@ public partial class GameLevel : Node
     private GameHUD _gameHUD;
     private CursorTargetingSystem _cursorSystem;
     private ProjectileSystem _projectileSystem;
+    private VisualEffectSystem _visualEffectSystem;
     private GoldManager _goldManager;
 
     // New systems for decoupling
@@ -91,6 +93,9 @@ public partial class GameLevel : Node
 
         _projectileSystem = new ProjectileSystem { Name = "ProjectileSystem" };
         AddChild(_projectileSystem);
+
+        _visualEffectSystem = new VisualEffectSystem { Name = "VisualEffectSystem" };
+        AddChild(_visualEffectSystem);
 
         // Create new systems for decoupling
         _levelUpSystem = new LevelUpSystem { Name = "LevelUpSystem" };
@@ -187,10 +192,13 @@ public partial class GameLevel : Node
         _projectileSystem.SetTextRenderer(_renderer);
         _renderer.SetProjectileSystem(_projectileSystem);
 
+        _visualEffectSystem.SetTextRenderer(_renderer);
+        _renderer.SetVisualEffectSystem(_visualEffectSystem);
+
         // Connect turn manager to projectile system for turn coordination
         _turnManager.SetProjectileSystem(_projectileSystem);
 
-        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem);
+        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _projectileSystem, _visualEffectSystem);
 
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);
@@ -223,6 +231,7 @@ public partial class GameLevel : Node
         _aiSystem.SetCombatSystem(_combatSystem);
         _aiSystem.SetEntityFactory(_entityFactory);
         _aiSystem.SetProjectileSystem(_projectileSystem);
+        _aiSystem.SetVisualEffectSystem(_visualEffectSystem);
 
         _spawnManager.PopulateDungeon(playerSpawn);
 

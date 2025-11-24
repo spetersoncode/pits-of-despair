@@ -381,16 +381,28 @@ public class ItemData
 
     /// <summary>
     /// Determines if this item requires targeting when activated.
-    /// Currently, items with "confusion" condition effects require targeting.
+    /// Items with explicit targeting config, AOE effects, or certain effect types require targeting.
     /// </summary>
     public bool RequiresTargeting()
     {
+        // Items with explicit targeting configuration always require targeting
+        if (Targeting != null)
+        {
+            return true;
+        }
+
         foreach (var effectDef in Effects)
         {
             var effectType = effectDef.Type?.ToLower();
 
             // Charm effects require targeting
             if (effectType == "charm")
+            {
+                return true;
+            }
+
+            // Fireball and other AOE effects require targeting
+            if (effectType == "fireball")
             {
                 return true;
             }
@@ -486,6 +498,17 @@ public class EffectDefinition
     /// Condition type for apply_condition effects (e.g., "confusion", "armor_buff").
     /// </summary>
     public string? ConditionType { get; set; } = null;
+
+    /// <summary>
+    /// Dice notation for variable amounts (e.g., "3d6", "2d8+2").
+    /// </summary>
+    public string? Dice { get; set; } = null;
+
+    /// <summary>
+    /// Area radius for AOE effects (in tiles).
+    /// </summary>
+    [YamlMember(Alias = "radius")]
+    public int Radius { get; set; } = 0;
 }
 
 /// <summary>
@@ -505,9 +528,10 @@ public class ItemTargeting
     public int Range { get; set; } = 0;
 
     /// <summary>
-    /// Area size for AoE items.
+    /// Area radius for AoE items (in tiles).
     /// </summary>
-    public int AreaSize { get; set; } = 0;
+    [YamlMember(Alias = "radius")]
+    public int Radius { get; set; } = 0;
 
     /// <summary>
     /// Whether line-of-sight is required. Defaults to true.

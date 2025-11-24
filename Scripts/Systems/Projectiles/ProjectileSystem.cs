@@ -153,6 +153,30 @@ public partial class ProjectileSystem : Node
     }
 
     /// <summary>
+    /// Spawns a projectile with a callback to execute on impact.
+    /// Used for AOE effects that need custom handling (e.g., fireball explosion).
+    /// </summary>
+    public void SpawnProjectileWithCallback(
+        GridPosition origin,
+        GridPosition target,
+        ProjectileDefinition definition,
+        System.Action onImpactCallback,
+        BaseEntity? caster = null)
+    {
+        var projectile = new ProjectileData(
+            origin,
+            target,
+            definition,
+            caster)
+        {
+            OnImpactCallback = onImpactCallback
+        };
+
+        _activeProjectiles.Add(projectile);
+        AnimateProjectile(projectile);
+    }
+
+    /// <summary>
     /// Animates a projectile from origin to target.
     /// </summary>
     private void AnimateProjectile(ProjectileData projectile)
@@ -187,7 +211,12 @@ public partial class ProjectileSystem : Node
     /// </summary>
     private void OnProjectileImpact(ProjectileData projectile)
     {
-        if (projectile.HasDeferredEffect)
+        // Handle impact callback first (for AOE effects)
+        if (projectile.HasImpactCallback)
+        {
+            projectile.OnImpactCallback?.Invoke();
+        }
+        else if (projectile.HasDeferredEffect)
         {
             ApplyDeferredEffect(projectile);
         }

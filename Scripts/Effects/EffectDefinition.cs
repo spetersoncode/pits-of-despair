@@ -65,6 +65,11 @@ public class EffectDefinition
     public string? DamageType { get; set; } = null;
 
     /// <summary>
+    /// Area radius for AOE effects (in tiles, Euclidean distance).
+    /// </summary>
+    public int Radius { get; set; } = 0;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -106,7 +111,9 @@ public class EffectDefinition
             Range = itemEffect.Range,
             Duration = itemEffect.Duration,
             DurationDice = itemEffect.DurationDice,
-            ConditionType = itemEffect.ConditionType
+            ConditionType = itemEffect.ConditionType,
+            Dice = itemEffect.Dice,
+            Radius = itemEffect.Radius
         };
     }
 }

@@ -25,5 +25,10 @@ public enum DamageType
     /// <summary>
     /// Poison damage from toxins, venom, and poisonous substances.
     /// </summary>
-    Poison
+    Poison,
+
+    /// <summary>
+    /// Fire damage from flames, explosions, and burning effects.
+    /// </summary>
+    Fire
 }

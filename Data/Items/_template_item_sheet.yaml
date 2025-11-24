@@ -69,7 +69,7 @@ entries:
     # targeting:
     #   type: enemy       # self, enemy, ally, tile, creature, area
     #   range: 8
-    #   areaSize: 0
+    #   radius: 0         # For area targeting - radius in tiles
     #   requiresLos: true
 
 # Example item types and their typical defaults:

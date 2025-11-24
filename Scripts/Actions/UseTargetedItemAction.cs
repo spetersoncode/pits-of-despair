@@ -3,6 +3,8 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Targeting;
 using System.Text;
 
 namespace PitsOfDespair.Actions;
@@ -102,15 +104,6 @@ public class UseTargetedItemAction : Action
 			return ActionResult.CreateFailure($"{itemName} has no charges.");
 		}
 
-		// Get the target entity (if any)
-		var targetEntity = context.EntityManager.GetEntityAtPosition(_targetPosition);
-
-		// If no entity at target position, fail gracefully
-		if (targetEntity == null)
-		{
-			return ActionResult.CreateFailure("No target at that location.");
-		}
-
 		// Get the item's effects
 		var effects = itemTemplate.GetEffects();
 		if (effects.Count == 0)
@@ -118,24 +111,26 @@ public class UseTargetedItemAction : Action
 			return ActionResult.CreateFailure($"{itemName} has no effects.");
 		}
 
-		// Apply all effects to the target entity using unified context
-		// Actor is the user (caster), targetEntity is the target
-		var effectContext = EffectContext.ForItem(targetEntity, actor, context);
+		// Determine if this is an area-targeted item
+		bool isAreaTargeted = itemTemplate.Targeting?.Type?.ToLower() == "area";
+
 		var messages = new StringBuilder();
 		bool anyEffectSucceeded = false;
 
-		foreach (var effect in effects)
+		if (isAreaTargeted)
 		{
-			var effectResult = effect.Apply(effectContext);
-			if (effectResult.Success)
+			// AOE item: apply effects to all entities in the area
+			anyEffectSucceeded = ApplyAreaEffects(actor, effects, context, messages);
+		}
+		else
+		{
+			// Single-target item: require entity at target position
+			var targetEntity = context.EntityManager.GetEntityAtPosition(_targetPosition);
+			if (targetEntity == null)
 			{
-				anyEffectSucceeded = true;
+				return ActionResult.CreateFailure("No target at that location.");
 			}
-
-			if (!string.IsNullOrEmpty(effectResult.Message))
-			{
-				messages.AppendLine(effectResult.Message);
-			}
+			anyEffectSucceeded = ApplySingleTargetEffects(actor, targetEntity, effects, context, messages);
 		}
 
 		// If no effects succeeded, don't consume the item
@@ -152,6 +147,14 @@ public class UseTargetedItemAction : Action
 		else if (itemTemplate.GetMaxCharges() > 0)
 		{
 			slot.Item.UseCharge();
+
+			// Check if wand is depleted
+			if (slot.Item.CurrentCharges <= 0)
+			{
+				// Wand crumbles to dust
+				messages.AppendLine("The wand crumbles to dust.");
+				inventory.RemoveItem(_itemKey, 1);
+			}
 		}
 
 		string resultMessage = messages.ToString().TrimEnd();
@@ -163,5 +166,131 @@ public class UseTargetedItemAction : Action
 		}
 
 		return ActionResult.CreateSuccess(resultMessage);
+	}
+
+	/// <summary>
+	/// Applies effects to a single target entity.
+	/// </summary>
+	private bool ApplySingleTargetEffects(BaseEntity actor, BaseEntity target, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	{
+		bool anySucceeded = false;
+		var effectContext = EffectContext.ForItem(target, actor, context);
+
+		foreach (var effect in effects)
+		{
+			var effectResult = effect.Apply(effectContext);
+			if (effectResult.Success)
+			{
+				anySucceeded = true;
+			}
+
+			if (!string.IsNullOrEmpty(effectResult.Message))
+			{
+				messages.AppendLine(effectResult.Message);
+			}
+		}
+
+		return anySucceeded;
+	}
+
+	/// <summary>
+	/// Applies effects to all entities in the target area.
+	/// Uses targeting handler to determine affected entities.
+	/// For fireball effects, spawns a projectile that triggers on impact.
+	/// </summary>
+	private bool ApplyAreaEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	{
+		// Get targeting definition and handler for the item
+		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+		var slot = inventory?.GetSlot(_itemKey);
+		if (slot == null) return false;
+
+		var definition = TargetingDefinition.FromItem(slot.Item.Template);
+
+		// Check if any effect is a fireball (needs projectile)
+		FireballEffect? fireballEffect = null;
+		foreach (var effect in effects)
+		{
+			if (effect is FireballEffect fb)
+			{
+				fireballEffect = fb;
+				break;
+			}
+		}
+
+		// For fireball, spawn a projectile with callback
+		if (fireballEffect != null && context.ProjectileSystem != null)
+		{
+			// Use targeting definition's radius, falling back to effect's default
+			int radius = definition.Radius > 0 ? definition.Radius : fireballEffect.Radius;
+
+			// Ensure the effect uses the same radius as targeting
+			fireballEffect.Radius = radius;
+
+			// Create callback that applies damage and spawns explosion visual on impact
+			System.Action onImpact = () =>
+			{
+				// Apply AOE damage
+				var results = fireballEffect.ApplyToArea(actor, _targetPosition, context);
+
+				// Log messages via combat system
+				foreach (var result in results)
+				{
+					if (!string.IsNullOrEmpty(result.Message))
+					{
+						context.CombatSystem?.EmitActionMessage(actor, result.Message, Palette.ToHex(Palette.Fire));
+					}
+				}
+				if (results.Count == 0)
+				{
+					context.CombatSystem?.EmitActionMessage(actor, "The flames dissipate harmlessly.", Palette.ToHex(Palette.Fire));
+				}
+
+				// Spawn explosion visual
+				context.VisualEffectSystem?.SpawnExplosion(_targetPosition, radius, Palette.Fire);
+			};
+
+			// Spawn the fireball projectile
+			context.ProjectileSystem.SpawnProjectileWithCallback(
+				actor.GridPosition,
+				_targetPosition,
+				ProjectileDefinitions.Fireball,
+				onImpact,
+				actor);
+
+			// Projectile spawned successfully - damage will be applied on impact
+			return true;
+		}
+
+		// Non-projectile AOE effects (apply immediately)
+		bool anySucceeded = false;
+		var handler = TargetingHandler.CreateForDefinition(definition);
+		var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
+
+		foreach (var effect in effects)
+		{
+			foreach (var target in targets)
+			{
+				var effectContext = EffectContext.ForItem(target, actor, context);
+				var effectResult = effect.Apply(effectContext);
+				if (effectResult.Success)
+				{
+					anySucceeded = true;
+				}
+				if (!string.IsNullOrEmpty(effectResult.Message))
+				{
+					messages.AppendLine(effectResult.Message);
+				}
+			}
+		}
+
+		// If no targets were hit but the effect was valid, still count as success
+		if (targets.Count == 0 && effects.Count > 0)
+		{
+			messages.AppendLine("The effect dissipates harmlessly.");
+			anySucceeded = true;
+		}
+
+		return anySucceeded;
 	}
 }
