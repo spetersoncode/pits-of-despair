@@ -30,5 +30,15 @@ public enum DamageType
     /// <summary>
     /// Fire damage from flames, explosions, and burning effects.
     /// </summary>
-    Fire
+    Fire,
+
+    /// <summary>
+    /// Cold damage from ice, frost, and freezing effects.
+    /// </summary>
+    Cold,
+
+    /// <summary>
+    /// Necrotic damage from life-draining and death magic.
+    /// </summary>
+    Necrotic
 }
