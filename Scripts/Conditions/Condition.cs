@@ -93,6 +93,13 @@ public abstract class Condition
     public string? SourceId { get; set; }
 
     /// <summary>
+    /// Optional description shown when examining a creature with this condition.
+    /// Return null to hide from examine display (default).
+    /// Example: "confused", "poisoned", "hasted"
+    /// </summary>
+    public virtual string? ExamineDescription => null;
+
+    /// <summary>
     /// Resolves the duration by rolling dice notation.
     /// Called by ConditionComponent when adding this condition.
     /// </summary>

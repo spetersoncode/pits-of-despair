@@ -18,6 +18,8 @@ public class ConfusionCondition : Condition
 
 	public override string TypeId => "confusion";
 
+	public override string? ExamineDescription => "confused";
+
 	/// <summary>
 	/// Parameterless constructor with default values.
 	/// </summary>

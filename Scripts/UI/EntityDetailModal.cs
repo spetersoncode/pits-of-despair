@@ -107,8 +107,8 @@ public partial class EntityDetailModal : CenterContainer
             : entity.Description;
         string descriptionSection = $"[color={Palette.ToHex(Palette.AshGray)}]{description}[/color]";
 
-        // Resistances/Vulnerabilities
-        string resistanceSection = BuildResistanceDisplay(entity);
+        // Status (conditions + resistances/vulnerabilities)
+        string statusSection = BuildStatusDisplay(entity);
 
         // Commands
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
@@ -117,7 +117,7 @@ public partial class EntityDetailModal : CenterContainer
 
         string content = $"{headerRow}\n\n" +
                          $"{descriptionSection}" +
-                         $"{resistanceSection}" +
+                         $"{statusSection}" +
                          $"{commands}";
 
         _contentLabel.Text = content;
@@ -139,29 +139,44 @@ public partial class EntityDetailModal : CenterContainer
         return ("Near Death", Palette.Crimson);
     }
 
-    private string BuildResistanceDisplay(BaseEntity entity)
+    private string BuildStatusDisplay(BaseEntity entity)
     {
-        var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
-        if (health == null) return "";
-
         var sentences = new List<string>();
 
-        if (health.Immunities.Count > 0)
+        // Conditions with visible descriptions (deduplicated)
+        var conditions = entity.GetActiveConditions()
+            .Where(c => c.ExamineDescription != null)
+            .Select(c => c.ExamineDescription!)
+            .Distinct()
+            .ToList();
+
+        if (conditions.Count > 0)
         {
-            string types = FormatDamageTypeList(health.Immunities);
-            sentences.Add($"Immune to {types} damage.");
+            string conditionList = FormatStringList(conditions);
+            sentences.Add($"{conditionList}.");
         }
 
-        if (health.Resistances.Count > 0)
+        // Resistances/Immunities/Vulnerabilities
+        var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
+        if (health != null)
         {
-            string types = FormatDamageTypeList(health.Resistances);
-            sentences.Add($"Resistant to {types} damage.");
-        }
+            if (health.Immunities.Count > 0)
+            {
+                string types = FormatDamageTypeList(health.Immunities);
+                sentences.Add($"Immune to {types} damage.");
+            }
 
-        if (health.Vulnerabilities.Count > 0)
-        {
-            string types = FormatDamageTypeList(health.Vulnerabilities);
-            sentences.Add($"Vulnerable to {types} damage.");
+            if (health.Resistances.Count > 0)
+            {
+                string types = FormatDamageTypeList(health.Resistances);
+                sentences.Add($"Resistant to {types} damage.");
+            }
+
+            if (health.Vulnerabilities.Count > 0)
+            {
+                string types = FormatDamageTypeList(health.Vulnerabilities);
+                sentences.Add($"Vulnerable to {types} damage.");
+            }
         }
 
         if (sentences.Count == 0)
@@ -174,13 +189,25 @@ public partial class EntityDetailModal : CenterContainer
     private string FormatDamageTypeList(List<DamageType> types)
     {
         var names = types.Select(t => t.ToString().ToLower()).ToList();
+        return FormatStringList(names);
+    }
 
-        if (names.Count == 1)
-            return names[0];
-        if (names.Count == 2)
-            return $"{names[0]} and {names[1]}";
+    private string FormatStringList(List<string> items)
+    {
+        if (items.Count == 0)
+            return "";
+        if (items.Count == 1)
+            return Capitalize(items[0]);
+        if (items.Count == 2)
+            return $"{Capitalize(items[0])} and {items[1]}";
 
         // Oxford comma for 3+
-        return string.Join(", ", names.Take(names.Count - 1)) + ", and " + names.Last();
+        return Capitalize(items[0]) + ", " + string.Join(", ", items.Skip(1).Take(items.Count - 2)) + ", and " + items.Last();
+    }
+
+    private string Capitalize(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        return char.ToUpper(s[0]) + s[1..];
     }
 }
