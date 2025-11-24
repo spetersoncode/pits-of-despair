@@ -29,7 +29,8 @@ entries:
       - type: ShootAndScoot
     equipment:
       - weapon_short_bow
-      - ammo_arrow
+      - id: ammo_arrow
+        quantity: 20
 
   goblin_ruffian:
     name: goblin ruffian
