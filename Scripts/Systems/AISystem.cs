@@ -46,10 +46,36 @@ public partial class AISystem : Node
 
     /// <summary>
     /// Sets the entity manager dependency.
+    /// Subscribes to EntityAdded to automatically register AI components for dynamically spawned entities.
     /// </summary>
     public void SetEntityManager(EntityManager entityManager)
     {
+        // Disconnect from old entity manager if exists
+        if (_entityManager != null)
+        {
+            _entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+        }
+
         _entityManager = entityManager;
+
+        // Connect to new entity manager
+        if (_entityManager != null)
+        {
+            _entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
+        }
+    }
+
+    /// <summary>
+    /// Called when a new entity is added to the world.
+    /// Automatically registers AI components for dynamically spawned entities (e.g., clones, summons).
+    /// </summary>
+    private void OnEntityAdded(BaseEntity entity)
+    {
+        var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+        if (aiComponent != null)
+        {
+            RegisterAIComponent(aiComponent);
+        }
     }
 
     /// <summary>
@@ -258,6 +284,11 @@ public partial class AISystem : Node
         if (_turnManager != null)
         {
             _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnCreatureTurnsStarted));
+        }
+
+        if (_entityManager != null)
+        {
+            _entityManager.Disconnect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
         }
     }
 }

@@ -395,6 +395,9 @@ public static class Palette
     /// <summary>Acid effect (corrosive bright green)</summary>
     public static readonly Color Acid = new("#99FF88");
 
+    /// <summary>Arcane effect (pure magical energy, reality manipulation)</summary>
+    public static readonly Color Arcane = new("#7788EE");
+
     #endregion
 
     #region Dyes & Pigments
