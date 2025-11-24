@@ -10,7 +10,7 @@ namespace PitsOfDespair.Components.AI;
 /// Responds to OnIAmBored to push SeekItemGoal with configurable probability.
 /// Only creatures with this component will collect items.
 /// </summary>
-public partial class ItemCollectorComponent : Node, IAIEventHandler
+public partial class ItemCollectComponent : Node, IAIEventHandler
 {
     /// <summary>
     /// Chance to attempt item pickup each turn when bored (0.0 - 1.0).

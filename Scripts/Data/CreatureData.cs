@@ -16,7 +16,7 @@ public static class AIComponentTypes
         ["ShootAndScoot"] = "ShootAndScootComponent",
         ["ItemUsage"] = "ItemUsageComponent",
         ["Wandering"] = "WanderingComponent",
-        ["ItemCollect"] = "ItemCollectorComponent",
+        ["ItemCollect"] = "ItemCollectComponent",
         ["Patrol"] = "PatrolComponent"
     };
 

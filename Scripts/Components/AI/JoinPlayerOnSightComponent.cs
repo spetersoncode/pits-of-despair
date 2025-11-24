@@ -28,16 +28,9 @@ public partial class JoinPlayerOnSightComponent : Node
 
         // Log message via CombatSystem (which connects to MessageLog)
         combatSystem?.EmitActionMessage(entity, $"The {entity.DisplayName} meows and joins you!", Palette.ToHex(Palette.Player));
-        
+
         // Setup as friendly companion in AI
         var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
-        if (aiComponent != null)
-        {
-            // Find player to protect
-            // We can find the player via the group "player" or pass it in.
-            // For now, let's assume the system calling this knows the player.
-            // But wait, this method is called by the system.
-        }
 
         // Remove this component so it doesn't trigger again
         QueueFree();
