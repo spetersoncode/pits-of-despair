@@ -49,6 +49,11 @@ public partial class MessageSystem : Node
     private readonly Dictionary<string, CombatMessageData> _combatMessages = new();
 
     /// <summary>
+    /// Hazard damage messages grouped by target entity for combining with death.
+    /// </summary>
+    private readonly Dictionary<BaseEntity, HazardMessageData> _hazardMessages = new();
+
+    /// <summary>
     /// Non-combat messages that don't get combined (discovery, status effects, etc.).
     /// </summary>
     private readonly List<(MessagePriority priority, string message, string color)> _genericMessages = new();
@@ -124,6 +129,14 @@ public partial class MessageSystem : Node
         _healthConnections.Add((healthComponent, entity));
     }
 
+    /// <summary>
+    /// Connects to the TileHazardManager to receive hazard damage events.
+    /// </summary>
+    public void ConnectToTileHazardManager(TileHazardManager hazardManager)
+    {
+        hazardManager.Connect(TileHazardManager.SignalName.HazardDamageDealt, Callable.From<BaseEntity, int, string>(OnHazardDamageDealt));
+    }
+
     #endregion
 
     #region Sequencing Control
@@ -135,6 +148,7 @@ public partial class MessageSystem : Node
     {
         IsSequencing = true;
         _combatMessages.Clear();
+        _hazardMessages.Clear();
         _genericMessages.Clear();
     }
 
@@ -216,6 +230,44 @@ public partial class MessageSystem : Node
         RecordModifier(target, damageType, modifierType, attacker, sourceName);
     }
 
+    private void OnHazardDamageDealt(BaseEntity entity, int damage, string hazardType)
+    {
+        // Track for death message attribution
+        _lastDamageSourceName[entity] = hazardType;
+
+        if (!IsSequencing)
+        {
+            EmitHazardMessageImmediate(entity, damage, hazardType, targetDied: false);
+            return;
+        }
+
+        // Record for combining with potential death
+        if (!_hazardMessages.TryGetValue(entity, out var data))
+        {
+            data = new HazardMessageData
+            {
+                Target = entity,
+                HazardType = hazardType
+            };
+            _hazardMessages[entity] = data;
+        }
+
+        data.Damage += damage;
+        data.HazardType = hazardType; // Use most recent hazard type
+    }
+
+    private string FormatHazardName(string hazardType)
+    {
+        return hazardType switch
+        {
+            "poison_cloud" => "poison cloud",
+            "fire" => "flames",
+            "ice" => "freezing cold",
+            "acid" => "acid",
+            _ => hazardType.Replace("_", " ")
+        };
+    }
+
     #endregion
 
     #region Record Methods
@@ -281,6 +333,18 @@ public partial class MessageSystem : Node
         if (!IsSequencing)
         {
             EmitDeathMessageImmediate(victim, killer, sourceName);
+            return;
+        }
+
+        // Check if death was from hazard damage
+        if (_hazardMessages.TryGetValue(victim, out var hazardData))
+        {
+            hazardData.TargetDied = true;
+            // Player gets XP for hazard kills
+            if (_entityManager != null)
+            {
+                hazardData.XPReward = _entityManager.GetXPReward(victim);
+            }
             return;
         }
 
@@ -410,12 +474,25 @@ public partial class MessageSystem : Node
             }
         }
 
+        // Add hazard messages
+        foreach (var data in _hazardMessages.Values)
+        {
+            var (message, color) = FormatCombinedHazardMessage(data);
+            allMessages.Add((MessagePriority.ActionDamage, message, color));
+
+            if (data.TargetDied && data.XPReward > 0)
+            {
+                allMessages.Add((MessagePriority.Reward, $"Defeated {data.Target.DisplayName} for {data.XPReward} XP.", ColorDefault));
+            }
+        }
+
         foreach (var (_, message, color) in allMessages.OrderBy(m => m.priority))
         {
             _messageLog.AddMessage(message, color);
         }
 
         _combatMessages.Clear();
+        _hazardMessages.Clear();
         _genericMessages.Clear();
     }
 
@@ -489,6 +566,28 @@ public partial class MessageSystem : Node
         else
         {
             message += ".";
+        }
+
+        return (message, color);
+    }
+
+    private (string message, string color) FormatCombinedHazardMessage(HazardMessageData data)
+    {
+        bool isPlayer = data.Target?.DisplayName == "Player";
+        string hazardName = FormatHazardName(data.HazardType);
+        string color = isPlayer ? ColorCombatDamage : ColorDefault;
+
+        string message = isPlayer
+            ? $"You take {data.Damage} damage from the {hazardName}"
+            : $"The {data.Target.DisplayName} takes {data.Damage} damage from the {hazardName}";
+
+        if (data.TargetDied)
+        {
+            message += isPlayer ? ", killing you!" : ", killing it!";
+        }
+        else
+        {
+            message += isPlayer ? "!" : ".";
         }
 
         return (message, color);
@@ -704,6 +803,30 @@ public partial class MessageSystem : Node
                 : $"The {attacker.DisplayName} misses the {target.DisplayName}.";
 
         _messageLog.AddMessage(message, ColorDefault);
+    }
+
+    private void EmitHazardMessageImmediate(BaseEntity entity, int damage, string hazardType, bool targetDied)
+    {
+        if (_messageLog == null) return;
+
+        bool isPlayer = entity.DisplayName == "Player";
+        string hazardName = FormatHazardName(hazardType);
+        string color = isPlayer ? ColorCombatDamage : ColorDefault;
+
+        string message = isPlayer
+            ? $"You take {damage} damage from the {hazardName}"
+            : $"The {entity.DisplayName} takes {damage} damage from the {hazardName}";
+
+        if (targetDied)
+        {
+            message += isPlayer ? ", killing you!" : ", killing it!";
+        }
+        else
+        {
+            message += isPlayer ? "!" : ".";
+        }
+
+        _messageLog.AddMessage(message, color);
     }
 
     #endregion

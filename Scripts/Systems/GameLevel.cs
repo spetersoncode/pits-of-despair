@@ -60,6 +60,7 @@ public partial class GameLevel : Node
     private AutoExploreSystem _autoExploreSystem;
     private AutoRestSystem _autoRestSystem;
     private MessageSystem _messageSystem;
+    private TileHazardManager _tileHazardManager;
 
     public override void _Ready()
     {
@@ -118,6 +119,9 @@ public partial class GameLevel : Node
 
         _messageSystem = new MessageSystem { Name = "MessageSystem" };
         AddChild(_messageSystem);
+
+        _tileHazardManager = new TileHazardManager { Name = "TileHazardManager" };
+        AddChild(_tileHazardManager);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -195,7 +199,10 @@ public partial class GameLevel : Node
         // Connect turn manager to message system for message sequencing
         _turnManager.SetMessageSystem(_messageSystem);
 
-        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _visualEffectSystem);
+        // Initialize tile hazard manager
+        _tileHazardManager.SetDependencies(_entityManager, _turnManager, _renderer);
+
+        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _visualEffectSystem, _tileHazardManager);
 
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);
@@ -292,6 +299,9 @@ public partial class GameLevel : Node
         );
         _gameHUD.ConnectToCursorTargetingSystem(_cursorSystem);
         _gameHUD.ConnectToAutoExploreSystem(_autoExploreSystem);
+
+        // Connect tile hazard manager to message system for damage messages
+        _messageSystem.ConnectToTileHazardManager(_tileHazardManager);
 
         // Initialize SidePanel with ViewModels
         var sidePanel = _gameHUD.GetNode<UI.SidePanel>("HBoxContainer/SidePanel");

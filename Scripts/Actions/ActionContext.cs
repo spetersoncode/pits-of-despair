@@ -40,13 +40,19 @@ public class ActionContext
     /// </summary>
     public VisualEffectSystem VisualEffectSystem { get; }
 
+    /// <summary>
+    /// The tile hazard manager for creating persistent tile hazards.
+    /// </summary>
+    public TileHazardManager? TileHazardManager { get; }
+
     public ActionContext(
         MapSystem mapSystem,
         EntityManager entityManager,
         Player player,
         CombatSystem combatSystem,
         EntityFactory entityFactory,
-        VisualEffectSystem visualEffectSystem)
+        VisualEffectSystem visualEffectSystem,
+        TileHazardManager? tileHazardManager = null)
     {
         MapSystem = mapSystem;
         EntityManager = entityManager;
@@ -54,5 +60,6 @@ public class ActionContext
         CombatSystem = combatSystem;
         EntityFactory = entityFactory;
         VisualEffectSystem = visualEffectSystem;
+        TileHazardManager = tileHazardManager;
     }
 }
