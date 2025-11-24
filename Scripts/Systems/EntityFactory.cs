@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.AI;
@@ -242,8 +243,38 @@ public partial class EntityFactory : Node
             // Load and equip creature equipment
             if (data.Equipment != null && data.Equipment.Count > 0)
             {
-                foreach (var itemId in data.Equipment)
+                foreach (var equipEntry in data.Equipment)
                 {
+                    // Parse equipment entry - supports both string and object forms
+                    string itemId;
+                    int quantity = 1;
+
+                    if (equipEntry is string simpleId)
+                    {
+                        // Simple form: just item ID string
+                        itemId = simpleId;
+                    }
+                    else if (equipEntry is Dictionary<object, object> dict)
+                    {
+                        // Object form: { id: "item_id", quantity: 20 }
+                        if (!dict.TryGetValue("id", out var idObj) || idObj is not string id)
+                        {
+                            GD.PushWarning($"EntityFactory: Equipment entry missing 'id' for creature '{data.Name}'");
+                            continue;
+                        }
+                        itemId = id;
+
+                        if (dict.TryGetValue("quantity", out var qtyObj))
+                        {
+                            quantity = Convert.ToInt32(qtyObj);
+                        }
+                    }
+                    else
+                    {
+                        GD.PushWarning($"EntityFactory: Invalid equipment entry format for creature '{data.Name}'");
+                        continue;
+                    }
+
                     var itemData = _dataLoader.GetItem(itemId);
                     if (itemData == null)
                     {
@@ -251,8 +282,9 @@ public partial class EntityFactory : Node
                         continue;
                     }
 
-                    // Create item instance
+                    // Create item instance with specified quantity
                     var itemInstance = new ItemInstance(itemData);
+                    itemInstance.Quantity = quantity;
 
                     // Add item to inventory
                     var key = inventoryComponent.AddItem(itemInstance, out string message, excludeEquipped: false);
@@ -355,6 +387,8 @@ public partial class EntityFactory : Node
             "ShootAndScootComponent" => new Components.AI.ShootAndScootComponent(),
             "ItemUsageComponent" => new Components.AI.ItemUsageComponent(),
             "JoinPlayerOnSightComponent" => new Components.AI.JoinPlayerOnSightComponent(),
+            "WanderingComponent" => new Components.AI.WanderingComponent(),
+            "ItemCollectorComponent" => new Components.AI.ItemCollectorComponent(),
             _ => null
         };
 

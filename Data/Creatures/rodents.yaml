@@ -17,6 +17,8 @@ entries:
         type: Melee
         dice: "1d2"
         damageType: Piercing
+    ai:
+      - type: Wandering
 
   elder_rat:
     name: elder rat
@@ -32,3 +34,5 @@ entries:
         type: Melee
         dice: "1d4"
         damageType: Piercing
+    ai:
+      - type: Wandering

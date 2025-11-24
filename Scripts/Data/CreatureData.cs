@@ -14,7 +14,9 @@ public static class AIComponentTypes
         ["Cowardly"] = "CowardlyComponent",
         ["YellForHelp"] = "YellForHelpComponent",
         ["ShootAndScoot"] = "ShootAndScootComponent",
-        ["ItemUsage"] = "ItemUsageComponent"
+        ["ItemUsage"] = "ItemUsageComponent",
+        ["Wandering"] = "WanderingComponent",
+        ["ItemCollector"] = "ItemCollectorComponent"
     };
 
     /// <summary>
@@ -107,10 +109,15 @@ public class CreatureData
     public List<Dictionary<string, object>> Ai { get; set; } = new();
 
     /// <summary>
-    /// List of item IDs that this creature starts equipped with.
-    /// If specified, the creature will have an EquipComponent and items will be added and equipped.
+    /// List of equipment entries for this creature.
+    /// Supports both simple strings (item ID) and objects with id/quantity properties.
+    /// Examples:
+    ///   equipment:
+    ///     - weapon_club                    # Simple: quantity defaults to 1
+    ///     - id: ammo_arrow                 # Object form: quantity defaults to 1
+    ///       quantity: 20                   # Override quantity
     /// </summary>
-    public List<string> Equipment { get; set; } = new();
+    public List<object> Equipment { get; set; } = new();
 
     /// <summary>
     /// Damage types this creature is immune to (takes 0 damage).
