@@ -18,7 +18,7 @@ entries:
 
   recover:
     name: Recover
-    description: Heal END x 2 HP.
+    description: Heal END x 3 HP.
     category: active
     targeting: self
     willpowerCost: 5
@@ -30,7 +30,7 @@ entries:
     effects:
       - type: heal
         scalingStat: end
-        scalingMultiplier: 2
+        scalingMultiplier: 3
 
   protective_aura:
     name: Protective Aura
