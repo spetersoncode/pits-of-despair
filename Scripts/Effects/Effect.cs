@@ -52,6 +52,7 @@ public abstract class Effect
         return definition.Type?.ToLower() switch
         {
             "heal" or "modify_health" => new ModifyHealthEffect(definition),
+            "heal_percent" => new ModifyHealthEffect(definition) { Percent = true },
             "damage" => new DamageEffect(definition),
             "apply_condition" => new ApplyConditionEffect(definition),
             "teleport" => new TeleportEffect(definition),

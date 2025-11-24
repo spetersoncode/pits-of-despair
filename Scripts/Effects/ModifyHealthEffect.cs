@@ -35,6 +35,11 @@ public class ModifyHealthEffect : Effect
     /// </summary>
     public float ScalingMultiplier { get; set; } = 1.0f;
 
+    /// <summary>
+    /// Whether Amount is a percentage of max HP.
+    /// </summary>
+    public bool Percent { get; set; } = false;
+
     public ModifyHealthEffect()
     {
         Amount = 0;
@@ -51,7 +56,7 @@ public class ModifyHealthEffect : Effect
 
     /// <summary>
     /// Creates a modify health effect from a unified effect definition.
-    /// Supports dice and stat scaling from skills.
+    /// Supports dice, stat scaling, and percentage mode from skills.
     /// </summary>
     public ModifyHealthEffect(EffectDefinition definition)
     {
@@ -59,6 +64,7 @@ public class ModifyHealthEffect : Effect
         Dice = definition.Dice;
         ScalingStat = definition.ScalingStat;
         ScalingMultiplier = definition.ScalingMultiplier;
+        Percent = definition.Percent;
     }
 
     public override EffectResult Apply(EffectContext context)
@@ -76,7 +82,16 @@ public class ModifyHealthEffect : Effect
         }
 
         // Calculate amount with dice and scaling
-        int amount = CalculateScaledAmount(Amount, Dice, ScalingStat, ScalingMultiplier, context);
+        int amount;
+        if (Percent)
+        {
+            // Percentage of max HP
+            amount = (int)(healthComponent.MaxHealth * Amount / 100f);
+        }
+        else
+        {
+            amount = CalculateScaledAmount(Amount, Dice, ScalingStat, ScalingMultiplier, context);
+        }
 
         if (amount == 0)
         {

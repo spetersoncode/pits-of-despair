@@ -80,6 +80,11 @@ public class EffectDefinition
     public int Targets { get; set; } = 1;
 
     /// <summary>
+    /// Whether the Amount is a percentage (e.g., heal 20% of max HP).
+    /// </summary>
+    public bool Percent { get; set; } = false;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -105,7 +110,8 @@ public class EffectDefinition
             Stat = skillEffect.Stat,
             ScalingStat = skillEffect.ScalingStat,
             ScalingMultiplier = skillEffect.ScalingMultiplier,
-            Targets = skillEffect.Targets
+            Targets = skillEffect.Targets,
+            Percent = skillEffect.Percent
         };
     }
 

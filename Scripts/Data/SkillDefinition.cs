@@ -296,4 +296,9 @@ public class SkillEffectDefinition
     /// Number of targets for multi-target effects (e.g., Cleave hits 2 enemies).
     /// </summary>
     public int Targets { get; set; } = 1;
+
+    /// <summary>
+    /// Whether the Amount is a percentage (e.g., heal 20% of max HP).
+    /// </summary>
+    public bool Percent { get; set; } = false;
 }
