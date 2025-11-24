@@ -182,8 +182,8 @@ public partial class GameHUD : Control
         player.Connect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
         player.Connect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
         player.Connect(Player.SignalName.ItemDropped, Callable.From<string, bool, string>(OnItemDropped));
-        player.Connect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
-        player.Connect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
+        player.Connect(Player.SignalName.ItemEquipped, Callable.From<string, string, string>(OnItemEquipped));
+        player.Connect(Player.SignalName.ItemUnequipped, Callable.From<string, string, string>(OnItemUnequipped));
         player.Connect(Player.SignalName.SkillUsed, Callable.From<string, bool, string>(OnSkillUsed));
 
         player.Connect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
@@ -672,14 +672,14 @@ public partial class GameHUD : Control
         }
     }
 
-    private void OnItemEquipped(string itemName)
+    private void OnItemEquipped(string itemName, string glyph, string color)
     {
-        _messageLog.AddMessage($"You equip {itemName}.", Palette.ToHex(Palette.Equipment));
+        _messageLog.AddMessage($"You equip [color={color}]{glyph} {itemName}[/color].", Palette.ToHex(Palette.Equipment));
     }
 
-    private void OnItemUnequipped(string itemName)
+    private void OnItemUnequipped(string itemName, string glyph, string color)
     {
-        _messageLog.AddMessage($"You unequip {itemName}.", Palette.ToHex(Palette.Equipment));
+        _messageLog.AddMessage($"You unequip [color={color}]{glyph} {itemName}[/color].", Palette.ToHex(Palette.Equipment));
     }
 
     private void OnGoldCollected(int amount, int totalGold)
@@ -946,8 +946,8 @@ public partial class GameHUD : Control
             _player.Disconnect(Player.SignalName.ItemPickedUp, Callable.From<string, bool, string>(OnItemPickedUp));
             _player.Disconnect(Player.SignalName.ItemUsed, Callable.From<string, bool, string>(OnItemUsed));
             _player.Disconnect(Player.SignalName.ItemDropped, Callable.From<string, bool, string>(OnItemDropped));
-            _player.Disconnect(Player.SignalName.ItemEquipped, Callable.From<string>(OnItemEquipped));
-            _player.Disconnect(Player.SignalName.ItemUnequipped, Callable.From<string>(OnItemUnequipped));
+            _player.Disconnect(Player.SignalName.ItemEquipped, Callable.From<string, string, string>(OnItemEquipped));
+            _player.Disconnect(Player.SignalName.ItemUnequipped, Callable.From<string, string, string>(OnItemUnequipped));
             _player.Disconnect(Player.SignalName.SkillUsed, Callable.From<string, bool, string>(OnSkillUsed));
             _player.Disconnect(Player.SignalName.GoldCollected, Callable.From<int, int>(OnGoldCollected));
             _player.Disconnect(Player.SignalName.StandingOnEntity, Callable.From<string, string, Color>(OnStandingOnEntity));

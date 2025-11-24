@@ -57,14 +57,18 @@ public class UnequipAction : Action
             return ActionResult.CreateFailure($"No item equipped in {_slot} slot.");
         }
 
-        // Get item name for feedback (if player)
+        // Get item info for feedback (if player)
         string itemName = "item";
+        string itemGlyph = "?";
+        string itemColor = "#FFFFFF";
         if (actor is Player player)
         {
             var slot = player.GetInventorySlot(equippedKey.Value);
             if (slot != null)
             {
                 itemName = slot.Item.Template.Name;
+                itemGlyph = slot.Item.Template.GetGlyph();
+                itemColor = slot.Item.Template.Color;
             }
         }
 
@@ -78,7 +82,7 @@ public class UnequipAction : Action
         // Emit unequipment signal for UI feedback (if player)
         if (actor is Player player2)
         {
-            player2.EmitSignal(Player.SignalName.ItemUnequipped, itemName);
+            player2.EmitSignal(Player.SignalName.ItemUnequipped, itemName, itemGlyph, itemColor);
         }
 
         return ActionResult.CreateSuccess($"Unequipped {itemName}.");
