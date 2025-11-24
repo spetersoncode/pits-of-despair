@@ -61,6 +61,7 @@ public partial class GameHUD : Control
     // New systems for decoupling
     private Systems.LevelUpSystem _levelUpSystem;
     private Systems.PlayerActionHandler _actionHandler;
+    private Systems.MessageSystem _messageSystem;
     private int _floorDepth;
 
     public override void _Ready()
@@ -90,21 +91,25 @@ public partial class GameHUD : Control
     /// <param name="goldManager">The gold manager for tracking player gold.</param>
     /// <param name="levelUpSystem">The level-up system for stat rewards.</param>
     /// <param name="actionHandler">The action handler for player actions.</param>
+    /// <param name="messageSystem">The message system for combat message sequencing.</param>
     /// <param name="visionSystem">The player vision system for checking visible entities.</param>
     /// <param name="debugContext">The debug context for debug commands.</param>
     /// <param name="debugModeActive">Initial debug mode state (default: false).</param>
-    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, GoldManager goldManager, Systems.LevelUpSystem levelUpSystem, Systems.PlayerActionHandler actionHandler, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null, bool debugModeActive = false)
+    public void Initialize(Player player, CombatSystem combatSystem, EntityManager entityManager, int floorDepth, GoldManager goldManager, Systems.LevelUpSystem levelUpSystem, Systems.PlayerActionHandler actionHandler, Systems.MessageSystem messageSystem, PlayerVisionSystem visionSystem = null, DebugContext debugContext = null, bool debugModeActive = false)
     {
         _player = player;
         _levelUpSystem = levelUpSystem;
         _actionHandler = actionHandler;
+        _messageSystem = messageSystem;
         _floorDepth = floorDepth;
 
         // Note: SidePanel is now initialized separately in GameLevel
 
-        _messageLog.ConnectToCombatSystem(combatSystem);
-        _messageLog.SetPlayer(player);
-        _messageLog.SetEntityManager(entityManager);
+        // Wire up MessageSystem for combat message sequencing
+        _messageSystem.SetMessageLog(_messageLog);
+        _messageSystem.SetPlayer(player);
+        _messageSystem.SetEntityManager(entityManager);
+        _messageSystem.ConnectToCombatSystem(combatSystem);
 
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
@@ -165,17 +170,18 @@ public partial class GameHUD : Control
         _entityManager = entityManager;
         _entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
 
+        // Connect health components to MessageSystem for combat message sequencing
         foreach (var entity in entityManager.GetAllEntities())
         {
             var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
             if (healthComponent != null)
             {
-                _messageLog.ConnectToHealthComponent(healthComponent, entity);
+                _messageSystem.ConnectToHealthComponent(healthComponent, entity);
             }
         }
 
         var playerHealth = player.GetNode<Components.HealthComponent>("HealthComponent");
-        _messageLog.ConnectToHealthComponent(playerHealth, player);
+        _messageSystem.ConnectToHealthComponent(playerHealth, player);
 
         player.Connect(Player.SignalName.Waited, Callable.From(() => _messageLog.AddMessage("You wait.", Palette.ToHex(Palette.Success))));
 
@@ -692,11 +698,11 @@ public partial class GameHUD : Control
 
     private void OnEntityAdded(BaseEntity entity)
     {
-        // Connect the entity's HealthComponent to the message log for death messages
+        // Connect the entity's HealthComponent to the message system for combat messages
         var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
         if (healthComponent != null)
         {
-            _messageLog.ConnectToHealthComponent(healthComponent, entity);
+            _messageSystem.ConnectToHealthComponent(healthComponent, entity);
         }
     }
 

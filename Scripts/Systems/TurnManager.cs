@@ -24,6 +24,7 @@ public partial class TurnManager : Node
     private bool _isPlayerTurn = true;
     private bool _waitingForEffects = false;
     private VisualEffectSystem _visualEffectSystem;
+    private MessageSystem _messageSystem;
 
     public bool IsPlayerTurn => _isPlayerTurn;
 
@@ -48,11 +49,20 @@ public partial class TurnManager : Node
     }
 
     /// <summary>
+    /// Sets the message system reference for message sequencing.
+    /// </summary>
+    public void SetMessageSystem(MessageSystem messageSystem)
+    {
+        _messageSystem = messageSystem;
+    }
+
+    /// <summary>
     /// Starts the first player turn. Call this after initialization.
     /// </summary>
     public void StartFirstPlayerTurn()
     {
         _isPlayerTurn = true;
+        _messageSystem?.BeginSequence();
         EmitSignal(SignalName.PlayerTurnStarted);
     }
 
@@ -99,8 +109,14 @@ public partial class TurnManager : Node
     /// </summary>
     private void TransitionToCreatureTurns()
     {
+        // Flush player turn messages before transitioning
+        _messageSystem?.EndSequence();
+
         _isPlayerTurn = false;
         EmitSignal(SignalName.PlayerTurnEnded);
+
+        // Begin sequencing for creature turns
+        _messageSystem?.BeginSequence();
         EmitSignal(SignalName.CreatureTurnsStarted);
     }
 
@@ -116,8 +132,14 @@ public partial class TurnManager : Node
             return;
         }
 
+        // Flush creature turn messages
+        _messageSystem?.EndSequence();
+
         _isPlayerTurn = true;
         EmitSignal(SignalName.CreatureTurnsEnded);
+
+        // Begin sequencing for next player turn
+        _messageSystem?.BeginSequence();
         EmitSignal(SignalName.PlayerTurnStarted);
     }
 

@@ -37,6 +37,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 - **[ai.md](ai.md)**: AI architecture and goal-based decision making
 - **[autoexplore.md](autoexplore.md)**: Automated dungeon exploration with safety interrupts
 - **[effects.md](effects.md)**: Instantaneous and time-based effect application
+- **[message-system.md](message-system.md)**: Combat message sequencing, formatting, and combination
 - **[progression.md](progression.md)**: Experience points, leveling, and stat growth
 - **[statistics.md](statistics.md)**: Multi-source stat tracking and combat value calculations
 - **[conditions.md](conditions.md)**: Condition system with turn-based lifecycle and equipment bonuses

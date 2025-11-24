@@ -59,6 +59,7 @@ public partial class GameLevel : Node
     private NearbyEntitiesTracker _nearbyEntitiesTracker;
     private AutoExploreSystem _autoExploreSystem;
     private AutoRestSystem _autoRestSystem;
+    private MessageSystem _messageSystem;
 
     public override void _Ready()
     {
@@ -114,6 +115,9 @@ public partial class GameLevel : Node
 
         _autoRestSystem = new AutoRestSystem { Name = "AutoRestSystem" };
         AddChild(_autoRestSystem);
+
+        _messageSystem = new MessageSystem { Name = "MessageSystem" };
+        AddChild(_messageSystem);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -187,6 +191,9 @@ public partial class GameLevel : Node
 
         // Connect turn manager to VFX system for turn coordination
         _turnManager.SetVisualEffectSystem(_visualEffectSystem);
+
+        // Connect turn manager to message system for message sequencing
+        _turnManager.SetMessageSystem(_messageSystem);
 
         var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _visualEffectSystem);
 
@@ -278,6 +285,7 @@ public partial class GameLevel : Node
             _goldManager,
             _levelUpSystem,
             _actionHandler,
+            _messageSystem,
             _visionSystem,
             debugContext,
             debugModeActive
