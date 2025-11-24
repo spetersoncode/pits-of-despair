@@ -130,7 +130,7 @@ public partial class EntityDetailModal : CenterContainer
 
         if (entity.IsDead) return ("Dead", Palette.Crimson);
 
-        float hpPercent = (float)health.CurrentHP / health.MaxHP;
+        float hpPercent = (float)health.CurrentHealth / health.MaxHealth;
 
         if (hpPercent >= 1.0f) return ("Uninjured", Palette.Success);
         if (hpPercent >= 0.75f) return ("Slightly Wounded", Palette.Success);

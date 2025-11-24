@@ -43,7 +43,7 @@ public static class ItemEvaluator
             var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
             if (health != null)
             {
-                float hpRatio = (float)health.CurrentHP / health.MaxHP;
+                float hpRatio = (float)health.CurrentHealth / health.MaxHealth;
                 if (hpRatio < 0.5f)
                 {
                     score += 30; // Extra value when damaged

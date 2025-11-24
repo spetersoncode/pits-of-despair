@@ -45,21 +45,21 @@ public partial class HealthComponent : Node, IAIEventHandler
     public delegate void DamageModifierAppliedEventHandler(int damageType, string modifierType);
 
     /// <summary>
-    /// Base maximum hit points (before Endurance modifiers).
-    /// Actual MaxHP is: BaseMaxHP + (Endurance × 2)
+    /// Base maximum health (before Endurance modifiers).
+    /// Actual MaxHealth is: BaseMaxHealth + (Endurance × 2)
     /// </summary>
-    [Export] public int BaseMaxHP { get; set; } = 10;
+    [Export] public int BaseMaxHealth { get; set; } = 10;
 
     /// <summary>
-    /// Maximum hit points including Endurance bonus.
-    /// Calculated as: BaseMaxHP + (Endurance × 2)
+    /// Maximum health including Endurance bonus.
+    /// Calculated as: BaseMaxHealth + (Endurance × 2)
     /// </summary>
-    public int MaxHP { get; private set; }
+    public int MaxHealth { get; private set; }
 
     /// <summary>
-    /// Current hit points
+    /// Current health
     /// </summary>
-    public int CurrentHP { get; private set; }
+    public int CurrentHealth { get; private set; }
 
     /// <summary>
     /// The last entity that dealt damage to this entity.
@@ -94,10 +94,10 @@ public partial class HealthComponent : Node, IAIEventHandler
     private int _regenPoints = 0;
 
     /// <summary>
-    /// Multi-source max HP modifiers from skills, items, buffs, etc.
-    /// Key is source identifier (e.g., "skill_tough"), value is HP bonus.
+    /// Multi-source max health modifiers from skills, items, buffs, etc.
+    /// Key is source identifier (e.g., "skill_tough"), value is Health bonus.
     /// </summary>
-    private readonly Dictionary<string, int> _maxHPModifiers = new();
+    private readonly Dictionary<string, int> _maxHealthModifiers = new();
 
     /// <summary>
     /// Multi-source regen rate modifiers from equipment, conditions, etc.
@@ -124,19 +124,19 @@ public partial class HealthComponent : Node, IAIEventHandler
 
     /// <summary>
     /// Base regeneration rate per turn (including modifiers).
-    /// Formula: 20 + MaxHP / 6 + TotalRegenBonus
+    /// Formula: 20 + MaxHealth / 6 + TotalRegenBonus
     /// At 100 points accumulated, heal 1 HP.
     /// </summary>
-    public int BaseRegenRate => 20 + MaxHP / 6 + TotalRegenBonus;
+    public int BaseRegenRate => 20 + MaxHealth / 6 + TotalRegenBonus;
 
     public override void _Ready()
     {
         _entity = GetParent<BaseEntity>();
         _stats = _entity?.GetNodeOrNull<StatsComponent>("StatsComponent");
 
-        // Calculate initial MaxHP
-        RecalculateMaxHP();
-        CurrentHP = MaxHP;
+        // Calculate initial MaxHealth
+        RecalculateMaxHealth();
+        CurrentHealth = MaxHealth;
 
         // Connect to stat changes if StatsComponent exists
         if (_stats != null)
@@ -222,7 +222,7 @@ public partial class HealthComponent : Node, IAIEventHandler
     private void ProcessRegeneration()
     {
         // Don't regenerate if dead or at full health
-        if (!IsAlive() || CurrentHP >= MaxHP)
+        if (!IsAlive() || CurrentHealth >= MaxHealth)
         {
             // Reset regen points when at full health to avoid stockpiling
             _regenPoints = 0;
@@ -233,7 +233,7 @@ public partial class HealthComponent : Node, IAIEventHandler
         _regenPoints += BaseRegenRate;
 
         // Heal 1 HP for every 100 points accumulated
-        while (_regenPoints >= 100 && CurrentHP < MaxHP)
+        while (_regenPoints >= 100 && CurrentHealth < MaxHealth)
         {
             Heal(1);
             _regenPoints -= 100;
@@ -241,46 +241,46 @@ public partial class HealthComponent : Node, IAIEventHandler
     }
 
     /// <summary>
-    /// Recalculates MaxHP based on BaseMaxHP, Endurance bonus, and external modifiers.
-    /// MaxHP is floored at BaseMaxHP (negative END can't reduce HP below base).
+    /// Recalculates MaxHealth based on BaseMaxHealth, Endurance bonus, and external modifiers.
+    /// MaxHealth is floored at BaseMaxHealth (negative END can't reduce HP below base).
     /// </summary>
-    private void RecalculateMaxHP()
+    private void RecalculateMaxHealth()
     {
-        int enduranceBonus = _stats?.GetHPBonus() ?? 0;
-        int modifierBonus = GetTotalMaxHPModifiers();
-        int newMaxHP = BaseMaxHP + enduranceBonus + modifierBonus;
+        int enduranceBonus = _stats?.GetHealthBonus() ?? 0;
+        int modifierBonus = GetTotalMaxHealthModifiers();
+        int newMaxHealth = BaseMaxHealth + enduranceBonus + modifierBonus;
 
-        // Enforce floor: MaxHP can never go below BaseMaxHP
+        // Enforce floor: MaxHealth can never go below BaseMaxHealth
         // This handles negative Endurance (debuffs, weak creatures)
-        if (newMaxHP < BaseMaxHP)
-            newMaxHP = BaseMaxHP;
+        if (newMaxHealth < BaseMaxHealth)
+            newMaxHealth = BaseMaxHealth;
 
-        // If MaxHP increases, add the difference to CurrentHP
-        // If MaxHP decreases, reduce CurrentHP if it exceeds new max
-        int hpDifference = newMaxHP - MaxHP;
-        MaxHP = newMaxHP;
+        // If MaxHealth increases, add the difference to CurrentHealth
+        // If MaxHealth decreases, reduce CurrentHealth if it exceeds new max
+        int hpDifference = newMaxHealth - MaxHealth;
+        MaxHealth = newMaxHealth;
 
         if (hpDifference > 0)
         {
-            // MaxHP increased - gain the additional HP (healing mechanic for END buffs)
-            CurrentHP += hpDifference;
+            // MaxHealth increased - gain the additional HP (healing mechanic for END buffs)
+            CurrentHealth += hpDifference;
         }
-        else if (CurrentHP > MaxHP)
+        else if (CurrentHealth > MaxHealth)
         {
-            // MaxHP decreased - cap CurrentHP to new max
-            CurrentHP = MaxHP;
+            // MaxHealth decreased - cap CurrentHealth to new max
+            CurrentHealth = MaxHealth;
         }
 
-        CallDeferred(MethodName.EmitHealthChangedSignal, CurrentHP, MaxHP);
+        CallDeferred(MethodName.EmitHealthChangedSignal, CurrentHealth, MaxHealth);
     }
 
     /// <summary>
     /// Called when stats change (e.g., equipment changes, buffs/debuffs).
-    /// Recalculates MaxHP based on new Endurance value.
+    /// Recalculates MaxHealth based on new Endurance value.
     /// </summary>
     private void OnStatsChanged()
     {
-        RecalculateMaxHP();
+        RecalculateMaxHealth();
     }
 
     /// <summary>
@@ -349,13 +349,13 @@ public partial class HealthComponent : Node, IAIEventHandler
         }
 
         // Apply damage after modifiers
-        int oldHP = CurrentHP;
-        CurrentHP = Mathf.Max(0, CurrentHP - amount);
+        int oldHealth = CurrentHealth;
+        CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
 
         EmitSignal(SignalName.DamageTaken, amount);
-        EmitSignal(SignalName.HealthChanged, CurrentHP, MaxHP);
+        EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
 
-        if (CurrentHP == 0 && oldHP > 0)
+        if (CurrentHealth == 0 && oldHealth > 0)
         {
             EmitSignal(SignalName.Died);
         }
@@ -369,11 +369,11 @@ public partial class HealthComponent : Node, IAIEventHandler
     /// <param name="amount">Amount of HP to restore</param>
     public void Heal(int amount)
     {
-        if (amount <= 0 || CurrentHP == MaxHP)
+        if (amount <= 0 || CurrentHealth == MaxHealth)
             return;
 
-        CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
-        EmitSignal(SignalName.HealthChanged, CurrentHP, MaxHP);
+        CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+        EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
     }
 
     /// <summary>
@@ -389,42 +389,42 @@ public partial class HealthComponent : Node, IAIEventHandler
     /// </summary>
     public bool IsAlive()
     {
-        return CurrentHP > 0;
+        return CurrentHealth > 0;
     }
 
-    #region Max HP Modifiers
+    #region Max Health Modifiers
 
     /// <summary>
-    /// Adds a max HP modifier from a named source.
+    /// Adds a max Health modifier from a named source.
     /// Used by passive skills, items, buffs, etc.
     /// </summary>
     /// <param name="source">Source identifier (e.g., "skill_tough", "item_amulet")</param>
-    /// <param name="value">HP bonus value (can be positive or negative)</param>
-    public void AddMaxHPModifier(string source, int value)
+    /// <param name="value">Health bonus value (can be positive or negative)</param>
+    public void AddMaxHealthModifier(string source, int value)
     {
-        _maxHPModifiers[source] = value;
-        RecalculateMaxHP();
+        _maxHealthModifiers[source] = value;
+        RecalculateMaxHealth();
     }
 
     /// <summary>
-    /// Removes a max HP modifier by source name.
+    /// Removes a max Health modifier by source name.
     /// </summary>
     /// <param name="source">Source identifier to remove</param>
-    public void RemoveMaxHPModifier(string source)
+    public void RemoveMaxHealthModifier(string source)
     {
-        if (_maxHPModifiers.Remove(source))
+        if (_maxHealthModifiers.Remove(source))
         {
-            RecalculateMaxHP();
+            RecalculateMaxHealth();
         }
     }
 
     /// <summary>
-    /// Gets the total max HP bonus from all modifier sources.
+    /// Gets the total max Health bonus from all modifier sources.
     /// </summary>
-    private int GetTotalMaxHPModifiers()
+    private int GetTotalMaxHealthModifiers()
     {
         int total = 0;
-        foreach (var value in _maxHPModifiers.Values)
+        foreach (var value in _maxHealthModifiers.Values)
         {
             total += value;
         }
@@ -479,7 +479,7 @@ public partial class HealthComponent : Node, IAIEventHandler
         }
 
         // Check if health is below threshold
-        float hpRatio = (float)CurrentHP / MaxHP;
+        float hpRatio = (float)CurrentHealth / MaxHealth;
         if (hpRatio >= HealingThreshold)
         {
             return;

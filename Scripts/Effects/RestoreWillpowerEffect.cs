@@ -94,7 +94,7 @@ public class RestoreWillpowerEffect : Effect
         int actualRestored = willpowerComponent.CurrentWillpower - oldWP;
 
         return EffectResult.CreateSuccess(
-            $"{targetName} restores {actualRestored} WP.",
+            $"{targetName} restores {actualRestored} Willpower.",
             Palette.ToHex(Palette.StatusBuff),
             target
         );

@@ -180,13 +180,13 @@ public class ItemData
     /// <summary>Will modifier when equipped.</summary>
     public int? Will { get; set; }
 
-    /// <summary>Max HP modifier when equipped.</summary>
-    [YamlMember(Alias = "maxHp")]
-    public int? MaxHp { get; set; }
+    /// <summary>Max Health modifier when equipped.</summary>
+    [YamlMember(Alias = "health")]
+    public int? MaxHealth { get; set; }
 
-    /// <summary>Max WP modifier when equipped.</summary>
-    [YamlMember(Alias = "maxWp")]
-    public int? MaxWp { get; set; }
+    /// <summary>Max Willpower modifier when equipped.</summary>
+    [YamlMember(Alias = "willpower")]
+    public int? MaxWillpower { get; set; }
 
     /// <summary>Regeneration modifier when equipped (in basis points, 100 = 1%).</summary>
     public int? Regen { get; set; }

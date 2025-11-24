@@ -73,7 +73,7 @@ public class HealEffect : Effect
         }
 
         // Check if already at full health
-        if (healthComponent.CurrentHP >= healthComponent.MaxHP)
+        if (healthComponent.CurrentHealth >= healthComponent.MaxHealth)
         {
             return EffectResult.CreateFailure(
                 $"{targetName} is already at full health.",
@@ -93,12 +93,12 @@ public class HealEffect : Effect
         }
 
         // Apply healing
-        int oldHealth = healthComponent.CurrentHP;
+        int oldHealth = healthComponent.CurrentHealth;
         healthComponent.Heal(healing);
-        int actualHealing = healthComponent.CurrentHP - oldHealth;
+        int actualHealing = healthComponent.CurrentHealth - oldHealth;
 
         return EffectResult.CreateSuccess(
-            $"{targetName} heals {actualHealing} HP.",
+            $"{targetName} heals {actualHealing} Health.",
             Palette.ToHex(Palette.Success),
             target
         );

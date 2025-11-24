@@ -4,7 +4,7 @@ using System.Linq;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
-using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;
 using PitsOfDespair.Systems.Input.Services;
@@ -207,17 +207,17 @@ public partial class LevelUpModal : PanelContainer
     /// </summary>
     private string GetHPPreview()
     {
-        if (_stats == null) return "+? Max Hit Points";
+        if (_stats == null) return "+? Max Health";
 
         int currentEnd = _stats.TotalEndurance;
-        int currentHPBonus = _stats.GetHPBonus();
+        int currentHPBonus = _stats.GetHealthBonus();
 
         // Calculate HP bonus with +1 END using the same formula
         int newEnd = currentEnd + 1;
         int newHPBonus = (newEnd * newEnd + 9 * newEnd) / 2;
         int hpGain = newHPBonus - currentHPBonus;
 
-        return $"+{hpGain} Max Hit Points";
+        return $"+{hpGain} Max Health";
     }
 
     /// <summary>
@@ -446,7 +446,7 @@ public partial class LevelUpModal : PanelContainer
         string descColor = Palette.ToHex(Palette.Disabled);
 
         // Spell out category
-        string category = skill.GetCategory() == Scripts.Skills.SkillCategory.Active ? "Active" : "Passive";
+        string category = skill.GetCategory() == SkillCategory.Active ? "Active" : "Passive";
 
         // Letter and name
         line.Append($"  [color={keyColor}]{letter})[/color] ");
@@ -456,7 +456,7 @@ public partial class LevelUpModal : PanelContainer
         // WP cost if any
         if (skill.WillpowerCost > 0)
         {
-            line.Append($" [color={costColor}]{skill.WillpowerCost} WP[/color]");
+            line.Append($" [color={costColor}]{skill.WillpowerCost} Willpower[/color]");
         }
 
         // Mark newly unlocked

@@ -11,7 +11,7 @@ entries:
     strength: -2
     agility: 1
     endurance: -2
-    maxHP: 4
+    health: 4
     attacks:
       - name: bite
         type: Melee
@@ -26,7 +26,7 @@ entries:
     strength: 0
     agility: 1
     endurance: -1
-    maxHP: 8
+    health: 8
     attacks:
       - name: bite
         type: Melee

@@ -11,7 +11,7 @@ entries:
     strength: 0
     agility: 0
     endurance: -1
-    maxHP: 8
+    health: 8
     attacks:
       - name: claw
         type: Melee

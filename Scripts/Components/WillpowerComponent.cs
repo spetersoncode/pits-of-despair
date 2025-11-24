@@ -56,10 +56,10 @@ public partial class WillpowerComponent : Node
     private int _regenPoints = 0;
 
     /// <summary>
-    /// Multi-source max WP modifiers from skills, items, buffs, etc.
-    /// Key is source identifier (e.g., "skill_arcane_focus"), value is WP bonus.
+    /// Multi-source max Willpower modifiers from skills, items, buffs, etc.
+    /// Key is source identifier (e.g., "skill_arcane_focus"), value is Willpower bonus.
     /// </summary>
-    private readonly System.Collections.Generic.Dictionary<string, int> _maxWPModifiers = new();
+    private readonly System.Collections.Generic.Dictionary<string, int> _maxWillpowerModifiers = new();
 
     #endregion
 
@@ -74,7 +74,7 @@ public partial class WillpowerComponent : Node
         RecalculateMaxWillpower();
         CurrentWillpower = MaxWillpower;
 
-        // Connect to stat changes to update MaxWP when WIL changes
+        // Connect to stat changes to update MaxWillpower when WIL changes
         if (_stats != null)
         {
             _stats.Connect(StatsComponent.SignalName.StatsChanged, Callable.From(OnStatsChanged));
@@ -209,7 +209,7 @@ public partial class WillpowerComponent : Node
     private void RecalculateMaxWillpower()
     {
         int wil = _stats?.TotalWill ?? 0;
-        int modifierBonus = GetTotalMaxWPModifiers();
+        int modifierBonus = GetTotalMaxWillpowerModifiers();
         int newMax = 10 + (wil * 5) + modifierBonus;
 
         // Ensure minimum of 10
@@ -303,39 +303,39 @@ public partial class WillpowerComponent : Node
 
     #endregion
 
-    #region Max WP Modifiers
+    #region Max Willpower Modifiers
 
     /// <summary>
-    /// Adds a max WP modifier from a named source.
+    /// Adds a max Willpower modifier from a named source.
     /// Used by passive skills, items, buffs, etc.
     /// </summary>
     /// <param name="source">Source identifier (e.g., "skill_arcane_focus")</param>
-    /// <param name="value">WP bonus value (can be positive or negative)</param>
-    public void AddMaxWPModifier(string source, int value)
+    /// <param name="value">Willpower bonus value (can be positive or negative)</param>
+    public void AddMaxWillpowerModifier(string source, int value)
     {
-        _maxWPModifiers[source] = value;
+        _maxWillpowerModifiers[source] = value;
         RecalculateMaxWillpower();
     }
 
     /// <summary>
-    /// Removes a max WP modifier by source name.
+    /// Removes a max Willpower modifier by source name.
     /// </summary>
     /// <param name="source">Source identifier to remove</param>
-    public void RemoveMaxWPModifier(string source)
+    public void RemoveMaxWillpowerModifier(string source)
     {
-        if (_maxWPModifiers.Remove(source))
+        if (_maxWillpowerModifiers.Remove(source))
         {
             RecalculateMaxWillpower();
         }
     }
 
     /// <summary>
-    /// Gets the total max WP bonus from all modifier sources.
+    /// Gets the total max Willpower bonus from all modifier sources.
     /// </summary>
-    private int GetTotalMaxWPModifiers()
+    private int GetTotalMaxWillpowerModifiers()
     {
         int total = 0;
-        foreach (var value in _maxWPModifiers.Values)
+        foreach (var value in _maxWillpowerModifiers.Values)
         {
             total += value;
         }

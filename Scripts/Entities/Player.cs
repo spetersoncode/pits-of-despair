@@ -91,7 +91,7 @@ public partial class Player : BaseEntity
         var healthComponent = new HealthComponent
         {
             Name = "HealthComponent",
-            BaseMaxHP = 20
+            BaseMaxHealth = 20
         };
         AddChild(healthComponent);
 

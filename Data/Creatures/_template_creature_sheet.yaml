@@ -24,7 +24,7 @@ entries:
     name: example creature
     description: Description for examine window.
     level: 1
-    maxHP: 8              # Base HP (actual = maxHP + endurance x level)
+    health: 8              # Base HP (actual = maxHP + endurance x level)
 
     # Stats (optional, default 0)
     strength: 0           # Melee damage bonus = STR/2

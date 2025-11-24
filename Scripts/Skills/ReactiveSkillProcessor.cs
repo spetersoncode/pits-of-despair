@@ -7,7 +7,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Skills;
+
 using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Skills;
@@ -181,7 +181,7 @@ public partial class ReactiveSkillProcessor : Node
         TriggerReactiveSkills("on_damage", null, amount);
 
         // Check for on_low_hp triggers (below 25% HP)
-        float hpPercent = (float)_healthComponent.CurrentHP / _healthComponent.MaxHP;
+        float hpPercent = (float)_healthComponent.CurrentHealth / _healthComponent.MaxHealth;
         if (hpPercent <= 0.25f)
         {
             TriggerReactiveSkills("on_low_hp", null, amount);

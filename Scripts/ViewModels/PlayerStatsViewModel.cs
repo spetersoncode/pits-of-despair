@@ -35,56 +35,56 @@ public partial class PlayerStatsViewModel : Node
 
 	#region Properties - Health
 
-	public int CurrentHP { get; private set; }
-	public int MaxHP { get; private set; }
+    public int MaxHealth => _healthComponent?.MaxHealth ?? 0;
+    public int CurrentHealth => _healthComponent?.CurrentHealth ?? 0;
 
 	#endregion
 
 	#region Properties - Willpower
 
-	public int CurrentWP { get; private set; }
-	public int MaxWP { get; private set; }
+    public int MaxWillpower => _willpowerComponent?.MaxWillpower ?? 0;
+    public int CurrentWillpower => _willpowerComponent?.CurrentWillpower ?? 0;
 
 	#endregion
 
 	#region Properties - Level & Experience
 
-	public int Level { get; private set; }
-	public int CurrentXP { get; private set; }
-	public int XPToNextLevel { get; private set; }
+    public int Level => _statsComponent?.Level ?? 1;
+    public int CurrentXP => _statsComponent?.CurrentExperience ?? 0;
+    public int XPToNextLevel => _statsComponent?.ExperienceToNextLevel ?? 0;
 
 	#endregion
 
 	#region Properties - Base Stats
 
-	public int BaseStrength { get; private set; }
-	public int BaseAgility { get; private set; }
-	public int BaseEndurance { get; private set; }
-	public int BaseWill { get; private set; }
+    public int BaseStrength => _statsComponent?.BaseStrength ?? 0;
+    public int BaseAgility => _statsComponent?.BaseAgility ?? 0;
+    public int BaseEndurance => _statsComponent?.BaseEndurance ?? 0;
+    public int BaseWill => _statsComponent?.BaseWill ?? 0;
 
 	#endregion
 
 	#region Properties - Total Stats (with modifiers)
 
-	public int TotalStrength { get; private set; }
-	public int TotalAgility { get; private set; }
-	public int TotalEndurance { get; private set; }
-	public int TotalWill { get; private set; }
+    public int TotalStrength => _statsComponent?.TotalStrength ?? 0;
+    public int TotalAgility => _statsComponent?.TotalAgility ?? 0;
+    public int TotalEndurance => _statsComponent?.TotalEndurance ?? 0;
+    public int TotalWill => _statsComponent?.TotalWill ?? 0;
 
 	#endregion
 
 	#region Properties - Derived Combat Stats
 
-	public int MeleeAttack { get; private set; }
-	public int RangedAttack { get; private set; }
-	public int TotalArmor { get; private set; }
-	public int TotalEvasion { get; private set; }
+    public int MeleeAttack => _statsComponent?.MeleeAttack ?? 0;
+    public int RangedAttack => _statsComponent?.RangedAttack ?? 0;
+    public int TotalArmor => _statsComponent?.TotalArmor ?? 0;
+    public int TotalEvasion => _statsComponent?.TotalEvasion ?? 0;
 
 	#endregion
 
 	#region Properties - Resources
 
-	public int Gold { get; private set; }
+    public int Gold => _goldManager?.Gold ?? 0;
 	public int FloorDepth { get; private set; }
 
 	#endregion
@@ -128,7 +128,7 @@ public partial class PlayerStatsViewModel : Node
 
 		if (_willpowerComponent == null)
 		{
-			GD.PushWarning("PlayerStatsViewModel: Player missing WillpowerComponent. WP display will be disabled.");
+			GD.PushWarning("PlayerStatsViewModel: Player missing WillpowerComponent. Willpower display will be disabled.");
 		}
 
 		if (_statsComponent == null)
@@ -140,8 +140,8 @@ public partial class PlayerStatsViewModel : Node
 		// Connect to component signals
 		ConnectToSignals();
 
-		// Initialize properties with current values
-		UpdateAllStats();
+		// Initial update
+		EmitSignal(SignalName.StatsUpdated);
 	}
 
 	/// <summary>
@@ -202,121 +202,14 @@ public partial class PlayerStatsViewModel : Node
 
 	#endregion
 
-	#region Update Methods
-
-	/// <summary>
-	/// Updates all stats from components.
-	/// Called during initialization.
-	/// </summary>
-	private void UpdateAllStats()
-	{
-		UpdateHealthStats();
-		UpdateWillpowerStats();
-		UpdateLevelAndXP();
-		UpdateBaseStats();
-		UpdateTotalStats();
-		UpdateDerivedStats();
-		UpdateGold();
-	}
-
-	private void UpdateHealthStats()
-	{
-		CurrentHP = _healthComponent.CurrentHP;
-		MaxHP = _healthComponent.MaxHP;
-	}
-
-	private void UpdateWillpowerStats()
-	{
-		if (_willpowerComponent != null)
-		{
-			CurrentWP = _willpowerComponent.CurrentWillpower;
-			MaxWP = _willpowerComponent.MaxWillpower;
-		}
-		else
-		{
-			CurrentWP = 0;
-			MaxWP = 0;
-		}
-	}
-
-	private void UpdateLevelAndXP()
-	{
-		Level = _statsComponent.Level;
-		CurrentXP = _statsComponent.CurrentExperience;
-		XPToNextLevel = _statsComponent.ExperienceToNextLevel;
-	}
-
-	private void UpdateBaseStats()
-	{
-		BaseStrength = _statsComponent.BaseStrength;
-		BaseAgility = _statsComponent.BaseAgility;
-		BaseEndurance = _statsComponent.BaseEndurance;
-		BaseWill = _statsComponent.BaseWill;
-	}
-
-	private void UpdateTotalStats()
-	{
-		TotalStrength = _statsComponent.TotalStrength;
-		TotalAgility = _statsComponent.TotalAgility;
-		TotalEndurance = _statsComponent.TotalEndurance;
-		TotalWill = _statsComponent.TotalWill;
-	}
-
-	private void UpdateDerivedStats()
-	{
-		MeleeAttack = _statsComponent.MeleeAttack;
-		RangedAttack = _statsComponent.RangedAttack;
-		TotalArmor = _statsComponent.TotalArmor;
-		TotalEvasion = _statsComponent.TotalEvasion;
-	}
-
-	private void UpdateGold()
-	{
-		Gold = _goldManager.Gold;
-	}
-
-	#endregion
-
 	#region Event Handlers
 
-	private void OnHealthChanged(int current, int max)
-	{
-		UpdateHealthStats();
-		EmitSignal(SignalName.StatsUpdated);
-	}
-
-	private void OnWillpowerChanged(int current, int max)
-	{
-		UpdateWillpowerStats();
-		EmitSignal(SignalName.StatsUpdated);
-	}
-
-	private void OnStatsChanged()
-	{
-		UpdateLevelAndXP();
-		UpdateBaseStats();
-		UpdateTotalStats();
-		UpdateDerivedStats();
-		EmitSignal(SignalName.StatsUpdated);
-	}
-
-	private void OnExperienceGained(int amount, int current, int toNext)
-	{
-		UpdateLevelAndXP();
-		EmitSignal(SignalName.StatsUpdated);
-	}
-
-	private void OnLevelUp(int newLevel)
-	{
-		UpdateLevelAndXP();
-		EmitSignal(SignalName.StatsUpdated);
-	}
-
-	private void OnGoldChanged(int amount, int totalGold)
-	{
-		UpdateGold();
-		EmitSignal(SignalName.StatsUpdated);
-	}
+	private void OnStatsChanged() => EmitSignal(SignalName.StatsUpdated);
+	private void OnHealthChanged(int current, int max) => EmitSignal(SignalName.StatsUpdated);
+	private void OnWillpowerChanged(int current, int max) => EmitSignal(SignalName.StatsUpdated);
+	private void OnExperienceGained(int amount, int current, int toNext) => EmitSignal(SignalName.StatsUpdated);
+	private void OnLevelUp(int newLevel) => EmitSignal(SignalName.StatsUpdated);
+	private void OnGoldChanged(int amount, int total) => EmitSignal(SignalName.StatsUpdated);
 
 	#endregion
 

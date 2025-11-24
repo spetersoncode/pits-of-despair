@@ -7,8 +7,8 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Skills;
 using PitsOfDespair.Skills;
+
 using PitsOfDespair.Targeting;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
@@ -286,7 +286,7 @@ public class SkillCommand : DebugCommand
         if (willpowerComponent != null && willpowerComponent.CurrentWillpower < skill.WillpowerCost)
         {
             return DebugCommandResult.CreateFailure(
-                $"Not enough WP ({skill.WillpowerCost} required, have {willpowerComponent.CurrentWillpower}).",
+                $"Not enough Willpower ({skill.WillpowerCost} required, have {willpowerComponent.CurrentWillpower}).",
                 Palette.ToHex(Palette.Caution)
             );
         }

@@ -7,7 +7,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Skills;
+using PitsOfDespair.Skills;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;
 
@@ -287,7 +287,7 @@ public partial class SkillsModal : PanelContainer
 
     private string FormatActiveSkill(SkillDefinition skill, char keyDisplay, bool canAfford)
     {
-        string wpCost = skill.WillpowerCost > 0 ? $"[color={Palette.ToHex(Palette.Wizard)}]{skill.WillpowerCost} WP[/color]" : "[color=#888888]Free[/color]";
+        string wpCost = skill.WillpowerCost > 0 ? $"[color={Palette.ToHex(Palette.Wizard)}]{skill.WillpowerCost} Willpower[/color]" : "[color=#888888]Free[/color]";
         string nameColor = canAfford ? Palette.ToHex(Palette.Default) : Palette.ToHex(Palette.Disabled);
 
         return $"  [{keyDisplay}] [color={nameColor}]{skill.Name}[/color] - {wpCost} - {skill.Description}";
@@ -301,7 +301,7 @@ public partial class SkillsModal : PanelContainer
     private string FormatReactiveSkill(SkillDefinition skill)
     {
         string trigger = !string.IsNullOrEmpty(skill.Trigger) ? $"[i]Triggers: {skill.Trigger}[/i]" : "[i]Auto-triggers[/i]";
-        string wpCost = skill.WillpowerCost > 0 ? $" ({skill.WillpowerCost} WP)" : "";
+        string wpCost = skill.WillpowerCost > 0 ? $" ({skill.WillpowerCost} Willpower)" : "";
         return $"  [color={Palette.ToHex(Palette.Caution)}]⚡[/color] {skill.Name}{wpCost} - {trigger} - {skill.Description}";
     }
 
@@ -323,9 +323,9 @@ public partial class SkillsModal : PanelContainer
     private string BuildHeader()
     {
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-        int currentWP = _willpowerComponent?.CurrentWillpower ?? 0;
-        int maxWP = _willpowerComponent?.MaxWillpower ?? 0;
-        return $"[center][b]Skills (a-z)[/b][/center]\n[center]WP: [color={Palette.ToHex(Palette.Wizard)}]{currentWP}/{maxWP}[/color] | [=] Rebind | ({closeKey} to close)[/center]";
+        int currentWillpower = _willpowerComponent?.CurrentWillpower ?? 0;
+        int maxWillpower = _willpowerComponent?.MaxWillpower ?? 0;
+        return $"[center][b]Skills (a-z)[/b][/center]\n[center]Willpower: [color={Palette.ToHex(Palette.Wizard)}]{currentWillpower}/{maxWillpower}[/color] | [=] Rebind | ({closeKey} to close)[/center]";
     }
 
     private string BuildRebindHeader()

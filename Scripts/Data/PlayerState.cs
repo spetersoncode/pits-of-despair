@@ -32,8 +32,8 @@ public class PlayerState
 
 	#region Health State
 
-	public int BaseMaxHP { get; set; }
-	public int CurrentHP { get; set; }
+	public int BaseMaxHealth { get; set; }
+	public int CurrentHealth { get; set; }
 	public List<DamageType> Immunities { get; set; } = new();
 	public List<DamageType> Resistances { get; set; } = new();
 	public List<DamageType> Vulnerabilities { get; set; } = new();
@@ -116,8 +116,8 @@ public class PlayerState
 		var healthComponent = player.GetNodeOrNull<HealthComponent>("HealthComponent");
 		if (healthComponent != null)
 		{
-			state.BaseMaxHP = healthComponent.BaseMaxHP;
-			state.CurrentHP = healthComponent.CurrentHP;
+			state.BaseMaxHealth = healthComponent.BaseMaxHealth;
+			state.CurrentHealth = healthComponent.CurrentHealth;
 			state.Immunities = new List<DamageType>(healthComponent.Immunities);
 			state.Resistances = new List<DamageType>(healthComponent.Resistances);
 			state.Vulnerabilities = new List<DamageType>(healthComponent.Vulnerabilities);
@@ -197,13 +197,13 @@ public class PlayerState
 		var healthComponent = player.GetNodeOrNull<HealthComponent>("HealthComponent");
 		if (healthComponent != null)
 		{
-			healthComponent.BaseMaxHP = BaseMaxHP;
+			healthComponent.BaseMaxHealth = BaseMaxHealth;
 			healthComponent.Immunities = new List<DamageType>(Immunities);
 			healthComponent.Resistances = new List<DamageType>(Resistances);
 			healthComponent.Vulnerabilities = new List<DamageType>(Vulnerabilities);
 
 			// Set CurrentHP using reflection to access private setter
-			SetPrivateProperty(healthComponent, "CurrentHP", CurrentHP);
+			SetPrivateProperty(healthComponent, "CurrentHealth", CurrentHealth);
 		}
 
 		// Apply Willpower (fully restore on floor transitions per design)

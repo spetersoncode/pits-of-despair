@@ -5,7 +5,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Skills;
+
 using PitsOfDespair.Systems.Projectiles;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
@@ -52,7 +52,7 @@ public static class SkillExecutor
 
         if (willpowerComponent.CurrentWillpower < skillDef.WillpowerCost)
         {
-            failureReason = $"Not enough Willpower ({skillDef.WillpowerCost} WP required).";
+            failureReason = $"Not enough Willpower ({skillDef.WillpowerCost} Willpower required).";
             return false;
         }
 

@@ -275,8 +275,8 @@ public partial class EquipComponent : Node
         ApplyStatCondition(itemData.Agility, "agility_modifier", sourcePrefix, ref effectIndex);
         ApplyStatCondition(itemData.Endurance, "endurance_modifier", sourcePrefix, ref effectIndex);
         ApplyStatCondition(itemData.Will, "will_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.MaxHp, "max_hp_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.MaxWp, "max_wp_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.MaxHealth, "max_health_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.MaxWillpower, "max_willpower_modifier", sourcePrefix, ref effectIndex);
         ApplyStatCondition(itemData.Regen, "regen_modifier", sourcePrefix, ref effectIndex);
     }
 

@@ -172,12 +172,12 @@ public partial class EntityFactory : Node
         }
 
         // Add HealthComponent if max HP is specified
-        if (data.MaxHP > 0)
+        if (data.MaxHealth > 0)
         {
             var healthComponent = new HealthComponent
             {
                 Name = "HealthComponent",
-                BaseMaxHP = data.MaxHP, // Will be modified by Endurance in _Ready
+                BaseMaxHealth = data.MaxHealth, // Will be modified by Endurance in _Ready
                 Immunities = new List<DamageType>(data.Immunities),
                 Resistances = new List<DamageType>(data.Resistances),
                 Vulnerabilities = new List<DamageType>(data.Vulnerabilities)

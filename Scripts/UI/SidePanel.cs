@@ -147,8 +147,8 @@ public partial class SidePanel : PanelContainer
         if (_healthBar == null || _healthLabel == null || _statsViewModel == null)
             return;
 
-        int current = _statsViewModel.CurrentHP;
-        int max = _statsViewModel.MaxHP;
+        int current = _statsViewModel.CurrentHealth;
+        int max = _statsViewModel.MaxHealth;
 
         float healthPercent = max > 0 ? (float)current / max : 0f;
         Color healthColor = GetHealthColor(healthPercent);
@@ -163,7 +163,7 @@ public partial class SidePanel : PanelContainer
         _healthBar.AddThemeStyleboxOverride("fill", styleBox);
 
         // Update text label
-        _healthLabel.Text = $"Hit Points: {current}/{max}";
+        _healthLabel.Text = $"Health: {current}/{max}";
         _healthLabel.AddThemeColorOverride("font_color", healthColor);
     }
 
@@ -188,8 +188,8 @@ public partial class SidePanel : PanelContainer
         if (_willpowerBar == null || _willpowerLabel == null || _statsViewModel == null)
             return;
 
-        int current = _statsViewModel.CurrentWP;
-        int max = _statsViewModel.MaxWP;
+        int current = _statsViewModel.CurrentWillpower;
+        int max = _statsViewModel.MaxWillpower;
 
         // Update progress bar
         _willpowerBar.MaxValue = max;

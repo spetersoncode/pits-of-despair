@@ -18,14 +18,14 @@ public class CompanionState
     public string CreatureId { get; set; } = "";
 
     /// <summary>
-    /// Current hit points.
+    /// Current health.
     /// </summary>
-    public int CurrentHP { get; set; }
+    public int CurrentHealth { get; set; }
 
     /// <summary>
-    /// Base maximum HP (before modifiers).
+    /// Base maximum Health (before modifiers).
     /// </summary>
-    public int BaseMaxHP { get; set; }
+    public int BaseMaxHealth { get; set; }
 
     /// <summary>
     /// Active conditions with their remaining turns.
@@ -52,8 +52,8 @@ public class CompanionState
         var healthComponent = companion.GetNodeOrNull<HealthComponent>("HealthComponent");
         if (healthComponent != null)
         {
-            state.CurrentHP = healthComponent.CurrentHP;
-            state.BaseMaxHP = healthComponent.BaseMaxHP;
+            state.CurrentHealth = healthComponent.CurrentHealth;
+            state.BaseMaxHealth = healthComponent.BaseMaxHealth;
         }
 
         // Extract conditions (now managed directly by BaseEntity)
@@ -73,9 +73,9 @@ public class CompanionState
         var healthComponent = companion.GetNodeOrNull<HealthComponent>("HealthComponent");
         if (healthComponent != null)
         {
-            healthComponent.BaseMaxHP = BaseMaxHP;
-            // Use reflection to set CurrentHP (has private setter)
-            SetPrivateProperty(healthComponent, nameof(HealthComponent.CurrentHP), CurrentHP);
+            healthComponent.BaseMaxHealth = BaseMaxHealth;
+            // Use reflection to set CurrentHealth (has private setter)
+            SetPrivateProperty(healthComponent, nameof(HealthComponent.CurrentHealth), CurrentHealth);
         }
 
         // Apply conditions (now managed directly by BaseEntity)

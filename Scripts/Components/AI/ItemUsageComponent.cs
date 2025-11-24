@@ -82,7 +82,7 @@ public partial class ItemUsageComponent : Node, IAIEventHandler
         }
 
         // Check if health is below threshold
-        float hpRatio = (float)_healthComponent.CurrentHP / _healthComponent.MaxHP;
+        float hpRatio = (float)_healthComponent.CurrentHealth / _healthComponent.MaxHealth;
         if (hpRatio >= HealingThreshold)
         {
             return;
