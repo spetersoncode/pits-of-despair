@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
@@ -226,7 +227,14 @@ public static class SkillExecutor
                 continue;
             }
 
-            foreach (var target in targets)
+            // Expand targets for multi-target melee effects (e.g., Cleave)
+            var effectTargets = targets;
+            if (effectDef.Targets > 1 && effectDef.Type == "melee_attack" && targets.Count > 0)
+            {
+                effectTargets = ExpandMeleeTargets(caster, targets[0], effectDef.Targets, context);
+            }
+
+            foreach (var target in effectTargets)
             {
                 var effectContext = EffectContext.ForSkill(target, caster, context, skillDef, targetPosition);
                 var effectResult = effect.Apply(effectContext);
@@ -255,6 +263,45 @@ public static class SkillExecutor
 
         result.Success = anyEffectSucceeded || skillDef.Effects.Count == 0;
         return result;
+    }
+
+    /// <summary>
+    /// Expands a single target into multiple adjacent targets for multi-target melee effects.
+    /// </summary>
+    /// <param name="caster">The entity using the skill</param>
+    /// <param name="primaryTarget">The initially selected target</param>
+    /// <param name="maxTargets">Maximum number of targets</param>
+    /// <param name="context">The action context</param>
+    /// <returns>List of targets including primary and additional adjacent enemies</returns>
+    private static List<BaseEntity> ExpandMeleeTargets(
+        BaseEntity caster,
+        BaseEntity primaryTarget,
+        int maxTargets,
+        ActionContext context)
+    {
+        var expandedTargets = new List<BaseEntity> { primaryTarget };
+
+        if (maxTargets <= 1 || context.EntityManager == null)
+        {
+            return expandedTargets;
+        }
+
+        // Find additional enemies adjacent to the caster (within melee range)
+        var adjacentEntities = context.EntityManager.GetEntitiesInRadius(caster.GridPosition, 1);
+
+        // Filter to hostile entities with health that aren't already targeted
+        var additionalTargets = adjacentEntities
+            .Where(e => e != primaryTarget &&
+                       e != caster &&
+                       !e.IsDead &&
+                       e.Faction != caster.Faction &&
+                       e.GetNodeOrNull<HealthComponent>("HealthComponent") != null)
+            .Take(maxTargets - 1)
+            .ToList();
+
+        expandedTargets.AddRange(additionalTargets);
+
+        return expandedTargets;
     }
 
     /// <summary>

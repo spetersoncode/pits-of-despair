@@ -291,4 +291,9 @@ public class SkillEffectDefinition
     /// Multiplier for stat scaling.
     /// </summary>
     public float ScalingMultiplier { get; set; } = 1.0f;
+
+    /// <summary>
+    /// Number of targets for multi-target effects (e.g., Cleave hits 2 enemies).
+    /// </summary>
+    public int Targets { get; set; } = 1;
 }

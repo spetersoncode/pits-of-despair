@@ -66,6 +66,7 @@ public abstract class Effect
             "clone" => new CloneEffect(definition),
             "cone_of_cold" => new ConeOfColdEffect(definition),
             "move_tiles" => new MoveTilesEffect(definition),
+            "melee_attack" => new MeleeAttackEffect(definition),
             _ => null
         };
     }

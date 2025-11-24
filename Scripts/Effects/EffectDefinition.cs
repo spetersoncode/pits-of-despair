@@ -75,6 +75,11 @@ public class EffectDefinition
     public string? HazardType { get; set; } = null;
 
     /// <summary>
+    /// Number of targets for multi-target effects (e.g., Cleave hits 2 enemies).
+    /// </summary>
+    public int Targets { get; set; } = 1;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -99,7 +104,8 @@ public class EffectDefinition
             ConditionType = skillEffect.ConditionType,
             Stat = skillEffect.Stat,
             ScalingStat = skillEffect.ScalingStat,
-            ScalingMultiplier = skillEffect.ScalingMultiplier
+            ScalingMultiplier = skillEffect.ScalingMultiplier,
+            Targets = skillEffect.Targets
         };
     }
 
