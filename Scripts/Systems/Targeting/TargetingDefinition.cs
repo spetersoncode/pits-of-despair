@@ -143,6 +143,22 @@ public class TargetingDefinition
     };
 
     /// <summary>
+    /// Creates a targeting definition for line/beam targeting.
+    /// Effect travels in a line from caster to target position.
+    /// Uses Euclidean distance for natural circular range.
+    /// </summary>
+    /// <param name="range">Maximum range for the line</param>
+    /// <param name="requiresLOS">If true, line stops at walls; if false, passes through (for tunneling)</param>
+    public static TargetingDefinition Line(int range, bool requiresLOS = true) => new()
+    {
+        Type = TargetingType.Line,
+        Range = range,
+        RequiresLOS = requiresLOS,
+        Metric = DistanceMetric.Euclidean,
+        Filter = TargetFilter.Tile
+    };
+
+    /// <summary>
     /// Creates a targeting definition from a skill definition.
     /// </summary>
     public static TargetingDefinition FromSkill(SkillDefinition skill)
@@ -224,6 +240,7 @@ public class TargetingDefinition
                 Filter = TargetFilter.Creature
             },
             "area" => Area(range, targeting.Radius, los),
+            "line" => Line(range, los),
             _ => Enemy(range, los)
         };
     }

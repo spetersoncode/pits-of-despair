@@ -2,4 +2,16 @@ type: staff
 defaults:
   glyph: "|"
 
-entries: {}
+entries:
+  tunneling:
+    name: tunneling
+    color: Ochre
+    description: A gnarled staff of petrified wood, thrumming with earthen power. Stone yields before its will.
+    charges: 2d4
+    rechargeTurns: 50
+    effects:
+      - type: tunneling
+    targeting:
+      type: line
+      range: 8
+      requiresLos: false

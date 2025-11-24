@@ -23,5 +23,10 @@ public enum VisualEffectType
     /// <summary>
     /// Impact flash effect (future)
     /// </summary>
-    Impact
+    Impact,
+
+    /// <summary>
+    /// Line/beam effect traveling from origin to target (tunneling, lightning, etc.)
+    /// </summary>
+    Beam
 }

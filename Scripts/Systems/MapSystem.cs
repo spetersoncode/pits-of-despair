@@ -99,6 +99,34 @@ public partial class MapSystem : Node
     }
 
     /// <summary>
+    /// Checks if a grid position is on the boundary edge of the map.
+    /// Boundary positions should not be dug through to prevent breaking dungeon containment.
+    /// </summary>
+    public bool IsOnBoundary(GridPosition pos)
+    {
+        return pos.X <= 0 || pos.X >= MapWidth - 1 ||
+               pos.Y <= 0 || pos.Y >= MapHeight - 1;
+    }
+
+    /// <summary>
+    /// Checks if a wall at this position is safe to dig/tunnel through.
+    /// Returns false for boundary walls (map edges) to prevent breaking dungeon containment.
+    /// </summary>
+    public bool IsSafeToDig(GridPosition pos)
+    {
+        // Must be in bounds
+        if (!IsInBounds(pos))
+            return false;
+
+        // Cannot dig boundary walls
+        if (IsOnBoundary(pos))
+            return false;
+
+        // Must be a wall to dig
+        return GetTileAt(pos) == TileType.Wall;
+    }
+
+    /// <summary>
     /// Finds a valid spawn position (walkable tile) on the map.
     /// Searches from the center outward in a spiral pattern.
     /// </summary>

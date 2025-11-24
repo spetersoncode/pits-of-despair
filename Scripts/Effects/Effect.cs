@@ -60,6 +60,7 @@ public abstract class Effect
             "restore_willpower" or "modify_willpower" => new ModifyWillpowerEffect(definition),
             "charm" => new CharmEffect(),
             "fireball" => new FireballEffect(definition),
+            "tunneling" => new TunnelingEffect(definition),
             _ => null
         };
     }

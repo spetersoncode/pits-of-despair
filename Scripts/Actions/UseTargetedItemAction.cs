@@ -4,6 +4,7 @@ using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems.Projectiles;
+using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.Targeting;
 using System.Text;
 
@@ -111,13 +112,18 @@ public class UseTargetedItemAction : Action
 			return ActionResult.CreateFailure($"{itemName} has no effects.");
 		}
 
-		// Determine if this is an area-targeted item
-		bool isAreaTargeted = itemTemplate.Targeting?.Type?.ToLower() == "area";
+		// Determine targeting type
+		var targetingType = itemTemplate.Targeting?.Type?.ToLower() ?? "";
 
 		var messages = new StringBuilder();
 		bool anyEffectSucceeded = false;
 
-		if (isAreaTargeted)
+		if (targetingType == "line")
+		{
+			// Line-targeted item (tunneling, lightning bolt, etc.)
+			anyEffectSucceeded = ApplyLineEffects(actor, effects, context, messages);
+		}
+		else if (targetingType == "area")
 		{
 			// AOE item: apply effects to all entities in the area
 			anyEffectSucceeded = ApplyAreaEffects(actor, effects, context, messages);
@@ -148,12 +154,18 @@ public class UseTargetedItemAction : Action
 		{
 			slot.Item.UseCharge();
 
-			// Check if wand is depleted
+			// Check if charged item is depleted
 			if (slot.Item.CurrentCharges <= 0)
 			{
-				// Wand crumbles to dust
-				messages.AppendLine("The wand crumbles to dust.");
-				inventory.RemoveItem(_itemKey, 1);
+				// Wands crumble when depleted, staves remain (they recharge)
+				bool isStaff = itemTemplate.Type?.ToLower() == "staff";
+				if (!isStaff)
+				{
+					// Wand crumbles to dust
+					messages.AppendLine("The wand crumbles to dust.");
+					inventory.RemoveItem(_itemKey, 1);
+				}
+				// Staves just become temporarily unusable until recharged
 			}
 		}
 
@@ -187,6 +199,78 @@ public class UseTargetedItemAction : Action
 			if (!string.IsNullOrEmpty(effectResult.Message))
 			{
 				messages.AppendLine(effectResult.Message);
+			}
+		}
+
+		return anySucceeded;
+	}
+
+	/// <summary>
+	/// Applies effects along a line from caster to target position.
+	/// Handles tunneling and other line-based effects with beam visual.
+	/// </summary>
+	private bool ApplyLineEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	{
+		// Get targeting definition for range
+		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+		var slot = inventory?.GetSlot(_itemKey);
+		if (slot == null) return false;
+
+		var definition = TargetingDefinition.FromItem(slot.Item.Template);
+		int range = definition.Range > 0 ? definition.Range : 8;
+
+		bool anySucceeded = false;
+
+		foreach (var effect in effects)
+		{
+			if (effect is TunnelingEffect tunnelingEffect)
+			{
+				// Apply tunneling effect with range from targeting definition
+				var result = tunnelingEffect.ApplyToLine(actor, _targetPosition, range, context);
+
+				if (result.Success)
+				{
+					anySucceeded = true;
+				}
+
+				if (!string.IsNullOrEmpty(result.Message))
+				{
+					messages.AppendLine(result.Message);
+				}
+
+				// Spawn beam visual effect
+				if (context.VisualEffectSystem != null)
+				{
+					// Calculate actual beam end position (may stop at boundary)
+					var endPos = tunnelingEffect.GetBeamEndPosition(actor, _targetPosition, range, context);
+					context.VisualEffectSystem.SpawnBeam(actor.GridPosition, endPos, Palette.Ochre, 0.5f);
+				}
+			}
+			else
+			{
+				// Other line effects (future: lightning bolt, etc.)
+				// Apply to all entities along the line using the already-retrieved definition
+				var handler = new LineTargetingHandler();
+				var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
+				foreach (var target in targets)
+				{
+					var effectContext = EffectContext.ForItem(target, actor, context);
+					var effectResult = effect.Apply(effectContext);
+					if (effectResult.Success)
+					{
+						anySucceeded = true;
+					}
+					if (!string.IsNullOrEmpty(effectResult.Message))
+					{
+						messages.AppendLine(effectResult.Message);
+					}
+				}
+
+				// If no targets but effect was valid, still count as success for terrain effects
+				if (targets.Count == 0)
+				{
+					anySucceeded = true;
+				}
 			}
 		}
 

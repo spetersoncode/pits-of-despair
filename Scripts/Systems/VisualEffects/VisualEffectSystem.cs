@@ -17,6 +17,7 @@ public partial class VisualEffectSystem : Node
     private List<VisualEffectData> _activeEffects = new();
     private TextRenderer _renderer;
     private Shader? _explosionShader;
+    private Shader? _beamShader;
     private int _tileSize = 18;
 
     /// <summary>
@@ -36,6 +37,13 @@ public partial class VisualEffectSystem : Node
         if (_explosionShader == null)
         {
             GD.PrintErr("VisualEffectSystem: Failed to load explosion shader");
+        }
+
+        // Load the beam shader
+        _beamShader = GD.Load<Shader>("res://Resources/Shaders/beam.gdshader");
+        if (_beamShader == null)
+        {
+            GD.PrintErr("VisualEffectSystem: Failed to load beam shader");
         }
     }
 
@@ -158,6 +166,107 @@ public partial class VisualEffectSystem : Node
     }
 
     /// <summary>
+    /// Spawns a beam effect traveling from origin to target.
+    /// Creates a shader-based visual for dramatic beam/tunneling effects.
+    /// </summary>
+    /// <param name="origin">Starting position in grid coordinates.</param>
+    /// <param name="target">End position in grid coordinates.</param>
+    /// <param name="color">Color of the beam (defaults to Ochre for earth/tunneling).</param>
+    /// <param name="duration">Duration of the effect in seconds.</param>
+    public void SpawnBeam(GridPosition origin, GridPosition target, Color? color = null, float duration = 0.5f)
+    {
+        if (_renderer == null) return;
+
+        var effectColor = color ?? Palette.Ochre;
+
+        // Calculate beam geometry
+        var originCenter = _renderer.GridToTileCenter(origin);
+        var targetCenter = _renderer.GridToTileCenter(target);
+        var delta = targetCenter - originCenter;
+        float beamLength = delta.Length();
+        float rotation = Mathf.Atan2(delta.Y, delta.X);
+
+        var effect = new VisualEffectData(
+            origin,
+            target,
+            duration,
+            effectColor,
+            effectColor.Darkened(0.4f),
+            beamLength,
+            rotation);
+
+        // Create shader-based visual node
+        CreateBeamShaderNode(effect);
+
+        _activeEffects.Add(effect);
+        AnimateEffect(effect);
+    }
+
+    /// <summary>
+    /// Creates a ColorRect with the beam shader for GPU-accelerated rendering.
+    /// </summary>
+    private void CreateBeamShaderNode(VisualEffectData effect)
+    {
+        if (_beamShader == null || _renderer == null) return;
+
+        // Create shader material
+        var material = new ShaderMaterial();
+        material.Shader = _beamShader;
+
+        // Set initial uniforms
+        material.SetShaderParameter("progress", 0.0f);
+        material.SetShaderParameter("beam_length", effect.BeamLength);
+        material.SetShaderParameter("beam_width", 6.0f);
+
+        // Set colors - tunneling uses earthy tones
+        material.SetShaderParameter("core_color", new Color(1.0f, 0.9f, 0.7f, 1.0f));
+        material.SetShaderParameter("mid_color", effect.PrimaryColor);
+        material.SetShaderParameter("outer_color", effect.SecondaryColor);
+
+        // Create the visual node
+        var colorRect = new ColorRect();
+        colorRect.Material = material;
+
+        // Size the rect: width is beam length, height is beam width with extra for particles
+        float beamWidth = 24.0f; // Height for beam and debris particles
+        colorRect.Size = new Vector2(effect.BeamLength + 20.0f, beamWidth);
+
+        // Apply rotation around origin
+        colorRect.PivotOffset = new Vector2(0, beamWidth / 2.0f);
+        colorRect.Rotation = effect.Rotation;
+
+        colorRect.ZIndex = 100; // Render above game elements
+
+        // Store references
+        effect.ShaderNode = colorRect;
+        effect.Material = material;
+
+        // Add to renderer
+        _renderer.AddChild(colorRect);
+
+        // Update position initially
+        UpdateBeamNodePosition(effect);
+    }
+
+    /// <summary>
+    /// Updates the beam shader node position based on camera/scroll offset.
+    /// </summary>
+    private void UpdateBeamNodePosition(VisualEffectData effect)
+    {
+        if (effect.ShaderNode == null || _renderer == null) return;
+
+        var offset = _renderer.GetRenderOffset();
+        var originCenter = _renderer.GridToTileCenter(effect.Position);
+
+        // Position at beam origin, centered vertically
+        float halfHeight = effect.ShaderNode.Size.Y / 2.0f;
+        effect.ShaderNode.Position = new Vector2(
+            offset.X + originCenter.X,
+            offset.Y + originCenter.Y - halfHeight
+        );
+    }
+
+    /// <summary>
     /// Animates an effect using a tween.
     /// </summary>
     private void AnimateEffect(VisualEffectData effect)
@@ -185,7 +294,14 @@ public partial class VisualEffectSystem : Node
         }
 
         // Update position in case camera moved
-        UpdateShaderNodePosition(effect);
+        if (effect.Type == VisualEffectType.Beam)
+        {
+            UpdateBeamNodePosition(effect);
+        }
+        else
+        {
+            UpdateShaderNodePosition(effect);
+        }
 
         _renderer?.QueueRedraw();
     }

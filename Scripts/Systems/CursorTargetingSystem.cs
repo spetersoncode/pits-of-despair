@@ -312,9 +312,30 @@ public partial class CursorTargetingSystem : Node
 		_useGridDistance = definition.Metric == DistanceMetric.Chebyshev;
 		_isActive = true;
 
-		// Calculate full visible range for the overlay (always shows entire targeting range)
+		// Calculate valid tiles for the overlay
 		int range = definition.Range > 0 ? definition.Range : 1;
-		_validTiles = FOVCalculator.CalculateVisibleTiles(_originPosition, range, context.MapSystem, definition.Metric);
+		if (definition.RequiresLOS)
+		{
+			// Use FOV for LOS-respecting targeting
+			_validTiles = FOVCalculator.CalculateVisibleTiles(_originPosition, range, context.MapSystem, definition.Metric);
+		}
+		else
+		{
+			// For non-LOS targeting (like tunneling), include all tiles in range regardless of visibility
+			_validTiles = new HashSet<GridPosition>();
+			for (int dx = -range; dx <= range; dx++)
+			{
+				for (int dy = -range; dy <= range; dy++)
+				{
+					var checkPos = new GridPosition(_originPosition.X + dx, _originPosition.Y + dy);
+					if (DistanceHelper.IsInRange(_originPosition, checkPos, range, definition.Metric) &&
+						context.MapSystem.IsInBounds(checkPos))
+					{
+						_validTiles.Add(checkPos);
+					}
+				}
+			}
+		}
 
 		// Get valid target positions from the handler (may be a subset for creature-only targeting)
 		var validTargetPositions = _targetingHandler.GetValidTargetPositions(caster, definition, context);
@@ -326,22 +347,29 @@ public partial class CursorTargetingSystem : Node
 			: new HashSet<GridPosition>(validTargetPositions);
 
 		// Build creature target list from valid target positions
+		// Only for creature-targeting filters (not tile/area targeting)
 		_validCreatureTargets = new List<BaseEntity>();
-		foreach (var tile in validTargetPositions)
-		{
-			if (tile == _originPosition)
-				continue;
+		bool isCreatureTargeting = definition.Filter != TargetFilter.Tile;
 
-			var entity = _entityManager.GetEntityAtPosition(tile);
-			if (entity != null && IsEntityValidForFilter(caster, entity, definition.Filter))
+		if (isCreatureTargeting)
+		{
+			foreach (var tile in validTargetPositions)
 			{
-				_validCreatureTargets.Add(entity);
+				if (tile == _originPosition)
+					continue;
+
+				var entity = _entityManager.GetEntityAtPosition(tile);
+				if (entity != null && IsEntityValidForFilter(caster, entity, definition.Filter))
+				{
+					_validCreatureTargets.Add(entity);
+				}
 			}
 		}
 
 		// Sort by distance and select initial target
-		if (_validCreatureTargets.Count > 0)
+		if (isCreatureTargeting && _validCreatureTargets.Count > 0)
 		{
+			// Creature targeting: auto-select nearest creature
 			_validCreatureTargets = _useGridDistance
 				? _validCreatureTargets.OrderBy(e => DistanceHelper.ChebyshevDistance(_originPosition, e.GridPosition)).ToList()
 				: _validCreatureTargets.OrderBy(e => DistanceHelper.EuclideanDistance(_originPosition, e.GridPosition)).ToList();
@@ -351,9 +379,9 @@ public partial class CursorTargetingSystem : Node
 		}
 		else if (_validTiles.Count > 0)
 		{
-			// No creatures, start at nearest valid tile
+			// Tile/area targeting or no creatures: start at origin (player picks position)
 			_currentCreatureIndex = -1;
-			_cursorPosition = _validTiles.OrderBy(t => DistanceHelper.ChebyshevDistance(_originPosition, t)).First();
+			_cursorPosition = _originPosition;
 		}
 		else
 		{
