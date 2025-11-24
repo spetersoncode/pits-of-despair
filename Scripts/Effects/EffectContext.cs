@@ -1,5 +1,6 @@
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 
@@ -37,6 +38,12 @@ public class EffectContext
     public StatsComponent? CasterStats { get; }
 
     /// <summary>
+    /// Optional target position for position-based effects (e.g., directional movement).
+    /// Used when the effect needs direction rather than a target entity.
+    /// </summary>
+    public GridPosition? TargetPosition { get; }
+
+    /// <summary>
     /// Whether this effect comes from a skill (vs item, trap, etc.).
     /// </summary>
     public bool IsSkillEffect => Skill != null;
@@ -45,13 +52,15 @@ public class EffectContext
         BaseEntity target,
         BaseEntity? caster,
         ActionContext actionContext,
-        SkillDefinition? skill = null)
+        SkillDefinition? skill = null,
+        GridPosition? targetPosition = null)
     {
         Target = target;
         Caster = caster;
         ActionContext = actionContext;
         Skill = skill;
         CasterStats = caster?.GetNodeOrNull<StatsComponent>("StatsComponent");
+        TargetPosition = targetPosition;
     }
 
     /// <summary>
@@ -71,9 +80,10 @@ public class EffectContext
         BaseEntity target,
         BaseEntity caster,
         ActionContext actionContext,
-        SkillDefinition skill)
+        SkillDefinition skill,
+        GridPosition? targetPosition = null)
     {
-        return new EffectContext(target, caster, actionContext, skill);
+        return new EffectContext(target, caster, actionContext, skill, targetPosition);
     }
 
     /// <summary>

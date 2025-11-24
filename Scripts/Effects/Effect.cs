@@ -65,6 +65,7 @@ public abstract class Effect
             "create_hazard" => new CreateHazardEffect(definition),
             "clone" => new CloneEffect(definition),
             "cone_of_cold" => new ConeOfColdEffect(definition),
+            "move_tiles" => new MoveTilesEffect(definition),
             _ => null
         };
     }

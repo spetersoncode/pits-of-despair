@@ -3,9 +3,10 @@ type: agility
 entries:
   quick_step:
     name: Quick Step
-    description: Move 1 extra tile this turn.
+    description: Move 2 tiles in the selected direction.
     category: active
-    targeting: self
+    targeting: line
+    range: 2
     willpowerCost: 2
     tier: 1
     prerequisites:
@@ -14,8 +15,8 @@ entries:
       - movement
       - utility
     effects:
-      - type: bonus_movement
-        amount: 1
+      - type: move_tiles
+        amount: 2
 
   fleet_of_foot:
     name: Fleet of Foot

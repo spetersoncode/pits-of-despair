@@ -65,8 +65,8 @@ public class UseTargetedSkillAction : Action
             return ActionResult.CreateFailure("No target at that location.");
         }
 
-        // Execute the skill
-        var result = SkillExecutor.ExecuteSkill(actor, _skill, targets, context);
+        // Execute the skill, passing target position for directional effects
+        var result = SkillExecutor.ExecuteSkill(actor, _skill, targets, context, _targetPosition);
 
         if (result.Success)
         {

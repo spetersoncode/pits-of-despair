@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
+using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
@@ -72,12 +73,14 @@ public static class SkillExecutor
     /// <param name="skillDef">The skill definition</param>
     /// <param name="targets">List of target entities</param>
     /// <param name="context">The action context</param>
+    /// <param name="targetPosition">Optional target position for directional skills</param>
     /// <returns>The result of the skill execution</returns>
     public static SkillResult ExecuteSkill(
         BaseEntity caster,
         SkillDefinition skillDef,
         List<BaseEntity> targets,
-        ActionContext context)
+        ActionContext context,
+        GridPosition? targetPosition = null)
     {
         // Validate skill can be used
         if (!CanExecuteSkill(caster, skillDef, out string failureReason))
@@ -85,14 +88,25 @@ public static class SkillExecutor
             return SkillResult.CreateFailure(failureReason);
         }
 
-        // Validate we have targets
-        if (targets.Count == 0 && skillDef.GetTargetingType() != TargetingType.Self)
+        // For line/area targeting without entity targets, use caster as effect target
+        // (the effect itself will use targetPosition for direction)
+        var targetingType = skillDef.GetTargetingType();
+        bool isPositionalTargeting = targetingType == TargetingType.Line ||
+                                     targetingType == TargetingType.Tile ||
+                                     targetingType == TargetingType.Area;
+
+        if (targets.Count == 0 && isPositionalTargeting && targetPosition != null)
+        {
+            // For positional skills, caster is the effect target
+            targets.Add(caster);
+        }
+        else if (targets.Count == 0 && targetingType != TargetingType.Self)
         {
             return SkillResult.CreateFailure("No valid targets.");
         }
 
         // For self-targeting skills, add caster as target if not already included
-        if (skillDef.GetTargetingType() == TargetingType.Self && targets.Count == 0)
+        if (targetingType == TargetingType.Self && targets.Count == 0)
         {
             targets.Add(caster);
         }
@@ -120,11 +134,11 @@ public static class SkillExecutor
         // Check if skill uses a projectile
         if (skillDef.HasProjectile)
         {
-            return ExecuteProjectileSkill(caster, skillDef, targets, context, result);
+            return ExecuteProjectileSkill(caster, skillDef, targets, context, result, targetPosition);
         }
 
         // Non-projectile skill: apply effects immediately
-        return ExecuteImmediateSkill(caster, skillDef, targets, context, result);
+        return ExecuteImmediateSkill(caster, skillDef, targets, context, result, targetPosition);
     }
 
     /// <summary>
@@ -135,13 +149,14 @@ public static class SkillExecutor
         SkillDefinition skillDef,
         List<BaseEntity> targets,
         ActionContext context,
-        SkillResult result)
+        SkillResult result,
+        GridPosition? targetPosition = null)
     {
         var projectileDef = VisualEffectDefinitions.GetById(skillDef.Projectile!);
         if (projectileDef == null || projectileDef.Type != VisualEffectType.Projectile)
         {
             GD.PrintErr($"SkillExecutor: Unknown projectile type '{skillDef.Projectile}' in skill '{skillDef.Id}'");
-            return ExecuteImmediateSkill(caster, skillDef, targets, context, result);
+            return ExecuteImmediateSkill(caster, skillDef, targets, context, result, targetPosition);
         }
 
         // Spawn projectile for each target
@@ -157,7 +172,7 @@ public static class SkillExecutor
                     continue;
                 }
 
-                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef);
+                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef, targetPosition);
                 var capturedTarget = target;
 
                 // Spawn projectile - effect will be applied on impact via callback
@@ -197,7 +212,8 @@ public static class SkillExecutor
         SkillDefinition skillDef,
         List<BaseEntity> targets,
         ActionContext context,
-        SkillResult result)
+        SkillResult result,
+        GridPosition? targetPosition = null)
     {
         bool anyEffectSucceeded = false;
 
@@ -212,7 +228,7 @@ public static class SkillExecutor
 
             foreach (var target in targets)
             {
-                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef);
+                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef, targetPosition);
                 var effectResult = effect.Apply(effectContext);
 
                 if (effectResult.Success)
