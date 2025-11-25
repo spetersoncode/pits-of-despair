@@ -295,7 +295,8 @@ public partial class GameLevel : Node
             dataLoader,
             _aiSystem,
             _movementSystem,
-            _timeSystem
+            _timeSystem,
+            _spawnOrchestrator
         );
 
         // Get persistent debug mode state from GameManager (if it exists)

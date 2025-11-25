@@ -1,6 +1,7 @@
 using PitsOfDespair.Actions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Spawning;
 
 namespace PitsOfDespair.Debug;
 
@@ -58,6 +59,11 @@ public class DebugContext
     /// </summary>
     public TimeSystem TimeSystem { get; }
 
+    /// <summary>
+    /// Spawn orchestrator for accessing spawn statistics.
+    /// </summary>
+    public SpawnOrchestrator SpawnOrchestrator { get; }
+
     public DebugContext(
         ActionContext actionContext,
         TurnManager turnManager,
@@ -66,7 +72,8 @@ public class DebugContext
         DataLoader dataLoader,
         AISystem aiSystem,
         MovementSystem movementSystem,
-        TimeSystem timeSystem)
+        TimeSystem timeSystem,
+        SpawnOrchestrator spawnOrchestrator)
     {
         ActionContext = actionContext;
         TurnManager = turnManager;
@@ -76,5 +83,6 @@ public class DebugContext
         AISystem = aiSystem;
         MovementSystem = movementSystem;
         TimeSystem = timeSystem;
+        SpawnOrchestrator = spawnOrchestrator;
     }
 }

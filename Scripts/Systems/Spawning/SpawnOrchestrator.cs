@@ -41,6 +41,11 @@ public partial class SpawnOrchestrator : Node
     private const int MinimumCreatureCount = 3;
 
     /// <summary>
+    /// Last spawn summary for debug inspection.
+    /// </summary>
+    public SpawnSummary LastSpawnSummary { get; private set; }
+
+    /// <summary>
     /// Sets dependencies for the orchestrator.
     /// Must be called before PopulateFloor.
     /// </summary>
@@ -103,6 +108,7 @@ public partial class SpawnOrchestrator : Node
             summary.AddWarning("No dungeon metadata available");
             stopwatch.Stop();
             summary.SpawnTimeMs = stopwatch.ElapsedMilliseconds;
+            LastSpawnSummary = summary;
             return summary;
         }
 
@@ -238,6 +244,7 @@ public partial class SpawnOrchestrator : Node
         // Log summary
         GD.Print(summary.ToDebugString());
 
+        LastSpawnSummary = summary;
         return summary;
     }
 
