@@ -1,7 +1,10 @@
 using Godot;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Generation;
 using PitsOfDespair.Generation.Generators;
+using PitsOfDespair.Generation.Metadata;
+using PitsOfDespair.Generation.Pipeline;
 
 namespace PitsOfDespair.Systems;
 
@@ -22,21 +25,35 @@ public partial class MapSystem : Node
     [Signal]
     public delegate void MapChangedEventHandler();
 
+    [Signal]
+    public delegate void GenerationCompleteEventHandler();
+
     private TileType[,] _grid;
+    private DungeonMetadata _metadata;
+    private DataLoader _dataLoader;
+
+    /// <summary>
+    /// Metadata from the last generation (regions, passages, chokepoints, etc.)
+    /// </summary>
+    public DungeonMetadata Metadata => _metadata;
 
     public override void _Ready()
     {
+        _dataLoader = GetNode<DataLoader>("/root/DataLoader");
+
         // Create default config if none is set
         if (BSPConfig == null)
         {
             BSPConfig = new BSPConfig();
         }
 
-        GenerateMap();
+        // Use new pipeline-based generation
+        GenerateFromConfig("default");
     }
 
     /// <summary>
-    /// Generates a new map using the BSP dungeon generator.
+    /// Generates a new map using the legacy BSP dungeon generator.
+    /// For new code, prefer GenerateFromConfig() or GenerateForFloor().
     /// </summary>
     public void GenerateMap()
     {
@@ -45,9 +62,89 @@ public partial class MapSystem : Node
 
         // Generate the map
         _grid = generator.Generate(MapWidth, MapHeight);
+        _metadata = null; // Legacy generation doesn't produce metadata
 
         EmitSignal(SignalName.MapChanged);
     }
+
+    /// <summary>
+    /// Generate dungeon from a YAML floor configuration by ID.
+    /// </summary>
+    /// <param name="floorConfigId">ID of the floor config (filename without extension).</param>
+    public void GenerateFromConfig(string floorConfigId)
+    {
+        var config = _dataLoader.GetFloorConfig(floorConfigId);
+        if (config == null)
+        {
+            GD.PushError($"MapSystem: Floor config '{floorConfigId}' not found, falling back to legacy generation");
+            GenerateMap();
+            return;
+        }
+
+        GenerateFromConfig(config);
+    }
+
+    /// <summary>
+    /// Generate dungeon from a FloorGenerationConfig object.
+    /// </summary>
+    public void GenerateFromConfig(Generation.Config.FloorGenerationConfig config)
+    {
+        GD.Print($"[MapSystem] Generating from config: {config.Name}");
+
+        var pipeline = GenerationPipeline.FromConfig(config);
+        var result = pipeline.Execute(config);
+
+        _grid = result.Grid;
+        _metadata = result.Metadata;
+        MapWidth = result.Width;
+        MapHeight = result.Height;
+
+        GD.Print($"[MapSystem] Generation complete: {result.PassesExecuted.Count} passes, {result.GetWalkablePercent():F1}% walkable");
+
+        EmitSignal(SignalName.MapChanged);
+        EmitSignal(SignalName.GenerationComplete);
+    }
+
+    /// <summary>
+    /// Generate dungeon for a specific floor depth.
+    /// Automatically selects the appropriate floor config.
+    /// </summary>
+    /// <param name="floorDepth">The floor depth (1-based).</param>
+    public void GenerateForFloor(int floorDepth)
+    {
+        var config = _dataLoader.GetFloorConfigForDepth(floorDepth);
+        if (config == null)
+        {
+            GD.PushWarning($"MapSystem: No floor config for depth {floorDepth}, falling back to legacy generation");
+            GenerateMap();
+            return;
+        }
+
+        GenerateFromConfig(config);
+    }
+
+    // Metadata query methods
+
+    /// <summary>
+    /// Get the region containing the given position (if metadata available).
+    /// </summary>
+    public Region GetRegionAt(GridPosition pos) => _metadata?.GetRegionAt(pos);
+
+    /// <summary>
+    /// Get all detected chokepoints (if metadata available).
+    /// </summary>
+    public System.Collections.Generic.List<Chokepoint> GetChokepoints() => _metadata?.Chokepoints;
+
+    /// <summary>
+    /// Get the distance field from entrance (if metadata available).
+    /// </summary>
+    public DistanceField GetDistanceFromEntrance() => _metadata?.EntranceDistance;
+
+    /// <summary>
+    /// Get tile classification at position (if metadata available).
+    /// </summary>
+    public TileClassification GetTileClassification(GridPosition pos) =>
+        _metadata?.GetClassification(pos) ?? TileClassification.Wall;
 
     /// <summary>
     /// Gets the tile type at the specified grid position.
