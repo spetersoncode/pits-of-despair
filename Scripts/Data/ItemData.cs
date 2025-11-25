@@ -88,6 +88,18 @@ public class ItemData
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gold value of this item. Used for shop pricing and loot budget calculations.
+    /// Higher value items are placed with stronger guardians.
+    /// </summary>
+    public int Value { get; set; } = 0;
+
+    /// <summary>
+    /// Rarity tier for loot distribution (common, uncommon, rare, epic).
+    /// Determines which item pools this item appears in.
+    /// </summary>
+    public string Rarity { get; set; } = "common";
+
+    /// <summary>
     /// Item type for category-based defaults (e.g., "potion", "scroll").
     /// Optional - blank type means no inherited defaults.
     /// </summary>
