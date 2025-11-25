@@ -57,6 +57,14 @@ public class BandLeaderData
     [YamlMember(Alias = "placement")]
     public string Placement { get; set; } = "center";
 
+    /// <summary>
+    /// Additional AI components to add to the leader at spawn time.
+    /// Uses the same format as creature AI definitions.
+    /// Example: [{ type: Patrol }] to make the leader patrol.
+    /// </summary>
+    [YamlMember(Alias = "ai")]
+    public List<Dictionary<string, object>> Ai { get; set; } = new();
+
     public bool IsValid() => !string.IsNullOrEmpty(CreatureId);
 }
 

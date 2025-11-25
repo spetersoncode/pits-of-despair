@@ -354,9 +354,10 @@ public partial class EntityFactory : Node
     }
 
     /// <summary>
-    /// Adds AI behavior components to an entity based on creature data configuration.
+    /// Adds AI behavior components to an entity based on configuration.
+    /// Can be called externally (e.g., by BandSpawnStrategy) to add leader-specific AI.
     /// </summary>
-    private void AddAIComponents(BaseEntity entity, List<Dictionary<string, object>> aiComponents)
+    public void AddAIComponents(BaseEntity entity, List<Dictionary<string, object>> aiComponents)
     {
         if (aiComponents == null || aiComponents.Count == 0)
             return;
@@ -398,6 +399,7 @@ public partial class EntityFactory : Node
             "WanderingComponent" => new Components.AI.WanderingComponent(),
             "ItemCollectComponent" => new Components.AI.ItemCollectComponent(),
             "PatrolComponent" => new Components.AI.PatrolComponent(),
+            "FollowLeaderComponent" => new Components.AI.FollowLeaderComponent(),
             _ => null
         };
 

@@ -64,6 +64,10 @@ creaturePools:
               distance:
                 dice: "1d2" # 1-2 tiles away from leader
 
+      # Wild dog pack - small pack that patrols together
+      - type: band
+        bandId: wild_dog_pack_small
+
   # Uncommon pool (25% weight) - Tougher encounters
   - id: uncommon
     weight: 25

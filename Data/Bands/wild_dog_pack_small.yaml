@@ -1,0 +1,13 @@
+name: wild dog pack (small)
+leader:
+  creatureId: wild_dog
+  placement: center
+  ai:
+    - type: Patrol
+followers:
+  - creatureId: wild_dog
+    count:
+      dice: "1d2"
+    placement: surrounding
+    distance:
+      dice: "1d2"

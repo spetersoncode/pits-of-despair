@@ -1,8 +1,10 @@
 using System;
 using Godot;
 using System.Collections.Generic;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.Spawning.Data;
 using PitsOfDespair.Systems.Spawning.Placement;
 
@@ -71,16 +73,22 @@ public class BandSpawnStrategy : ISpawnStrategy
         }
 
         // Spawn leader first
-        var leaderPosition = SpawnLeader(
+        var (leaderEntity, leaderPosition) = SpawnLeader(
             bandData.Leader,
             availableTiles,
             occupiedPositions
         );
 
-        if (!leaderPosition.HasValue)
+        if (leaderEntity == null || !leaderPosition.HasValue)
         {
             GD.PushWarning($"BandSpawnStrategy: Failed to spawn leader for band '{entry.BandId}'");
             return result;
+        }
+
+        // Add leader-specific AI components if defined in band data
+        if (bandData.Leader.Ai != null && bandData.Leader.Ai.Count > 0)
+        {
+            _entityFactory.AddAIComponents(leaderEntity, bandData.Leader.Ai);
         }
 
         result.SpawnedPositions.Add(leaderPosition.Value);
@@ -93,7 +101,8 @@ public class BandSpawnStrategy : ISpawnStrategy
                 followerGroup,
                 availableTiles,
                 occupiedPositions,
-                leaderPosition.Value
+                leaderPosition.Value,
+                leaderEntity
             );
 
             result.SpawnedPositions.AddRange(followerResult.SpawnedPositions);
@@ -103,14 +112,14 @@ public class BandSpawnStrategy : ISpawnStrategy
         return result;
     }
 
-    private Vector2I? SpawnLeader(
+    private (BaseEntity? entity, Vector2I? position) SpawnLeader(
         BandLeaderData leaderData,
         List<Vector2I> availableTiles,
         HashSet<Vector2I> occupiedPositions)
     {
         if (!leaderData.IsValid())
         {
-            return null;
+            return (null, null);
         }
 
         // Get placement strategy for leader
@@ -125,7 +134,7 @@ public class BandSpawnStrategy : ISpawnStrategy
 
         if (positions.Count == 0)
         {
-            return null;
+            return (null, null);
         }
 
         var position = positions[0];
@@ -137,17 +146,18 @@ public class BandSpawnStrategy : ISpawnStrategy
         {
             _entityManager.AddEntity(entity);
             occupiedPositions.Add(position);
-            return position;
+            return (entity, position);
         }
 
-        return null;
+        return (null, null);
     }
 
     private SpawnResult SpawnFollowers(
         BandFollowerData followerData,
         List<Vector2I> availableTiles,
         HashSet<Vector2I> occupiedPositions,
-        Vector2I leaderPosition)
+        Vector2I leaderPosition,
+        BaseEntity leaderEntity)
     {
         var result = new SpawnResult();
 
@@ -193,6 +203,13 @@ public class BandSpawnStrategy : ISpawnStrategy
                 result.SpawnedPositions.Add(position);
                 result.EntityCount++;
                 occupiedPositions.Add(position);
+
+                // Wire up follower to follow the leader
+                var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+                if (aiComponent != null)
+                {
+                    aiComponent.ProtectionTarget = leaderEntity;
+                }
             }
         }
 

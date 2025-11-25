@@ -48,6 +48,10 @@ creaturePools:
         count:
           dice: "1d2"
 
+      # Wild dog pack - small pack that patrols together
+      - type: band
+        bandId: wild_dog_pack_small
+
   # Uncommon pool (30% weight) - Increased from floor 1
   - id: uncommon
     weight: 30
@@ -81,6 +85,10 @@ creaturePools:
       # Undead band - mixed skeletons and zombies
       - type: band
         bandId: restless_dead
+
+      # Wild dog pack - medium pack that patrols together
+      - type: band
+        bandId: wild_dog_pack_medium
 
   # Rare pool (5% weight) - Very dangerous encounters
   - id: rare
