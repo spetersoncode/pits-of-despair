@@ -37,6 +37,24 @@ entries:
     ai:
       - type: Wandering
 
+  badger:
+    name: badger
+    description: A squat, striped creature with a foul temper. It fears nothing and attacks with surprising ferocity, slashing with wicked claws.
+    glyph: b
+    color: Palette.Minion
+    threat: 1
+    strength: 0
+    agility: 2
+    endurance: -1
+    health: 5
+    attacks:
+      - name: claws
+        type: Melee
+        dice: "1d3"
+        damageType: Slashing
+    ai:
+      - type: Wandering
+
   wild_boar:
     name: wild boar
     description: A bristly pig with curved tusks and a foul temper. It lowers its head and charges without hesitation, trampling anything in its path.
