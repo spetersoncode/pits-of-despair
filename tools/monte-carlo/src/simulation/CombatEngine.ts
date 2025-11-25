@@ -31,12 +31,15 @@ export interface CombatConfig {
   startingDistance: number;
   /** Enable verbose logging. */
   verbose: boolean;
+  /** Arena size (combatants can't move outside -arenaSize to +arenaSize). */
+  arenaSize: number;
 }
 
 export const DEFAULT_CONFIG: CombatConfig = {
   maxTurns: 1000,
   startingDistance: 5,
   verbose: false,
+  arenaSize: 20,
 };
 
 // =============================================================================
@@ -60,6 +63,7 @@ export interface CombatState {
   events: CombatEvent[];
   teamADamageDealt: number;
   teamBDamageDealt: number;
+  arenaSize: number;
 }
 
 // =============================================================================
@@ -103,6 +107,17 @@ export function initializeCombat(
     events: [],
     teamADamageDealt: 0,
     teamBDamageDealt: 0,
+    arenaSize: config.arenaSize,
+  };
+}
+
+/**
+ * Clamp a position to arena bounds.
+ */
+export function clampToArena(pos: Position, arenaSize: number): Position {
+  return {
+    x: Math.max(-arenaSize, Math.min(arenaSize, pos.x)),
+    y: Math.max(-arenaSize, Math.min(arenaSize, pos.y)),
   };
 }
 
@@ -191,6 +206,10 @@ export function executeTurn(
 
     case 'move': {
       applyMovement(actor, action.direction);
+      // Clamp to arena bounds
+      const clamped = clampToArena(actor.position, state.arenaSize);
+      actor.position.x = clamped.x;
+      actor.position.y = clamped.y;
       if (verbose) {
         state.events.push({
           turn: state.turn,

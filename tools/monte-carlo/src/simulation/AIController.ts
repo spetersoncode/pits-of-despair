@@ -228,20 +228,11 @@ export function decideAction(
 
   // Determine if this is a ranged or melee combatant
   // Prefer ranged if available and has ammo
+  // Once out of ammo, switch to melee behavior (no more kiting)
   if (hasRangedAttack(combatant) && getRangedAttack(combatant)) {
     return decideRangedAction(combatant, enemies);
   }
 
-  if (hasMeleeAttack(combatant)) {
-    return decideMeleeAction(combatant, enemies);
-  }
-
-  // No attacks available - just move toward enemies
-  const nearest = getNearestEnemy(combatant, enemies);
-  if (nearest) {
-    const direction = getMoveToward(combatant.position, nearest.position);
-    return { type: 'move', direction };
-  }
-
-  return { type: 'wait' };
+  // Melee behavior (includes ranged combatants who ran out of ammo)
+  return decideMeleeAction(combatant, enemies);
 }

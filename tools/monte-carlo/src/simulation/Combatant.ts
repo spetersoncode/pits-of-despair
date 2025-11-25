@@ -238,12 +238,23 @@ export function hasRangedAttack(combatant: CombatantState): boolean {
 }
 
 /**
- * Get the best melee attack.
+ * Default fallback melee attack for all creatures.
+ */
+const DEFAULT_PUNCH: AttackDefinition = {
+  name: 'punch',
+  damage: '1d2',
+  damageType: 'Bludgeoning',
+  type: 'Melee',
+  range: 1,
+};
+
+/**
+ * Get the best melee attack (falls back to default punch).
  */
 export function getMeleeAttack(
   combatant: CombatantState
-): AttackDefinition | undefined {
-  return combatant.attacks.find((a) => a.type === 'Melee');
+): AttackDefinition {
+  return combatant.attacks.find((a) => a.type === 'Melee') ?? DEFAULT_PUNCH;
 }
 
 /**
