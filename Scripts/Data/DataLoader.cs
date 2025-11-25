@@ -20,9 +20,7 @@ namespace PitsOfDespair.Data;
 public partial class DataLoader : Node
 {
     private const string CreaturesPath = "res://Data/Creatures/";
-    private const string SpawnTablesPath = "res://Data/SpawnTables/";
     private const string ItemsPath = "res://Data/Items/";
-    private const string BandsPath = "res://Data/Bands/";
     private const string SkillsPath = "res://Data/Skills/";
     private const string FloorsPath = "res://Data/Floors/";
     private const string PrefabsPath = "res://Data/Prefabs/";
@@ -34,11 +32,7 @@ public partial class DataLoader : Node
     private Dictionary<string, ItemData> _items = new();
     private Dictionary<string, SkillDefinition> _skills = new();
 
-    // Spawning system data (legacy)
-    private Dictionary<string, SpawnTableData> _spawnTables = new();
-    private Dictionary<string, BandData> _bands = new();
-
-    // New spawning system data
+    // Spawning system data
     private Dictionary<string, FactionTheme> _factionThemes = new();
     private Dictionary<string, EncounterTemplate> _encounterTemplates = new();
     private Dictionary<string, FloorSpawnConfig> _floorSpawnConfigs = new();
@@ -51,8 +45,6 @@ public partial class DataLoader : Node
     {
         LoadAllCreatures();
         LoadAllItems();
-        LoadAllSpawnTables();
-        LoadAllBands();
         LoadAllSkills();
         LoadAllFloorConfigs();
         LoadAllPrefabs();
@@ -102,34 +94,6 @@ public partial class DataLoader : Node
         }
 
         GD.PrintErr($"DataLoader: Item '{itemId}' not found!");
-        return null;
-    }
-
-    /// <summary>
-    /// Gets spawn table data by ID (filename without extension).
-    /// </summary>
-    public SpawnTableData GetSpawnTable(string tableId)
-    {
-        if (_spawnTables.TryGetValue(tableId, out var table))
-        {
-            return table;
-        }
-
-        GD.PrintErr($"DataLoader: Spawn table '{tableId}' not found!");
-        return null;
-    }
-
-    /// <summary>
-    /// Gets band data by ID (filename without extension).
-    /// </summary>
-    public BandData GetBand(string bandId)
-    {
-        if (_bands.TryGetValue(bandId, out var band))
-        {
-            return band;
-        }
-
-        GD.PrintErr($"DataLoader: Band '{bandId}' not found!");
         return null;
     }
 
@@ -483,26 +447,6 @@ public partial class DataLoader : Node
 
         if (!item.AutoPickup && defaults.AutoPickup.HasValue)
             item.AutoPickup = defaults.AutoPickup.Value;
-    }
-
-    private void LoadAllSpawnTables()
-    {
-        _spawnTables.Clear();
-        LoadYamlFilesRecursive(SpawnTablesPath, "", _spawnTables, "spawn table");
-        GD.Print($"DataLoader: Loaded {_spawnTables.Count} spawn tables");
-    }
-
-    private void LoadAllBands()
-    {
-        _bands.Clear();
-
-        // Bands folder is optional (not all projects may use bands)
-        if (!DirAccess.DirExistsAbsolute(BandsPath))
-        {
-            return;
-        }
-
-        LoadYamlFilesRecursive(BandsPath, "", _bands, "band");
     }
 
     private void LoadAllFloorConfigs()
