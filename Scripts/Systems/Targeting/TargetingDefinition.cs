@@ -143,6 +143,19 @@ public class TargetingDefinition
     };
 
     /// <summary>
+    /// Creates a targeting definition for cleave attacks (3-tile arc).
+    /// Free cursor movement within adjacent tiles.
+    /// </summary>
+    public static TargetingDefinition Cleave() => new()
+    {
+        Type = TargetingType.Cleave,
+        Range = 1,
+        RequiresLOS = false,
+        Metric = DistanceMetric.Chebyshev,
+        Filter = TargetFilter.Tile
+    };
+
+    /// <summary>
     /// Creates a targeting definition for line/beam targeting.
     /// Effect travels in a line from caster to target position.
     /// Uses Euclidean distance for natural circular range.
@@ -170,6 +183,7 @@ public class TargetingDefinition
         {
             "self" => Self(),
             "adjacent" => Adjacent(TargetFilter.Creature),
+            "cleave" => Cleave(),
             "tile" => Tile(range, requiresLOS: true),
             "enemy" => Enemy(range, requiresLOS: true),
             "ally" => Ally(range, requiresLOS: true),

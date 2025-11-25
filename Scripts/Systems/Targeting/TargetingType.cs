@@ -59,5 +59,10 @@ public enum TargetingType
     /// Reach attack targeting - uses Chebyshev distance with LOS.
     /// Suitable for polearms, spears, and other extended melee weapons.
     /// </summary>
-    Reach
+    Reach,
+
+    /// <summary>
+    /// Cleave attack - targets adjacent tile and affects a 3-tile arc.
+    /// </summary>
+    Cleave
 }

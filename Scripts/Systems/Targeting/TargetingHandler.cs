@@ -101,6 +101,7 @@ public abstract class TargetingHandler
             TargetingType.Reach => new ReachTargetingHandler(),
             TargetingType.Line => new LineTargetingHandler(),
             TargetingType.Cone => new ConeTargetingHandler(),
+            TargetingType.Cleave => new CleaveTargetingHandler(),
             _ => new SelfTargetingHandler()
         };
     }

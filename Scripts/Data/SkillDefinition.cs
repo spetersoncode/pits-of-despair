@@ -141,6 +141,7 @@ public class SkillDefinition
         {
             "self" => TargetingType.Self,
             "adjacent" => TargetingType.Adjacent,
+            "cleave" => TargetingType.Cleave,
             "tile" => TargetingType.Tile,
             "enemy" => TargetingType.Enemy,
             "ally" => TargetingType.Ally,

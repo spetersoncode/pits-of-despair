@@ -96,12 +96,15 @@ public static class SkillExecutor
                                      targetingType == TargetingType.Tile ||
                                      targetingType == TargetingType.Area;
 
+        // Cleave can execute with zero targets (swing at empty air)
+        bool allowEmptyTargets = targetingType == TargetingType.Cleave;
+
         if (targets.Count == 0 && isPositionalTargeting && targetPosition != null)
         {
             // For positional skills, caster is the effect target
             targets.Add(caster);
         }
-        else if (targets.Count == 0 && targetingType != TargetingType.Self)
+        else if (targets.Count == 0 && targetingType != TargetingType.Self && !allowEmptyTargets)
         {
             return SkillResult.CreateFailure("No valid targets.");
         }

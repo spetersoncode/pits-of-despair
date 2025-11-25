@@ -40,9 +40,9 @@ entries:
 
   cleave:
     name: Cleave
-    description: Attack hits two adjacent enemies.
+    description: Attack enemies in a 3-tile arc.
     category: active
-    targeting: adjacent
+    targeting: cleave
     willpowerCost: 6
     tier: 2
     prerequisites:
@@ -53,7 +53,6 @@ entries:
       - multi-target
     effects:
       - type: melee_attack
-        targets: 2
 
   rampage:
     name: Rampage
