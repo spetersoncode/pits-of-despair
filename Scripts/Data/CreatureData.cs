@@ -64,10 +64,11 @@ public class CreatureData
     public int Will { get; set; } = 0;
 
     /// <summary>
-    /// Creature level (affects difficulty and XP rewards).
-    /// Default level 1.
+    /// Creature threat rating (affects difficulty and XP rewards).
+    /// Unbounded scale: 1-5 trivial, 6-15 standard, 16-30 dangerous, 31-50 elite, 51+ boss.
+    /// Default threat 1.
     /// </summary>
-    public int Level { get; set; } = 1;
+    public int Threat { get; set; } = 1;
 
     /// <summary>
     /// Base MaxHealth before Endurance modifiers.

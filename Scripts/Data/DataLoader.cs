@@ -26,14 +26,22 @@ public partial class DataLoader : Node
     private const string SkillsPath = "res://Data/Skills/";
     private const string FloorsPath = "res://Data/Floors/";
     private const string PrefabsPath = "res://Data/Prefabs/";
+    private const string ThemesPath = "res://Data/Themes/";
+    private const string EncountersPath = "res://Data/Encounters/";
+    private const string SpawnConfigsPath = "res://Data/SpawnConfigs/";
 
     private Dictionary<string, CreatureData> _creatures = new();
     private Dictionary<string, ItemData> _items = new();
     private Dictionary<string, SkillDefinition> _skills = new();
 
-    // Spawning system data
+    // Spawning system data (legacy)
     private Dictionary<string, SpawnTableData> _spawnTables = new();
     private Dictionary<string, BandData> _bands = new();
+
+    // New spawning system data
+    private Dictionary<string, FactionTheme> _factionThemes = new();
+    private Dictionary<string, EncounterTemplate> _encounterTemplates = new();
+    private Dictionary<string, FloorSpawnConfig> _floorSpawnConfigs = new();
 
     // Floor generation data
     private Dictionary<string, Generation.Config.FloorGenerationConfig> _floorConfigs = new();
@@ -48,6 +56,9 @@ public partial class DataLoader : Node
         LoadAllSkills();
         LoadAllFloorConfigs();
         LoadAllPrefabs();
+        LoadAllFactionThemes();
+        LoadAllEncounterTemplates();
+        LoadAllFloorSpawnConfigs();
     }
 
     /// <summary>
@@ -237,6 +248,94 @@ public partial class DataLoader : Node
         return _skills.Values;
     }
 
+    /// <summary>
+    /// Gets faction theme by ID.
+    /// </summary>
+    public FactionTheme GetFactionTheme(string themeId)
+    {
+        if (_factionThemes.TryGetValue(themeId, out var theme))
+        {
+            return theme;
+        }
+        GD.PrintErr($"DataLoader: Faction theme '{themeId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all loaded faction themes.
+    /// </summary>
+    public IEnumerable<FactionTheme> GetAllFactionThemes()
+    {
+        return _factionThemes.Values;
+    }
+
+    /// <summary>
+    /// Gets all faction theme IDs.
+    /// </summary>
+    public IEnumerable<string> GetAllFactionThemeIds()
+    {
+        return _factionThemes.Keys;
+    }
+
+    /// <summary>
+    /// Gets encounter template by ID.
+    /// </summary>
+    public EncounterTemplate GetEncounterTemplate(string templateId)
+    {
+        if (_encounterTemplates.TryGetValue(templateId, out var template))
+        {
+            return template;
+        }
+        GD.PrintErr($"DataLoader: Encounter template '{templateId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all loaded encounter templates.
+    /// </summary>
+    public IEnumerable<EncounterTemplate> GetAllEncounterTemplates()
+    {
+        return _encounterTemplates.Values;
+    }
+
+    /// <summary>
+    /// Gets floor spawn config by ID.
+    /// </summary>
+    public FloorSpawnConfig GetFloorSpawnConfig(string configId)
+    {
+        if (_floorSpawnConfigs.TryGetValue(configId, out var config))
+        {
+            return config;
+        }
+        GD.PrintErr($"DataLoader: Floor spawn config '{configId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets floor spawn config for a specific floor depth.
+    /// Returns the first config where MinFloor <= depth <= MaxFloor.
+    /// </summary>
+    public FloorSpawnConfig GetFloorSpawnConfigForDepth(int depth)
+    {
+        foreach (var config in _floorSpawnConfigs.Values)
+        {
+            if (depth >= config.MinFloor && depth <= config.MaxFloor)
+            {
+                return config;
+            }
+        }
+        GD.PushWarning($"DataLoader: No floor spawn config found for depth {depth}");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all loaded floor spawn configs.
+    /// </summary>
+    public IEnumerable<FloorSpawnConfig> GetAllFloorSpawnConfigs()
+    {
+        return _floorSpawnConfigs.Values;
+    }
+
     private void LoadAllCreatures()
     {
         _creatures.Clear();
@@ -282,8 +381,8 @@ public partial class DataLoader : Node
         if (creature.Color == DataDefaults.DefaultColor && defaults.Color != null)
             creature.Color = defaults.Color;
 
-        if (creature.Level == 1 && defaults.Level.HasValue)
-            creature.Level = defaults.Level.Value;
+        if (creature.Threat == 1 && defaults.Threat.HasValue)
+            creature.Threat = defaults.Threat.Value;
 
         if (creature.VisionRange == 10 && defaults.VisionRange.HasValue)
             creature.VisionRange = defaults.VisionRange.Value;
@@ -500,6 +599,81 @@ public partial class DataLoader : Node
 
         if (skill.Range == 0 && defaults.Range.HasValue)
             skill.Range = defaults.Range.Value;
+    }
+
+    private void LoadAllFactionThemes()
+    {
+        _factionThemes.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(ThemesPath))
+        {
+            GD.Print("DataLoader: No Themes directory found, faction themes not loaded");
+            return;
+        }
+
+        LoadYamlFilesRecursive(ThemesPath, "", _factionThemes, "faction theme", (theme, id) =>
+        {
+            if (string.IsNullOrEmpty(theme.Id))
+            {
+                theme.Id = id;
+            }
+            if (string.IsNullOrEmpty(theme.Name))
+            {
+                theme.Name = id;
+            }
+        });
+
+        GD.Print($"DataLoader: Loaded {_factionThemes.Count} faction themes");
+    }
+
+    private void LoadAllEncounterTemplates()
+    {
+        _encounterTemplates.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(EncountersPath))
+        {
+            GD.Print("DataLoader: No Encounters directory found, encounter templates not loaded");
+            return;
+        }
+
+        LoadYamlFilesRecursive(EncountersPath, "", _encounterTemplates, "encounter template", (template, id) =>
+        {
+            if (string.IsNullOrEmpty(template.Id))
+            {
+                template.Id = id;
+            }
+            if (string.IsNullOrEmpty(template.Name))
+            {
+                template.Name = id;
+            }
+        });
+
+        GD.Print($"DataLoader: Loaded {_encounterTemplates.Count} encounter templates");
+    }
+
+    private void LoadAllFloorSpawnConfigs()
+    {
+        _floorSpawnConfigs.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(SpawnConfigsPath))
+        {
+            GD.Print("DataLoader: No SpawnConfigs directory found, floor spawn configs not loaded");
+            return;
+        }
+
+        LoadYamlFilesRecursive(SpawnConfigsPath, "", _floorSpawnConfigs, "floor spawn config", (config, id) =>
+        {
+            if (string.IsNullOrEmpty(config.Id))
+            {
+                config.Id = id;
+            }
+            if (string.IsNullOrEmpty(config.Name))
+            {
+                config.Name = id;
+            }
+        });
+
+        GD.Print($"DataLoader: Loaded {_floorSpawnConfigs.Count} floor spawn configs");
     }
 
     /// <summary>

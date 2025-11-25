@@ -7,7 +7,7 @@ entries:
   wild_dog:
     name: wild dog
     description: A feral hound with matted fur and hungry eyes. It travels in packs, following an alpha that leads them through the dungeon corridors.
-    level: 1
+    threat: 1
     strength: 0
     agility: 1
     endurance: 0
