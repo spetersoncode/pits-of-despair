@@ -9,14 +9,11 @@ using PitsOfDespair.Systems.Input.Processors;
 namespace PitsOfDespair.UI;
 
 /// <summary>
-/// Modal for viewing item details and performing actions like key rebinding.
+/// Modal for viewing item details.
 /// Opened from InventoryModal when selecting an item by its hotkey.
 /// </summary>
 public partial class ItemDetailModal : CenterContainer
 {
-	[Signal]
-	public delegate void KeyReboundEventHandler(char oldKey, char newKey);
-
 	[Signal]
 	public delegate void CancelledEventHandler();
 
@@ -24,14 +21,6 @@ public partial class ItemDetailModal : CenterContainer
 	private Player _player;
 	private bool _isVisible = false;
 	private InventorySlot _currentSlot;
-
-	private enum State
-	{
-		Viewing,
-		AwaitingRebind
-	}
-
-	private State _currentState = State.Viewing;
 
 	public override void _Ready()
 	{
@@ -65,7 +54,6 @@ public partial class ItemDetailModal : CenterContainer
 			return;
 		}
 
-		_currentState = State.Viewing;
 		_isVisible = true;
 		Show();
 		UpdateDisplay();
@@ -78,7 +66,6 @@ public partial class ItemDetailModal : CenterContainer
 	{
 		_isVisible = false;
 		_currentSlot = null;
-		_currentState = State.Viewing;
 		Hide();
 	}
 
@@ -97,20 +84,6 @@ public partial class ItemDetailModal : CenterContainer
 
 	private void HandleKeyInput(InputEventKey keyEvent)
 	{
-		// Handle based on current state
-		switch (_currentState)
-		{
-			case State.Viewing:
-				HandleViewingInput(keyEvent);
-				break;
-			case State.AwaitingRebind:
-				HandleRebindInput(keyEvent);
-				break;
-		}
-	}
-
-	private void HandleViewingInput(InputEventKey keyEvent)
-	{
 		// Cancel on modal close key
 		if (MenuInputProcessor.IsCloseKey(keyEvent))
 		{
@@ -119,53 +92,7 @@ public partial class ItemDetailModal : CenterContainer
 			return;
 		}
 
-		// Enter rebind mode on '='
-		if (MenuInputProcessor.IsKey(keyEvent, Key.Equal))
-		{
-			_currentState = State.AwaitingRebind;
-			UpdateDisplay();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		// Block all other keys (a-z, etc.) to prevent cycling through items
-		// Only ESC and '=' are valid in viewing mode
-		GetViewport().SetInputAsHandled();
-	}
-
-	private void HandleRebindInput(InputEventKey keyEvent)
-	{
-		// Cancel rebind on modal close key
-		if (MenuInputProcessor.IsCloseKey(keyEvent))
-		{
-			_currentState = State.Viewing;
-			UpdateDisplay();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		// Accept letter keys for rebinding
-		if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char newKey))
-		{
-			// Convert to lowercase
-			newKey = char.ToLower(newKey);
-			char oldKey = _currentSlot.Key;
-
-			// Emit signal for rebinding
-			EmitSignal(SignalName.KeyRebound, oldKey, newKey);
-
-			// Return to viewing state
-			_currentState = State.Viewing;
-
-			// Update the slot reference since key may have changed
-			_currentSlot = _player.GetInventorySlot(newKey);
-			UpdateDisplay();
-
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		// Block all other keys in rebind mode (including 'I', '=', etc.)
+		// Block all other keys
 		GetViewport().SetInputAsHandled();
 	}
 
@@ -177,20 +104,7 @@ public partial class ItemDetailModal : CenterContainer
 		}
 
 		var itemTemplate = _currentSlot.Item.Template;
-
-		// Build display based on state
-		string content = "";
-
-		if (_currentState == State.Viewing)
-		{
-			content = BuildViewingDisplay(itemTemplate);
-		}
-		else if (_currentState == State.AwaitingRebind)
-		{
-			content = BuildRebindDisplay(itemTemplate);
-		}
-
-		_contentLabel.Text = content;
+		_contentLabel.Text = BuildViewingDisplay(itemTemplate);
 	}
 
 	private string BuildViewingDisplay(ItemData itemTemplate)
@@ -239,31 +153,12 @@ public partial class ItemDetailModal : CenterContainer
 
 		// Commands section
 		var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-		string commands = $"\n\n[color={Palette.ToHex(Palette.Disabled)}]Commands:[/color]\n";
-		commands += $"[color={Palette.ToHex(Palette.Default)}]=[/color] Rebind hotkey\n";
-		commands += $"[color={Palette.ToHex(Palette.Default)}]{closeKey}[/color] Close";
+		string commands = $"\n\n[center][color={Palette.ToHex(Palette.Disabled)}]({closeKey} to close)[/color][/center]";
 
-		return $"[center][b]Item Details[/b][/center]\n\n" +
+		return $"[center][b]ITEM DETAILS[/b][/center]\n\n" +
 		       $"{glyph} {name}{countInfo}\n" +
 		       $"{keyInfo}{chargesInfo}{slotInfo}" +
 		       $"{descriptionSection}" +
 		       $"{commands}";
-	}
-
-	private string BuildRebindDisplay(ItemData itemTemplate)
-	{
-		string glyph = $"[color={itemTemplate.Color}]{itemTemplate.GetGlyph()}[/color]";
-		string name = $"[color={itemTemplate.Color}]{itemTemplate.Name}[/color]";
-		string currentKey = $"[color={Palette.ToHex(Palette.Caution)}]{_currentSlot.Key}[/color]";
-
-		var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-		string instructions = $"\n\n[center][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/center]\n\n";
-		instructions += $"Current hotkey: {currentKey}\n\n";
-		instructions += $"Press [color={Palette.ToHex(Palette.Default)}]a-z[/color] to assign new hotkey\n";
-		instructions += $"Press [color={Palette.ToHex(Palette.Default)}]{closeKey}[/color] to cancel";
-
-		return $"[center][b]Rebind Hotkey[/b][/center]\n\n" +
-		       $"{glyph} {name}" +
-		       $"{instructions}";
 	}
 }

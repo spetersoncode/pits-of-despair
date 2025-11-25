@@ -243,7 +243,7 @@ public partial class SkillsModal : PanelContainer
         // Active Skills section - sort by key for display
         if (activeSkills.Count > 0)
         {
-            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Cyan)}][b]─── Active Skills ───[/b][/color]");
+            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Cyan)}]ACTIVE[/color]");
             foreach (var kvp in _displayedSkills.OrderBy(k => k.Key))
             {
                 var skill = kvp.Value;
@@ -255,7 +255,7 @@ public partial class SkillsModal : PanelContainer
         // Passive Skills section
         if (passiveSkills.Count > 0)
         {
-            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Success)}][b]─── Passive Skills ───[/b][/color]");
+            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Success)}]PASSIVE[/color]");
             foreach (var skill in passiveSkills)
             {
                 sb.AppendLine(FormatPassiveSkill(skill));
@@ -265,7 +265,7 @@ public partial class SkillsModal : PanelContainer
         // Reactive Skills section
         if (reactiveSkills.Count > 0)
         {
-            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Caution)}][b]─── Reactive Skills ───[/b][/color]");
+            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Caution)}]REACTIVE[/color]");
             foreach (var skill in reactiveSkills)
             {
                 sb.AppendLine(FormatReactiveSkill(skill));
@@ -275,7 +275,7 @@ public partial class SkillsModal : PanelContainer
         // Aura Skills section
         if (auraSkills.Count > 0)
         {
-            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Wizard)}][b]─── Aura Skills ───[/b][/color]");
+            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Wizard)}]AURA[/color]");
             foreach (var skill in auraSkills)
             {
                 sb.AppendLine(FormatAuraSkill(skill));
@@ -287,28 +287,29 @@ public partial class SkillsModal : PanelContainer
 
     private string FormatActiveSkill(SkillDefinition skill, char keyDisplay, bool canAfford)
     {
-        string wpCost = skill.WillpowerCost > 0 ? $"[color={Palette.ToHex(Palette.Wizard)}]{skill.WillpowerCost} Willpower[/color]" : "[color=#888888]Free[/color]";
-        string nameColor = canAfford ? Palette.ToHex(Palette.Default) : Palette.ToHex(Palette.Disabled);
+        string wpCost = skill.WillpowerCost > 0 ? $"{skill.WillpowerCost} WP" : "Free";
+        string nameColor = canAfford ? Palette.ToHex(Palette.Cyan) : Palette.ToHex(Palette.Disabled);
+        string costColor = canAfford ? Palette.ToHex(Palette.Wizard) : Palette.ToHex(Palette.Disabled);
 
-        return $"  [{keyDisplay}] [color={nameColor}]{skill.Name}[/color] - {wpCost} - {skill.Description}";
+        return $"  [color={Palette.ToHex(Palette.Disabled)}]{keyDisplay})[/color] [color={nameColor}]{skill.Name}[/color] [color={costColor}]({wpCost})[/color] - {skill.Description}";
     }
 
     private string FormatPassiveSkill(SkillDefinition skill)
     {
-        return $"  [color={Palette.ToHex(Palette.Success)}]●[/color] {skill.Name} - [i]Always active[/i] - {skill.Description}";
+        return $"  [color={Palette.ToHex(Palette.Success)}]*[/color] [color={Palette.ToHex(Palette.Success)}]{skill.Name}[/color] - {skill.Description}";
     }
 
     private string FormatReactiveSkill(SkillDefinition skill)
     {
-        string trigger = !string.IsNullOrEmpty(skill.Trigger) ? $"[i]Triggers: {skill.Trigger}[/i]" : "[i]Auto-triggers[/i]";
-        string wpCost = skill.WillpowerCost > 0 ? $" ({skill.WillpowerCost} Willpower)" : "";
-        return $"  [color={Palette.ToHex(Palette.Caution)}]⚡[/color] {skill.Name}{wpCost} - {trigger} - {skill.Description}";
+        string trigger = !string.IsNullOrEmpty(skill.Trigger) ? skill.Trigger.Replace("_", " ") : "auto";
+        string wpCost = skill.WillpowerCost > 0 ? $"{skill.WillpowerCost} WP, " : "";
+        return $"  [color={Palette.ToHex(Palette.Caution)}]![/color] [color={Palette.ToHex(Palette.Caution)}]{skill.Name}[/color] ({wpCost}{trigger}) - {skill.Description}";
     }
 
     private string FormatAuraSkill(SkillDefinition skill)
     {
-        string range = skill.AuraRadius > 0 ? $"Range {skill.AuraRadius}" : "";
-        return $"  [color={Palette.ToHex(Palette.Wizard)}]◎[/color] {skill.Name} - [i]{range}[/i] - {skill.Description}";
+        string range = skill.AuraRadius > 0 ? $"range {skill.AuraRadius}" : "";
+        return $"  [color={Palette.ToHex(Palette.Wizard)}]@[/color] [color={Palette.ToHex(Palette.Wizard)}]{skill.Name}[/color] ({range}) - {skill.Description}";
     }
 
     private void ShowEmptyMessage()
@@ -316,7 +317,7 @@ public partial class SkillsModal : PanelContainer
         if (_skillsLabel != null)
         {
             var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-            _skillsLabel.Text = $"[center][b]Skills (a-z)[/b][/center]\n[center]({closeKey} to close)[/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No skills learned[/color][/center]";
+            _skillsLabel.Text = $"[center][b]SKILLS[/b][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]No skills learned[/color][/center]\n\n[center][color={Palette.ToHex(Palette.Disabled)}]({closeKey} to close)[/color][/center]";
         }
     }
 
@@ -325,7 +326,7 @@ public partial class SkillsModal : PanelContainer
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
         int currentWillpower = _willpowerComponent?.CurrentWillpower ?? 0;
         int maxWillpower = _willpowerComponent?.MaxWillpower ?? 0;
-        return $"[center][b]Skills (a-z)[/b][/center]\n[center]Willpower: [color={Palette.ToHex(Palette.Wizard)}]{currentWillpower}/{maxWillpower}[/color] | [=] Rebind | ({closeKey} to close)[/center]";
+        return $"[center][b]SKILLS[/b][/center]\n[center]Willpower: [color={Palette.ToHex(Palette.Wizard)}]{currentWillpower}/{maxWillpower}[/color][/center]\n[center][color={Palette.ToHex(Palette.Disabled)}][=] Rebind   ({closeKey} to close)[/color][/center]";
     }
 
     private string BuildRebindHeader()
@@ -335,12 +336,12 @@ public partial class SkillsModal : PanelContainer
         if (_rebindSourceKey == '\0')
         {
             // First step: select which skill to rebind
-            return $"[center][b][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/b][/center]\n[center]Press [color={Palette.ToHex(Palette.Default)}]a-z[/color] to select skill to rebind | ({closeKey} to cancel)[/center]";
+            return $"[center][b][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/b][/center]\n[center]Press a-z to select skill to rebind[/center]\n[center][color={Palette.ToHex(Palette.Disabled)}]({closeKey} to cancel)[/color][/center]";
         }
         else
         {
             // Second step: select target key
-            return $"[center][b][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/b][/center]\n[center]Rebinding [color={Palette.ToHex(Palette.Wizard)}]{_rebindSkillName}[/color] from [{_rebindSourceKey}][/center]\n[center]Press [color={Palette.ToHex(Palette.Default)}]a-z[/color] to assign new key | ({closeKey} to cancel)[/center]";
+            return $"[center][b][color={Palette.ToHex(Palette.Caution)}]REBIND MODE[/color][/b][/center]\n[center]Rebinding [color={Palette.ToHex(Palette.Wizard)}]{_rebindSkillName}[/color] from [{_rebindSourceKey}][/center]\n[center]Press a-z to assign new key[/center]\n[center][color={Palette.ToHex(Palette.Disabled)}]({closeKey} to cancel)[/color][/center]";
         }
     }
 }

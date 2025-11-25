@@ -114,13 +114,13 @@ public partial class GameHUD : Control
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
         _inventoryPanel.Connect(InventoryModal.SignalName.ItemSelected, Callable.From<char>(OnInventoryItemSelected));
+        _inventoryPanel.Connect(InventoryModal.SignalName.ItemKeyRebound, Callable.From<char, char>(OnInventoryItemKeyRebound));
 
         _activateItemPanel.ConnectToPlayer(player);
         _dropItemPanel.ConnectToPlayer(player);
         _equipPanel.ConnectToPlayer(player);
 
         _itemDetailModal.ConnectToPlayer(player);
-        _itemDetailModal.Connect(ItemDetailModal.SignalName.KeyRebound, Callable.From<char, char>(OnItemKeyRebound));
         _itemDetailModal.Connect(ItemDetailModal.SignalName.Cancelled, Callable.From(OnItemDetailCancelled));
 
         _entityDetailModal.Connect(EntityDetailModal.SignalName.Cancelled, Callable.From(OnEntityDetailCancelled));
@@ -453,15 +453,11 @@ public partial class GameHUD : Control
         // Return to examine mode (which is still active in CursorTargetingSystem)
     }
 
-    private void OnItemKeyRebound(char oldKey, char newKey)
+    private void OnInventoryItemKeyRebound(char oldKey, char newKey)
     {
-        // Delegate to PlayerActionHandler
+        // Delegate to PlayerActionHandler (handles swap logic and message)
         _actionHandler.RebindItemKey(oldKey, newKey);
-
-        // Close all modals and return to game
-        _itemDetailModal.HideMenu();
-        _inventoryPanel.ToggleInventory(); // Use toggle to properly reset the _isVisible flag
-        _currentMenuState = MenuState.None;
+        // Stay in inventory - don't close
     }
 
     /// <summary>
@@ -584,7 +580,7 @@ public partial class GameHUD : Control
 
             if (oldKey == newKey)
             {
-                _messageLog.AddMessage($"{skillName} remains on [{newKey}].", Palette.ToHex(Palette.Success));
+                _messageLog.AddMessage($"{skillName} remains on '{newKey}'.", Palette.ToHex(Palette.Success));
             }
             else
             {
@@ -594,11 +590,11 @@ public partial class GameHUD : Control
                 {
                     var swappedDef = _dataLoader?.GetSkill(swappedId);
                     string swappedName = swappedDef?.Name ?? "Skill";
-                    _messageLog.AddMessage($"{skillName} rebound to [{newKey}] (swapped with {swappedName} on [{oldKey}]).", Palette.ToHex(Palette.Success));
+                    _messageLog.AddMessage($"{skillName} rebound to '{newKey}' (swapped with {swappedName} on '{oldKey}').", Palette.ToHex(Palette.Success));
                 }
                 else
                 {
-                    _messageLog.AddMessage($"{skillName} rebound to [{newKey}].", Palette.ToHex(Palette.Success));
+                    _messageLog.AddMessage($"{skillName} rebound to '{newKey}'.", Palette.ToHex(Palette.Success));
                 }
             }
         }
@@ -883,11 +879,11 @@ public partial class GameHUD : Control
         {
             _inventoryPanel.Disconnect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
             _inventoryPanel.Disconnect(InventoryModal.SignalName.ItemSelected, Callable.From<char>(OnInventoryItemSelected));
+            _inventoryPanel.Disconnect(InventoryModal.SignalName.ItemKeyRebound, Callable.From<char, char>(OnInventoryItemKeyRebound));
         }
 
         if (_itemDetailModal != null)
         {
-            _itemDetailModal.Disconnect(ItemDetailModal.SignalName.KeyRebound, Callable.From<char, char>(OnItemKeyRebound));
             _itemDetailModal.Disconnect(ItemDetailModal.SignalName.Cancelled, Callable.From(OnItemDetailCancelled));
         }
 
