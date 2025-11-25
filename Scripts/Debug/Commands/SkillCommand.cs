@@ -296,7 +296,7 @@ public class SkillCommand : DebugCommand
         var targetingHandler = TargetingHandler.CreateForDefinition(definition);
         List<BaseEntity> targets;
 
-        if (skill.GetTargetingType() == TargetingType.Self)
+        if (skill.IsSelfTargeting())
         {
             targets = new List<BaseEntity> { player };
         }
@@ -306,7 +306,7 @@ public class SkillCommand : DebugCommand
             targets = FindDebugTargets(player, skill, definition, targetingHandler, context);
         }
 
-        if (targets.Count == 0 && skill.GetTargetingType() != TargetingType.Self)
+        if (targets.Count == 0 && !skill.IsSelfTargeting())
         {
             return DebugCommandResult.CreateFailure(
                 $"No valid targets found for {skill.Name}.",

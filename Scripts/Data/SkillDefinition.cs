@@ -139,17 +139,29 @@ public class SkillDefinition
     {
         return Targeting?.ToLower() switch
         {
-            "self" => TargetingType.Self,
-            "adjacent" => TargetingType.Adjacent,
+            "creature" => TargetingType.Creature,
+            "enemy" => TargetingType.Creature,
+            "ally" => TargetingType.Creature,
+            "adjacent" => TargetingType.Creature,
+            "melee" => TargetingType.Creature,
+            "reach" => TargetingType.Creature,
+            "ranged" => TargetingType.Creature,
             "cleave" => TargetingType.Cleave,
             "tile" => TargetingType.Tile,
-            "enemy" => TargetingType.Enemy,
-            "ally" => TargetingType.Ally,
             "area" => TargetingType.Area,
             "line" => TargetingType.Line,
             "cone" => TargetingType.Cone,
-            _ => TargetingType.Self
+            "self" => TargetingType.Creature, // Self handled at action level
+            _ => TargetingType.Creature
         };
+    }
+
+    /// <summary>
+    /// Returns true if this skill targets the caster (no selection needed).
+    /// </summary>
+    public bool IsSelfTargeting()
+    {
+        return Targeting?.ToLower() == "self";
     }
 
     /// <summary>

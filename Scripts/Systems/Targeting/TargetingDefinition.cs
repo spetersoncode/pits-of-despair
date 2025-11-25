@@ -15,12 +15,12 @@ public class TargetingDefinition
     public TargetingType Type { get; init; }
 
     /// <summary>
-    /// Maximum range for targeting. 0 means melee/adjacent only.
+    /// Maximum range for targeting.
     /// </summary>
     public int Range { get; init; } = 1;
 
     /// <summary>
-    /// For Area targeting, the radius of the effect around the target point (in tiles).
+    /// For Area targeting, the radius of the effect around the target point.
     /// </summary>
     public int Radius { get; init; } = 0;
 
@@ -31,54 +31,36 @@ public class TargetingDefinition
 
     /// <summary>
     /// The distance metric to use for range calculation.
-    /// Euclidean for circular range (ranged weapons), Chebyshev for grid range (reach/melee).
+    /// Euclidean for circular range (ranged weapons), Chebyshev for grid range (melee/reach).
     /// </summary>
     public DistanceMetric Metric { get; init; } = DistanceMetric.Chebyshev;
 
     /// <summary>
-    /// What types of targets are valid.
+    /// What types of targets are valid (for Creature targeting).
     /// </summary>
     public TargetFilter Filter { get; init; } = TargetFilter.Enemy;
 
     /// <summary>
     /// Whether this targeting type requires player input to select a target.
-    /// False for Self targeting.
+    /// Always true - self-targeting is handled at action level, not targeting level.
     /// </summary>
-    public bool RequiresSelection => Type != TargetingType.Self;
+    public bool RequiresSelection => true;
 
     /// <summary>
-    /// Creates a targeting definition for self-targeting (no selection needed).
+    /// Creates a targeting definition for creature targeting.
+    /// This is the primary factory for targeting enemies, allies, or any creature.
     /// </summary>
-    public static TargetingDefinition Self() => new()
+    public static TargetingDefinition Creature(
+        int range,
+        TargetFilter filter = TargetFilter.Enemy,
+        DistanceMetric metric = DistanceMetric.Chebyshev,
+        bool requiresLOS = true) => new()
     {
-        Type = TargetingType.Self,
-        Range = 0,
-        RequiresLOS = false,
-        Filter = TargetFilter.Self
-    };
-
-    /// <summary>
-    /// Creates a targeting definition for enemy targeting within range.
-    /// </summary>
-    public static TargetingDefinition Enemy(int range, bool requiresLOS = true) => new()
-    {
-        Type = TargetingType.Enemy,
+        Type = TargetingType.Creature,
         Range = range,
         RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Euclidean,
-        Filter = TargetFilter.Enemy
-    };
-
-    /// <summary>
-    /// Creates a targeting definition for ally targeting within range.
-    /// </summary>
-    public static TargetingDefinition Ally(int range, bool requiresLOS = true) => new()
-    {
-        Type = TargetingType.Ally,
-        Range = range,
-        RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Euclidean,
-        Filter = TargetFilter.Ally
+        Metric = metric,
+        Filter = filter
     };
 
     /// <summary>
@@ -107,44 +89,32 @@ public class TargetingDefinition
     };
 
     /// <summary>
-    /// Creates a targeting definition for ranged attacks (Euclidean distance with LOS).
+    /// Creates a targeting definition for line/beam targeting.
     /// </summary>
-    public static TargetingDefinition Ranged(int range) => new()
+    public static TargetingDefinition Line(int range, bool requiresLOS = true) => new()
     {
-        Type = TargetingType.Ranged,
+        Type = TargetingType.Line,
         Range = range,
-        RequiresLOS = true,
+        RequiresLOS = requiresLOS,
         Metric = DistanceMetric.Euclidean,
-        Filter = TargetFilter.Enemy
+        Filter = TargetFilter.Tile
     };
 
     /// <summary>
-    /// Creates a targeting definition for reach attacks (Chebyshev distance with LOS).
+    /// Creates a targeting definition for cone targeting.
     /// </summary>
-    public static TargetingDefinition Reach(int range) => new()
+    public static TargetingDefinition Cone(int range, int radius = 2, bool requiresLOS = true) => new()
     {
-        Type = TargetingType.Reach,
+        Type = TargetingType.Cone,
         Range = range,
-        RequiresLOS = true,
-        Metric = DistanceMetric.Chebyshev,
-        Filter = TargetFilter.Enemy
-    };
-
-    /// <summary>
-    /// Creates a targeting definition for adjacent targeting (8 directions).
-    /// </summary>
-    public static TargetingDefinition Adjacent(TargetFilter filter = TargetFilter.Creature) => new()
-    {
-        Type = TargetingType.Adjacent,
-        Range = 1,
-        RequiresLOS = false,
-        Metric = DistanceMetric.Chebyshev,
-        Filter = filter
+        Radius = radius,
+        RequiresLOS = requiresLOS,
+        Metric = DistanceMetric.Euclidean,
+        Filter = TargetFilter.Tile
     };
 
     /// <summary>
     /// Creates a targeting definition for cleave attacks (3-tile arc).
-    /// Free cursor movement within adjacent tiles.
     /// </summary>
     public static TargetingDefinition Cleave() => new()
     {
@@ -156,79 +126,60 @@ public class TargetingDefinition
     };
 
     /// <summary>
-    /// Creates a targeting definition for line/beam targeting.
-    /// Effect travels in a line from caster to target position.
-    /// Uses Euclidean distance for natural circular range.
-    /// </summary>
-    /// <param name="range">Maximum range for the line</param>
-    /// <param name="requiresLOS">If true, line stops at walls; if false, passes through (for tunneling)</param>
-    public static TargetingDefinition Line(int range, bool requiresLOS = true) => new()
-    {
-        Type = TargetingType.Line,
-        Range = range,
-        RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Euclidean,
-        Filter = TargetFilter.Tile
-    };
-
-    /// <summary>
     /// Creates a targeting definition from a skill definition.
     /// </summary>
     public static TargetingDefinition FromSkill(SkillDefinition skill)
     {
-        var skillTargeting = skill.Targeting?.ToLower() ?? "self";
+        var skillTargeting = skill.Targeting?.ToLower() ?? "creature";
         int range = skill.Range > 0 ? skill.Range : 1;
 
         return skillTargeting switch
         {
-            "self" => Self(),
-            "adjacent" => Adjacent(TargetFilter.Creature),
+            "self" => Creature(0, TargetFilter.Ally, DistanceMetric.Chebyshev, false), // Self handled at action level
+            "adjacent" => Creature(1, TargetFilter.Enemy, DistanceMetric.Chebyshev, false),
+            "melee" => Creature(1, TargetFilter.Enemy, DistanceMetric.Chebyshev, false),
+            "reach" => Creature(range, TargetFilter.Enemy, DistanceMetric.Chebyshev),
+            "ranged" => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean),
+            "enemy" => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean),
+            "ally" => Creature(range, TargetFilter.Ally, DistanceMetric.Euclidean),
+            "creature" => Creature(range, TargetFilter.Creature, DistanceMetric.Euclidean),
             "cleave" => Cleave(),
-            "tile" => Tile(range, requiresLOS: true),
-            "enemy" => Enemy(range, requiresLOS: true),
-            "ally" => Ally(range, requiresLOS: true),
-            "area" => Area(range, skill.Radius, requiresLOS: true),
-            "line" => Tile(range, requiresLOS: true), // Fallback for now
-            "cone" => Tile(range, requiresLOS: true), // Fallback for now
-            "reach" => Reach(range), // For melee skills that should use weapon reach
-            _ => Self()
+            "tile" => Tile(range),
+            "area" => Area(range, skill.Radius),
+            "line" => Line(range),
+            "cone" => Cone(range, skill.Radius > 0 ? skill.Radius : 2),
+            _ => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean)
         };
     }
 
     /// <summary>
     /// Creates a targeting definition from an item data.
-    /// Uses smart defaults based on item type.
     /// </summary>
     public static TargetingDefinition FromItem(ItemData item)
     {
-        // Check if item has explicit targeting data
         if (item.Targeting != null)
         {
             return FromItemTargeting(item.Targeting, item.GetTargetingRange());
         }
 
-        // Smart defaults based on item type
         int range = item.GetTargetingRange();
-        if (range <= 0) range = 5; // Default range
+        if (range <= 0) range = 5;
 
-        // Items with effects typically target enemies
         if (item.Effects.Count > 0)
         {
-            // Check if any effect is healing/beneficial
             bool isBeneficial = item.Effects.Exists(e =>
                 e.Type?.ToLower() == "heal" ||
                 e.Type?.ToLower() == "restore_wp");
 
             if (isBeneficial)
             {
-                return Ally(range);
+                return Creature(range, TargetFilter.Ally, DistanceMetric.Euclidean);
             }
 
-            return Enemy(range);
+            return Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean);
         }
 
-        // Default to enemy targeting
-        return Enemy(range);
+        return Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean);
     }
 
     /// <summary>
@@ -242,31 +193,19 @@ public class TargetingDefinition
 
         return type switch
         {
-            "self" => Self(),
-            "enemy" => Enemy(range, los),
-            "ally" => Ally(range, los),
+            "self" => Creature(0, TargetFilter.Ally, DistanceMetric.Chebyshev, false),
+            "enemy" => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean, los),
+            "ally" => Creature(range, TargetFilter.Ally, DistanceMetric.Euclidean, los),
+            "creature" => Creature(range, TargetFilter.Creature, DistanceMetric.Euclidean, los),
+            "adjacent" => Creature(1, TargetFilter.Enemy, DistanceMetric.Chebyshev, false),
+            "melee" => Creature(1, TargetFilter.Enemy, DistanceMetric.Chebyshev, false),
+            "reach" => Creature(range, TargetFilter.Enemy, DistanceMetric.Chebyshev, los),
+            "ranged" => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean, los),
             "tile" => Tile(range, los),
-            "creature" => new TargetingDefinition
-            {
-                Type = TargetingType.Creature,
-                Range = range,
-                RequiresLOS = los,
-                Metric = DistanceMetric.Euclidean,
-                Filter = TargetFilter.Creature
-            },
             "area" => Area(range, targeting.Radius, los),
             "line" => Line(range, los),
-            "adjacent" => Adjacent(TargetFilter.Creature),
-            "cone" => new TargetingDefinition
-            {
-                Type = TargetingType.Cone,
-                Range = range,
-                Radius = targeting.Radius,
-                RequiresLOS = los,
-                Metric = DistanceMetric.Euclidean,
-                Filter = TargetFilter.Tile
-            },
-            _ => Enemy(range, los)
+            "cone" => Cone(range, targeting.Radius, los),
+            _ => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean, los)
         };
     }
 }

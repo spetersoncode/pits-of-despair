@@ -470,11 +470,14 @@ public partial class TextRenderer : Control
 			DrawRect(new Rect2(cursorDrawPos.X, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true); // Left
 			DrawRect(new Rect2(cursorDrawPos.X + TileSize - borderWidth, cursorDrawPos.Y, borderWidth, TileSize), borderColor, true); // Right
 
-			// Draw pulsing fill inside border only when there's an entity
-			if (hasEntity)
+			// Draw pulsing fill inside border when cursor is on a valid target
+			// Only for Creature targeting - AOE types have their own red preview
+			bool showValidHighlight = _cursorSystem.IsOnValidTarget &&
+				_cursorSystem.TargetingDefinition?.Type == Targeting.TargetingType.Creature;
+			if (showValidHighlight)
 			{
 				float fillPulse = (float)(Mathf.Sin(Time.GetTicksMsec() / 200.0) * 0.2 + 0.25);
-				Color fillColor = Palette.TargetingValid; // Green for entities
+				Color fillColor = Palette.TargetingValid; // Green for valid targets
 				Color fillHighlight = new Color(fillColor.R, fillColor.G, fillColor.B, fillPulse);
 				DrawRect(new Rect2(cursorDrawPos, new Vector2(TileSize, TileSize)), fillHighlight, true);
 			}

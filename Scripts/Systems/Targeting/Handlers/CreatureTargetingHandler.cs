@@ -8,8 +8,9 @@ using PitsOfDespair.Helpers;
 namespace PitsOfDespair.Targeting;
 
 /// <summary>
-/// Targeting handler for creature targeting (any entity with health).
-/// Targets both enemies and allies within range.
+/// Unified targeting handler for all creature-based targeting.
+/// Uses the filter from TargetingDefinition to determine valid targets (Enemy/Ally/Creature).
+/// Supports configurable range and distance metric.
 /// </summary>
 public class CreatureTargetingHandler : TargetingHandler
 {
@@ -25,7 +26,7 @@ public class CreatureTargetingHandler : TargetingHandler
         int range = definition.Range > 0 ? definition.Range : 1;
 
         // Use FOV for LOS checking if required
-        HashSet<GridPosition>? visibleTiles = null;
+        HashSet<GridPosition> visibleTiles = null;
         if (definition.RequiresLOS)
         {
             visibleTiles = FOVCalculator.CalculateVisibleTiles(
@@ -34,11 +35,16 @@ public class CreatureTargetingHandler : TargetingHandler
 
         foreach (var entity in context.EntityManager.GetAllEntities())
         {
-            if (entity == caster)
+            // Skip self unless filter is Ally (which includes self)
+            if (entity == caster && definition.Filter != TargetFilter.Ally)
                 continue;
 
             // Must be a creature (has health)
             if (!IsCreature(entity))
+                continue;
+
+            // Check filter
+            if (!PassesFilter(caster, entity, definition.Filter))
                 continue;
 
             var entityPos = entity.GridPosition;
@@ -79,9 +85,13 @@ public class CreatureTargetingHandler : TargetingHandler
                 return false;
         }
 
-        // Check if there's a creature at this position
+        // Check if there's a valid creature at this position
         var entity = context.EntityManager.GetEntityAtPosition(targetPosition);
-        return entity != null && IsCreature(entity);
+        if (entity == null || !IsCreature(entity))
+            return false;
+
+        // Check filter
+        return PassesFilter(caster, entity, definition.Filter);
     }
 
     private bool IsCreature(BaseEntity entity)
@@ -89,4 +99,14 @@ public class CreatureTargetingHandler : TargetingHandler
         return entity.GetNodeOrNull<HealthComponent>("HealthComponent") != null;
     }
 
+    private bool PassesFilter(BaseEntity caster, BaseEntity target, TargetFilter filter)
+    {
+        return filter switch
+        {
+            TargetFilter.Enemy => caster.Faction != target.Faction,
+            TargetFilter.Ally => caster.Faction == target.Faction,
+            TargetFilter.Creature => true,
+            _ => true
+        };
+    }
 }

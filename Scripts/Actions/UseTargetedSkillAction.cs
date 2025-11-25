@@ -58,9 +58,8 @@ public class UseTargetedSkillAction : Action
         // Get affected entities at the target position
         var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
 
-        // For skills that require a target entity, ensure we have one
-        var targetingType = _skill.GetTargetingType();
-        if ((targetingType == TargetingType.Enemy || targetingType == TargetingType.Ally) && targets.Count == 0)
+        // For creature-targeting skills, ensure we have at least one target
+        if (definition.Type == TargetingType.Creature && targets.Count == 0)
         {
             return ActionResult.CreateFailure("No target at that location.");
         }

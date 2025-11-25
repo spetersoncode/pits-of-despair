@@ -22,12 +22,8 @@ public partial class CursorTargetingSystem : Node
 	{
 		/// <summary>Read-only examination of entities</summary>
 		Examine,
-		/// <summary>Ranged attack targeting</summary>
-		RangedAttack,
-		/// <summary>Reach attack targeting (melee with range > 1)</summary>
-		ReachAttack,
-		/// <summary>Targeted item usage (wands, scrolls, etc.)</summary>
-		TargetedItem
+		/// <summary>Action targeting (skills, items, attacks)</summary>
+		Action
 	}
 
 	[Signal]
@@ -40,46 +36,24 @@ public partial class CursorTargetingSystem : Node
 	public delegate void CursorCanceledEventHandler(int mode);
 
 	[Signal]
-    public delegate void EntityExaminedEventHandler(BaseEntity entity);
+	public delegate void EntityExaminedEventHandler(BaseEntity entity);
 
 	[Signal]
 	public delegate void TargetConfirmedEventHandler(Vector2I targetPosition);
-
-    /// <summary>
-    /// Examines the target at the current cursor position.
-    /// Emits EntityExamined signal if an entity is present.
-    /// </summary>
-    public void ExamineTarget()
-    {
-        if (!_isActive || _currentMode != TargetingMode.Examine)
-            return;
-
-        var entity = GetEntityAtCursor();
-        if (entity != null)
-        {
-            EmitSignal(SignalName.EntityExamined, entity);
-        }
-    }
 
 	private GridPosition _cursorPosition;
 	private GridPosition _originPosition;
 	private TargetingMode _currentMode;
 	private bool _isActive = false;
 
-	// Action mode state
-	private int _maxRange;
-	private HashSet<GridPosition> _validTiles;           // Full range for overlay display
-	private HashSet<GridPosition> _validCursorPositions; // Valid positions for cursor movement
-	private List<BaseEntity> _validCreatureTargets;
+	// Targeting state
+	private HashSet<GridPosition> _rangeTiles;           // Tiles within range for cursor movement and overlay
+	private List<BaseEntity> _validCreatureTargets;      // Valid creatures for Tab cycling
 	private int _currentCreatureIndex = -1;
-	private bool _requiresCreature = true;
-	private bool _useGridDistance = false;
-
-	// Unified targeting state
-	private TargetingDefinition? _targetingDefinition;
-	private TargetingHandler? _targetingHandler;
-	private BaseEntity? _caster;
-	private ActionContext? _actionContext;
+	private TargetingDefinition _targetingDefinition;
+	private TargetingHandler _targetingHandler;
+	private BaseEntity _caster;
+	private ActionContext _actionContext;
 	private Key? _initiatingKey;
 
 	// Dependencies
@@ -103,30 +77,24 @@ public partial class CursorTargetingSystem : Node
 	public GridPosition CursorPosition => _cursorPosition;
 
 	/// <summary>
-	/// Gets the origin position (for action modes).
+	/// Gets the origin position (caster position for action modes).
 	/// </summary>
 	public GridPosition OriginPosition => _originPosition;
 
 	/// <summary>
-	/// Gets all valid tiles (for action modes). Null for examine mode.
+	/// Gets all tiles in range (for overlay display). Null for examine mode.
 	/// </summary>
-	public HashSet<GridPosition> ValidTiles => _validTiles;
+	public HashSet<GridPosition> ValidTiles => _rangeTiles;
 
 	/// <summary>
-	/// Gets whether this targeting mode requires a creature target.
-	/// Only relevant for action modes.
+	/// Gets the current targeting definition.
 	/// </summary>
-	public bool RequiresCreature => _requiresCreature;
+	public TargetingDefinition TargetingDefinition => _targetingDefinition;
 
 	/// <summary>
-	/// Gets the current targeting definition, if using unified targeting.
+	/// Gets the current targeting handler.
 	/// </summary>
-	public TargetingDefinition? TargetingDefinition => _targetingDefinition;
-
-	/// <summary>
-	/// Gets the current targeting handler, if using unified targeting.
-	/// </summary>
-	public TargetingHandler? TargetingHandler => _targetingHandler;
+	public TargetingHandler TargetingHandler => _targetingHandler;
 
 	/// <summary>
 	/// Gets the key that initiated targeting (for confirmation).
@@ -136,7 +104,13 @@ public partial class CursorTargetingSystem : Node
 	/// <summary>
 	/// Gets the current affected positions for area preview.
 	/// </summary>
-	public List<GridPosition>? AffectedPositions { get; private set; }
+	public List<GridPosition> AffectedPositions { get; private set; }
+
+	/// <summary>
+	/// Gets whether the cursor is currently on a valid target.
+	/// Used by TextRenderer for green highlight.
+	/// </summary>
+	public bool IsOnValidTarget { get; private set; }
 
 	/// <summary>
 	/// Initializes the cursor targeting system with required dependencies.
@@ -147,40 +121,33 @@ public partial class CursorTargetingSystem : Node
 		_mapSystem = mapSystem;
 		_entityManager = entityManager;
 
-		// Subscribe to entity removal to invalidate cached targets
 		_entityManager.Connect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));
 	}
 
 	/// <summary>
 	/// Handles entity removal by invalidating cached target references.
-	/// Prevents dead entities from persisting in the valid targets list.
 	/// </summary>
 	private void OnEntityRemoved(BaseEntity entity)
 	{
-		// Only process during active targeting
 		if (!_isActive || _validCreatureTargets == null || !_validCreatureTargets.Contains(entity))
 			return;
 
 		int removedIndex = _validCreatureTargets.IndexOf(entity);
 		_validCreatureTargets.Remove(entity);
 
-		// Adjust current creature index if needed
 		if (_validCreatureTargets.Count == 0)
 		{
 			_currentCreatureIndex = -1;
 		}
 		else if (removedIndex <= _currentCreatureIndex)
 		{
-			// If we removed the current target or one before it, adjust index
 			_currentCreatureIndex = Mathf.Max(0, _currentCreatureIndex - 1);
 		}
 	}
 
 	/// <summary>
 	/// Starts examine mode at the player's position.
-	/// Uses vision-based validation with no range limits.
 	/// </summary>
-	/// <param name="playerPosition">The player's current position</param>
 	public void StartExamine(GridPosition playerPosition)
 	{
 		_currentMode = TargetingMode.Examine;
@@ -189,108 +156,37 @@ public partial class CursorTargetingSystem : Node
 		_originPosition = playerPosition;
 
 		// Clear action mode state
-		_validTiles = null;
-		_validCursorPositions = null;
+		_rangeTiles = null;
 		_validCreatureTargets = null;
 		_currentCreatureIndex = -1;
-		_requiresCreature = false;
+		_targetingDefinition = null;
+		_targetingHandler = null;
+		_caster = null;
+		_actionContext = null;
+		AffectedPositions = null;
+		IsOnValidTarget = false;
 
 		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
-
-		// Don't emit CursorMoved for initial position - player knows they're standing there
 	}
 
 	/// <summary>
-	/// Starts action targeting mode (ranged attack, reach attack, or targeted item).
-	/// Uses FOV-based range calculation with creature filtering.
+	/// Examines the target at the current cursor position.
 	/// </summary>
-	/// <param name="mode">The targeting mode (RangedAttack, ReachAttack, or TargetedItem)</param>
-	/// <param name="origin">The position to target from (usually the player)</param>
-	/// <param name="range">Maximum targeting range</param>
-	/// <param name="requiresCreature">Whether targeting requires a creature (shows warning on empty tiles)</param>
-	/// <param name="useGridDistance">Use Chebyshev (grid) distance instead of Euclidean</param>
-	/// <param name="validPositions">Optional pre-calculated valid positions (overrides FOV calculation if provided)</param>
-	/// <param name="initiatingKey">Optional key that initiated targeting (can be used to confirm)</param>
-	public void StartActionTargeting(TargetingMode mode, GridPosition origin, int range, bool requiresCreature = true, bool useGridDistance = false, HashSet<GridPosition> validPositions = null, Key? initiatingKey = null)
+	public void ExamineTarget()
 	{
-		if (mode == TargetingMode.Examine)
-		{
-			GD.PushError("Use StartExamine() for examine mode");
+		if (!_isActive || _currentMode != TargetingMode.Examine)
 			return;
-		}
 
-		_currentMode = mode;
-		_originPosition = origin;
-		_maxRange = range;
-		_requiresCreature = requiresCreature;
-		_useGridDistance = useGridDistance;
-		_initiatingKey = initiatingKey;
-		_isActive = true;
-
-		// Use provided valid positions or calculate using FOV
-		if (validPositions != null)
+		var entity = GetEntityAtCursor();
+		if (entity != null)
 		{
-			_validTiles = validPositions;
+			EmitSignal(SignalName.EntityExamined, entity);
 		}
-		else
-		{
-			var distanceMetric = useGridDistance ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean;
-			_validTiles = FOVCalculator.CalculateVisibleTiles(origin, range, _mapSystem, distanceMetric);
-		}
-
-		// For legacy action targeting, cursor positions match the overlay
-		_validCursorPositions = _validTiles;
-
-		// Find all creatures in valid tiles
-		_validCreatureTargets = new List<BaseEntity>();
-		foreach (var tile in _validTiles)
-		{
-			// Skip the origin tile (don't target yourself)
-			if (tile == origin)
-				continue;
-
-			var entity = _entityManager.GetEntityAtPosition(tile);
-			if (entity != null)
-			{
-				// Only target hostile entities with health (attackable creatures)
-				// Excludes player faction (allies) from hostile targeting
-				if (entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null &&
-					entity.Faction != Faction.Player)
-				{
-					_validCreatureTargets.Add(entity);
-				}
-			}
-		}
-
-		// Start with nearest creature if any exist
-		if (_validCreatureTargets.Count > 0)
-		{
-			// Sort by distance from origin using the appropriate metric
-			_validCreatureTargets = _useGridDistance
-				? _validCreatureTargets.OrderBy(e => DistanceHelper.ChebyshevDistance(origin, e.GridPosition)).ToList()
-				: _validCreatureTargets.OrderBy(e => DistanceHelper.EuclideanDistance(origin, e.GridPosition)).ToList();
-
-			_currentCreatureIndex = 0;
-			_cursorPosition = _validCreatureTargets[0].GridPosition;
-		}
-		else
-		{
-			// No creatures, start cursor at origin
-			_currentCreatureIndex = -1;
-			_cursorPosition = origin;
-		}
-
-		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
 	}
 
 	/// <summary>
-	/// Starts targeting using the unified targeting system with a TargetingDefinition.
-	/// This is the preferred method for new code.
+	/// Starts action targeting using a TargetingDefinition.
 	/// </summary>
-	/// <param name="caster">The entity doing the targeting</param>
-	/// <param name="definition">The targeting definition</param>
-	/// <param name="context">The action context for handler operations</param>
-	/// <param name="initiatingKey">Optional key that initiated targeting (can be used to confirm)</param>
 	public void StartTargeting(BaseEntity caster, TargetingDefinition definition, ActionContext context, Key? initiatingKey = null)
 	{
 		if (!definition.RequiresSelection)
@@ -302,27 +198,22 @@ public partial class CursorTargetingSystem : Node
 		_caster = caster;
 		_targetingDefinition = definition;
 		_actionContext = context;
-		_targetingHandler = TargetingHandler.CreateForDefinition(definition);
+		_targetingHandler = Targeting.TargetingHandler.CreateForDefinition(definition);
 		_initiatingKey = initiatingKey;
 
-		_currentMode = TargetingMode.TargetedItem; // Use generic mode for unified targeting
+		_currentMode = TargetingMode.Action;
 		_originPosition = caster.GridPosition;
-		_maxRange = definition.Range;
-		_requiresCreature = definition.Filter != TargetFilter.Tile;
-		_useGridDistance = definition.Metric == DistanceMetric.Chebyshev;
 		_isActive = true;
 
-		// Calculate valid tiles for the overlay
+		// Calculate range tiles for overlay and cursor movement bounds
 		int range = definition.Range > 0 ? definition.Range : 1;
 		if (definition.RequiresLOS)
 		{
-			// Use FOV for LOS-respecting targeting
-			_validTiles = FOVCalculator.CalculateVisibleTiles(_originPosition, range, context.MapSystem, definition.Metric);
+			_rangeTiles = FOVCalculator.CalculateVisibleTiles(_originPosition, range, context.MapSystem, definition.Metric);
 		}
 		else
 		{
-			// For non-LOS targeting (like tunneling), include all tiles in range regardless of visibility
-			_validTiles = new HashSet<GridPosition>();
+			_rangeTiles = new HashSet<GridPosition>();
 			for (int dx = -range; dx <= range; dx++)
 			{
 				for (int dy = -range; dy <= range; dy++)
@@ -331,28 +222,19 @@ public partial class CursorTargetingSystem : Node
 					if (DistanceHelper.IsInRange(_originPosition, checkPos, range, definition.Metric) &&
 						context.MapSystem.IsInBounds(checkPos))
 					{
-						_validTiles.Add(checkPos);
+						_rangeTiles.Add(checkPos);
 					}
 				}
 			}
 		}
 
-		// Get valid target positions from the handler (may be a subset for creature-only targeting)
-		var validTargetPositions = _targetingHandler.GetValidTargetPositions(caster, definition, context);
-
-		// Set valid cursor positions based on filter type
-		// Tile targeting allows free movement within range; creature targeting restricts to targets
-		_validCursorPositions = definition.Filter == TargetFilter.Tile
-			? _validTiles
-			: new HashSet<GridPosition>(validTargetPositions);
-
-		// Build creature target list from valid target positions
-		// Only for creature-targeting filters (not tile/area targeting)
+		// Build creature target list for Tab cycling (creature-targeting filters only)
 		_validCreatureTargets = new List<BaseEntity>();
 		bool isCreatureTargeting = definition.Filter != TargetFilter.Tile;
 
 		if (isCreatureTargeting)
 		{
+			var validTargetPositions = _targetingHandler.GetValidTargetPositions(caster, definition, context);
 			foreach (var tile in validTargetPositions)
 			{
 				if (tile == _originPosition)
@@ -367,31 +249,24 @@ public partial class CursorTargetingSystem : Node
 		}
 
 		// Sort by distance and select initial target
+		bool useGridDistance = definition.Metric == DistanceMetric.Chebyshev;
 		if (isCreatureTargeting && _validCreatureTargets.Count > 0)
 		{
-			// Creature targeting: auto-select nearest creature
-			_validCreatureTargets = _useGridDistance
+			_validCreatureTargets = useGridDistance
 				? _validCreatureTargets.OrderBy(e => DistanceHelper.ChebyshevDistance(_originPosition, e.GridPosition)).ToList()
 				: _validCreatureTargets.OrderBy(e => DistanceHelper.EuclideanDistance(_originPosition, e.GridPosition)).ToList();
 
 			_currentCreatureIndex = 0;
 			_cursorPosition = _validCreatureTargets[0].GridPosition;
 		}
-		else if (_validTiles.Count > 0)
-		{
-			// Tile/area targeting or no creatures: start at origin (player picks position)
-			_currentCreatureIndex = -1;
-			_cursorPosition = _originPosition;
-		}
 		else
 		{
-			// No valid targets at all
 			_currentCreatureIndex = -1;
 			_cursorPosition = _originPosition;
 		}
 
-		// Update area preview if applicable
 		UpdateAffectedPositions();
+		UpdateIsOnValidTarget();
 
 		EmitSignal(SignalName.CursorStarted, (int)_currentMode);
 	}
@@ -411,13 +286,12 @@ public partial class CursorTargetingSystem : Node
 			TargetFilter.Creature => true,
 			TargetFilter.Self => target == caster,
 			TargetFilter.Tile => true,
-			_ => caster.Faction != target.Faction // Default to enemy
+			_ => caster.Faction != target.Faction
 		};
 	}
 
 	/// <summary>
 	/// Updates the affected positions for area preview.
-	/// UI can access via the AffectedPositions property after CursorMoved signal.
 	/// </summary>
 	private void UpdateAffectedPositions()
 	{
@@ -431,13 +305,26 @@ public partial class CursorTargetingSystem : Node
 	}
 
 	/// <summary>
+	/// Updates the IsOnValidTarget property based on current cursor position.
+	/// </summary>
+	private void UpdateIsOnValidTarget()
+	{
+		if (_targetingHandler == null || _targetingDefinition == null || _caster == null || _actionContext == null)
+		{
+			IsOnValidTarget = false;
+			return;
+		}
+
+		IsOnValidTarget = _targetingHandler.IsValidTarget(_caster, _cursorPosition, _targetingDefinition, _actionContext);
+	}
+
+	/// <summary>
 	/// Stops targeting mode and clears all state.
 	/// </summary>
 	public void Stop()
 	{
 		_isActive = false;
-		_validTiles = null;
-		_validCursorPositions = null;
+		_rangeTiles = null;
 		_validCreatureTargets = null;
 		_currentCreatureIndex = -1;
 		_targetingDefinition = null;
@@ -446,14 +333,13 @@ public partial class CursorTargetingSystem : Node
 		_actionContext = null;
 		_initiatingKey = null;
 		AffectedPositions = null;
+		IsOnValidTarget = false;
 	}
 
 	/// <summary>
 	/// Moves the cursor in the specified direction.
-	/// Validation depends on current mode (vision for examine, range for actions).
+	/// Free movement within range - validation happens on confirm.
 	/// </summary>
-	/// <param name="direction">Direction vector to move</param>
-	/// <returns>True if the cursor moved, false if blocked</returns>
 	public bool MoveCursor(Vector2I direction)
 	{
 		if (!_isActive)
@@ -461,23 +347,21 @@ public partial class CursorTargetingSystem : Node
 
 		var newPosition = _cursorPosition.Add(direction);
 
-		// Validate based on mode
 		bool isValid = _currentMode == TargetingMode.Examine
 			? _visionSystem.IsVisible(newPosition)
-			: _validCursorPositions != null && _validCursorPositions.Contains(newPosition);
+			: _rangeTiles != null && _rangeTiles.Contains(newPosition);
 
 		if (isValid)
 		{
 			_cursorPosition = newPosition;
 
-			// Update creature index for action modes
-			if (_currentMode != TargetingMode.Examine)
+			if (_currentMode == TargetingMode.Action)
 			{
 				UpdateCreatureIndexFromPosition();
 				UpdateAffectedPositions();
+				UpdateIsOnValidTarget();
 			}
 
-			// Emit cursor moved signal
 			var entity = _entityManager.GetEntityAtPosition(_cursorPosition);
 			EmitSignal(SignalName.CursorMoved, entity);
 
@@ -488,11 +372,11 @@ public partial class CursorTargetingSystem : Node
 	}
 
 	/// <summary>
-	/// Cycles to the next valid creature target (action modes only).
+	/// Cycles to the next valid creature target.
 	/// </summary>
 	public void CycleNextTarget()
 	{
-		if (!_isActive || _currentMode == TargetingMode.Examine)
+		if (!_isActive || _currentMode != TargetingMode.Action)
 			return;
 
 		if (_validCreatureTargets == null || _validCreatureTargets.Count == 0)
@@ -502,18 +386,18 @@ public partial class CursorTargetingSystem : Node
 		_cursorPosition = _validCreatureTargets[_currentCreatureIndex].GridPosition;
 
 		UpdateAffectedPositions();
+		UpdateIsOnValidTarget();
 
-		// Emit cursor moved signal
 		var entity = _validCreatureTargets[_currentCreatureIndex];
 		EmitSignal(SignalName.CursorMoved, entity);
 	}
 
 	/// <summary>
-	/// Cycles to the previous valid creature target (action modes only).
+	/// Cycles to the previous valid creature target.
 	/// </summary>
 	public void CyclePreviousTarget()
 	{
-		if (!_isActive || _currentMode == TargetingMode.Examine)
+		if (!_isActive || _currentMode != TargetingMode.Action)
 			return;
 
 		if (_validCreatureTargets == null || _validCreatureTargets.Count == 0)
@@ -526,19 +410,18 @@ public partial class CursorTargetingSystem : Node
 		_cursorPosition = _validCreatureTargets[_currentCreatureIndex].GridPosition;
 
 		UpdateAffectedPositions();
+		UpdateIsOnValidTarget();
 
-		// Emit cursor moved signal
 		var entity = _validCreatureTargets[_currentCreatureIndex];
 		EmitSignal(SignalName.CursorMoved, entity);
 	}
 
 	/// <summary>
-	/// Confirms the current target (action modes only).
-	/// Emits TargetConfirmed signal and stops targeting.
+	/// Confirms the current target.
 	/// </summary>
 	public void ConfirmTarget()
 	{
-		if (!_isActive || _currentMode == TargetingMode.Examine)
+		if (!_isActive || _currentMode != TargetingMode.Action)
 			return;
 
 		GridPosition targetPosition = _cursorPosition;
@@ -547,7 +430,7 @@ public partial class CursorTargetingSystem : Node
 	}
 
 	/// <summary>
-	/// Cancels targeting and emits the CursorCanceled signal.
+	/// Cancels targeting.
 	/// </summary>
 	public void Cancel()
 	{
@@ -560,7 +443,7 @@ public partial class CursorTargetingSystem : Node
 	}
 
 	/// <summary>
-	/// Gets the entity at the cursor position, if any.
+	/// Gets the entity at the cursor position.
 	/// </summary>
 	public BaseEntity GetEntityAtCursor()
 	{
@@ -571,35 +454,18 @@ public partial class CursorTargetingSystem : Node
 	}
 
 	/// <summary>
-	/// Gets the creature at the cursor position (entity with HealthComponent), if any.
+	/// Gets the creature at the cursor position (entity with HealthComponent).
 	/// </summary>
 	public BaseEntity GetCreatureAtCursor()
 	{
-		if (!_isActive)
-			return null;
-
-		var entity = _entityManager.GetEntityAtPosition(_cursorPosition);
-		if (entity != null)
-		{
-			if (entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null)
-			{
-				return entity;
-			}
-		}
-
+		var entity = GetEntityAtCursor();
+		if (entity?.GetNodeOrNull<Components.HealthComponent>("HealthComponent") != null)
+			return entity;
 		return null;
 	}
 
 	/// <summary>
-	/// Checks if the cursor is currently on a valid creature.
-	/// </summary>
-	public bool IsCursorOnCreature()
-	{
-		return GetCreatureAtCursor() != null;
-	}
-
-	/// <summary>
-	/// Updates the creature index when cursor is moved manually (action modes only).
+	/// Updates the creature index when cursor is moved manually.
 	/// </summary>
 	private void UpdateCreatureIndexFromPosition()
 	{
@@ -618,13 +484,11 @@ public partial class CursorTargetingSystem : Node
 			}
 		}
 
-		// Cursor is not on a creature
 		_currentCreatureIndex = -1;
 	}
 
 	public override void _ExitTree()
 	{
-		// Disconnect from entity manager to prevent memory leaks
 		if (_entityManager != null && GodotObject.IsInstanceValid(_entityManager))
 		{
 			_entityManager.Disconnect(EntityManager.SignalName.EntityRemoved, Callable.From<BaseEntity>(OnEntityRemoved));

@@ -3,7 +3,6 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Skills;
-using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Actions;
 
@@ -107,8 +106,7 @@ public class UseSkillAction : Action
         }
 
         // For self-targeting skills, target the caster
-        var targetingType = _skill.GetTargetingType();
-        if (targetingType == TargetingType.Self)
+        if (_skill.IsSelfTargeting())
         {
             return new List<BaseEntity> { actor };
         }

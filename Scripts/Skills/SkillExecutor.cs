@@ -104,13 +104,13 @@ public static class SkillExecutor
             // For positional skills, caster is the effect target
             targets.Add(caster);
         }
-        else if (targets.Count == 0 && targetingType != TargetingType.Self && !allowEmptyTargets)
+        else if (targets.Count == 0 && !skillDef.IsSelfTargeting() && !allowEmptyTargets)
         {
             return SkillResult.CreateFailure("No valid targets.");
         }
 
         // For self-targeting skills, add caster as target if not already included
-        if (targetingType == TargetingType.Self && targets.Count == 0)
+        if (skillDef.IsSelfTargeting() && targets.Count == 0)
         {
             targets.Add(caster);
         }

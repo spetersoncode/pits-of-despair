@@ -5,6 +5,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Targeting;
@@ -100,7 +101,7 @@ public class GameplayInputProcessor
         int range = GetRangedWeaponRange();
         if (range > 0)
         {
-            var definition = TargetingDefinition.Ranged(range);
+            var definition = TargetingDefinition.Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean);
             _cursorSystem.StartTargeting(_player, definition, _actionContext, Key.F);
             _gameHUD.EnterTargetingMode();
         }
@@ -141,7 +142,7 @@ public class GameplayInputProcessor
         if (slot != null && slot.Item.Template.Attack != null)
         {
             int range = slot.Item.Template.Attack.Range;
-            var definition = TargetingDefinition.Reach(range);
+            var definition = TargetingDefinition.Creature(range, TargetFilter.Enemy, DistanceMetric.Chebyshev);
             var initiatingKey = CharToKey(itemKey);
             _cursorSystem.StartTargeting(_player, definition, _actionContext, initiatingKey);
         }
@@ -179,7 +180,7 @@ public class GameplayInputProcessor
             int weaponReach = GetEquippedMeleeWeaponReach();
             if (weaponReach > definition.Range)
             {
-                definition = TargetingDefinition.Reach(weaponReach);
+                definition = TargetingDefinition.Creature(weaponReach, TargetFilter.Enemy, DistanceMetric.Chebyshev);
             }
         }
 

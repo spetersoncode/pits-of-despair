@@ -19,10 +19,6 @@ public abstract class TargetingHandler
     /// <summary>
     /// Gets all valid target positions for the given targeting definition.
     /// </summary>
-    /// <param name="caster">The entity using the targeting</param>
-    /// <param name="definition">The targeting definition</param>
-    /// <param name="context">The action context</param>
-    /// <returns>List of valid target positions</returns>
     public abstract List<GridPosition> GetValidTargetPositions(
         BaseEntity caster,
         TargetingDefinition definition,
@@ -31,11 +27,6 @@ public abstract class TargetingHandler
     /// <summary>
     /// Checks if a specific position is a valid target.
     /// </summary>
-    /// <param name="caster">The entity using the targeting</param>
-    /// <param name="targetPosition">The position to check</param>
-    /// <param name="definition">The targeting definition</param>
-    /// <param name="context">The action context</param>
-    /// <returns>True if the position is valid</returns>
     public abstract bool IsValidTarget(
         BaseEntity caster,
         GridPosition targetPosition,
@@ -45,11 +36,6 @@ public abstract class TargetingHandler
     /// <summary>
     /// Gets entities at the target position that would be affected.
     /// </summary>
-    /// <param name="caster">The entity using the targeting</param>
-    /// <param name="targetPosition">The selected target position</param>
-    /// <param name="definition">The targeting definition</param>
-    /// <param name="context">The action context</param>
-    /// <returns>List of entities that would be affected</returns>
     public virtual List<BaseEntity> GetAffectedEntities(
         BaseEntity caster,
         GridPosition targetPosition,
@@ -79,30 +65,19 @@ public abstract class TargetingHandler
     }
 
     /// <summary>
-    /// Whether this targeting type requires player selection.
-    /// </summary>
-    public virtual bool RequiresSelection => true;
-
-    /// <summary>
     /// Creates a targeting handler for the given targeting type.
     /// </summary>
     public static TargetingHandler CreateForType(TargetingType type)
     {
         return type switch
         {
-            TargetingType.Self => new SelfTargetingHandler(),
-            TargetingType.Adjacent => new AdjacentTargetingHandler(),
-            TargetingType.Tile => new TileTargetingHandler(),
-            TargetingType.Enemy => new EnemyTargetingHandler(),
-            TargetingType.Ally => new AllyTargetingHandler(),
             TargetingType.Creature => new CreatureTargetingHandler(),
+            TargetingType.Tile => new TileTargetingHandler(),
             TargetingType.Area => new AreaTargetingHandler(),
-            TargetingType.Ranged => new RangedTargetingHandler(),
-            TargetingType.Reach => new ReachTargetingHandler(),
             TargetingType.Line => new LineTargetingHandler(),
             TargetingType.Cone => new ConeTargetingHandler(),
             TargetingType.Cleave => new CleaveTargetingHandler(),
-            _ => new SelfTargetingHandler()
+            _ => new CreatureTargetingHandler()
         };
     }
 
