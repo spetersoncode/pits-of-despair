@@ -129,6 +129,28 @@ public class EffectContext
     }
 
     /// <summary>
+    /// Gets a stat value from the target for saving throw calculations.
+    /// Returns 0 if target lacks a stats component.
+    /// </summary>
+    /// <param name="statName">Stat name: "str", "agi", "end", "wil"</param>
+    /// <returns>The stat value, or 0 if not found</returns>
+    public int GetTargetStat(string? statName)
+    {
+        var targetStats = Target.GetNodeOrNull<StatsComponent>("StatsComponent");
+        if (targetStats == null || string.IsNullOrEmpty(statName))
+            return 0;
+
+        return statName.ToLower() switch
+        {
+            "str" => targetStats.TotalStrength,
+            "agi" => targetStats.TotalAgility,
+            "end" => targetStats.TotalEndurance,
+            "wil" => targetStats.TotalWill,
+            _ => 0
+        };
+    }
+
+    /// <summary>
     /// Gets the display name for the effect source (skill name, "item", etc.).
     /// Useful for failure messages.
     /// </summary>

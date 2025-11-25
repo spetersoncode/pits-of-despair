@@ -79,7 +79,9 @@ entries:
     effects:
       - type: apply_condition
         conditionType: confusion
-        durationDice: 2d3
+        durationDice: 3d4
+        saveStat: wil
+        saveModifier: 4
     targeting:
       type: enemy
       range: 5

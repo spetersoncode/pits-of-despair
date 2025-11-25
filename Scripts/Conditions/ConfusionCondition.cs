@@ -52,7 +52,7 @@ public class ConfusionCondition : Condition
 		aiComponent.GoalStack.Push(new ConfusedWanderGoal());
 
 		return new ConditionMessage(
-			$"{target.DisplayName} looks confused!",
+			$"The {target.DisplayName} looks confused!",
 			Palette.ToHex(Palette.StatusDebuff)
 		);
 	}

@@ -85,6 +85,23 @@ public class EffectDefinition
     public bool Percent { get; set; } = false;
 
     /// <summary>
+    /// Target's save stat for saving throw (e.g., "end" for physical, "wil" for mental).
+    /// If set, a saving throw is required before the effect applies.
+    /// </summary>
+    public string? SaveStat { get; set; } = null;
+
+    /// <summary>
+    /// Caster's attack stat for the opposed saving throw roll.
+    /// Defaults to "wil" if SaveStat is set but AttackStat is not.
+    /// </summary>
+    public string? AttackStat { get; set; } = null;
+
+    /// <summary>
+    /// Modifier to the caster's save roll. Positive = harder to resist, negative = easier.
+    /// </summary>
+    public int SaveModifier { get; set; } = 0;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -111,7 +128,10 @@ public class EffectDefinition
             ScalingStat = skillEffect.ScalingStat,
             ScalingMultiplier = skillEffect.ScalingMultiplier,
             Targets = skillEffect.Targets,
-            Percent = skillEffect.Percent
+            Percent = skillEffect.Percent,
+            SaveStat = skillEffect.SaveStat,
+            AttackStat = skillEffect.AttackStat,
+            SaveModifier = skillEffect.SaveModifier
         };
     }
 
@@ -132,7 +152,10 @@ public class EffectDefinition
             Dice = itemEffect.Dice,
             Radius = itemEffect.Radius,
             DamageType = itemEffect.DamageType,
-            HazardType = itemEffect.HazardType
+            HazardType = itemEffect.HazardType,
+            SaveStat = itemEffect.SaveStat,
+            AttackStat = itemEffect.AttackStat,
+            SaveModifier = itemEffect.SaveModifier
         };
     }
 }

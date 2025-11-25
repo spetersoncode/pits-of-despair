@@ -319,6 +319,35 @@ public partial class BaseEntity : Node2D
     }
 
     /// <summary>
+    /// Adds a condition that has already had OnApplied called.
+    /// Used when the caller needs to capture the OnApplied message for custom routing.
+    /// </summary>
+    public void AddConditionWithoutMessage(Condition condition)
+    {
+        if (condition == null)
+        {
+            GD.PrintErr("BaseEntity: Attempted to add null condition");
+            return;
+        }
+
+        // Check if this condition type is already active
+        var existingCondition = _activeConditions.FirstOrDefault(c => c.TypeId == condition.TypeId);
+        if (existingCondition != null)
+        {
+            // Refresh duration instead of stacking
+            var resolvedDuration = condition.ResolveDuration();
+            existingCondition.RefreshDuration(resolvedDuration);
+            // Note: OnApplied was already called, so we don't emit refresh message here
+            return;
+        }
+
+        // Add new condition (OnApplied already called by caller)
+        _activeConditions.Add(condition);
+        condition.RemainingTurns = condition.ResolveDuration();
+        EmitSignal(SignalName.ConditionAdded, condition.Name);
+    }
+
+    /// <summary>
     /// Removes a specific condition from this entity.
     /// </summary>
     public void RemoveCondition(Condition condition)

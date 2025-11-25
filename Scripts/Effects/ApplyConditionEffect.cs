@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
+using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Effects;
 
@@ -38,6 +39,22 @@ public class ApplyConditionEffect : Effect
     /// </summary>
     public float ScalingMultiplier { get; set; } = 1.0f;
 
+    /// <summary>
+    /// Target's save stat for saving throw (e.g., "end", "wil").
+    /// If set, target can resist the condition.
+    /// </summary>
+    private readonly string? _saveStat;
+
+    /// <summary>
+    /// Caster's attack stat for the opposed roll. Defaults to "wil".
+    /// </summary>
+    private readonly string? _attackStat;
+
+    /// <summary>
+    /// Modifier to caster's roll. Positive = harder to resist, negative = easier.
+    /// </summary>
+    private readonly int _saveModifier;
+
     public ApplyConditionEffect()
     {
         ConditionType = string.Empty;
@@ -62,12 +79,21 @@ public class ApplyConditionEffect : Effect
         Duration = definition.GetDurationString();
         ScalingStat = definition.ScalingStat;
         ScalingMultiplier = definition.ScalingMultiplier;
+        _saveStat = definition.SaveStat;
+        _attackStat = definition.AttackStat;
+        _saveModifier = definition.SaveModifier;
     }
 
     public override EffectResult Apply(EffectContext context)
     {
         var target = context.Target;
         var targetName = target.DisplayName;
+
+        // Check saving throw if configured (message emitted by SavingThrow)
+        if (SavingThrow.TryResist(context, _saveStat, _attackStat, _saveModifier))
+        {
+            return EffectResult.CreateFailure(string.Empty, Palette.ToHex(Palette.Default));
+        }
 
         // Calculate amount with scaling
         int finalAmount = CalculateScaledAmount(Amount, null, ScalingStat, ScalingMultiplier, context);
@@ -84,9 +110,21 @@ public class ApplyConditionEffect : Effect
         }
 
         // Add condition to target (conditions are now managed by BaseEntity directly)
-        target.AddCondition(condition);
+        // Note: AddCondition emits ConditionMessage signal, but that's only connected for the player.
+        // We need to capture the message and emit it via CombatSystem for all entities.
+        var conditionMessage = condition.OnApplied(target);
+        target.AddConditionWithoutMessage(condition);
 
-        // Return success - the actual message is emitted by BaseEntity's ConditionMessage signal
+        // Emit condition applied message via CombatSystem so it shows for all entities
+        if (!string.IsNullOrEmpty(conditionMessage.Message))
+        {
+            context.ActionContext.CombatSystem.EmitActionMessage(
+                target,
+                conditionMessage.Message,
+                conditionMessage.Color
+            );
+        }
+
         return EffectResult.CreateSuccess(
             string.Empty,
             Palette.ToHex(Palette.StatusBuff),
