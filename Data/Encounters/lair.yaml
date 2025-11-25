@@ -1,0 +1,41 @@
+name: Lair
+type: Lair
+minBudget: 4
+maxBudget: 20
+minRegionSize: 25
+
+slots:
+  - role: leader
+    preferredArchetypes:
+      - elite
+      - warrior
+      - brute
+    minCount: "1"
+    maxCount: "1"
+    threatMultiplier: 1.5
+    placement: center
+
+  - role: follower
+    preferredArchetypes:
+      - minion
+      - warrior
+    minCount: "1d3"
+    maxCount: "2d3"
+    threatMultiplier: 0.8
+    placement: surrounding
+
+placement:
+  preferredRegions:
+    - large
+    - dead_end
+  minDistanceFromEntrance: 10
+  preferNearChokepoints: false
+  preferEdges: false
+
+aiConfig:
+  initialState: idle
+  followersProtectLeader: true
+  territoryBound: true
+  leaderYellsForHelp: true
+  generatePatrolRoute: false
+  wakeRadius: 0

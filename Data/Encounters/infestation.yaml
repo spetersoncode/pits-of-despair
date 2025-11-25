@@ -1,0 +1,30 @@
+name: Infestation
+type: Infestation
+minBudget: 3
+maxBudget: 10
+minRegionSize: 25
+
+slots:
+  - role: vermin
+    preferredArchetypes:
+      - minion
+    minCount: "2d3"
+    maxCount: "3d4"
+    threatMultiplier: 0.5
+    placement: random
+
+placement:
+  preferredRegions:
+    - large
+    - medium
+  minDistanceFromEntrance: 0
+  preferNearChokepoints: false
+  preferEdges: false
+
+aiConfig:
+  initialState: idle
+  followersProtectLeader: false
+  territoryBound: false
+  leaderYellsForHelp: false
+  generatePatrolRoute: false
+  wakeRadius: 0

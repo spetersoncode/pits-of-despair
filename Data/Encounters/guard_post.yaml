@@ -1,0 +1,32 @@
+name: Guard Post
+type: GuardPost
+minBudget: 2
+maxBudget: 6
+minRegionSize: 4
+
+slots:
+  - role: guard
+    preferredArchetypes:
+      - tank
+      - warrior
+      - brute
+    minCount: "1"
+    maxCount: "2"
+    threatMultiplier: 1.0
+    placement: center
+
+placement:
+  preferredRegions:
+    - passage
+    - small
+  minDistanceFromEntrance: 5
+  preferNearChokepoints: true
+  preferEdges: false
+
+aiConfig:
+  initialState: guarding
+  followersProtectLeader: false
+  territoryBound: true
+  leaderYellsForHelp: true
+  generatePatrolRoute: false
+  wakeRadius: 0
