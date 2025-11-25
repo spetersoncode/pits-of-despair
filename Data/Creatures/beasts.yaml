@@ -1,12 +1,13 @@
 type: beasts
 defaults:
-  glyph: d
+  glyph: b
   color: Palette.Minion
 
 entries:
   wild_dog:
     name: wild dog
     description: A feral hound with matted fur and hungry eyes. It travels in packs, following an alpha that leads them through the dungeon corridors.
+    glyph: d
     threat: 1
     strength: 0
     agility: 1
@@ -40,8 +41,6 @@ entries:
   badger:
     name: badger
     description: A squat, striped creature with a foul temper. It fears nothing and attacks with surprising ferocity, slashing with wicked claws.
-    glyph: b
-    color: Palette.Minion
     threat: 1
     strength: 0
     agility: 2
@@ -58,7 +57,6 @@ entries:
   wild_boar:
     name: wild boar
     description: A bristly pig with curved tusks and a foul temper. It lowers its head and charges without hesitation, trampling anything in its path.
-    glyph: b
     color: Palette.Fur
     threat: 2
     strength: 1

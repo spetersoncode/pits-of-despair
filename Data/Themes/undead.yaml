@@ -1,7 +1,7 @@
 name: Undead
 description: Shambling corpses and animated bones driven by dark magic
 color: Palette.Clay
-minFloor: 1
+minFloor: 2
 maxFloor: 10
 creatures:
   - skeleton
