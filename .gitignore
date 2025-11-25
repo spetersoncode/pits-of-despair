@@ -25,3 +25,7 @@ exports/
 # Claude Code
 .claude/settings.local.json
 .claude/plans/
+
+# Monte Carlo simulator output
+tools/monte-carlo/*.csv
+tools/monte-carlo/*.json
