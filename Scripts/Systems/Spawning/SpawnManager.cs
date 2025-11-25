@@ -4,6 +4,7 @@ using System.Linq;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Systems.Spawning.Data;
 using PitsOfDespair.Systems.Spawning.Placement;
 using PitsOfDespair.Systems.Spawning.Strategies;
@@ -76,6 +77,12 @@ public partial class SpawnManager : Node
         _placementStrategies["surrounding"] = new SurroundingPlacement();
         _placementStrategies["formation"] = new FormationPlacement(FormationType.Line);
 
+        // Metadata-aware placement strategies
+        _placementStrategies["distance_far"] = new DistanceBasedPlacement(20, int.MaxValue, "entrance", "distance_far");
+        _placementStrategies["distance_mid"] = new DistanceBasedPlacement(10, 25, "entrance", "distance_mid");
+        _placementStrategies["distance_near"] = new DistanceBasedPlacement(0, 10, "entrance", "distance_near");
+        _placementStrategies["near_walls"] = new DistanceBasedPlacement(1, 2, "walls", "near_walls");
+
         // Register spawn strategies
         _spawnStrategies["single"] = new SingleSpawnStrategy(
             _entityFactory,
@@ -104,7 +111,6 @@ public partial class SpawnManager : Node
     /// <param name="playerPosition">Player's starting position to enforce exclusion zone</param>
     public void PopulateDungeon(GridPosition playerPosition)
     {
-
         // Get spawn table for this floor
         var spawnTable = GetSpawnTableForFloor(_floorDepth);
         if (spawnTable == null)
@@ -112,7 +118,6 @@ public partial class SpawnManager : Node
             GD.PushWarning($"SpawnOrchestrator: No spawn table found for floor {_floorDepth}");
             return;
         }
-
 
         // Get all walkable tiles from the map
         var allWalkableTiles = _mapSystem.GetAllWalkableTiles();
@@ -122,11 +127,34 @@ public partial class SpawnManager : Node
             return;
         }
 
+        // Set up metadata for placement strategies
+        var metadata = _mapSystem.Metadata;
+        MetadataProvider.SetMetadata(metadata);
 
-        // Create density controller
+        // Set entrance position for distance calculations
+        if (metadata != null)
+        {
+            metadata.EntrancePosition = playerPosition;
+        }
+
+        // Track occupied positions across all phases
+        var occupiedPositions = new HashSet<Vector2I>();
+
+        // Phase 1: Process prefab spawn hints (dedicated spawns)
+        if (metadata != null)
+        {
+            ProcessPrefabSpawnHints(metadata, spawnTable, allWalkableTiles, occupiedPositions);
+        }
+
+        // Phase 2: Place guards at strategic chokepoints
+        if (metadata != null)
+        {
+            PlaceChokepointGuards(metadata, spawnTable, occupiedPositions);
+        }
+
+        // Phase 3: Standard budget-based spawning
         var densityController = new SpawnDensityController(spawnTable);
 
-        // Get spawn budgets
         int creatureBudget = densityController.GetCreatureBudget();
         int itemBudget = densityController.GetItemBudget();
         int goldBudget = spawnTable.GetRandomGoldBudget();
@@ -152,8 +180,11 @@ public partial class SpawnManager : Node
             goldBudget
         );
 
-        // Spawn stairs or throne depending on floor depth (far from player)
+        // Phase 4: Spawn stairs or throne depending on floor depth (far from player)
         SpawnStairsOrThrone(allWalkableTiles, playerPosition);
+
+        // Clean up metadata provider
+        MetadataProvider.Clear();
     }
 
     /// <summary>
@@ -583,5 +614,216 @@ public partial class SpawnManager : Node
             throne.Initialize(spawnPosition);
             _entityManager.AddEntity(throne);
         }
+    }
+
+    /// <summary>
+    /// Process spawn hints from prefab regions using existing strategy patterns.
+    /// Spawns entities at positions defined by prefabs.
+    /// </summary>
+    private void ProcessPrefabSpawnHints(
+        DungeonMetadata metadata,
+        SpawnTableData spawnTable,
+        List<GridPosition> allWalkableTiles,
+        HashSet<Vector2I> occupiedPositions)
+    {
+        var spawnableRegions = metadata.GetSpawnableRegions();
+        if (spawnableRegions.Count == 0)
+        {
+            return;
+        }
+
+        GD.Print($"[SpawnManager] Processing spawn hints from {spawnableRegions.Count} prefab region(s)");
+
+        foreach (var region in spawnableRegions)
+        {
+            var regionTiles = region.Tiles
+                .Select(t => new Vector2I(t.X, t.Y))
+                .ToList();
+
+            foreach (var hint in region.SpawnHints)
+            {
+                // Create spawn entry from hint
+                var entry = CreateEntryFromHint(hint, spawnTable);
+                if (entry == null) continue;
+
+                // Determine available tiles
+                List<Vector2I> availableTiles;
+                if (hint.Position.HasValue)
+                {
+                    // Specific position from prefab
+                    var pos = new Vector2I(hint.Position.Value.X, hint.Position.Value.Y);
+                    availableTiles = occupiedPositions.Contains(pos)
+                        ? new List<Vector2I>()
+                        : new List<Vector2I> { pos };
+                }
+                else
+                {
+                    // Use region tiles
+                    availableTiles = regionTiles;
+                }
+
+                if (availableTiles.Count == 0) continue;
+
+                // Get spawn strategy
+                var strategy = GetSpawnStrategy(entry.Type);
+                if (strategy == null) continue;
+
+                // Execute spawn
+                var result = strategy.Execute(entry, availableTiles, occupiedPositions);
+                if (result.Success)
+                {
+                    GD.Print($"[SpawnManager] Spawned {result.EntityCount} entity(s) for hint '{hint.Tag}' in region {region.Id}");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Create a SpawnEntryData from a spawn hint.
+    /// </summary>
+    private SpawnEntryData CreateEntryFromHint(SpawnHint hint, SpawnTableData spawnTable)
+    {
+        // Determine if this is a creature or item spawn
+        bool isCreature = hint.CreaturePool != null && hint.CreaturePool.Count > 0;
+        bool isItem = !string.IsNullOrEmpty(hint.ItemId) || !string.IsNullOrEmpty(hint.ItemPool);
+
+        if (!isCreature && !isItem)
+        {
+            return null;
+        }
+
+        var entry = new SpawnEntryData
+        {
+            TypeString = hint.SpawnType ?? "single",
+            Placement = hint.Placement ?? "random"
+        };
+
+        if (isCreature)
+        {
+            // Select random creature from pool
+            int index = GD.RandRange(0, hint.CreaturePool.Count - 1);
+            entry.CreatureId = hint.CreaturePool[index];
+        }
+        else if (isItem)
+        {
+            entry.ItemId = hint.ItemId;
+            // TODO: Support item pool lookup if needed
+        }
+
+        // Parse count
+        if (!string.IsNullOrEmpty(hint.Count))
+        {
+            entry.Count = new CountRange { DiceNotation = hint.Count };
+        }
+        else
+        {
+            entry.Count = new CountRange { DiceNotation = "1" };
+        }
+
+        return entry;
+    }
+
+    /// <summary>
+    /// Parse spawn type string to enum.
+    /// </summary>
+    private SpawnEntryType ParseSpawnType(string spawnType)
+    {
+        if (string.IsNullOrEmpty(spawnType)) return SpawnEntryType.Single;
+
+        return spawnType.ToLowerInvariant() switch
+        {
+            "single" => SpawnEntryType.Single,
+            "multiple" => SpawnEntryType.Multiple,
+            "band" => SpawnEntryType.Band,
+            "unique" => SpawnEntryType.Unique,
+            _ => SpawnEntryType.Single
+        };
+    }
+
+    /// <summary>
+    /// Place guards at high-value chokepoints for tactical encounters.
+    /// </summary>
+    private void PlaceChokepointGuards(
+        DungeonMetadata metadata,
+        SpawnTableData spawnTable,
+        HashSet<Vector2I> occupiedPositions)
+    {
+        if (metadata.Chokepoints == null || metadata.Chokepoints.Count == 0)
+        {
+            return;
+        }
+
+        // Select top strategic chokepoints (limit to 3)
+        var strategicChokepoints = metadata.Chokepoints
+            .Where(c => c.StrategicValue > 0.5f)
+            .OrderByDescending(c => c.StrategicValue)
+            .Take(3)
+            .ToList();
+
+        if (strategicChokepoints.Count == 0)
+        {
+            return;
+        }
+
+        GD.Print($"[SpawnManager] Placing guards at {strategicChokepoints.Count} strategic chokepoint(s)");
+
+        foreach (var choke in strategicChokepoints)
+        {
+            var pos = new Vector2I(choke.Position.X, choke.Position.Y);
+            if (occupiedPositions.Contains(pos)) continue;
+
+            // Select a guard creature from uncommon pool (stronger than common)
+            var guardEntry = SelectGuardCreature(spawnTable);
+            if (guardEntry == null) continue;
+
+            var tiles = new List<Vector2I> { pos };
+            var strategy = GetSpawnStrategy(SpawnEntryType.Single);
+
+            var result = strategy.Execute(guardEntry, tiles, occupiedPositions);
+            if (result.Success)
+            {
+                GD.Print($"[SpawnManager] Placed chokepoint guard at ({pos.X}, {pos.Y})");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Select a suitable guard creature from spawn table.
+    /// Prefers less common pools for variety.
+    /// </summary>
+    private SpawnEntryData SelectGuardCreature(SpawnTableData spawnTable)
+    {
+        if (spawnTable.CreaturePools == null || spawnTable.CreaturePools.Count == 0)
+        {
+            return null;
+        }
+
+        // Try to select from a non-primary pool if available (for variety)
+        // Otherwise use random pool selection
+        SpawnPoolData pool = null;
+        if (spawnTable.CreaturePools.Count > 1)
+        {
+            // Skip the first (usually most common) pool sometimes
+            int startIndex = GD.RandRange(0, 1);
+            pool = spawnTable.CreaturePools[startIndex % spawnTable.CreaturePools.Count];
+        }
+        else
+        {
+            pool = spawnTable.SelectRandomCreaturePool();
+        }
+
+        if (pool == null) return null;
+
+        var entry = pool.SelectRandomEntry();
+        if (entry == null || !entry.IsValid()) return null;
+
+        // Force single spawn type for guards
+        return new SpawnEntryData
+        {
+            CreatureId = entry.CreatureId,
+            TypeString = "single",
+            Count = new CountRange { DiceNotation = "1" },
+            Placement = "center"
+        };
     }
 }
