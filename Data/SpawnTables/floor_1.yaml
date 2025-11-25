@@ -74,6 +74,12 @@ creaturePools:
         count:
           dice: "1d2" # Spawns 1-2 skeletons per occurrence
 
+      # Multiple zombies - slow but tough undead
+      - type: multiple
+        creatureId: zombie
+        count:
+          dice: "1d2" # Spawns 1-2 zombies per occurrence
+
   # Rare pool (5% weight) - Dangerous encounters
   - id: rare
     weight: 5
@@ -96,6 +102,10 @@ creaturePools:
               placement: surrounding
               distance:
                 dice: "1d2" # 1-2 tiles away from leader
+
+      # Undead band - mixed skeletons and zombies
+      - type: band
+        bandId: restless_dead
 
 # Item Pools
 # Similar structure to creature pools: weighted pools with entries

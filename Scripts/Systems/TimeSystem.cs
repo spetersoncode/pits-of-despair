@@ -93,7 +93,7 @@ public partial class TimeSystem : Node
     /// Gets the next creature ready to act (fastest first).
     /// Returns null if no creatures have enough time to act.
     /// </summary>
-    /// <param name="actionDelayCost">The delay cost to check against (typically standard delay).</param>
+    /// <param name="actionDelayCost">The base delay cost to check against (typically standard delay).</param>
     /// <returns>The SpeedComponent of the next creature to act, or null.</returns>
     public SpeedComponent? GetNextReadyCreature(int actionDelayCost)
     {
@@ -107,8 +107,10 @@ public partial class TimeSystem : Node
                 continue;
             }
 
-            // Check if creature has enough time to act
-            if (speed.AccumulatedTime >= actionDelayCost)
+            // Check if creature has enough time to act based on its actual delay
+            // Slow creatures need more accumulated time to act
+            int actualDelay = speed.CalculateDelay(actionDelayCost);
+            if (speed.AccumulatedTime >= actualDelay)
             {
                 // Prefer faster creatures (higher EffectiveSpeed)
                 if (fastest == null || speed.EffectiveSpeed > highestSpeed)
@@ -125,12 +127,12 @@ public partial class TimeSystem : Node
     /// <summary>
     /// Gets all creatures ready to act, sorted by speed (fastest first).
     /// </summary>
-    /// <param name="actionDelayCost">The delay cost to check against.</param>
+    /// <param name="actionDelayCost">The base delay cost to check against.</param>
     /// <returns>List of ready creatures sorted by speed descending.</returns>
     public List<SpeedComponent> GetAllReadyCreatures(int actionDelayCost)
     {
         return _trackedEntities
-            .Where(s => IsInstanceValid(s) && s.AccumulatedTime >= actionDelayCost)
+            .Where(s => IsInstanceValid(s) && s.AccumulatedTime >= s.CalculateDelay(actionDelayCost))
             .OrderByDescending(s => s.EffectiveSpeed)
             .ToList();
     }
@@ -142,7 +144,7 @@ public partial class TimeSystem : Node
     {
         foreach (var speed in _trackedEntities)
         {
-            if (IsInstanceValid(speed) && speed.AccumulatedTime >= actionDelayCost)
+            if (IsInstanceValid(speed) && speed.AccumulatedTime >= speed.CalculateDelay(actionDelayCost))
             {
                 return true;
             }

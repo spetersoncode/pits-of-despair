@@ -23,3 +23,25 @@ entries:
       - Piercing
     vulnerabilities:
       - Bludgeoning
+
+  zombie:
+    name: zombie
+    color: Clay
+    description: A shambling corpse animated by dark magic. Its rotting flesh is resilient but its movements are sluggish.
+    level: 2
+    speed: 8
+    strength: 1
+    agility: -2
+    endurance: 1
+    health: 12
+    attacks:
+      - name: slam
+        type: Melee
+        dice: "1d5"
+        damageType: Bludgeoning
+    immunities:
+      - Poison
+    resistances:
+      - Piercing
+    vulnerabilities:
+      - Bludgeoning

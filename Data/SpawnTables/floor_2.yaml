@@ -42,6 +42,12 @@ creaturePools:
         count:
           dice: "1d2"
 
+      # Zombies - slow but tough
+      - type: multiple
+        creatureId: zombie
+        count:
+          dice: "1d2"
+
   # Uncommon pool (30% weight) - Increased from floor 1
   - id: uncommon
     weight: 30
@@ -71,6 +77,10 @@ creaturePools:
         creatureId: skeleton
         count:
           dice: "1d3" # 1-3 skeletons
+
+      # Undead band - mixed skeletons and zombies
+      - type: band
+        bandId: restless_dead
 
   # Rare pool (5% weight) - Very dangerous encounters
   - id: rare
@@ -123,6 +133,7 @@ itemPools:
       - itemId: weapon_axe
       - itemId: armor_leather
         weight: 2 # Armor more common on floor 2
+      - itemId: potion_haste
 
   # Rare items (5% weight)
   - id: rare

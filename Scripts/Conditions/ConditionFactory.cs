@@ -48,6 +48,9 @@ public static class ConditionFactory
             // Debuffs / Status effects
             "confusion" => new ConfusionCondition(duration),
 
+            // Speed modifier
+            "speed_modifier" => new SpeedModifierCondition(amount, duration, durationMode, sourceId),
+
             _ => null
         };
 
@@ -88,6 +91,7 @@ public static class ConditionFactory
             "max_willpower_modifier" => true,
             "regen_modifier" => true,
             "confusion" => true,
+            "speed_modifier" => true,
             _ => false
         };
     }

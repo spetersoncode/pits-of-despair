@@ -1,0 +1,14 @@
+name: restless dead
+followers:
+  - creatureId: skeleton
+    count:
+      dice: "1d2+1"
+    placement: surrounding
+    distance:
+      dice: "1d2"
+  - creatureId: zombie
+    count:
+      dice: "1d2+1"
+    placement: surrounding
+    distance:
+      dice: "1d2"

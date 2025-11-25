@@ -495,6 +495,13 @@ public static class Palette
 
     #endregion
 
+    #region Potions - Speed
+
+    /// <summary>Haste potion (energetic yellow-green)</summary>
+    public static readonly Color PotionHaste = new("#AADD55");
+
+    #endregion
+
     #region Gems and Jewelry
 
     /// <summary>Jade (soft green gemstone)</summary>
