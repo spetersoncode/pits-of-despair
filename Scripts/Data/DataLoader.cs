@@ -623,7 +623,40 @@ public partial class DataLoader : Node
             }
         });
 
+        // Validate creature references in themes (after creatures are loaded)
+        ValidateFactionThemes();
+
         GD.Print($"DataLoader: Loaded {_factionThemes.Count} faction themes");
+    }
+
+    /// <summary>
+    /// Validates that all creature IDs in faction themes reference existing creatures.
+    /// Logs warnings for invalid references.
+    /// </summary>
+    private void ValidateFactionThemes()
+    {
+        foreach (var (themeId, theme) in _factionThemes)
+        {
+            if (theme.Creatures == null || theme.Creatures.Count == 0)
+            {
+                GD.PushWarning($"DataLoader: Theme '{themeId}' has no creatures defined");
+                continue;
+            }
+
+            var invalidCreatures = new List<string>();
+            foreach (var creatureId in theme.Creatures)
+            {
+                if (!_creatures.ContainsKey(creatureId))
+                {
+                    invalidCreatures.Add(creatureId);
+                }
+            }
+
+            if (invalidCreatures.Count > 0)
+            {
+                GD.PushWarning($"DataLoader: Theme '{themeId}' references unknown creatures: {string.Join(", ", invalidCreatures)}");
+            }
+        }
     }
 
     private void LoadAllEncounterTemplates()

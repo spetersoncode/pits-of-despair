@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Generation.Metadata;
+using PitsOfDespair.Systems.Spawning;
 
 namespace PitsOfDespair.Systems.Spawning.Data;
 
@@ -110,26 +111,3 @@ public class SpawnedEncounter
     public int CreatureCount => Creatures.Count;
 }
 
-/// <summary>
-/// Creature archetypes inferred from stats and capabilities.
-/// A creature can have multiple archetypes.
-/// </summary>
-public enum CreatureArchetype
-{
-    /// <summary>High END relative to other stats.</summary>
-    Tank,
-    /// <summary>High STR, balanced stats.</summary>
-    Warrior,
-    /// <summary>High AGI + STR, low END.</summary>
-    Assassin,
-    /// <summary>Has ranged attack OR high AGI + low STR.</summary>
-    Ranged,
-    /// <summary>Has healing effects OR high WIL.</summary>
-    Support,
-    /// <summary>Low threat (1-5).</summary>
-    Minion,
-    /// <summary>High threat (16+).</summary>
-    Elite,
-    /// <summary>High END + STR, low AGI, slow speed.</summary>
-    Brute
-}
