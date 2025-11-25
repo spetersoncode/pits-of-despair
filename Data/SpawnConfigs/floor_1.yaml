@@ -2,10 +2,10 @@ name: "Dungeon Entrance"
 minFloor: 1
 maxFloor: 1
 
-# Low power budget for introductory floor
-powerBudget: "2d4+4"
-itemBudget: "1d3+1"
-goldBudget: "2d10+10"
+# Power budget for large test floor (100x100)
+powerBudget: "10d6+50"
+itemBudget: "3d6+10"
+goldBudget: "5d10+50"
 
 # Threat limits - keep creatures easy
 minThreat: 1
