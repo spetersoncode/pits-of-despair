@@ -175,7 +175,14 @@ public class EncounterSpawner
             if (effectiveThreat > remainingBudget)
                 continue;
 
-            // Calculate match score
+            // Check required archetypes (strict filter)
+            if (slot.RequiredArchetypes != null && slot.RequiredArchetypes.Count > 0)
+            {
+                if (!ArchetypeInferrer.MatchesArchetypes(creature.data, slot.RequiredArchetypes))
+                    continue;
+            }
+
+            // Calculate match score (using preferred archetypes for scoring)
             int score = ArchetypeInferrer.CalculateArchetypeMatchScore(creature.data, slot.PreferredArchetypes);
 
             // Bonus for role-specific keywords in creature name/type
@@ -353,7 +360,7 @@ public class EncounterSpawner
     /// </summary>
     private void ConfigureEncounterAI(SpawnedEncounter encounter, SpawnedCreature leader)
     {
-        var aiConfig = encounter.Template.AIConfig;
+        var aiConfig = encounter.Template.AiConfig;
 
         // Configure followers to protect leader
         if (aiConfig.FollowersProtectLeader && leader?.Entity != null)

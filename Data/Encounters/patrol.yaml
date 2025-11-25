@@ -6,6 +6,8 @@ minRegionSize: 6
 
 slots:
   - role: scout
+    requiredArchetypes:
+      - patroller
     preferredArchetypes:
       - ranged
       - assassin
@@ -15,6 +17,8 @@ slots:
     placement: random
 
   - role: follower
+    requiredArchetypes:
+      - patroller
     preferredArchetypes:
       - warrior
       - assassin

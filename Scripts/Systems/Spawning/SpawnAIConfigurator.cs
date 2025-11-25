@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Godot;
+using PitsOfDespair.AI;
 using PitsOfDespair.AI.Components;
+using PitsOfDespair.AI.Patrol;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
@@ -15,6 +17,13 @@ namespace PitsOfDespair.Systems.Spawning;
 /// </summary>
 public class SpawnAIConfigurator
 {
+    private readonly MapSystem _mapSystem;
+
+    public SpawnAIConfigurator(MapSystem mapSystem)
+    {
+        _mapSystem = mapSystem;
+    }
+
     /// <summary>
     /// Configures all creatures in an encounter with appropriate AI settings.
     /// </summary>
@@ -23,7 +32,7 @@ public class SpawnAIConfigurator
         if (encounter?.Creatures == null || encounter.Creatures.Count == 0)
             return;
 
-        var aiConfig = encounter.Template?.AIConfig;
+        var aiConfig = encounter.Template?.AiConfig;
 
         // Configure each creature
         foreach (var creature in encounter.Creatures)
@@ -33,6 +42,9 @@ public class SpawnAIConfigurator
 
         // Configure group relationships
         ConfigureGroupRelationships(encounter, aiConfig);
+
+        // Configure grouped patrol behavior
+        ConfigureGroupedPatrol(encounter);
     }
 
     /// <summary>
@@ -150,6 +162,75 @@ public class SpawnAIConfigurator
                     aiComponent.ProtectionTarget = encounter.Leader.Entity;
                     aiComponent.FollowDistance = 3; // Default follow distance
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Configures grouped patrol behavior for creatures with Grouped=true PatrolComponent.
+    /// Creates a shared PatrolGroup and assigns it to all grouped patrollers.
+    /// Uses the first patroller's config for route generation.
+    /// </summary>
+    private void ConfigureGroupedPatrol(SpawnedEncounter encounter)
+    {
+        if (encounter?.Creatures == null)
+            return;
+
+        // Find all creatures with grouped PatrolComponent
+        var groupedPatrollers = new List<(SpawnedCreature creature, PatrolComponent patrol)>();
+        foreach (var creature in encounter.Creatures)
+        {
+            if (creature.Entity == null)
+                continue;
+
+            var patrolComp = creature.Entity.GetNodeOrNull<PatrolComponent>("PatrolComponent");
+            if (patrolComp != null && patrolComp.Grouped)
+            {
+                groupedPatrollers.Add((creature, patrolComp));
+            }
+        }
+
+        if (groupedPatrollers.Count == 0)
+            return;
+
+        // Use the first patroller's config for route generation
+        var config = groupedPatrollers[0].patrol;
+        var centerPos = encounter.CenterPosition;
+
+        // Generate route based on scope
+        var route = PatrolRouteGenerator.GeneratePatrol(
+            config.Scope,
+            centerPos,
+            encounter.Region,
+            _mapSystem,
+            config.WaypointCount,
+            config.MinDistance,
+            config.MaxDistance);
+
+        if (route == null || route.Waypoints.Count < 2)
+        {
+            GD.Print($"[GroupedPatrol] Failed to generate {config.Scope} route for encounter");
+            return;
+        }
+
+        // Create shared patrol group
+        var patrolGroup = new PatrolGroup(route);
+
+        GD.Print($"[GroupedPatrol] Created {config.Scope} group with {groupedPatrollers.Count} members, {route.Waypoints.Count} waypoints");
+
+        // Assign patrol group to all grouped patrollers
+        foreach (var (creature, patrolComp) in groupedPatrollers)
+        {
+            patrolComp.PatrolGroup = patrolGroup;
+            patrolGroup.AddMember(creature.Entity);
+
+            // Also add PatrolRouteComponent for compatibility with existing patrol goal
+            if (creature.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent") == null)
+            {
+                var routeComp = new PatrolRouteComponent();
+                routeComp.Name = "PatrolRouteComponent";
+                routeComp.Route = route;
+                creature.Entity.AddChild(routeComp);
             }
         }
     }

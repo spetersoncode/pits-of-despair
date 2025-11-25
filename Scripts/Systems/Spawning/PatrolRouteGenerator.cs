@@ -1,28 +1,55 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PitsOfDespair.AI.Patrol;
 using PitsOfDespair.Core;
 using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Systems.Spawning;
 
 /// <summary>
-/// Static service for generating patrol routes within regions.
+/// Static service for generating patrol routes based on scope and configuration.
 /// Creates waypoint patterns for patrolling creatures.
 /// </summary>
 public static class PatrolRouteGenerator
 {
     /// <summary>
-    /// Generates waypoints distributed across a region.
+    /// Generates a patrol route based on scope configuration.
+    /// </summary>
+    /// <param name="scope">How far the patrol extends (Local, Extended, Roaming).</param>
+    /// <param name="startPos">Starting position for route.</param>
+    /// <param name="region">Spawn region (used for Local/Extended scope).</param>
+    /// <param name="mapSystem">Map system for walkability checks (used for Extended/Roaming).</param>
+    /// <param name="waypointCount">Number of waypoints to generate.</param>
+    /// <param name="minDistance">Minimum distance between waypoints.</param>
+    /// <param name="maxDistance">Maximum distance from start (Roaming only).</param>
+    /// <returns>A patrol route, or null if generation fails.</returns>
+    public static PatrolRoute GeneratePatrol(
+        PatrolScope scope,
+        GridPosition startPos,
+        Region region,
+        MapSystem mapSystem,
+        int waypointCount = 4,
+        int minDistance = 8,
+        int maxDistance = 40)
+    {
+        return scope switch
+        {
+            PatrolScope.Local => GenerateLocalPatrol(region, startPos, waypointCount),
+            PatrolScope.Extended => GenerateExtendedPatrol(region, startPos, mapSystem, waypointCount, minDistance),
+            PatrolScope.Roaming => GenerateRoamingPatrol(startPos, mapSystem, waypointCount, minDistance, maxDistance),
+            _ => GenerateLocalPatrol(region, startPos, waypointCount)
+        };
+    }
+
+    /// <summary>
+    /// Generates waypoints distributed across a region (Local scope).
     /// Strategy: Divide region into quadrants, pick one walkable tile per quadrant,
     /// order by greedy shortest path starting from startPos.
     /// </summary>
-    /// <param name="region">The region to patrol.</param>
-    /// <param name="startPos">Starting position for route ordering.</param>
-    /// <param name="waypointCount">Target number of waypoints (3-5 recommended).</param>
-    /// <returns>A Loop patrol route, or null if insufficient waypoints found.</returns>
-    public static PatrolRoute GenerateRegionPatrol(
+    public static PatrolRoute GenerateLocalPatrol(
         Region region,
         GridPosition startPos,
         int waypointCount = 4)
@@ -30,14 +57,123 @@ public static class PatrolRouteGenerator
         if (region?.Tiles == null || region.Tiles.Count < waypointCount)
             return null;
 
-        var waypoints = SelectDistributedWaypoints(region, waypointCount);
+        var waypoints = SelectDistributedWaypoints(region.Tiles, region.BoundingBox, waypointCount);
         if (waypoints.Count < 2)
             return null;
 
-        // Order waypoints by greedy nearest neighbor starting from startPos
         var orderedWaypoints = OrderByNearestNeighbor(waypoints, startPos);
-
         return new PatrolRoute(orderedWaypoints, PatrolRouteType.Loop, waypointTolerance: 1);
+    }
+
+    /// <summary>
+    /// Generates waypoints extending beyond spawn region into adjacent areas (Extended scope).
+    /// Includes tiles within minDistance of the region boundary.
+    /// </summary>
+    public static PatrolRoute GenerateExtendedPatrol(
+        Region region,
+        GridPosition startPos,
+        MapSystem mapSystem,
+        int waypointCount = 4,
+        int minDistance = 8)
+    {
+        if (region?.Tiles == null || mapSystem == null)
+            return null;
+
+        // Collect tiles: region tiles + nearby walkable tiles
+        var extendedTiles = new HashSet<GridPosition>(region.Tiles);
+        var bbox = region.BoundingBox;
+        int expansion = minDistance;
+
+        // Expand search area beyond region bounds
+        for (int x = bbox.Position.X - expansion; x < bbox.Position.X + bbox.Size.X + expansion; x++)
+        {
+            for (int y = bbox.Position.Y - expansion; y < bbox.Position.Y + bbox.Size.Y + expansion; y++)
+            {
+                var pos = new GridPosition(x, y);
+                if (mapSystem.IsWalkable(pos))
+                {
+                    extendedTiles.Add(pos);
+                }
+            }
+        }
+
+        if (extendedTiles.Count < waypointCount)
+            return null;
+
+        // Create bounding box for extended area
+        var allTiles = extendedTiles.ToList();
+        var extendedBbox = CalculateBoundingBox(allTiles);
+
+        var waypoints = SelectDistributedWaypoints(allTiles, extendedBbox, waypointCount);
+        if (waypoints.Count < 2)
+            return null;
+
+        var orderedWaypoints = OrderByNearestNeighbor(waypoints, startPos);
+        return new PatrolRoute(orderedWaypoints, PatrolRouteType.Loop, waypointTolerance: 1);
+    }
+
+    /// <summary>
+    /// Generates waypoints across the map (Roaming scope).
+    /// Picks random distant walkable tiles within maxDistance.
+    /// </summary>
+    public static PatrolRoute GenerateRoamingPatrol(
+        GridPosition startPos,
+        MapSystem mapSystem,
+        int waypointCount = 4,
+        int minDistance = 8,
+        int maxDistance = 40)
+    {
+        if (mapSystem == null)
+            return null;
+
+        var waypoints = new List<GridPosition>();
+        int mapWidth = mapSystem.MapWidth;
+        int mapHeight = mapSystem.MapHeight;
+
+        const int maxAttempts = 100;
+        int attempts = 0;
+
+        while (waypoints.Count < waypointCount && attempts < maxAttempts)
+        {
+            attempts++;
+
+            int x = GD.RandRange(1, mapWidth - 2);
+            int y = GD.RandRange(1, mapHeight - 2);
+            var pos = new GridPosition(x, y);
+
+            if (!mapSystem.IsWalkable(pos))
+                continue;
+
+            int distance = DistanceHelper.ChebyshevDistance(startPos, pos);
+            if (distance < minDistance || distance > maxDistance)
+                continue;
+
+            // Ensure waypoints are spread out from each other
+            bool tooClose = waypoints.Any(wp =>
+                DistanceHelper.ChebyshevDistance(wp, pos) < minDistance / 2);
+            if (tooClose)
+                continue;
+
+            waypoints.Add(pos);
+        }
+
+        if (waypoints.Count < 2)
+            return null;
+
+        var orderedWaypoints = OrderByNearestNeighbor(waypoints, startPos);
+        return new PatrolRoute(orderedWaypoints, PatrolRouteType.Loop, waypointTolerance: 1);
+    }
+
+    /// <summary>
+    /// Legacy method - generates waypoints distributed across a region.
+    /// Preserved for backwards compatibility.
+    /// </summary>
+    public static PatrolRoute GenerateRegionPatrol(
+        Region region,
+        GridPosition startPos,
+        int waypointCount = 4)
+    {
+        return GenerateLocalPatrol(region, startPos, waypointCount);
     }
 
     /// <summary>
@@ -107,11 +243,13 @@ public static class PatrolRouteGenerator
     }
 
     /// <summary>
-    /// Selects waypoints distributed across the region by dividing into quadrants.
+    /// Selects waypoints distributed across tiles by dividing into quadrants.
     /// </summary>
-    private static List<GridPosition> SelectDistributedWaypoints(Region region, int count)
+    private static List<GridPosition> SelectDistributedWaypoints(
+        IList<GridPosition> tiles,
+        Rect2I bbox,
+        int count)
     {
-        var bbox = region.BoundingBox;
         var midX = bbox.Position.X + bbox.Size.X / 2;
         var midY = bbox.Position.Y + bbox.Size.Y / 2;
 
@@ -120,7 +258,7 @@ public static class PatrolRouteGenerator
         for (int i = 0; i < 4; i++)
             quadrants[i] = new List<GridPosition>();
 
-        foreach (var tile in region.Tiles)
+        foreach (var tile in tiles)
         {
             int quadrant = (tile.X >= midX ? 1 : 0) + (tile.Y >= midY ? 2 : 0);
             quadrants[quadrant].Add(tile);
@@ -138,10 +276,10 @@ public static class PatrolRouteGenerator
             }
         }
 
-        // If we need more waypoints, add random tiles from the region
-        while (waypoints.Count < count && waypoints.Count < region.Tiles.Count)
+        // If we need more waypoints, add random tiles
+        while (waypoints.Count < count && waypoints.Count < tiles.Count)
         {
-            var tile = region.Tiles[GD.RandRange(0, region.Tiles.Count - 1)];
+            var tile = tiles[GD.RandRange(0, tiles.Count - 1)];
             if (!waypoints.Contains(tile))
             {
                 waypoints.Add(tile);
@@ -149,6 +287,28 @@ public static class PatrolRouteGenerator
         }
 
         return waypoints;
+    }
+
+    /// <summary>
+    /// Calculates bounding box for a set of tiles.
+    /// </summary>
+    private static Rect2I CalculateBoundingBox(IList<GridPosition> tiles)
+    {
+        if (tiles.Count == 0)
+            return new Rect2I(0, 0, 0, 0);
+
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+
+        foreach (var tile in tiles)
+        {
+            if (tile.X < minX) minX = tile.X;
+            if (tile.Y < minY) minY = tile.Y;
+            if (tile.X > maxX) maxX = tile.X;
+            if (tile.Y > maxY) maxY = tile.Y;
+        }
+
+        return new Rect2I(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
     /// <summary>

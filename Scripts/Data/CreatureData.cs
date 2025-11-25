@@ -109,13 +109,13 @@ public class CreatureData
 
     /// <summary>
     /// List of AI component configurations for goal-stack AI system.
-    /// Supports short type names (Cowardly) or full names (CowardlyComponent).
-    /// Only specify properties when overriding defaults.
+    /// Each entry is a dictionary with "type" and optional config properties.
     /// Example YAML:
     ///   ai:
     ///     - type: Cowardly
-    ///     - type: ShootAndScoot
-    ///       fleeTurns: 2
+    ///     - type: Patrol
+    ///       grouped: true
+    ///     - type: Warrior    # Explicit archetype (no behavior, grants archetype)
     /// </summary>
     public List<Dictionary<string, object>> Ai { get; set; } = new();
 

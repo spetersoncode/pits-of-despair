@@ -65,10 +65,35 @@ public static class ArchetypeInferrer
             archetypes.Add(CreatureArchetype.Brute);
         }
 
-        // Scout: Has Cowardly or YellForHelp AI components
-        if (HasScoutBehavior(creature))
+        // Cowardly: Has Cowardly AI component
+        if (HasCowardlyBehavior(creature))
         {
-            archetypes.Add(CreatureArchetype.Scout);
+            archetypes.Add(CreatureArchetype.Cowardly);
+        }
+
+        // Patroller: Has Patrol AI component
+        if (HasPatrolBehavior(creature))
+        {
+            archetypes.Add(CreatureArchetype.Patroller);
+        }
+
+        // Explicit archetype declarations from AI types
+        // e.g., type: Warrior grants Warrior archetype directly
+        if (creature.Ai != null)
+        {
+            foreach (var aiConfig in creature.Ai)
+            {
+                var typeName = GetAiTypeName(aiConfig);
+                if (typeName != null && TryParseArchetype(typeName, out var explicitArchetype))
+                {
+                    // Only add if the type name exactly matches an archetype
+                    // (not inferred behavior like Cowardly/Patrol which are handled above)
+                    if (!archetypes.Contains(explicitArchetype))
+                    {
+                        archetypes.Add(explicitArchetype);
+                    }
+                }
+            }
         }
 
         // Default to Warrior if no archetypes assigned
@@ -78,6 +103,20 @@ public static class ArchetypeInferrer
         }
 
         return archetypes;
+    }
+
+    /// <summary>
+    /// Extracts the AI type name from a config dictionary.
+    /// </summary>
+    private static string GetAiTypeName(Dictionary<string, object> config)
+    {
+        if (config == null)
+            return null;
+
+        if (config.TryGetValue("type", out var typeObj))
+            return typeObj?.ToString();
+
+        return null;
     }
 
     /// <summary>
@@ -133,22 +172,39 @@ public static class ArchetypeInferrer
     }
 
     /// <summary>
-    /// Checks if a creature has scout behavior (Cowardly or YellForHelp AI).
+    /// Checks if a creature has Cowardly AI behavior.
     /// </summary>
-    private static bool HasScoutBehavior(CreatureData creature)
+    private static bool HasCowardlyBehavior(CreatureData creature)
     {
         if (creature.Ai == null || creature.Ai.Count == 0)
             return false;
 
         foreach (var aiConfig in creature.Ai)
         {
-            if (aiConfig.TryGetValue("type", out var typeObj))
+            var typeName = GetAiTypeName(aiConfig);
+            if (string.Equals(typeName, "Cowardly", System.StringComparison.OrdinalIgnoreCase))
             {
-                var typeName = typeObj?.ToString()?.ToLowerInvariant();
-                if (typeName == "cowardly" || typeName == "yellforhelp")
-                {
-                    return true;
-                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a creature has Patrol AI behavior.
+    /// </summary>
+    private static bool HasPatrolBehavior(CreatureData creature)
+    {
+        if (creature.Ai == null || creature.Ai.Count == 0)
+            return false;
+
+        foreach (var aiConfig in creature.Ai)
+        {
+            var typeName = GetAiTypeName(aiConfig);
+            if (string.Equals(typeName, "Patrol", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
             }
         }
 
@@ -218,7 +274,8 @@ public static class ArchetypeInferrer
             "ranged" => CreatureArchetype.Ranged,
             "support" => CreatureArchetype.Support,
             "brute" => CreatureArchetype.Brute,
-            "scout" => CreatureArchetype.Scout,
+            "cowardly" => CreatureArchetype.Cowardly,
+            "patroller" => CreatureArchetype.Patroller,
             _ => CreatureArchetype.Warrior
         };
 

@@ -354,42 +354,81 @@ public partial class EntityFactory : Node
 	}
 
 	/// <summary>
-	/// Adds AI behavior components to an entity based on configuration.
+	/// Adds AI behavior components to an entity based on configuration dictionaries.
+	/// Each dictionary must have a "type" key; other keys are applied as component properties.
 	/// Can be called externally (e.g., by BandSpawnStrategy) to add leader-specific AI.
 	/// </summary>
-	public void AddAIComponents(BaseEntity entity, List<Dictionary<string, object>> aiComponents)
+	public void AddAIComponents(BaseEntity entity, List<Dictionary<string, object>> aiConfigs)
 	{
-		if (aiComponents == null || aiComponents.Count == 0)
+		if (aiConfigs == null || aiConfigs.Count == 0)
 			return;
 
-		foreach (var componentConfig in aiComponents)
+		foreach (var config in aiConfigs)
 		{
-			if (!componentConfig.TryGetValue("type", out var typeObj) || typeObj == null)
-			{
-				GD.PushWarning($"EntityFactory: AI component missing 'type' field for creature '{entity.DisplayName}'");
+			if (config == null || !config.TryGetValue("type", out var typeObj))
 				continue;
-			}
 
-			string componentName = AIComponentTypes.Resolve(typeObj.ToString());
-			Node component = CreateAIComponent(componentName, componentConfig);
+			var typeName = typeObj?.ToString();
+			if (string.IsNullOrWhiteSpace(typeName))
+				continue;
+
+			string componentName = AIComponentTypes.Resolve(typeName);
+			Node component = CreateAIComponent(componentName);
 			if (component != null)
 			{
 				component.Name = componentName;
+				ApplyComponentConfig(component, config);
 				entity.AddChild(component);
 			}
 			else
 			{
-				GD.PushWarning($"EntityFactory: Unknown AI component '{componentName}' for creature '{entity.DisplayName}'");
+				// Not a warning - could be explicit archetype declaration (e.g., type: Warrior)
+				// which has no corresponding component but grants the archetype
 			}
 		}
 	}
 
 	/// <summary>
-	/// Creates an AI component instance by name and applies configuration.
+	/// Applies configuration properties from a dictionary to a component via reflection.
+	/// Skips the "type" key as it's used for component selection.
 	/// </summary>
-	private Node CreateAIComponent(string componentName, Dictionary<string, object> config)
+	private void ApplyComponentConfig(Node component, Dictionary<string, object> config)
 	{
-		Node component = componentName switch
+		var componentType = component.GetType();
+
+		foreach (var kvp in config)
+		{
+			// Skip the type key
+			if (kvp.Key.Equals("type", StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			// Find property with matching name (case-insensitive)
+			var property = componentType.GetProperty(kvp.Key,
+				System.Reflection.BindingFlags.Public |
+				System.Reflection.BindingFlags.Instance |
+				System.Reflection.BindingFlags.IgnoreCase);
+
+			if (property != null && property.CanWrite)
+			{
+				try
+				{
+					var value = Convert.ChangeType(kvp.Value, property.PropertyType);
+					property.SetValue(component, value);
+				}
+				catch (Exception ex)
+				{
+					GD.PushWarning($"EntityFactory: Failed to set {kvp.Key} on {componentType.Name}: {ex.Message}");
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Creates an AI component instance by name.
+	/// </summary>
+	private Node CreateAIComponent(string componentName)
+	{
+		return componentName switch
 		{
 			"CowardlyComponent" => new AI.Components.CowardlyComponent(),
 			"YellForHelpComponent" => new AI.Components.YellForHelpComponent(),
@@ -402,63 +441,6 @@ public partial class EntityFactory : Node
 			"FollowLeaderComponent" => new AI.Components.FollowLeaderComponent(),
 			_ => null
 		};
-
-		if (component == null)
-			return null;
-
-		// Apply configuration values via reflection
-		ApplyComponentConfig(component, config);
-
-		return component;
-	}
-
-	/// <summary>
-	/// Applies configuration dictionary values to component properties.
-	/// </summary>
-	private void ApplyComponentConfig(Node component, Dictionary<string, object> config)
-	{
-		var type = component.GetType();
-
-		foreach (var kvp in config)
-		{
-			// Convert camelCase YAML key to PascalCase property name
-			string propertyName = char.ToUpper(kvp.Key[0]) + kvp.Key.Substring(1);
-			var property = type.GetProperty(propertyName);
-
-			if (property != null && property.CanWrite)
-			{
-				try
-				{
-					object value = ConvertConfigValue(kvp.Value, property.PropertyType);
-					property.SetValue(component, value);
-				}
-				catch (System.Exception e)
-				{
-					GD.PushWarning($"EntityFactory: Failed to set {propertyName} on {type.Name}: {e.Message}");
-				}
-			}
-		}
-	}
-
-	/// <summary>
-	/// Converts a config value to the expected property type.
-	/// </summary>
-	private object ConvertConfigValue(object value, System.Type targetType)
-	{
-		if (value == null)
-			return null;
-
-		// Handle common type conversions
-		if (targetType == typeof(int))
-			return System.Convert.ToInt32(value);
-		if (targetType == typeof(float))
-			return System.Convert.ToSingle(value);
-		if (targetType == typeof(bool))
-			return System.Convert.ToBoolean(value);
-		if (targetType == typeof(string))
-			return value.ToString();
-
-		return value;
 	}
 
 	/// <summary>

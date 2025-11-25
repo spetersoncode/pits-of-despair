@@ -40,15 +40,15 @@ public class MoveAction : Action
                 return context.MapSystem.IsWalkable(targetPos);
             }
 
-            // If target is not walkable and actor is player, check for interactions
+            // Any creature can swap positions with friendly creatures
+            if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
+            {
+                return true;
+            }
+
+            // Player-only: bump-to-attack hostile creatures
             if (actor == context.Player)
             {
-                // Can swap positions with friendly creatures
-                if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
-                {
-                    return true;
-                }
-
                 var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
                 var actorAttack = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
 
@@ -78,10 +78,10 @@ public class MoveAction : Action
         var targetPos = currentPos.Add(_direction);
         var targetEntity = GetEntityAtPosition(targetPos, context);
 
-        // Check for bump interactions (player only)
-        if (targetEntity != null && !targetEntity.IsWalkable && actor == context.Player)
+        // Check for bump interactions
+        if (targetEntity != null && !targetEntity.IsWalkable)
         {
-            // Swap positions with friendly creatures
+            // Any creature can swap positions with friendly creatures
             if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
             {
                 targetEntity.SetGridPosition(currentPos);
@@ -89,14 +89,18 @@ public class MoveAction : Action
                 return ActionResult.CreateSuccess();
             }
 
-            var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
-            var actorAttack = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
-
-            if (targetHealth != null && actorAttack != null)
+            // Player-only: bump-to-attack hostile creatures
+            if (actor == context.Player)
             {
-                // Execute attack instead of movement
-                var attackAction = new AttackAction(targetEntity);
-                return attackAction.Execute(actor, context);
+                var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
+                var actorAttack = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
+
+                if (targetHealth != null && actorAttack != null)
+                {
+                    // Execute attack instead of movement
+                    var attackAction = new AttackAction(targetEntity);
+                    return attackAction.Execute(actor, context);
+                }
             }
         }
 

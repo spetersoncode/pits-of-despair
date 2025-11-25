@@ -1,76 +1,131 @@
 using PitsOfDespair.AI.Components;
 using PitsOfDespair.AI.Patrol;
+using PitsOfDespair.Core;
 using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.AI.Goals;
 
 /// <summary>
-/// Goal that follows waypoints from a PatrolRouteComponent.
+/// Goal that follows waypoints from a PatrolRouteComponent or shared PatrolGroup.
 /// Uses ApproachGoal for pathfinding to each waypoint.
 /// Automatically advances through waypoints as they are reached.
+/// When using a PatrolGroup, all members share the same current waypoint.
 /// </summary>
 public class PatrolRouteGoal : Goal
 {
     private PatrolRouteComponent _routeComponent;
+    private PatrolGroup _patrolGroup;
+
+    /// <summary>
+    /// Creates a patrol route goal.
+    /// </summary>
+    /// <param name="patrolGroup">Optional shared patrol group for synchronized movement.</param>
+    public PatrolRouteGoal(PatrolGroup patrolGroup = null)
+    {
+        _patrolGroup = patrolGroup;
+    }
 
     public override bool IsFinished(AIContext context)
     {
-        // Ensure we have the route component
-        _routeComponent ??= context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent");
+        // Check group first
+        if (_patrolGroup != null)
+        {
+            return _patrolGroup.Route?.Type == PatrolRouteType.OneWay
+                && _patrolGroup.IsRouteComplete;
+        }
 
-        // Finished only if OneWay route and complete
+        // Fall back to individual route component
+        _routeComponent ??= context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent");
         return _routeComponent?.Route?.Type == PatrolRouteType.OneWay
             && _routeComponent.IsRouteComplete;
     }
 
     public override void TakeAction(AIContext context)
     {
-        // Get route component from entity
-        _routeComponent ??= context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent");
+        // Get current target from group or individual component
+        GridPosition? currentTarget;
+        int waypointTolerance;
 
-        if (_routeComponent?.Route == null || _routeComponent.CurrentTarget == null)
+        if (_patrolGroup != null)
         {
-            Fail(context);
-            return;
-        }
+            currentTarget = _patrolGroup.CurrentTarget;
+            waypointTolerance = _patrolGroup.Route?.WaypointTolerance ?? 1;
 
-        var currentTarget = _routeComponent.CurrentTarget.Value;
-
-        // Check if at current waypoint
-        int distance = DistanceHelper.ChebyshevDistance(
-            context.Entity.GridPosition,
-            currentTarget);
-
-        if (distance <= _routeComponent.Route.WaypointTolerance)
-        {
-            _routeComponent.AdvanceWaypoint();
-
-            // If route just completed (OneWay), we're done
-            if (_routeComponent.IsRouteComplete)
-                return;
-
-            // Update target for next waypoint
-            if (_routeComponent.CurrentTarget == null)
+            if (currentTarget == null)
             {
                 Fail(context);
                 return;
             }
-            currentTarget = _routeComponent.CurrentTarget.Value;
+
+            // Check if at current waypoint - advance the group (syncs all members)
+            int distance = DistanceHelper.ChebyshevDistance(
+                context.Entity.GridPosition,
+                currentTarget.Value);
+
+            if (distance <= waypointTolerance)
+            {
+                _patrolGroup.AdvanceWaypoint();
+
+                if (_patrolGroup.IsRouteComplete)
+                    return;
+
+                currentTarget = _patrolGroup.CurrentTarget;
+                if (currentTarget == null)
+                {
+                    Fail(context);
+                    return;
+                }
+            }
+        }
+        else
+        {
+            // Use individual route component
+            _routeComponent ??= context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent");
+
+            if (_routeComponent?.Route == null || _routeComponent.CurrentTarget == null)
+            {
+                Fail(context);
+                return;
+            }
+
+            currentTarget = _routeComponent.CurrentTarget;
+            waypointTolerance = _routeComponent.Route.WaypointTolerance;
+
+            // Check if at current waypoint
+            int distance = DistanceHelper.ChebyshevDistance(
+                context.Entity.GridPosition,
+                currentTarget.Value);
+
+            if (distance <= waypointTolerance)
+            {
+                _routeComponent.AdvanceWaypoint();
+
+                if (_routeComponent.IsRouteComplete)
+                    return;
+
+                currentTarget = _routeComponent.CurrentTarget;
+                if (currentTarget == null)
+                {
+                    Fail(context);
+                    return;
+                }
+            }
         }
 
         // Push ApproachGoal for current target
         var approach = new ApproachGoal(
-            currentTarget,
-            desiredDistance: _routeComponent.Route.WaypointTolerance,
+            currentTarget.Value,
+            desiredDistance: waypointTolerance,
             originalIntent: this);
         context.AIComponent.GoalStack.Push(approach);
     }
 
     public override string GetName()
     {
-        if (_routeComponent?.CurrentTarget != null)
+        GridPosition? target = _patrolGroup?.CurrentTarget ?? _routeComponent?.CurrentTarget;
+        if (target != null)
         {
-            return $"Patrol to {_routeComponent.CurrentTarget.Value}";
+            return $"Patrol to {target.Value}";
         }
         return "Patrol Route";
     }

@@ -37,7 +37,14 @@ public class EncounterSlot
     public string Role { get; set; } = "any";
 
     /// <summary>
+    /// Required archetypes for this slot. Creatures MUST have at least one.
+    /// Empty means no requirement (use PreferredArchetypes for soft matching).
+    /// </summary>
+    public List<string> RequiredArchetypes { get; set; } = new();
+
+    /// <summary>
     /// Preferred archetypes for this slot (e.g., ["tank", "warrior"]).
+    /// Used for scoring among creatures that pass RequiredArchetypes filter.
     /// If empty, any archetype is acceptable.
     /// </summary>
     public List<string> PreferredArchetypes { get; set; } = new();
@@ -113,7 +120,7 @@ public class EncounterTemplate
     /// <summary>
     /// AI behavior configuration for spawned creatures.
     /// </summary>
-    public EncounterAIConfig AIConfig { get; set; } = new();
+    public EncounterAIConfig AiConfig { get; set; } = new();
 }
 
 /// <summary>

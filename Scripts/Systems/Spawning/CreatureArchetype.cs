@@ -24,6 +24,9 @@ public enum CreatureArchetype
     /// <summary>High END + STR, low AGI, slow speed. Slow but tough hitters.</summary>
     Brute,
 
-    /// <summary>Has Cowardly or YellForHelp AI. Flees and alerts others.</summary>
-    Scout
+    /// <summary>Has Cowardly AI component. Flees from danger.</summary>
+    Cowardly,
+
+    /// <summary>Has Patrol AI component. Suitable for patrol encounters.</summary>
+    Patroller
 }

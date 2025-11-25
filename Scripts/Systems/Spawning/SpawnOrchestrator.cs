@@ -73,7 +73,7 @@ public partial class SpawnOrchestrator : Node
         _budgetAllocator = new RegionBudgetAllocator();
         _encounterPlacer = new EncounterPlacer(_dataLoader);
         _encounterSpawner = new EncounterSpawner(_entityFactory, _entityManager, _dataLoader);
-        _aiConfigurator = new SpawnAIConfigurator();
+        _aiConfigurator = new SpawnAIConfigurator(_mapSystem);
         _treasurePlacer = new TreasurePlacer(_dataLoader, _entityFactory, _entityManager);
         _lootDistributor = new LootDistributor(_dataLoader, _entityFactory, _entityManager);
         _goldPlacer = new GoldPlacer(_entityManager);

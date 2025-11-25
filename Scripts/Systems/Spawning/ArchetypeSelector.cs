@@ -317,7 +317,8 @@ public class ArchetypeSelector
             "ranged" => CreatureArchetype.Ranged,
             "support" => CreatureArchetype.Support,
             "brute" => CreatureArchetype.Brute,
-            "scout" => CreatureArchetype.Scout,
+            "cowardly" => CreatureArchetype.Cowardly,
+            "patroller" => CreatureArchetype.Patroller,
             _ => CreatureArchetype.Warrior
         };
         return value != null;
