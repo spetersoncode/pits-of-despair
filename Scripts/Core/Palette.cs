@@ -291,6 +291,30 @@ public static class Palette
 
     #region Creatures - Role-Based Combat Identity
 
+    // === Core Archetypes (Spawning System) ===
+    // These map directly to CreatureArchetype enum for encounter composition
+
+    /// <summary>Tank, high endurance frontline defender</summary>
+    public static readonly Color Tank = new("#6699BB");
+
+    /// <summary>Warrior, balanced standard melee combatant</summary>
+    public static readonly Color Warrior = new("#AA8866");
+
+    /// <summary>Assassin, stealth-based lethal striker (high AGI, low END)</summary>
+    public static readonly Color Assassin = new("#776688");
+
+    /// <summary>Ranged, attacks from distance (bows, thrown weapons)</summary>
+    public static readonly Color Ranged = new("#88CC55");
+
+    /// <summary>Support, provides buffs and heals to allies (high WIL)</summary>
+    public static readonly Color Support = new("#AADDAA");
+
+    /// <summary>Brute, heavy devastating striker (high STR+END, low AGI)</summary>
+    public static readonly Color Brute = new("#AA4422");
+
+    /// <summary>Scout, fast reconnaissance unit (Cowardly/YellForHelp AI)</summary>
+    public static readonly Color Scout = new("#77CCAA");
+
     // === Basic Tiers (Threat Progression) ===
 
     /// <summary>Minion, weak subordinate creature (basic tier 1)</summary>
@@ -313,31 +337,25 @@ public static class Palette
     /// <summary>Duelist, skilled one-on-one melee fighter</summary>
     public static readonly Color Duelist = new("#CCBB66");
 
-    /// <summary>Assassin, stealth-based lethal striker</summary>
-    public static readonly Color Assassin = new("#776688");
-
     /// <summary>Gladiator, arena-trained melee combatant</summary>
     public static readonly Color Gladiator = new("#DD9944");
 
     /// <summary>Berserker, frenzied aggressive melee attacker</summary>
     public static readonly Color Berserker = new("#DD5533");
 
-    /// <summary>Brute, heavy devastating melee striker</summary>
-    public static readonly Color Brute = new("#AA4422");
-
     /// <summary>Guardian, defensive protector melee role</summary>
-    public static readonly Color Guardian = new("#6699BB");
+    public static readonly Color Guardian = new("#5577AA");
 
     // === Combat Specialists (Ranged) ===
 
     /// <summary>Archer, ranged bow/crossbow combatant</summary>
-    public static readonly Color Archer = new("#88CC55");
+    public static readonly Color Archer = new("#99DD66");
 
     /// <summary>Skirmisher, mobile hit-and-run ranged attacker</summary>
-    public static readonly Color Skirmisher = new("#99DD66");
+    public static readonly Color Skirmisher = new("#77AA55");
 
     /// <summary>Hunter, wilderness-trained ranged tracker</summary>
-    public static readonly Color Hunter = new("#77AA55");
+    public static readonly Color Hunter = new("#669944");
 
     /// <summary>Bandit, opportunistic ranged ambusher</summary>
     public static readonly Color Bandit = new("#CCAA55");
@@ -369,12 +387,7 @@ public static class Palette
     public static readonly Color Warlock = new("#CC55AA");
 
     /// <summary>Healer, restorative support magic caster</summary>
-    public static readonly Color Healer = new("#AADDAA");
-
-    // === Non-Combatants ===
-
-    /// <summary>Scout, fast reconnaissance unit</summary>
-    public static readonly Color Scout = new("#77CCAA");
+    public static readonly Color Healer = new("#88BBAA");
 
     #endregion
 
