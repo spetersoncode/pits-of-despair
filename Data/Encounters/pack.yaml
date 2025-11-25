@@ -1,0 +1,40 @@
+name: Pack
+type: Pack
+minBudget: 3
+maxBudget: 12
+minRegionSize: 16
+
+slots:
+  - role: alpha
+    preferredArchetypes:
+      - warrior
+      - brute
+    minCount: "1"
+    maxCount: "1"
+    threatMultiplier: 1.3
+    placement: center
+
+  - role: packmate
+    preferredArchetypes:
+      - minion
+      - warrior
+    minCount: "2"
+    maxCount: "1d4+1"
+    threatMultiplier: 0.7
+    placement: surrounding
+
+placement:
+  preferredRegions:
+    - large
+    - medium
+  minDistanceFromEntrance: 5
+  preferNearChokepoints: false
+  preferEdges: false
+
+aiConfig:
+  initialState: idle
+  followersProtectLeader: true
+  territoryBound: false
+  leaderYellsForHelp: false
+  generatePatrolRoute: false
+  wakeRadius: 0

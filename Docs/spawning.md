@@ -1,129 +1,152 @@
 # Spawning System
 
-The spawning system populates dungeon floors with creatures, items, and gold through a budget-based, data-driven architecture. Inspired by DCSS and NetHack spawning mechanics, the system uses weighted random selection, spatial placement strategies, and monster band formation to create varied, balanced encounters.
+The spawning system populates dungeon floors through a region-based, encounter-driven pipeline. Power budgets distribute across regions by size and danger level, faction themes create territorial coherence, and encounter templates define creature compositions with tactical behaviors.
 
 ## Core Architecture
 
-**Budget-Based Spawning**: Floor-wide spawn budgets replace per-room allocation. Spawn tables define creature, item, and gold budgets using dice notation. Each spawn consumes budget points equal to entity count. Spawning continues until budget exhausted or placement space runs out. This approach works with any map topology—rooms, caves, or open areas.
+**Pipeline Orchestration**: Spawning executes as an 11-phase pipeline. Each phase has clear inputs, outputs, and dependencies. Phases execute sequentially—theme assignment before budget allocation, encounters before items, AI configuration last. This separation enables independent testing and modification of individual phases.
 
-**Weighted Pool Selection**: Spawn tables organize entries into pools (common, uncommon, rare) with weights determining selection frequency. Two-tier weighted selection—first choose pool, then choose entry from pool. Powerful creatures and rare items placed in low-weight pools for controlled scarcity. Designers tune encounter difficulty through weight adjustments without code changes.
+**Region-Based Distribution**: Rather than per-room or random placement, spawning operates on detected regions from dungeon metadata. Regions receive theme assignments and power budgets proportional to their characteristics. This creates natural variation—large distant regions feel dangerous, small entry regions feel safe.
 
-**Strategy-Based Execution**: Spawn entries specify type (single, multiple, band, unique) determining which spawn strategy handles execution. Strategies encapsulate spawning logic—single entities, monster packs with leaders, or unique bosses. Placement strategies handle spatial positioning—random scatter, center placement, surrounding formations. Strategy pattern enables clean separation between "what spawns" and "how it spawns."
+**Encounter-Driven Composition**: Instead of spawning individual creatures, the system spawns encounters—structured groups with defined roles, positions, and behaviors. Encounters transform generic creature lists into tactical situations: ambushes near passages, lairs in large rooms, patrols through corridors.
 
-**Space Allocation**: Spawner calculates required space for each entry before attempting placement. Single creatures need minimal space. Bands require contiguous areas for formation placement. Occupied positions tracked throughout spawning to prevent overlap. Minimum spacing enforced between spawn groups to avoid clustering. Failed placements retry with different entries—no wasted budget on impossible spawns.
+**Theme Clustering**: Adjacent regions can share faction themes (40% probability), creating territorial zones. Walking through a dungeon, players encounter coherent goblin territory or undead crypts rather than random creature soup. Themes also filter creature selection to thematically appropriate choices.
 
-## Data Structure
+## Spawning Pipeline
 
-**Spawn Tables**: Top-level configuration for entire floor defining creature pools, item pools, and spawn budgets. Each table references pools by ID and weight. Budget specified as dice notation allowing natural variation between runs. Tables map to floor depth—early floors use weaker tables, deeper floors introduce stronger creatures and rarer items.
+**Phase 1 - Load Configuration**: Retrieve floor spawn config for current depth. Config defines budgets, theme weights, encounter weights, threat limits.
 
-**Spawn Pools**: Weighted collections of spawn entries sharing rarity tier (common, uncommon, rare). Pool weight determines selection frequency relative to other pools. Entries within pool have individual weights for fine-grained probability control. Same creature can appear in multiple pools with different weights creating depth-based progression—rats common on floor 1, uncommon on floor 5.
+**Phase 2 - Assign Themes**: Distribute faction themes across regions using weighted selection. Adjacent regions may cluster. Prefab spawn hints can override theme assignment.
 
-**Spawn Entries**: Individual spawn definitions specifying creature or item ID, spawn type, count range, placement strategy, and spatial requirements. Entries configure minimum space needed (NxN area), minimum isolation distance from other spawns, and placement preference. Count specified as dice notation enabling variable spawn sizes—1d3+1 produces 2-4 creatures per entry.
+**Phase 3 - Allocate Budgets**: Distribute floor power budget across regions. Weight factors: region size, distance from entrance, isolation (dead-ends more dangerous), region tags. Each region receives proportional share.
 
-**Band Definitions**: Monster pack configurations with leader and follower groups. Leader specifies creature ID and placement (typically center). Followers define creature types, count ranges, placement strategies, and distance ranges from leader. Multiple follower groups enable mixed compositions—orc band with warrior leader, archer followers, and wolf companions. Bands can be inline in spawn entry or external references shared across tables.
+**Phase 4 - Process Prefabs**: Handle spawn hints from prefab rooms. These can specify exact creatures, encounter templates, items, or theme overrides. Prefab spawns deduct from region budgets.
 
-## Spawning Flow
+**Phase 5 - Spawn Uniques**: Place unique/boss creatures if configured for this floor. Uniques tracked per-run to prevent duplicates. Prefer large regions far from entrance.
 
-**Initialization**: SpawnManager receives dependencies (EntityFactory, EntityManager, MapSystem) and floor depth. Loads appropriate spawn table for depth. Initializes spawn and placement strategy registries. Queries map for all walkable tiles—spawn candidates regardless of room structure.
+**Phase 6 - Spawn Encounters**: Main spawning loop. For each region with remaining budget: select encounter template fitting budget, spawn creatures filling template slots, track positions, repeat until budget exhausted.
 
-**Budget Allocation**: SpawnDensityController rolls budgets from spawn table dice notation. Separate budgets for creatures, items, and gold. Budget values vary each run creating different encounter densities. No budget reserved or pre-allocated—spawning opportunistically consumes budget until exhausted.
+**Phase 7 - Place Treasures**: Distribute valuable items with guardians. Higher-value items placed in more dangerous regions. Risk equals reward principle.
 
-**Creature Population**: Main spawning loop selects random pool weighted by pool weights. Selects random entry from pool weighted by entry weights. Calculates space requirements based on entry type and count. Searches walkable tiles for suitable location meeting space and spacing constraints. Retrieves spawn strategy for entry type. Strategy executes spawn using placement strategy and available tiles. Budget decrements by entity count. Loop continues until budget depleted or max attempts reached.
+**Phase 8 - Place Items**: Scatter remaining items across regions. Distribution weighted by region danger level.
 
-**Item and Gold Population**: Similar flow to creatures using item pools and single placement strategy. Items avoid creature-occupied positions. Gold budget divided into random-sized piles (5-15 per pile). Each pile spawned at available position. Gold spawning simplest—no strategies or complex placement.
+**Phase 9 - Place Gold**: Distribute gold piles across floor. Pile sizes vary randomly within configured range.
 
-**Failure Handling**: Entry selection continues until valid spawn succeeds—skips invalid entries, missing creature definitions, impossible placements. Attempt counter prevents infinite loops when space exhausted. Partial budget consumption acceptable—some floors more dense, others sparse. Warning logged if significant budget remains unspent indicating space shortage or configuration issues.
+**Phase 10 - Place Stairs**: Position level exit (or throne on final floor) in region farthest from entrance. Validates player can path to exit.
 
-## Spawn Strategies
+**Phase 11 - Configure AI**: Set up AI behaviors for all spawned encounters. Configure territory bounds, initial states (sleeping for ambushes), leader-follower relationships.
 
-**Single Strategy**: Spawns individual entities or multiples of same type at random positions. Determines count from entry dice notation. Uses random placement to scatter entities across available tiles. Validates creature or item ID exists in data before spawning. Marks spawned positions as occupied preventing overlap. Handles both creature and item spawning—unified code path reduces duplication.
+## Power Budget System
 
-**Band Strategy**: Spawns monster packs with leader-follower structure. Loads band definition from entry—inline configuration or external reference by ID. Spawns leader first using leader's placement strategy (typically center of available area). For each follower group, rolls count and spawns around leader using follower placement (typically surrounding). Distance ranges control follower proximity—tight formations vs scattered packs. Returns total entity count including leader and all followers. Fails if leader placement impossible—no orphaned followers.
+**Budget Calculation**: Floor configs specify budgets as dice notation (e.g., `3d6+8`). Rolled once per floor, distributed across regions. Creatures have threat ratings consuming budget on spawn.
 
-**Unique Strategy**: Spawns boss or named creatures with special placement. Uses center or specific placement strategies rather than random. Future-proofed for duplicate prevention—track spawned uniques across floors. Currently allows re-spawning on different floors. Clear tracking when descending depths. Placement failures logged with warnings since unique spawns critical for progression.
+**Threat Rating**: Unbounded integer measuring creature danger. Guidelines: 1-5 trivial (rats, bats), 6-15 standard (goblins, skeletons), 16-30 dangerous (ogres, wraiths), 31-50 elite, 51+ boss. XP awards derive from threat.
 
-## Placement Strategies
+**Budget Allocation**: Regions receive budget proportional to weighted area. Weight factors:
+- **Size**: Larger regions get more budget
+- **Distance**: Farther from entrance increases weight
+- **Isolation**: Single-connection regions (dead-ends) get danger bonus
+- **Tags**: Special regions (treasure rooms) can have modifiers
 
-**Random Placement**: Filters occupied positions from available tiles. Randomly selects requested count from unoccupied tiles. No clustering or pattern—pure spatial randomization. Default for most single and multiple spawns. Simple, fast, works with any tile configuration.
+## Encounter Templates
 
-**Center Placement**: Finds geometric center of available tile set. Selects center and nearby tiles for multi-entity spawns. Used for leader positioning in bands and unique creatures. Creates focal point for encounters. Falls back to random if center occupied.
+Templates define structured creature groups with roles, positions, and behaviors. Seven template types cover common tactical situations:
 
-**Surrounding Placement**: Places entities in ring around anchor position (leader). Accepts minimum and maximum distance parameters. Searches tiles within distance range filtering occupied positions. Distributes followers evenly when possible. Used by band followers maintaining formation coherence. Gracefully handles partial placement if some ring positions occupied.
+**Lair**: Leader at region center, followers distributed throughout. Good for large rooms and dead-ends. Creates boss-fight dynamics with minions.
 
-**Formation Placement**: Arranges entities in patterns (line, wedge, box). Currently supports line formations. Useful for tactical encounters with positioning significance. Future extensibility for complex formation types. Requires contiguous available space—fails gracefully if space inadequate.
+**Patrol**: Small group (2-4) spawning at region edge. Configured with patrol behavior through region or into adjacent areas. Creates mobile threats.
 
-## Density Control
+**Ambush**: Creatures placed near chokepoints, initially sleeping. Wake on player proximity. Creates surprise encounters in passages.
 
-**Budget Calculation**: SpawnDensityController wraps spawn table budget retrieval. Rolls dice notation for creatures, items, and gold. Provides debug information for spawn configuration verification. Simple wrapper around spawn table—future extensibility for difficulty modifiers or player-driven density adjustments.
+**Guard Post**: 1-2 creatures at strategic position, configured to hold ground. May call for reinforcements. Good for chokepoints and entrances.
 
-**Spatial Constraints**: Required space calculation prevents oversized spawns in small areas. Bands need 3x3 minimum for formation. Multiple spawns calculate space from max count (ceil of square root). Spacing requirements keep spawn groups separated (typically 3 tile minimum). Area clearing verification ensures contiguous walkable space exists.
+**Treasure Guard**: Valuable item placed first, guardian scaled to match value. Risk-reward principle—better loot has tougher guardians.
 
-**Attempt Limits**: Maximum attempts prevent infinite loops when budget exceeds available space. Set to budget × 10 allowing reasonable retry iterations. Attempts reset on successful spawn—only consecutive failures count. Early exit if no valid tiles remain. Partial population better than complete failure—some encounters better than none.
+**Infestation**: Many weak creatures spread throughout region. No leader, chaotic behavior. Good for caves and large open areas.
 
-## System Integration
+**Pack**: Alpha creature with pack members configured to follow. Alpha uses call-for-help. Good for beast themes.
 
-**Map System**: Provides all walkable tiles for spawn candidate identification. Area clearing validation for contiguous space requirements. Formation detection for band placement. Topology-agnostic—works with rooms, caves, cellular automata, any walkable tile set.
+**Template Structure**: Each template defines slots with role requirements (leader, follower, guard), preferred archetypes, count ranges, placement preferences, and threat multipliers. Slots filled by selecting creatures matching requirements from region's theme.
 
-**Entity Manager**: Registers spawned entities maintaining spatial index. Position occupation queries prevent entity overlap. Handles entity lifecycle—spawned entities integrate immediately with turn system and AI. No special spawn-only entity states—entities fully functional on creation.
+## Faction Themes
 
-**Entity Factory**: Creates creature and item instances from data IDs. Handles unknown IDs with warnings—graceful degradation on missing data. Factory pattern centralizes entity creation—spawner doesn't know entity implementation details. Spawner provides grid positions, factory handles scene instantiation and component setup.
+Themes group thematically related creatures for coherent encounters:
 
-**Data Loader**: Loads spawn tables by ID mapped to floor depth. Retrieves band definitions for external band references. Future extensibility for biome-specific tables or special event spawns. Centralized data access point—spawner doesn't touch file system directly.
+**Theme Definition**: Name, creature list, optional floor range (min/max depth), display color. Creatures belong to theme by ID reference—no role tagging required.
+
+**Current Themes**: Vermin (rats, spiders, insects), Goblinoid (goblins, hobgoblins), Undead (skeletons, zombies, wraiths), Beast (wolves, bears, natural creatures).
+
+**Theme Selection**: Floor configs specify theme weights. Selection uses weighted random—higher weight means more likely. Floor range filtering ensures themes appear at appropriate depths.
+
+**Territory Clustering**: When assigning themes, adjacent regions have 40% chance to receive same theme as neighbor. Creates faction territories rather than random distribution.
+
+## Archetype System
+
+Archetypes categorize creatures by combat role, inferred from stats rather than manual tagging.
+
+**Eight Archetypes**:
+- **Minion**: Low threat (≤5)—fodder creatures
+- **Elite**: High threat (≥16)—dangerous individuals
+- **Tank**: High END relative to other stats—damage absorbers
+- **Warrior**: High STR, balanced—front-line fighters
+- **Assassin**: High AGI + STR, low END—glass cannons
+- **Ranged**: Has ranged attack or high AGI with low STR—ranged damage
+- **Support**: Healing effects or high WIL—buffers/healers
+- **Brute**: High END + STR, low AGI, slow speed—slow heavy hitters
+
+**Inference**: Archetypes derived from creature data at runtime. Stats distribution, attack types, and equipment determine applicable archetypes. Creatures can match multiple archetypes.
+
+**Slot Matching**: Encounter template slots specify preferred archetypes. Creature selection filters theme's creatures by archetype match, then by threat fitting remaining budget. This enables role-based composition without manual creature tagging.
+
+## Special Spawning
+
+**Unique Monsters**: Floor configs can specify unique creatures guaranteed to spawn. Tracked per-run—once spawned, won't appear again. Placed in lair-style configuration in appropriate region.
+
+**Out-of-Depth**: Configurable chance per floor to spawn creature from deeper floor's pools. Creates memorable danger moments. Controlled by `outOfDepthChance` (0.0-1.0) and `outOfDepthFloors` (how many floors ahead).
+
+**Prefab Integration**: Prefab rooms can include spawn hints specifying:
+- Exact creatures at positions
+- Encounter template to use
+- Items to place
+- Theme override for region
+Prefab spawns execute before regular spawning, deducting from region budget.
 
 ## Design Patterns
 
-**Strategy Pattern**: ISpawnStrategy defines execution interface. Concrete strategies (Single, Band, Unique) implement different spawning behaviors. SpawnManager selects strategy based on entry type. IPlacementStrategy similarly encapsulates positioning logic. Runtime selection enables data-driven configuration without code branches.
+**Pipeline Pattern**: Clear phase separation with defined interfaces. Each phase can be tested, modified, or replaced independently.
 
-**Factory Pattern**: EntityFactory creates entities from string IDs. SpawnManager doesn't instantiate entities directly. Strategy creates clear separation between spawn logic and entity creation. Extension point for new entity types—factory handles instantiation details.
+**Budget System**: Global resource distributed locally. Prevents over/under-spawning. Enables natural density variation.
 
-**Two-Tier Selection**: Pool selection followed by entry selection provides controlled randomization. Outer tier controls rarity distribution (common vs rare). Inner tier controls specific spawn within rarity. Designers tune probability at both levels independently. Prevents rare pool entries from being too common or common pool entries too uniform.
+**Composition**: Encounters compose creatures by role. Themes compose creature pools. Configs compose themes and templates. No deep inheritance hierarchies.
 
-**Budget Management**: Global budget replaces room-by-room allocation. Flexible distribution—dense areas with multiple spawns, sparse areas untouched. Allows natural variation without artificial uniformity. Works with irregular map layouts where room counts vary significantly.
+**Data-Driven**: All spawning parameters in YAML. New floors, themes, encounters added without code changes. Designers tune difficulty through data.
 
-**Composition Over Inheritance**: Spawn strategies composed with placement strategies. Bands use leader placement strategy + follower placement strategy. No inheritance hierarchy for spawn types. New spawn behaviors created by combining existing strategies in novel ways.
+**Inference Over Tagging**: Archetypes computed from existing data. No manual role assignment. Creatures automatically fit appropriate slots.
 
-## Extensibility
+## Adding New Encounter Templates
 
-### Adding New Spawn Strategies
+1. Define template in YAML with type, budget range, region requirements
+2. Specify slots with roles, archetype preferences, count ranges, placement
+3. Configure AI settings (initial state, territory binding, wake conditions)
+4. Reference template in floor spawn configs with appropriate weight
+5. Design considerations: What tactical situation does this create? What region types suit it? How do creatures interact?
 
-Implement ISpawnStrategy interface with Name property and Execute method. Accept SpawnEntryData, available tiles, and occupied position set. Calculate entity count and positions using placement strategies. Call EntityFactory to create entities, register with EntityManager, add positions to occupied set, and return SpawnResult. Handle failures gracefully with partial or empty results.
+## Adding New Faction Themes
 
-**Registration and Configuration**: Register strategy in SpawnManager InitializeStrategies dictionary. Update GetSpawnStrategy enum mapping. Extend SpawnEntryType if adding new type. Add type value to YAML schema only if existing types (single, multiple, band, unique) insufficient.
+1. Define theme in YAML with name, creature list, floor range
+2. Ensure theme has archetype variety (tanks, ranged, support) for encounter slot filling
+3. Reference theme in floor spawn configs with appropriate weight
+4. Design considerations: What creatures belong together thematically? What depths feel appropriate? Does the creature list cover needed archetypes?
 
-**Design Considerations**: Work with any map topology. Respect occupied positions. Compose with placement strategies rather than custom positioning. Return meaningful counts for budget consumption. Log warnings for configuration issues.
+## Adding New Floor Spawn Configs
 
-**Example Extensions**: Scattered placement for items across large areas. Guard formations around map features. Patrol routes along predefined paths. Ambush spawns near chokepoints.
+1. Define config with budgets (power, item, gold) as dice notation
+2. Specify theme weights for faction distribution
+3. Specify encounter weights for tactical variety
+4. Set threat limits (min/max) for creature filtering
+5. Configure out-of-depth settings for danger moments
+6. Design considerations: How difficult should this floor feel? What themes dominate? What encounter types create the right pacing?
 
-### Adding New Placement Strategies
+---
 
-Placement strategies control spatial positioning requiring implementation and registration only—no data changes.
-
-**Strategy Implementation**: Implement IPlacementStrategy interface with Name property and SelectPositions method. Accept available tiles, count, occupied positions, and optional anchor position. Filter occupied positions from available tiles. Apply spatial algorithm (distance constraints, patterns, geometric calculations). Return list of selected positions—may be fewer than requested count if space limited. Handle empty input gracefully returning empty list.
-
-**Strategy Registration**: Register in SpawnManager InitializeStrategies. Add to _placementStrategies dictionary. Placement strategies referenced by name in YAML—designers specify "random", "center", "surrounding", "formation" directly. New strategies immediately available in spawn and band definitions.
-
-**Parameterization**: Simple strategies (random, center) need no parameters—stateless single instance shared. Complex strategies (surrounding with distance, formation with pattern type) require parameters. Create parameterized instances in spawn/band strategy when needed. SurroundingPlacement example shows distance parameter pattern—construct with follower-specific distances rather than default.
-
-**Design Considerations**: Algorithm should handle irregular tile sets—not assume rectangular areas. Scale gracefully with count—selecting 1 vs 20 entities should both work. Anchor position enables relative placement for bands and formations. Respect occupied positions but don't assume perfect distribution possible. Deterministic when possible for consistent results with same input.
-
-**Example Extensions**: Perimeter placement around room edges. Corner placement in rectangular rooms. Diagonal or cardinal line formations. Spiral patterns outward from anchor. Distance-graduated placement (concentric rings). Cluster placement grouping entities tightly.
-
-### Adding New Spawn Tables
-
-Spawn tables enable floor progression and biome variation requiring only data definition—no code changes.
-
-**Table Definition**: Create YAML file defining creature pools, item pools, and budgets. Specify pool IDs, weights, and entries. Define creature/item IDs, types, weights, counts, and placement preferences. Use dice notation for budgets and counts enabling natural variation. Reference existing band definitions or define bands inline.
-
-**Floor Mapping**: Update SpawnManager _spawnTableIdsByFloor array mapping depths to table IDs. Array index represents floor depth—entry represents table ID. Falls back to last table for deeper floors enabling indefinite progression. Alternative: extend DataLoader with depth-based table selection logic.
-
-**Pool Organization**: Organize entries by rarity tier balancing encounter difficulty. Common pools (weight 60-70) contain standard enemies and items. Uncommon pools (weight 20-30) introduce moderate challenges. Rare pools (weight 5-10) provide dangerous encounters and valuable loot. Out-of-depth spawns in rare pools create risk/reward moments.
-
-**Design Considerations**: Budget ranges should match expected floor size—larger floors need higher budgets. Weight tuning controls encounter variety versus consistency—higher variance creates surprises, lower variance more predictable. Cross-floor progression gradually shifts common pools toward stronger baselines. Test multiple runs verifying budget consumption and spatial distribution.
-
-**Example Applications**: Biome-specific tables for dungeon zones (mines, crypts, sewers). Event tables for special floors (treasure rooms, boss floors). Difficulty variants for player-selected challenge modes. Seasonal or thematic variations for special events.
-
-## See Also
-
-- [dungeon-generator.md](dungeon-generator.md) - Map generation before spawning
-- [yaml.md](yaml.md) - YAML data format for spawn tables
-- [entities.md](entities.md) - Entity creation and lifecycle
+*See [dungeon-generator.md](dungeon-generator.md) for region generation, [yaml.md](yaml.md) for data formats, [entities.md](entities.md) for creature creation, [ai.md](ai.md) for AI configuration.*

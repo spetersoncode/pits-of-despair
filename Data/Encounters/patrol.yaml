@@ -1,0 +1,40 @@
+name: Patrol
+type: Patrol
+minBudget: 2
+maxBudget: 8
+minRegionSize: 16
+
+slots:
+  - role: scout
+    preferredArchetypes:
+      - ranged
+      - assassin
+    minCount: "1"
+    maxCount: "1"
+    threatMultiplier: 1.0
+    placement: random
+
+  - role: follower
+    preferredArchetypes:
+      - warrior
+      - minion
+    minCount: "1"
+    maxCount: "1d2"
+    threatMultiplier: 0.8
+    placement: formation
+
+placement:
+  preferredRegions:
+    - passage
+    - medium
+  minDistanceFromEntrance: 5
+  preferNearChokepoints: false
+  preferEdges: true
+
+aiConfig:
+  initialState: patrolling
+  followersProtectLeader: false
+  territoryBound: false
+  leaderYellsForHelp: false
+  generatePatrolRoute: true
+  wakeRadius: 0

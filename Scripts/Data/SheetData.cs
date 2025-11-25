@@ -43,7 +43,7 @@ public class CreatureDefaults
 {
     public string? Glyph { get; set; }
     public string? Color { get; set; }
-    public int? Level { get; set; }
+    public int? Threat { get; set; }
     public int? Strength { get; set; }
     public int? Agility { get; set; }
     public int? Endurance { get; set; }

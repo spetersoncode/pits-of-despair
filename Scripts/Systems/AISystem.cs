@@ -111,6 +111,12 @@ public partial class AISystem : Node
             return ActionDelay.Standard; // No AI, default delay
         }
 
+        // Handle sleeping creatures
+        if (aiComponent.IsSleeping)
+        {
+            return ProcessSleepingCreature(aiComponent, speedComponent);
+        }
+
         // Build AI context
         var context = BuildAIContext(aiComponent, entity);
 
@@ -121,6 +127,28 @@ public partial class AISystem : Node
         int actualDelay = speedComponent.CalculateDelay(result.DelayCost);
 
         return actualDelay;
+    }
+
+    /// <summary>
+    /// Processes a sleeping creature's turn.
+    /// Checks wake conditions but otherwise skips action.
+    /// </summary>
+    private int ProcessSleepingCreature(AIComponent aiComponent, SpeedComponent speedComponent)
+    {
+        // Check if player proximity should wake the creature
+        aiComponent.CheckWakeFromPlayerProximity(_player.GridPosition);
+
+        // If still sleeping, skip the turn but use standard delay
+        if (aiComponent.IsSleeping)
+        {
+            return speedComponent.CalculateDelay(ActionDelay.Standard);
+        }
+
+        // Creature woke up - process normal turn
+        var entity = aiComponent.GetEntity();
+        var context = BuildAIContext(aiComponent, entity);
+        var result = ProcessGoalStack(aiComponent, context);
+        return speedComponent.CalculateDelay(result.DelayCost);
     }
 
     /// <summary>

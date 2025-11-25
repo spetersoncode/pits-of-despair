@@ -7,7 +7,7 @@ entries:
   rat:
     name: rat
     description: A filthy dungeon rat with matted fur and gleaming eyes. Disease and desperation have made it bold enough to attack anything.
-    level: 1
+    threat: 1
     strength: -2
     agility: 1
     endurance: -2
@@ -23,7 +23,7 @@ entries:
   elder_rat:
     name: elder rat
     description: A massive rat, bloated on dungeon refuse and grown cunning with age. Its scarred muzzle speaks to countless violent encounters.
-    level: 2
+    threat: 2
     color: Palette.Fur
     strength: 0
     agility: 1

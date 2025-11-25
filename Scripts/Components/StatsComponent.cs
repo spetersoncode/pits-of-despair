@@ -71,10 +71,17 @@ public partial class StatsComponent : Node
 	[Export] public int BaseWill { get; set; } = 0;
 
 	/// <summary>
-	/// Character level (affects HP from Endurance).
+	/// Character level (affects HP from Endurance, used for player progression).
 	/// HP bonus = Endurance × Level
 	/// </summary>
 	[Export] public int Level { get; set; } = 1;
+
+	/// <summary>
+	/// Threat rating for creatures (affects XP rewards and spawn budgets).
+	/// Unbounded scale: 1-5 trivial, 6-15 standard, 16-30 dangerous, 31-50 elite, 51+ boss.
+	/// For players, this is typically 0 (unused).
+	/// </summary>
+	[Export] public int Threat { get; set; } = 0;
 
 	/// <summary>
 	/// Current experience points.

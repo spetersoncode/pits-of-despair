@@ -1,6 +1,6 @@
 # YAML Data System
 
-Game data (creatures, items, bands, spawn tables) is defined in YAML files under `Data/`, loaded at runtime via DataLoader singleton. Type-based smart defaults minimize verbosity while maintaining clarity.
+Game data (creatures, items, spawn configs, encounter templates, faction themes) is defined in YAML files under `Data/`, loaded at runtime via DataLoader singleton. Type-based smart defaults minimize verbosity while maintaining clarity.
 
 ## Design Principles
 
@@ -24,8 +24,9 @@ Game data (creatures, items, bands, spawn tables) is defined in YAML files under
 **ID Generation**: DataLoader creates IDs from filenames with intentionally different patterns by data category:
 - **Creatures**: Filename-only (`rat.yaml` → `"rat"`, `goblin_scout.yaml` → `"goblin_scout"`)
 - **Items**: Type-prefixed (`club.yaml` → `"weapon_club"`, `healing_8.yaml` → `"potion_healing_8"`)
-- **Bands**: Filename-only (`goblin_pack.yaml` → `"goblin_pack"`)
-- **Spawn Tables**: Filename-only (`floor_1.yaml` → `"floor_1"`)
+- **Spawn Configs**: Filename-only (`floor_1.yaml` → `"floor_1"`)
+- **Encounter Templates**: Filename-only (`lair.yaml` → `"lair"`)
+- **Faction Themes**: Filename-only (`goblinoid.yaml` → `"goblinoid"`)
 
 **ID Rationale**: Items use type prefixes because item type drives gameplay mechanics (inventory categorization, equipment slots, usage behavior). Creature type exists only for visual/behavior defaults, not gameplay categorization, so creature IDs remain simple. This split allows `/give weapon_club` to be unambiguous while keeping creature references concise.
 
@@ -57,31 +58,37 @@ Game data (creatures, items, bands, spawn tables) is defined in YAML files under
 
 **Automatic Properties**: `isConsumable`, `isEquippable`, `equipSlot` auto-set based on type unless explicitly overridden.
 
-### Bands
+### Floor Spawn Configs
 
-**Structure**: Leader creature with placement, followers with count dice and positioning.
+**Structure**: Budget dice for power/items/gold, weighted theme and encounter lists, threat limits, out-of-depth settings.
 
-**Required**: name, leader.creatureId, followers array with creatureId and count.dice per entry
+**Required**: name, powerBudget, itemBudget, goldBudget
 
-**Optional**: placement (defaults: "center" for leader, "surrounding" for followers), distance.min/max (defaults: 1/2)
+**Optional**: minFloor/maxFloor (depth range), themeWeights (weighted faction theme list), encounterWeights (weighted encounter template list), minThreat/maxThreat (creature filtering), outOfDepthChance/outOfDepthFloors, uniqueCreatures (guaranteed spawns), items (rarity pools)
 
-**Usage**: Can be defined as standalone files in `Data/Bands/` or inline within spawn tables. External files enable reuse across multiple spawn tables; inline definitions work for level-specific configurations.
+**Budgets**: Dice notation determines total budget per floor generation (`"3d6+8"`). Power budget distributes across regions, consumed by creature threat ratings.
 
-### Spawn Tables
+**Weights**: Theme and encounter weights control selection probability. Higher weight = more likely. Format: `[{id: "goblinoid", weight: 40}, {id: "undead", weight: 30}]`
 
-**Structure**: Budget dice for creatures/items/gold, weighted pools containing weighted entries.
+### Encounter Templates
 
-**Budgets**: Dice notation determines spawn points per level generation (`"2d20+60"`).
+**Structure**: Template type, budget range, slots defining creature composition, AI configuration.
 
-**Pools**: Weighted categories (common/uncommon/rare) selected randomly based on weights. Higher weight = more likely selection.
+**Required**: name, type (Lair, Patrol, Ambush, GuardPost, TreasureGuard, Infestation, Pack)
 
-**Entry Types**:
-- `single`: One creature
-- `multiple`: Small group using count dice
-- `band`: Creature band (bandId reference or inline definition)
-- `unique`: Spawns once per level maximum
+**Optional**: minBudget/maxBudget (encounter cost range), minRegionSize (spatial requirement), slots (creature slot definitions), placement preferences, aiConfig (initial state, territory, wake conditions)
 
-**Defaults**: Entry weight defaults to 1 (equal probability within pool), count defaults to "1", type defaults to "single".
+**Slots**: Define creature roles within encounter. Each slot specifies: role (leader, follower, guard), preferredArchetypes (archetype filter), minCount/maxCount (dice notation), threatMultiplier, placement strategy.
+
+**AI Config**: Controls spawned creature behavior—initialState (sleeping for ambush), territoryBound, wakeDistance, leaderBehavior.
+
+### Faction Themes
+
+**Structure**: Creature grouping with floor range and visual identity.
+
+**Required**: name, creatures (ID list)
+
+**Optional**: minFloor/maxFloor (depth filtering), color (territory display)
 
 ## Field Naming Standards
 
@@ -103,7 +110,7 @@ String format for random values: `"XdY+Z"` where X = number of dice, Y = die siz
 
 ## Comments in Data Files
 
-YAML comments (`#`) document complex structures, explain design decisions, and clarify optional fields. See `Data/SpawnTables/floor_1.yaml` for comprehensive commenting example showing both inline and end-of-line comment patterns.
+YAML comments (`#`) document complex structures, explain design decisions, and clarify optional fields. See `Data/SpawnConfigs/floor_1.yaml` for comprehensive commenting example showing both inline and end-of-line comment patterns.
 
 ## Adding New Types
 
@@ -115,5 +122,5 @@ YAML comments (`#`) document complex structures, explain design decisions, and c
 
 ## See Also
 
-- [spawning.md](spawning.md) - Spawn table YAML format
+- [spawning.md](spawning.md) - Spawning system architecture and YAML formats
 - [glyphs.md](glyphs.md) - Glyph and color assignment patterns

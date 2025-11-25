@@ -212,8 +212,8 @@ public partial class EntityManager : Node
 
             if (creatureStats != null && playerStats != null && killedByPlayerFaction)
             {
-                // Calculate XP reward using delta-based formula
-                int xpAwarded = CalculateXPReward(creatureStats.Level, playerStats.Level);
+                // Calculate XP reward using threat-based formula
+                int xpAwarded = CalculateXPReward(creatureStats.Threat, playerStats.Level);
 
                 // Award XP to player
                 playerStats.GainExperience(xpAwarded);
@@ -238,21 +238,21 @@ public partial class EntityManager : Node
         if (creatureStats == null || playerStats == null)
             return 0;
 
-        return CalculateXPReward(creatureStats.Level, playerStats.Level);
+        return CalculateXPReward(creatureStats.Threat, playerStats.Level);
     }
 
     /// <summary>
-    /// Calculates XP reward based on creature level vs player level.
-    /// Formula: baseXP × (1.0 + (creatureLevel - playerLevel) × 0.3) with 20% minimum floor
-    /// Base XP: creatureLevel × 8
+    /// Calculates XP reward based on creature threat vs player level.
+    /// Formula: baseXP × (1.0 + (creatureThreat - playerLevel) × 0.3) with 20% minimum floor
+    /// Base XP: creatureThreat × 8
     /// </summary>
-    private int CalculateXPReward(int creatureLevel, int playerLevel)
+    private int CalculateXPReward(int creatureThreat, int playerLevel)
     {
-        // Base XP scales with creature level
-        int baseXP = creatureLevel * 8;
+        // Base XP scales with creature threat rating
+        int baseXP = creatureThreat * 8;
 
-        // Delta multiplier: +30% per level above player, -30% per level below
-        float deltaMultiplier = 1.0f + (creatureLevel - playerLevel) * 0.3f;
+        // Delta multiplier: +30% per threat above player level, -30% per threat below
+        float deltaMultiplier = 1.0f + (creatureThreat - playerLevel) * 0.3f;
 
         // Apply minimum floor of 20% (never less than 1 XP for level 1+ creatures)
         float finalMultiplier = Mathf.Max(0.2f, deltaMultiplier);

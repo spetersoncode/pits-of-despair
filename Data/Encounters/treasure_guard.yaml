@@ -1,0 +1,32 @@
+name: Treasure Guard
+type: TreasureGuard
+minBudget: 3
+maxBudget: 15
+minRegionSize: 9
+
+slots:
+  - role: guardian
+    preferredArchetypes:
+      - elite
+      - tank
+      - brute
+    minCount: "1"
+    maxCount: "1"
+    threatMultiplier: 1.5
+    placement: center
+
+placement:
+  preferredRegions:
+    - treasure_room
+    - dead_end
+  minDistanceFromEntrance: 15
+  preferNearChokepoints: false
+  preferEdges: false
+
+aiConfig:
+  initialState: guarding
+  followersProtectLeader: false
+  territoryBound: true
+  leaderYellsForHelp: false
+  generatePatrolRoute: false
+  wakeRadius: 0

@@ -1,0 +1,10 @@
+name: Goblinoid
+description: Cruel, cunning humanoids that infest the upper dungeon levels
+color: Palette.Minion
+minFloor: 1
+maxFloor: 5
+creatures:
+  - goblin
+  - goblin_archer
+  - goblin_ruffian
+  - goblin_scout

@@ -1,0 +1,64 @@
+name: "Deeper Halls"
+minFloor: 5
+maxFloor: 5
+
+powerBudget: "4d6+10"
+itemBudget: "1d6+2"
+goldBudget: "5d10+30"
+
+minThreat: 1
+maxThreat: 5
+
+outOfDepthChance: 0.12
+outOfDepthFloors: 2
+
+# Last goblinoid floor, balanced themes
+themeWeights:
+  - id: goblinoid
+    weight: 35
+  - id: undead
+    weight: 35
+  - id: beast
+    weight: 30
+
+encounterWeights:
+  - id: patrol
+    weight: 25
+  - id: pack
+    weight: 25
+  - id: guard_post
+    weight: 20
+  - id: ambush
+    weight: 15
+  - id: treasure_guard
+    weight: 10
+  - id: lair
+    weight: 5
+
+items:
+  commonItems:
+    - potion_strength_1
+    - potion_agility_1
+    - potion_endurance_1
+    - potion_armor_1
+    - potion_will_1
+  uncommonItems:
+    - potion_strength_2
+    - potion_agility_2
+    - potion_endurance_2
+    - potion_armor_2
+    - potion_will_2
+  rareItems:
+    - potion_haste
+    - potion_strength_3
+    - potion_agility_3
+    - potion_armor_3
+  epicItems:
+    - potion_endurance_3
+    - potion_will_3
+  unguardedItemChance: 0.25
+  minGuardedRarity: rare
+  commonWeight: 50
+  uncommonWeight: 30
+  rareWeight: 15
+  epicWeight: 5

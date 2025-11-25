@@ -8,7 +8,7 @@ entries:
   cat:
     name: cat
     description: A scrawny dungeon cat with keen eyes and quick reflexes. It survived down here by being faster and smarter than the rats.
-    level: 1
+    threat: 1
     glyph: c
     color: "#c8a060"
     strength: -1

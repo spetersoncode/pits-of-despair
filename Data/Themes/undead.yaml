@@ -1,0 +1,8 @@
+name: Undead
+description: Shambling corpses and animated bones driven by dark magic
+color: Palette.Clay
+minFloor: 2
+maxFloor: 10
+creatures:
+  - skeleton
+  - zombie

@@ -48,4 +48,16 @@ public class SpawnHint
     /// Count of entities to spawn (dice notation or fixed).
     /// </summary>
     public string Count { get; set; } = "1";
+
+    /// <summary>
+    /// Override faction theme ID for this region.
+    /// If set, the region will use this theme instead of random selection.
+    /// </summary>
+    public string ThemeId { get; set; }
+
+    /// <summary>
+    /// Override encounter template ID.
+    /// If set, forces this specific encounter type.
+    /// </summary>
+    public string EncounterTemplateId { get; set; }
 }

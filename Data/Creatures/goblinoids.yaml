@@ -8,7 +8,7 @@ entries:
     name: goblin
     description: A wretched creature with yellowed eyes and jagged teeth. It clutches its weapon with malicious intent, eager for violence.
     color: Palette.Minion
-    level: 1
+    threat: 1
     strength: 0
     agility: 0
     endurance: -1
@@ -20,7 +20,7 @@ entries:
     name: goblin archer
     description: A goblin armed with a crude bow. It keeps its distance, raining arrows on intruders from afar.
     color: Palette.Archer
-    level: 2
+    threat: 2
     strength: -1
     agility: 2
     endurance: -1
@@ -35,7 +35,7 @@ entries:
   goblin_ruffian:
     name: goblin ruffian
     description: A brutish specimen, larger and meaner than its kin. Scars criss-cross its hide, and its crude weapon has seen considerable use.
-    level: 2
+    threat: 2
     color: Palette.Brute
     strength: 1
     agility: -1
@@ -47,7 +47,7 @@ entries:
   goblin_scout:
     name: goblin scout
     description: A scrawny goblin with wide, darting eyes. It looks ready to bolt at the first sign of real danger, shrieking for help.
-    level: 1
+    threat: 1
     color: Palette.Scout
     strength: -2
     agility: 2

@@ -19,6 +19,7 @@ public static class DebugCommandFactory
         { "reveal", () => new RevealCommand() },
         { "skill", () => new SkillCommand() },
         { "spawn", () => new SpawnCommand() },
+        { "spawnstats", () => new SpawnStatsCommand() },
         { "stairs", () => new StairsCommand() }
     };
 

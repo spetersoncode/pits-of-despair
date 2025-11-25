@@ -29,7 +29,7 @@ See **[README.md](../README.md)** for game overview, mechanics, and technical st
 - **[components.md](components.md)**: Component-based entity composition patterns
 - **[dungeon-generator.md](dungeon-generator.md)**: Binary Space Partitioning algorithm for procedural dungeon generation
 - **[entities.md](entities.md)**: Entity architecture and lifecycle management
-- **[spawning.md](spawning.md)**: Budget-based dungeon population with weighted spawn tables
+- **[spawning.md](spawning.md)**: Region-based dungeon population with encounter templates and faction themes
 - **[turn-based.md](turn-based.md)**: Turn-based coordination and phase management
 - **[yaml.md](yaml.md)**: YAML data system with type-based defaults and content creation patterns
 

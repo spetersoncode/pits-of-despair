@@ -1,0 +1,32 @@
+name: Ambush
+type: Ambush
+minBudget: 3
+maxBudget: 12
+minRegionSize: 9
+
+slots:
+  - role: ambusher
+    preferredArchetypes:
+      - assassin
+      - warrior
+      - ranged
+    minCount: "1d2"
+    maxCount: "1d3"
+    threatMultiplier: 1.2
+    placement: near_walls
+
+placement:
+  preferredRegions:
+    - small
+    - passage
+  minDistanceFromEntrance: 8
+  preferNearChokepoints: true
+  preferEdges: true
+
+aiConfig:
+  initialState: sleeping
+  followersProtectLeader: false
+  territoryBound: false
+  leaderYellsForHelp: false
+  generatePatrolRoute: false
+  wakeRadius: 5

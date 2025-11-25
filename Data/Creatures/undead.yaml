@@ -7,7 +7,7 @@ entries:
   skeleton:
     name: skeleton
     description: Animated bones held together by dark magic. Empty sockets regard you with hollow purpose, and its claws reach for your flesh.
-    level: 1
+    threat: 1
     strength: 0
     agility: 0
     endurance: -1
@@ -28,7 +28,7 @@ entries:
     name: zombie
     color: Palette.Clay
     description: A shambling corpse animated by dark magic. Its rotting flesh is resilient but its movements are sluggish.
-    level: 2
+    threat: 2
     speed: 8
     strength: 1
     agility: -2

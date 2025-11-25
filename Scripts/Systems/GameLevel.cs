@@ -40,7 +40,7 @@ public partial class GameLevel : Node
     private MovementSystem _movementSystem;
     private EntityManager _entityManager;
     private EntityFactory _entityFactory;
-    private SpawnManager _spawnManager;
+    private SpawnOrchestrator _spawnOrchestrator;
     private PlayerVisionSystem _visionSystem;
     private NonPlayerVisionSystem _nonPlayerVisionSystem;
     private CombatSystem _combatSystem;
@@ -72,7 +72,7 @@ public partial class GameLevel : Node
         _movementSystem = GetNode<MovementSystem>("MovementSystem");
         _entityManager = GetNode<EntityManager>("EntityManager");
         _entityFactory = GetNode<EntityFactory>("EntityFactory");
-        _spawnManager = GetNode<SpawnManager>("SpawnManager");
+        _spawnOrchestrator = GetNode<SpawnOrchestrator>("SpawnOrchestrator");
         _visionSystem = GetNode<PlayerVisionSystem>("PlayerVisionSystem");
         _nonPlayerVisionSystem = GetNode<NonPlayerVisionSystem>("NonPlayerVisionSystem");
         _combatSystem = GetNode<CombatSystem>("CombatSystem");
@@ -130,7 +130,7 @@ public partial class GameLevel : Node
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
 
-        _spawnManager.SetDependencies(_entityFactory, _entityManager, _mapSystem, FloorDepth);
+        _spawnOrchestrator.SetDependencies(_entityFactory, _entityManager, _mapSystem, FloorDepth);
 
         var playerSpawn = _mapSystem.GetValidSpawnPosition();
         _player.Initialize(playerSpawn);
@@ -245,7 +245,7 @@ public partial class GameLevel : Node
         _aiSystem.SetEntityFactory(_entityFactory);
         _aiSystem.SetVisualEffectSystem(_visualEffectSystem);
 
-        _spawnManager.PopulateDungeon(playerSpawn);
+        _spawnOrchestrator.PopulateFloor(playerSpawn);
 
         foreach (var entity in _entityManager.GetAllEntities())
         {
@@ -295,7 +295,8 @@ public partial class GameLevel : Node
             dataLoader,
             _aiSystem,
             _movementSystem,
-            _timeSystem
+            _timeSystem,
+            _spawnOrchestrator
         );
 
         // Get persistent debug mode state from GameManager (if it exists)

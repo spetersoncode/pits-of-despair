@@ -1,0 +1,8 @@
+name: Vermin
+description: Diseased rodents and other dungeon pests
+color: Palette.Minion
+minFloor: 1
+maxFloor: 3
+creatures:
+  - rat
+  - elder_rat
