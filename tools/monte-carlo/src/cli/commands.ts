@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { SeededRng, defaultRng } from '../data/DiceNotation.js';
+import { SeededRng } from '../data/DiceNotation.js';
 import {
   loadGameData,
   listCreatures,
@@ -14,7 +14,47 @@ import {
 import { runDuel } from '../scenarios/DuelScenario.js';
 import { runGroupBattle, parseTeamString } from '../scenarios/GroupScenario.js';
 import { printResults, printCompactResult } from '../output/ConsoleReporter.js';
+import { writeJsonFile, printJson } from '../output/JsonReporter.js';
+import { writeCsvFile, printCsv } from '../output/CsvReporter.js';
 import { calculateMaxHealth } from '../simulation/Combatant.js';
+import type { AggregateResult } from '../data/types.js';
+
+type OutputFormat = 'console' | 'json' | 'csv';
+
+/**
+ * Handle output based on format and file options.
+ */
+function handleOutput(
+  result: AggregateResult,
+  format: OutputFormat,
+  outfile?: string,
+  compact?: boolean
+): void {
+  switch (format) {
+    case 'json':
+      if (outfile) {
+        writeJsonFile(result, outfile.endsWith('.json') ? outfile : `${outfile}.json`);
+      } else {
+        printJson(result);
+      }
+      break;
+    case 'csv':
+      if (outfile) {
+        writeCsvFile([result], outfile.endsWith('.csv') ? outfile : `${outfile}.csv`);
+      } else {
+        printCsv([result]);
+      }
+      break;
+    case 'console':
+    default:
+      if (compact) {
+        printCompactResult(result);
+      } else {
+        printResults(result);
+      }
+      break;
+  }
+}
 
 /**
  * Create the CLI program.
@@ -35,7 +75,9 @@ export function createProgram(): Command {
     .option('-s, --seed <number>', 'Random seed for reproducibility')
     .option('--equip-a <items>', 'Equipment overrides for creature A (comma-separated)')
     .option('--equip-b <items>', 'Equipment overrides for creature B (comma-separated)')
-    .option('-c, --compact', 'Compact output format')
+    .option('-o, --output <format>', 'Output format: console, json, csv', 'console')
+    .option('--outfile <path>', 'Output file path (for json/csv)')
+    .option('-c, --compact', 'Compact console output')
     .action((creatureA, creatureB, options) => {
       const iterations = parseInt(options.iterations, 10);
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
@@ -58,11 +100,7 @@ export function createProgram(): Command {
         rng
       );
 
-      if (options.compact) {
-        printCompactResult(result);
-      } else {
-        printResults(result);
-      }
+      handleOutput(result, options.output as OutputFormat, options.outfile, options.compact);
     });
 
   // Group battle command
@@ -71,7 +109,9 @@ export function createProgram(): Command {
     .description('Run a group battle simulation (e.g., "goblin:3" "skeleton:2")')
     .option('-n, --iterations <number>', 'Number of iterations', '1000')
     .option('-s, --seed <number>', 'Random seed for reproducibility')
-    .option('-c, --compact', 'Compact output format')
+    .option('-o, --output <format>', 'Output format: console, json, csv', 'console')
+    .option('--outfile <path>', 'Output file path (for json/csv)')
+    .option('-c, --compact', 'Compact console output')
     .action((teamAStr, teamBStr, options) => {
       const iterations = parseInt(options.iterations, 10);
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
@@ -84,11 +124,7 @@ export function createProgram(): Command {
 
       const result = runGroupBattle({ teamA, teamB, iterations }, gameData, rng);
 
-      if (options.compact) {
-        printCompactResult(result);
-      } else {
-        printResults(result);
-      }
+      handleOutput(result, options.output as OutputFormat, options.outfile, options.compact);
     });
 
   // List creatures command
