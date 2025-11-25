@@ -13,6 +13,7 @@ import {
 } from '../data/DataLoader.js';
 import { runDuel } from '../scenarios/DuelScenario.js';
 import { runGroupBattle, parseTeamString } from '../scenarios/GroupScenario.js';
+import { runVariations, printVariationResults } from '../scenarios/VariationScenario.js';
 import { printResults, printCompactResult } from '../output/ConsoleReporter.js';
 import { writeJsonFile, printJson } from '../output/JsonReporter.js';
 import { writeCsvFile, printCsv } from '../output/CsvReporter.js';
@@ -125,6 +126,75 @@ export function createProgram(): Command {
       const result = runGroupBattle({ teamA, teamB, iterations }, gameData, rng);
 
       handleOutput(result, options.output as OutputFormat, options.outfile, options.compact);
+    });
+
+  // Variation command
+  program
+    .command('variation <creature> <opponent>')
+    .description('Test different equipment loadouts (e.g., variation goblin skeleton --var "club:weapon_club" --var "spear:weapon_spear")')
+    .option('-n, --iterations <number>', 'Number of iterations per variation', '1000')
+    .option('-s, --seed <number>', 'Random seed for reproducibility')
+    .option('--var <spec>', 'Variation spec "name:item1,item2" (can repeat)', (val, prev: string[]) => [...prev, val], [])
+    .action((creature, opponent, options) => {
+      const iterations = parseInt(options.iterations, 10);
+      const seed = options.seed ? parseInt(options.seed, 10) : undefined;
+      const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
+
+      if (options.var.length === 0) {
+        console.error('At least one --var option required');
+        process.exit(1);
+      }
+
+      const variations = options.var.map((spec: string) => {
+        const [name, ...equipParts] = spec.split(':');
+        const equipment = equipParts.join(':').split(',').map((s: string) => s.trim()).filter(Boolean);
+        return {
+          name: name.trim(),
+          equipmentOverrides: equipment.length > 0 ? equipment : undefined,
+        };
+      });
+
+      const gameData = loadGameData();
+      const results = runVariations(
+        { baseCreature: creature, opponent, variations, iterations },
+        gameData,
+        rng
+      );
+
+      printVariationResults(results);
+    });
+
+  // Matrix command - run all creatures vs all creatures
+  program
+    .command('matrix')
+    .description('Run all creatures against each other')
+    .option('-n, --iterations <number>', 'Number of iterations per matchup', '500')
+    .option('-s, --seed <number>', 'Random seed')
+    .option('-o, --output <format>', 'Output format: console, csv', 'console')
+    .option('--outfile <path>', 'Output file path')
+    .action((options) => {
+      const iterations = parseInt(options.iterations, 10);
+      const seed = options.seed ? parseInt(options.seed, 10) : undefined;
+      const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
+
+      const gameData = loadGameData();
+      const creatures = listCreatures(gameData);
+      const results: AggregateResult[] = [];
+
+      console.log(`\nRunning ${creatures.length}x${creatures.length} matrix (${creatures.length * creatures.length} matchups)...\n`);
+
+      for (const a of creatures) {
+        for (const b of creatures) {
+          if (a === b) continue;
+          const result = runDuel({ creatureA: a, creatureB: b, iterations }, gameData, rng);
+          results.push(result);
+          printCompactResult(result);
+        }
+      }
+
+      if (options.output === 'csv' && options.outfile) {
+        writeCsvFile(results, options.outfile.endsWith('.csv') ? options.outfile : `${options.outfile}.csv`);
+      }
     });
 
   // List creatures command
