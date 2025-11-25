@@ -1,0 +1,50 @@
+name: "Dungeon Entrance"
+minFloor: 1
+maxFloor: 1
+
+# Low power budget for introductory floor
+powerBudget: "2d4+4"
+itemBudget: "1d3+1"
+goldBudget: "2d10+10"
+
+# Threat limits - keep creatures easy
+minThreat: 1
+maxThreat: 2
+
+# No out-of-depth on first floor
+outOfDepthChance: 0.0
+
+# Available themes (vermin and goblins only)
+themeWeights:
+  - id: vermin
+    weight: 60
+  - id: goblinoid
+    weight: 40
+
+# Encounter types - simple encounters
+encounterWeights:
+  - id: infestation
+    weight: 40
+  - id: patrol
+    weight: 30
+  - id: pack
+    weight: 30
+
+# Item configuration
+items:
+  commonItems:
+    - potion_strength_1
+    - potion_agility_1
+    - potion_endurance_1
+    - potion_armor_1
+  uncommonItems:
+    - potion_strength_2
+    - potion_agility_2
+  rareItems: []
+  epicItems: []
+  unguardedItemChance: 0.5
+  minGuardedRarity: uncommon
+  commonWeight: 80
+  uncommonWeight: 20
+  rareWeight: 0
+  epicWeight: 0
