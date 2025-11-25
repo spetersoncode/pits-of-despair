@@ -1,0 +1,32 @@
+name: shrine
+description: "Small shrine room with altar"
+
+dimensions:
+  width: 7
+  height: 7
+
+tiles:
+  - "#######"
+  - "#.....#"
+  - "#.....#"
+  - "#..A..#"
+  - "#.....#"
+  - "#.....#"
+  - "#######"
+
+legend:
+  A:
+    type: spawn_point
+    tag: altar
+
+placement:
+  minFloor: 1
+  maxFloor: 99
+  frequency: uncommon
+  minRegionSize: 49
+
+spawnHints:
+  altar:
+    spawnType: single
+    itemPool: consumables
+    placement: center

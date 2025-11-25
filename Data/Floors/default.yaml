@@ -1,0 +1,48 @@
+name: default
+description: "Standard BSP dungeon layout"
+seed: -1
+width: 100
+height: 100
+
+minFloor: 1
+maxFloor: 99
+
+pipeline:
+  - pass: bsp
+    priority: 0
+    config:
+      minPartitionSize: 8
+      maxPartitionSize: 14
+      minRoomWidth: 6
+      maxRoomWidth: 12
+      minRoomHeight: 6
+      maxRoomHeight: 12
+      corridorWidth: 1
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 20
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 25
+      maxWalkablePercent: 55
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 16
+      maxPassageWidth: 2
+
+metadata:
+  minRegionSize: 16
+  maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+    - exit
+
+spawnTable: floor_1

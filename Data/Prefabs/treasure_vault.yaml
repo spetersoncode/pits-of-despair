@@ -1,0 +1,41 @@
+name: treasure_vault
+description: "Sealed vault with treasure and guardian"
+
+dimensions:
+  width: 9
+  height: 7
+
+tiles:
+  - "#########"
+  - "#.......#"
+  - "#..*....#"
+  - "#...G...#"
+  - "#..*....#"
+  - "#.......#"
+  - "#########"
+
+legend:
+  G:
+    type: spawn_point
+    tag: guardian
+  "*":
+    type: spawn_point
+    tag: treasure
+
+placement:
+  minFloor: 3
+  maxFloor: 99
+  frequency: rare
+  minRegionSize: 63
+
+spawnHints:
+  guardian:
+    spawnType: single
+    creaturePool:
+      - skeleton
+      - goblin_warrior
+    placement: center
+  treasure:
+    spawnType: single
+    itemPool: valuable
+    placement: random

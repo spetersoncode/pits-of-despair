@@ -1,0 +1,54 @@
+name: floor_hybrid
+description: "BSP rooms with some cave-transformed sections"
+seed: -1
+width: 100
+height: 100
+
+minFloor: 9
+maxFloor: 12
+
+pipeline:
+  - pass: bsp
+    priority: 0
+    config:
+      minPartitionSize: 10
+      maxPartitionSize: 16
+      minRoomWidth: 8
+      maxRoomWidth: 14
+      minRoomHeight: 8
+      maxRoomHeight: 14
+      corridorWidth: 2
+
+  - pass: cellular_automata
+    priority: 100
+    config:
+      role: modifier
+      iterations: 4
+      birthLimit: 4
+      deathLimit: 3
+      targetRegions:
+        type: random
+        count: 2
+        filter:
+          minArea: 64
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 25
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 25
+      maxWalkablePercent: 55
+
+  - pass: metadata
+    priority: 999
+
+metadata:
+  minRegionSize: 16
+  maxPassageWidth: 2
+
+spawnTable: floor_9

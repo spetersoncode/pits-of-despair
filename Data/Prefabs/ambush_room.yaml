@@ -1,0 +1,45 @@
+name: ambush_room
+description: "Room with hidden enemies in corners"
+
+dimensions:
+  width: 9
+  height: 9
+
+tiles:
+  - "#########"
+  - "#E.....E#"
+  - "#.......#"
+  - "#.......#"
+  - "#...L...#"
+  - "#.......#"
+  - "#.......#"
+  - "#E.....E#"
+  - "#########"
+
+legend:
+  E:
+    type: spawn_point
+    tag: ambusher
+  L:
+    type: spawn_point
+    tag: loot
+
+placement:
+  minFloor: 2
+  maxFloor: 99
+  frequency: common
+  minRegionSize: 81
+
+spawnHints:
+  ambusher:
+    spawnType: single
+    creaturePool:
+      - rat
+      - bat
+      - goblin
+    placement: random
+    count: "1d2"
+  loot:
+    spawnType: single
+    itemPool: common
+    placement: center

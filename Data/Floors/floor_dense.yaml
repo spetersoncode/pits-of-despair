@@ -1,0 +1,41 @@
+name: floor_dense
+description: "Dense dungeon with smaller rooms"
+seed: -1
+width: 100
+height: 100
+
+minFloor: 3
+maxFloor: 5
+
+pipeline:
+  - pass: bsp
+    priority: 0
+    config:
+      minPartitionSize: 6
+      maxPartitionSize: 10
+      minRoomWidth: 4
+      maxRoomWidth: 8
+      minRoomHeight: 4
+      maxRoomHeight: 8
+      corridorWidth: 1
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 20
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 30
+      maxWalkablePercent: 60
+
+  - pass: metadata
+    priority: 999
+
+metadata:
+  minRegionSize: 12
+  maxPassageWidth: 2
+
+spawnTable: floor_3

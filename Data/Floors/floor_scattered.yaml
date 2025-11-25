@@ -1,0 +1,54 @@
+name: floor_scattered
+description: "Chaotic room layout using simple room placement"
+seed: -1
+width: 100
+height: 100
+
+minFloor: 4
+maxFloor: 6
+
+pipeline:
+  - pass: simple_rooms
+    priority: 0
+    config:
+      roomAttempts: 40
+      minRooms: 8
+      maxRooms: 14
+      minRoomWidth: 5
+      maxRoomWidth: 11
+      minRoomHeight: 5
+      maxRoomHeight: 11
+      roomSpacing: 3
+      corridorWidth: 1
+      lShaped: true
+      extraConnectionChance: 20
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 25
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 15
+      maxWalkablePercent: 45
+      minRegions: 5
+      warnOnFail: true
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 16
+      maxPassageWidth: 2
+
+metadata:
+  minRegionSize: 16
+  maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+    - exit
+
+spawnTable: floor_1

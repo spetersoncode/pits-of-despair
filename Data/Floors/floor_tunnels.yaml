@@ -1,0 +1,50 @@
+name: floor_tunnels
+description: "Winding tunnel network using drunkard's walk algorithm"
+seed: -1
+width: 100
+height: 100
+
+minFloor: 3
+maxFloor: 5
+
+pipeline:
+  - pass: drunkard_walk
+    priority: 0
+    config:
+      targetFloorPercent: 35
+      walkerCount: 3
+      maxStepsPerWalker: 5000
+      tunnelWidth: 1
+      turnChance: 40
+      startFromCenter: true
+      roomChance: 8
+      minRoomSize: 4
+      maxRoomSize: 7
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 30
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 20
+      maxWalkablePercent: 50
+      warnOnFail: true
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 12
+      maxPassageWidth: 2
+
+metadata:
+  minRegionSize: 12
+  maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+
+spawnTable: floor_1
