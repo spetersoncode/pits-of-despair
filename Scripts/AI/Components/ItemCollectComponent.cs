@@ -1,9 +1,10 @@
 using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
+using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// Makes creature opportunistically pick up valuable items when bored.

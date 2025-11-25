@@ -3,7 +3,7 @@ using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Helpers;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// Makes creature follow their protection target (leader) when bored.

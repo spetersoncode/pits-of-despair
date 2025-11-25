@@ -69,7 +69,7 @@ public partial class NonPlayerVisionSystem : Node
             if (visiblePositions.Contains(playerPos))
             {
                 // Trigger JoinPlayerOnSight behavior
-                var joinComponent = entity.GetNodeOrNull<Components.AI.JoinPlayerOnSightComponent>("JoinPlayerOnSightComponent");
+                var joinComponent = entity.GetNodeOrNull<AI.Components.JoinPlayerOnSightComponent>("JoinPlayerOnSightComponent");
                 if (joinComponent != null)
                 {
                     joinComponent.OnPlayerSeen(_combatSystem);

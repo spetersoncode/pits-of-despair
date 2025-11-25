@@ -391,15 +391,15 @@ public partial class EntityFactory : Node
     {
         Node component = componentName switch
         {
-            "CowardlyComponent" => new Components.AI.CowardlyComponent(),
-            "YellForHelpComponent" => new Components.AI.YellForHelpComponent(),
-            "ShootAndScootComponent" => new Components.AI.ShootAndScootComponent(),
-            "ItemUsageComponent" => new Components.AI.ItemUsageComponent(),
-            "JoinPlayerOnSightComponent" => new Components.AI.JoinPlayerOnSightComponent(),
-            "WanderingComponent" => new Components.AI.WanderingComponent(),
-            "ItemCollectComponent" => new Components.AI.ItemCollectComponent(),
-            "PatrolComponent" => new Components.AI.PatrolComponent(),
-            "FollowLeaderComponent" => new Components.AI.FollowLeaderComponent(),
+            "CowardlyComponent" => new AI.Components.CowardlyComponent(),
+            "YellForHelpComponent" => new AI.Components.YellForHelpComponent(),
+            "ShootAndScootComponent" => new AI.Components.ShootAndScootComponent(),
+            "ItemUsageComponent" => new AI.Components.ItemUsageComponent(),
+            "JoinPlayerOnSightComponent" => new AI.Components.JoinPlayerOnSightComponent(),
+            "WanderingComponent" => new AI.Components.WanderingComponent(),
+            "ItemCollectComponent" => new AI.Components.ItemCollectComponent(),
+            "PatrolComponent" => new AI.Components.PatrolComponent(),
+            "FollowLeaderComponent" => new AI.Components.FollowLeaderComponent(),
             _ => null
         };
 

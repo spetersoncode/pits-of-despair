@@ -1,9 +1,10 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// AI component that causes the entity to join the player's faction when it sees the player.

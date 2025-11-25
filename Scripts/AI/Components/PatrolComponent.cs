@@ -2,7 +2,7 @@ using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// Makes creature patrol to random distant locations when bored.

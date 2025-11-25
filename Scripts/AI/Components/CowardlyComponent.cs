@@ -3,7 +3,7 @@ using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// Makes creature flee instead of fight when it sees enemies.

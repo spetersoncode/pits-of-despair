@@ -6,7 +6,7 @@ using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Components;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// AI component that allows creatures to use consumable items from inventory.

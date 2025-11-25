@@ -3,7 +3,7 @@ using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// AI component that causes creatures to retreat after successful ranged attacks.

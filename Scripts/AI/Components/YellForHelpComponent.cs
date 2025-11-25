@@ -3,7 +3,7 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.AI;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Components.AI;
+namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// Causes creature to periodically yell for help, alerting nearby allies.
