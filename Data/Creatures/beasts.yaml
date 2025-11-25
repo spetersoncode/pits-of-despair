@@ -1,0 +1,56 @@
+type: beasts
+defaults:
+  glyph: d
+  color: Palette.Minion
+
+entries:
+  wild_dog:
+    name: wild dog
+    description: A feral hound with matted fur and hungry eyes. It travels in packs, following an alpha that leads them through the dungeon corridors.
+    threat: 1
+    strength: 0
+    agility: 1
+    endurance: 0
+    health: 6
+    attacks:
+      - name: bite
+        type: Melee
+        dice: "1d3"
+        damageType: Piercing
+    ai:
+      - type: FollowLeader
+
+  cave_lizard:
+    name: cave lizard
+    description: A pale reptile with unblinking eyes, adapted to the eternal darkness below. It lies motionless until prey draws near, then strikes with surprising speed.
+    glyph: l
+    threat: 1
+    strength: 0
+    agility: 1
+    endurance: 0
+    health: 5
+    attacks:
+      - name: bite
+        type: Melee
+        dice: "1d3"
+        damageType: Piercing
+    ai:
+      - type: Wandering
+
+  wild_boar:
+    name: wild boar
+    description: A bristly pig with curved tusks and a foul temper. It lowers its head and charges without hesitation, trampling anything in its path.
+    glyph: b
+    color: Palette.Fur
+    threat: 2
+    strength: 1
+    agility: -1
+    endurance: 1
+    health: 6
+    attacks:
+      - name: headbutt
+        type: Melee
+        dice: "1d4"
+        damageType: Bludgeoning
+    ai:
+      - type: Wandering

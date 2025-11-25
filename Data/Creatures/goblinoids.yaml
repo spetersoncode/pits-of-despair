@@ -62,3 +62,15 @@ entries:
         type: Melee
         dice: "1d2"
         damageType: Piercing
+
+  goblin_cutter:
+    name: goblin cutter
+    description: A sneering goblin with a chipped blade. It favors quick slashes over brute force, darting in to nick and slash.
+    color: Palette.Assassin
+    threat: 1
+    strength: 0
+    agility: 1
+    endurance: -1
+    health: 5
+    equipment:
+      - weapon_rusty_knife
