@@ -24,3 +24,4 @@ exports/
 
 # Claude Code
 .claude/settings.local.json
+.claude/plans/
