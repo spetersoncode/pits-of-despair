@@ -1,8 +1,40 @@
 # Dungeon Generator
 
-Binary Space Partitioning (BSP) algorithm creates procedurally generated tile-based dungeons through recursive subdivision, room carving, and corridor connection. Extensible architecture supports multiple generation algorithms through factory and strategy patterns.
+Modular pipeline-based dungeon generation supporting multiple algorithms (BSP, Cellular Automata, Drunkard's Walk, Simple Room Placement). YAML-configurable passes enable complex generation workflows with post-processing for connectivity, validation, and metadata analysis.
 
-## Core Architecture
+## Pipeline Architecture
+
+**Pass-Based Generation**: Generation pipeline executes ordered passes on shared context. Each pass implements `IGenerationPass` interface with priority-based execution. Three roles: Base (primary topology), Modifier (transforms existing), PostProcess (analysis/repair). Pipeline validates exactly one Base pass exists.
+
+**YAML Configuration**: Floor configs define pipeline in `Data/Floors/*.yaml`. Each pass specifies algorithm, priority, and parameters. Configs support floor depth ranges for progression. See `Data/Floors/default.yaml` for reference.
+
+**Generation Context**: Shared state passed through all passes containing grid, metadata, random instance, and inter-pass data. Passes read/write grid and contribute to metadata. Context provides utility methods for bounds checking and tile operations.
+
+**Metadata System**: `DungeonMetadata` captures spatial analysis (regions, passages, chokepoints, distance fields). Algorithm-agnostic—works with any base generator. Enables intelligent spawning and AI behavior.
+
+## Available Passes
+
+### Base Generators
+
+**BSP** (`bsp`): Binary Space Partitioning creates structured room-corridor layouts. Recursively divides space, creates rooms in leaves, connects via L-shaped corridors. Produces predictable, balanced dungeons.
+
+**Cellular Automata** (`cellular_automata`): Cave generation via noise and iteration rules. Can be Base (generate caves) or Modifier (transform existing regions). Produces organic, irregular shapes.
+
+**Drunkard's Walk** (`drunkard_walk`): Random walk tunnel carving. Multiple walkers create branching passages. Optional room creation along paths. Produces winding, organic tunnel networks.
+
+**Simple Room Placement** (`simple_rooms`): Scatter rooms randomly, connect with MST. Less structured than BSP, more chaotic layouts. Supports extra connections for loops.
+
+### Post-Processing Passes
+
+**Connectivity** (`connectivity`): Validates all walkable areas connected. Repairs disconnected islands using MST corridor carving.
+
+**Validation** (`validation`): Read-only constraint checking (walkable %, region count). Warns or throws on validation failure.
+
+**Metadata** (`metadata`): Executes spatial analysis chain (wall distance, tile classification, region detection, passage/chokepoint detection).
+
+**Prefabs** (`prefabs`): Inserts pre-designed rooms into suitable regions. Collects spawn hints for entity placement.
+
+## Legacy Architecture
 
 **Algorithm Abstraction**: `IDungeonGenerator` interface defines generation contract returning `TileType[,]` grid. Factory pattern centralizes instantiation enabling multiple algorithm implementations. MapSystem orchestrates generation lifecycle and exposes query API. Clean separation between generation (tile layout) and spawning (entity placement).
 
@@ -98,23 +130,54 @@ Binary Space Partitioning (BSP) algorithm creates procedurally generated tile-ba
 
 **Future Extensions**: Biome-specific generators could vary algorithm by floor range (BSP for dungeons, cellular automata for caves). Floor depth could influence generation parameters (bigger rooms deeper). Special floors could use different algorithms (boss arenas, treasure vaults). Current architecture supports these extensions through factory pattern.
 
-## Extensibility
+## Adding New Passes
 
-### Adding New Algorithms
+### Pass Implementation
 
-Complete algorithm integration requires interface implementation, factory registration, and optional configuration resource.
+1. Create pass class implementing `IGenerationPass`:
+   - `Name`: Display name for logging
+   - `Priority`: Execution order (lower first)
+   - `Role`: PassRole.Base, Modifier, or PostProcess
+   - `CanExecute()`: Pre-execution validation
+   - `Execute()`: Main generation/modification logic
+
+2. Create config class (optional) parsing PassConfig dictionary to typed properties
+
+3. Register in `GenerationPassFactory.EnsureInitialized()`:
+   ```csharp
+   Register("my_pass", cfg => new MyGenerationPass(cfg));
+   ```
+
+### Pass Guidelines
+
+**Base Generators**: Initialize grid with walls, carve floor tiles, register regions in metadata. Ensure 1-tile border preservation. Handle random seed via `context.Random`.
+
+**Modifiers**: Transform existing topology. Check `CanExecute` for required preconditions (e.g., existing regions). Update affected regions in metadata.
+
+**PostProcess**: Read-only analysis or repair passes. Connectivity repair, validation, metadata computation. Should not require specific base generator.
+
+### YAML Configuration
+
+```yaml
+pipeline:
+  - pass: my_pass
+    priority: 100
+    config:
+      myParameter: value
+      anotherParam: 42
+```
+
+Config values accessed via `passConfig.GetConfigValue<T>("key", defaultValue)`.
+
+## Legacy Extensibility
+
+### Adding New Algorithms (Legacy)
+
+For direct `IDungeonGenerator` implementations without pipeline:
 
 **Algorithm Implementation**: Implement `IDungeonGenerator` interface with `Generate(width, height)` method. Initialize `TileType[,]` grid with walls. Apply algorithm-specific logic carving floor tiles. Ensure border preservation (1-tile wall perimeter). Return populated grid. Handle random seed if determinism needed.
 
-**Factory Registration**: Add creation method to `DungeonGeneratorFactory` (e.g., `CreateCellularAutomata(config)`). Instantiate generator with configuration. Return as `IDungeonGenerator` interface. Factory centralizes instantiation keeping client code algorithm-agnostic.
-
-**Configuration Resource**: Create Godot Resource class extending Resource for algorithm parameters. Export tunable properties for designer control. Implement seed handling if determinism required. Save as `.tres` file or embed in scene.
-
-**MapSystem Integration**: Update `MapSystem.GenerateMap()` to call appropriate factory method. Could expose algorithm selection via export enum. Or create algorithm-specific MapSystem subclass. Signal-based notification unchanged regardless of algorithm.
-
-**Design Considerations**: Algorithm must produce walkable floor tiles for spawning. Guarantee connectivity or document disconnected region handling. Respect map dimensions and border preservation. Consider performance characteristics for large maps. Match game's dungeon crawler aesthetic.
-
-**Candidate Algorithms**: Cellular automata for organic caves. Drunkard walk for flowing caverns. Voronoi diagrams for natural room distributions. Recursive room division as BSP alternative. Prefab assembly for hand-crafted sections. Hybrid approaches combining algorithms.
+**Factory Registration**: Add creation method to `DungeonGeneratorFactory` (e.g., `CreateCellularAutomata(config)`). Instantiate generator with configuration. Return as `IDungeonGenerator` interface.
 
 ## See Also
 
