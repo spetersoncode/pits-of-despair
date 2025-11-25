@@ -1,25 +1,27 @@
-name: Infestation
-type: Infestation
-minBudget: 3
-maxBudget: 10
-minRegionSize: 25
+name: Solitary
+type: Stragglers
+minBudget: 1
+maxBudget: 3
+minRegionSize: 4
 
 slots:
-  - role: vermin
+  - role: loner
     preferredArchetypes:
-      - minion
-    minCount: "2d3"
-    maxCount: "3d4"
-    threatMultiplier: 0.5
+      - scout
+      - warrior
+    minCount: "1"
+    maxCount: "1d2"
+    threatMultiplier: 1.0
     placement: random
 
 placement:
   preferredRegions:
-    - large
-    - medium
+    - passage
+    - small
+    - alcove
   minDistanceFromEntrance: 0
   preferNearChokepoints: false
-  preferEdges: false
+  preferEdges: true
 
 aiConfig:
   initialState: idle

@@ -19,16 +19,6 @@ public static class ArchetypeInferrer
     {
         var archetypes = new List<CreatureArchetype>();
 
-        // Threat-based archetypes (mutually exclusive tiers)
-        if (creature.Threat <= 5)
-        {
-            archetypes.Add(CreatureArchetype.Minion);
-        }
-        else if (creature.Threat >= 16)
-        {
-            archetypes.Add(CreatureArchetype.Elite);
-        }
-
         // Stat-based archetypes (can overlap)
         int str = creature.Strength;
         int agi = creature.Agility;
@@ -76,8 +66,14 @@ public static class ArchetypeInferrer
             archetypes.Add(CreatureArchetype.Brute);
         }
 
-        // Default to Warrior if no combat archetypes assigned
-        if (!archetypes.Any(a => a != CreatureArchetype.Minion && a != CreatureArchetype.Elite))
+        // Scout: Has Cowardly or YellForHelp AI components
+        if (HasScoutBehavior(creature))
+        {
+            archetypes.Add(CreatureArchetype.Scout);
+        }
+
+        // Default to Warrior if no archetypes assigned
+        if (archetypes.Count == 0)
         {
             archetypes.Add(CreatureArchetype.Warrior);
         }
@@ -128,6 +124,29 @@ public static class ArchetypeInferrer
                     itemId.Contains("crossbow") ||
                     itemId.Contains("sling") ||
                     itemId.Contains("thrown")))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a creature has scout behavior (Cowardly or YellForHelp AI).
+    /// </summary>
+    private static bool HasScoutBehavior(CreatureData creature)
+    {
+        if (creature.Ai == null || creature.Ai.Count == 0)
+            return false;
+
+        foreach (var aiConfig in creature.Ai)
+        {
+            if (aiConfig.TryGetValue("type", out var typeObj))
+            {
+                var typeName = typeObj?.ToString()?.ToLowerInvariant();
+                if (typeName == "cowardly" || typeName == "yellforhelp")
                 {
                     return true;
                 }
@@ -199,9 +218,8 @@ public static class ArchetypeInferrer
             "assassin" => CreatureArchetype.Assassin,
             "ranged" => CreatureArchetype.Ranged,
             "support" => CreatureArchetype.Support,
-            "minion" => CreatureArchetype.Minion,
-            "elite" => CreatureArchetype.Elite,
             "brute" => CreatureArchetype.Brute,
+            "scout" => CreatureArchetype.Scout,
             _ => CreatureArchetype.Warrior
         };
 

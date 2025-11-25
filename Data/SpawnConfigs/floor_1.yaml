@@ -2,10 +2,10 @@ name: "Dungeon Entrance"
 minFloor: 1
 maxFloor: 1
 
-# Power budget for large test floor (100x100)
-powerBudget: "10d6+50"
-itemBudget: "3d6+10"
-goldBudget: "5d10+50"
+# Power budget - moderate density
+powerBudget: "3d6+15"
+itemBudget: "1d6+8"
+goldBudget: "2d10+20"
 
 # Threat limits - keep creatures easy
 minThreat: 1
@@ -14,21 +14,31 @@ maxThreat: 2
 # No out-of-depth on first floor
 outOfDepthChance: 0.0
 
-# Available themes (vermin and goblins only)
+# Available themes
 themeWeights:
   - id: vermin
-    weight: 60
+    weight: 35
   - id: goblinoid
-    weight: 40
+    weight: 30
+  - id: beast
+    weight: 20
+  - id: undead
+    weight: 15
 
-# Encounter types - simple encounters
+# Encounter types
 encounterWeights:
-  - id: infestation
-    weight: 40
+  - id: swarm
+    weight: 25
+  - id: ambush
+    weight: 20
+  - id: lair
+    weight: 20
+  - id: solitary
+    weight: 15
   - id: patrol
-    weight: 30
-  - id: pack
-    weight: 30
+    weight: 10
+  - id: guard
+    weight: 10
 
 # Item configuration
 items:

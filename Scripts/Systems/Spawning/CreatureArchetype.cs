@@ -21,12 +21,9 @@ public enum CreatureArchetype
     /// <summary>Has healing effects OR high WIL. Provides buffs/heals to allies.</summary>
     Support,
 
-    /// <summary>Low threat (1-5). Weak creatures, usually found in groups.</summary>
-    Minion,
-
-    /// <summary>High threat (16+). Powerful individual threats.</summary>
-    Elite,
-
     /// <summary>High END + STR, low AGI, slow speed. Slow but tough hitters.</summary>
-    Brute
+    Brute,
+
+    /// <summary>Has Cowardly or YellForHelp AI. Flees and alerts others.</summary>
+    Scout
 }

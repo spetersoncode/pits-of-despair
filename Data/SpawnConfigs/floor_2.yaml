@@ -13,23 +13,30 @@ maxThreat: 2
 outOfDepthChance: 0.05
 outOfDepthFloors: 2
 
-# Undead start appearing
+# Undead start appearing, beasts roam
 themeWeights:
   - id: vermin
-    weight: 40
-  - id: goblinoid
-    weight: 40
-  - id: undead
-    weight: 20
-
-encounterWeights:
-  - id: infestation
     weight: 30
-  - id: patrol
-    weight: 35
-  - id: pack
+  - id: goblinoid
+    weight: 30
+  - id: undead
     weight: 25
-  - id: guard_post
+  - id: beast
+    weight: 15
+
+# Encounter types
+encounterWeights:
+  - id: swarm
+    weight: 25
+  - id: ambush
+    weight: 15
+  - id: lair
+    weight: 20
+  - id: solitary
+    weight: 15
+  - id: patrol
+    weight: 15
+  - id: guard
     weight: 10
 
 items:

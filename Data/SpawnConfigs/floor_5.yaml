@@ -23,17 +23,17 @@ themeWeights:
 
 encounterWeights:
   - id: patrol
+    weight: 20
+  - id: lair
     weight: 25
-  - id: pack
-    weight: 25
-  - id: guard_post
+  - id: guard
     weight: 20
   - id: ambush
     weight: 15
   - id: treasure_guard
     weight: 10
-  - id: lair
-    weight: 5
+  - id: swarm
+    weight: 10
 
 items:
   commonItems:

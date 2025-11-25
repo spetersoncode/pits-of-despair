@@ -1,0 +1,30 @@
+name: Swarm
+type: Infestation
+minBudget: 2
+maxBudget: 15
+minRegionSize: 12
+
+slots:
+  - role: swarm
+    preferredArchetypes:
+      - warrior
+    minCount: "2d3"
+    maxCount: "3d4"
+    threatMultiplier: 0.5
+    placement: random
+
+placement:
+  preferredRegions:
+    - large
+    - medium
+  minDistanceFromEntrance: 0
+  preferNearChokepoints: false
+  preferEdges: false
+
+aiConfig:
+  initialState: idle
+  followersProtectLeader: false
+  territoryBound: false
+  leaderYellsForHelp: false
+  generatePatrolRoute: false
+  wakeRadius: 0

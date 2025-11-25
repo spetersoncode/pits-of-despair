@@ -8,20 +8,20 @@ namespace PitsOfDespair.Systems.Spawning.Data;
 /// </summary>
 public enum EncounterType
 {
-    /// <summary>Leader at/near centroid with followers distributed throughout region.</summary>
+    /// <summary>Leader with followers, territorial. For dens and hideouts.</summary>
     Lair,
-    /// <summary>Small group (2-4) spawning in passages/edges with patrol waypoints.</summary>
+    /// <summary>Small moving group with patrol waypoints.</summary>
     Patrol,
-    /// <summary>Creatures near chokepoints, initially sleeping, trigger on proximity.</summary>
+    /// <summary>Sleeping creatures that wake on proximity.</summary>
     Ambush,
-    /// <summary>1-2 creatures at chokepoint holding position.</summary>
+    /// <summary>Stationary guards at chokepoints.</summary>
     GuardPost,
-    /// <summary>Guardian(s) placed near valuable item. Risk = Reward.</summary>
+    /// <summary>Guardian(s) placed near valuable item.</summary>
     TreasureGuard,
-    /// <summary>Many weak creatures spread throughout region, no leader.</summary>
+    /// <summary>Many creatures spread throughout region.</summary>
     Infestation,
-    /// <summary>Alpha + pack members that follow the alpha.</summary>
-    Pack
+    /// <summary>1-2 lone wanderers.</summary>
+    Stragglers
 }
 
 /// <summary>

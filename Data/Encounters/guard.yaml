@@ -1,6 +1,6 @@
-name: Guard Post
+name: Guard
 type: GuardPost
-minBudget: 2
+minBudget: 1
 maxBudget: 6
 minRegionSize: 4
 
@@ -11,7 +11,7 @@ slots:
       - warrior
       - brute
     minCount: "1"
-    maxCount: "2"
+    maxCount: "3"
     threatMultiplier: 1.0
     placement: center
 
@@ -19,7 +19,7 @@ placement:
   preferredRegions:
     - passage
     - small
-  minDistanceFromEntrance: 5
+  minDistanceFromEntrance: 4
   preferNearChokepoints: true
   preferEdges: false
 

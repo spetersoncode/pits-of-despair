@@ -17,7 +17,6 @@ slots:
   - role: follower
     preferredArchetypes:
       - warrior
-      - minion
     minCount: "1"
     maxCount: "1d2"
     threatMultiplier: 0.8

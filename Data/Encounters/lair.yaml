@@ -1,34 +1,33 @@
 name: Lair
 type: Lair
-minBudget: 4
+minBudget: 2
 maxBudget: 20
-minRegionSize: 25
+minRegionSize: 12
 
 slots:
   - role: leader
     preferredArchetypes:
-      - elite
-      - warrior
       - brute
+      - warrior
     minCount: "1"
     maxCount: "1"
-    threatMultiplier: 1.5
+    threatMultiplier: 1.2
     placement: center
 
   - role: follower
     preferredArchetypes:
-      - minion
       - warrior
     minCount: "1d3"
-    maxCount: "2d3"
-    threatMultiplier: 0.8
+    maxCount: "2d4"
+    threatMultiplier: 0.6
     placement: surrounding
 
 placement:
   preferredRegions:
     - large
+    - medium
     - dead_end
-  minDistanceFromEntrance: 10
+  minDistanceFromEntrance: 5
   preferNearChokepoints: false
   preferEdges: false
 
