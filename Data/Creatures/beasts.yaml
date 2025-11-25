@@ -6,7 +6,7 @@ defaults:
 entries:
   wild_dog:
     name: wild dog
-    description: A feral hound with matted fur and hungry eyes. It travels in packs, following an alpha that leads them through the dungeon corridors.
+    description: A feral hound with matted fur and hungry eyes. It travels in packs, patrolling the dungeon corridors in search of prey.
     glyph: d
     threat: 1
     strength: 0
@@ -18,8 +18,6 @@ entries:
         type: Melee
         dice: "1d3"
         damageType: Piercing
-    ai:
-      - type: FollowLeader
 
   cave_lizard:
     name: cave lizard
@@ -35,22 +33,6 @@ entries:
         type: Melee
         dice: "1d3"
         damageType: Piercing
-    ai:
-      - type: Wandering
-
-  badger:
-    name: badger
-    description: A squat, striped creature with a foul temper. It fears nothing and attacks with surprising ferocity, slashing with wicked claws.
-    threat: 1
-    strength: 0
-    agility: 2
-    endurance: -1
-    health: 5
-    attacks:
-      - name: claws
-        type: Melee
-        dice: "1d3"
-        damageType: Slashing
     ai:
       - type: Wandering
 

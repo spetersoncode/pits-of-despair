@@ -17,7 +17,9 @@ public static class AIComponentTypes
         ["ItemUsage"] = "ItemUsageComponent",
         ["Wandering"] = "WanderingComponent",
         ["ItemCollect"] = "ItemCollectComponent",
-        ["Patrol"] = "PatrolComponent"
+        ["Patrol"] = "PatrolComponent",
+        ["FollowLeader"] = "FollowLeaderComponent",
+        ["JoinPlayerOnSight"] = "JoinPlayerOnSightComponent"
     };
 
     /// <summary>

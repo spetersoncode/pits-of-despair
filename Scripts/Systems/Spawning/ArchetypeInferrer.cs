@@ -47,9 +47,8 @@ public static class ArchetypeInferrer
             archetypes.Add(CreatureArchetype.Assassin);
         }
 
-        // Ranged: Has ranged attack OR high AGI with low STR
-        bool hasRangedAttack = HasRangedCapability(creature);
-        if (hasRangedAttack || (agi >= 1 && str <= 0))
+        // Ranged: Must have actual ranged capability (attack or weapon)
+        if (HasRangedCapability(creature))
         {
             archetypes.Add(CreatureArchetype.Ranged);
         }

@@ -26,12 +26,12 @@ public class RegionBudgetAllocator
     /// Distributes the floor's power budget across all regions.
     /// </summary>
     /// <param name="metadata">Dungeon metadata with regions</param>
-    /// <param name="config">Floor spawn configuration</param>
+    /// <param name="totalBudget">Total power budget to distribute (already rolled)</param>
     /// <param name="regionSpawnData">Region spawn data to populate with budgets</param>
     /// <param name="entrancePosition">Player spawn position for distance calculations</param>
     public void AllocateBudgets(
         DungeonMetadata metadata,
-        FloorSpawnConfig config,
+        int totalBudget,
         Dictionary<int, RegionSpawnData> regionSpawnData,
         GridPosition entrancePosition)
     {
@@ -40,9 +40,6 @@ public class RegionBudgetAllocator
             GD.PushWarning("RegionBudgetAllocator: No regions to allocate budget to");
             return;
         }
-
-        // Roll total floor budget
-        int totalBudget = config.RollPowerBudget();
 
         // Calculate total weighted area across all regions
         float totalWeightedArea = 0f;

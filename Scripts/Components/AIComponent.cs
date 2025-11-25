@@ -150,6 +150,7 @@ public partial class AIComponent : Node
                 ? Intent.Attacking
                 : Intent.Hunting,
             PatrolGoal => Intent.Patrolling,
+            PatrolRouteGoal => Intent.Patrolling,
             WanderGoal => Intent.Wandering,
             FollowTargetGoal => Intent.Following,
             DefendTargetGoal => Intent.Guarding,
@@ -181,6 +182,7 @@ public partial class AIComponent : Node
             KillTargetGoal => Intent.Hunting,
             FollowTargetGoal => Intent.Following,
             PatrolGoal => Intent.Patrolling,
+            PatrolRouteGoal => Intent.Patrolling,
             _ => Intent.Hunting // Default to hunting if approaching something
         };
     }

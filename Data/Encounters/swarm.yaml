@@ -8,6 +8,7 @@ slots:
   - role: swarm
     preferredArchetypes:
       - warrior
+      - assassin
     minCount: "2d3"
     maxCount: "3d4"
     threatMultiplier: 0.5

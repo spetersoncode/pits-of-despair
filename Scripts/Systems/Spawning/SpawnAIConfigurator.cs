@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using PitsOfDespair.AI.Components;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
@@ -56,6 +57,13 @@ public class SpawnAIConfigurator
 
         // Configure initial state based on template
         ConfigureInitialState(aiComponent, creature, aiConfig);
+
+        // Configure patrol route if enabled
+        if (aiConfig?.GeneratePatrolRoute == true && encounter.Region != null)
+        {
+            GD.Print($"[Patrol] Configuring patrol route for {creature.Entity?.DisplayName}");
+            ConfigurePatrolRoute(creature, encounter);
+        }
     }
 
     /// <summary>
@@ -78,6 +86,45 @@ public class SpawnAIConfigurator
 
         // Note: Guarding and other states are handled via the existing goal system.
         // The BoredGoal checks for threats and handles guarding behavior naturally.
+    }
+
+    /// <summary>
+    /// Configures patrol route for a creature based on its spawn region.
+    /// </summary>
+    private void ConfigurePatrolRoute(SpawnedCreature creature, SpawnedEncounter encounter)
+    {
+        if (creature.Entity == null || encounter.Region == null)
+        {
+            GD.Print($"[Patrol] Skipped: entity={creature.Entity != null}, region={encounter.Region != null}");
+            return;
+        }
+
+        var route = PatrolRouteGenerator.GenerateRegionPatrol(
+            encounter.Region,
+            creature.Entity.GridPosition,
+            waypointCount: 4);
+
+        if (route == null || route.Waypoints.Count < 2)
+        {
+            GD.Print($"[Patrol] Route generation failed: route={route != null}, waypoints={route?.Waypoints?.Count ?? 0}");
+            return;
+        }
+
+        GD.Print($"[Patrol] Created route with {route.Waypoints.Count} waypoints for {creature.Entity.DisplayName}");
+
+        // Add PatrolRouteComponent to entity
+        var routeComp = new PatrolRouteComponent();
+        routeComp.Name = "PatrolRouteComponent";
+        routeComp.Route = route;
+        creature.Entity.AddChild(routeComp);
+
+        // Add injector if not present
+        if (creature.Entity.GetNodeOrNull<PatrolRouteInjector>("PatrolRouteInjector") == null)
+        {
+            var injector = new PatrolRouteInjector();
+            injector.Name = "PatrolRouteInjector";
+            creature.Entity.AddChild(injector);
+        }
     }
 
     /// <summary>

@@ -115,11 +115,11 @@ public class EncounterPlacer
     }
 
     /// <summary>
-    /// Gets encounter templates valid for this floor and region.
+    /// Gets encounter templates valid for this floor and region, with their config weights.
     /// </summary>
-    private List<EncounterTemplate> GetAvailableTemplates(FloorSpawnConfig config, Region region)
+    private List<(EncounterTemplate template, int configWeight)> GetAvailableTemplates(FloorSpawnConfig config, Region region)
     {
-        var templates = new List<EncounterTemplate>();
+        var templates = new List<(EncounterTemplate, int)>();
 
         // First try weighted templates from config
         foreach (var entry in config.EncounterWeights)
@@ -127,18 +127,18 @@ public class EncounterPlacer
             var template = _dataLoader.GetEncounterTemplate(entry.Id);
             if (template != null && IsTemplateValidForRegion(template, region))
             {
-                templates.Add(template);
+                templates.Add((template, entry.Weight));
             }
         }
 
-        // If none configured, get all templates that fit the region
+        // If none configured, get all templates that fit the region (default weight 10)
         if (templates.Count == 0)
         {
             foreach (var template in _dataLoader.GetAllEncounterTemplates())
             {
                 if (IsTemplateValidForRegion(template, region))
                 {
-                    templates.Add(template);
+                    templates.Add((template, 10));
                 }
             }
         }
@@ -178,61 +178,62 @@ public class EncounterPlacer
     }
 
     /// <summary>
-    /// Selects a template based on weighted random, budget, and region fit.
+    /// Selects a template based on config weights multiplied by fit bonuses.
     /// </summary>
     private EncounterTemplate SelectTemplate(
-        List<EncounterTemplate> templates,
+        List<(EncounterTemplate template, int configWeight)> templates,
         RegionSpawnData spawnData,
         Region region)
     {
         // Filter to templates that fit remaining budget
         var validTemplates = templates
-            .Where(t => t.MinBudget <= spawnData.RemainingBudget)
+            .Where(t => t.template.MinBudget <= spawnData.RemainingBudget)
             .ToList();
 
         if (validTemplates.Count == 0)
             return null;
 
-        // Weight templates by fit
+        // Weight templates using config weight × fit multiplier
         var weightedTemplates = new List<(EncounterTemplate template, int weight)>();
         int totalWeight = 0;
 
-        foreach (var template in validTemplates)
+        foreach (var (template, configWeight) in validTemplates)
         {
-            int weight = 10; // Base weight
+            float fitMultiplier = 1.0f;
 
-            // Bonus for matching region preferences
+            // Region preference match: 1.5x
             if (template.Placement.PreferredRegions.Count > 0)
             {
                 foreach (var preferred in template.Placement.PreferredRegions)
                 {
                     if (MatchesRegionType(region, preferred))
                     {
-                        weight += 20;
+                        fitMultiplier *= 1.5f;
                         break;
                     }
                 }
             }
 
-            // Bonus for budget efficiency (use more of remaining budget)
+            // Budget efficiency bonus: 1.25x
             float budgetRatio = (float)template.MinBudget / spawnData.RemainingBudget;
             if (budgetRatio > 0.5f)
             {
-                weight += 10;
+                fitMultiplier *= 1.25f;
             }
 
-            // Adjust for danger level
+            // Danger level bonus for ambush: 1.3x
             if (spawnData.DangerLevel > 1.2f && template.Type == EncounterType.Ambush)
             {
-                weight += 15; // Dangerous regions favor ambushes
+                fitMultiplier *= 1.3f;
             }
 
-            weightedTemplates.Add((template, weight));
-            totalWeight += weight;
+            int finalWeight = Mathf.RoundToInt(configWeight * fitMultiplier);
+            weightedTemplates.Add((template, finalWeight));
+            totalWeight += finalWeight;
         }
 
         if (totalWeight == 0)
-            return validTemplates[0];
+            return validTemplates[0].template;
 
         // Weighted random selection
         int roll = _rng.RandiRange(0, totalWeight - 1);

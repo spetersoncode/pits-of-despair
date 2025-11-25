@@ -17,22 +17,20 @@ outOfDepthChance: 0.0
 # Available themes
 themeWeights:
   - id: vermin
-    weight: 35
+    weight: 40
   - id: goblinoid
-    weight: 30
+    weight: 35
   - id: beast
-    weight: 20
-  - id: undead
-    weight: 15
+    weight: 25
 
 # Encounter types
 encounterWeights:
   - id: swarm
-    weight: 25
+    weight: 20
   - id: ambush
     weight: 20
   - id: lair
-    weight: 20
+    weight: 15
   - id: solitary
     weight: 15
   - id: patrol

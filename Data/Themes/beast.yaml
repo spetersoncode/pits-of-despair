@@ -6,5 +6,4 @@ maxFloor: 6
 creatures:
   - wild_dog
   - cave_lizard
-  - badger
   - wild_boar

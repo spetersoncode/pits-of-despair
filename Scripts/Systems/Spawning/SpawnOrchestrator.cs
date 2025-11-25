@@ -137,7 +137,7 @@ public partial class SpawnOrchestrator : Node
         _themeAssigner.AssignThemes(metadata, floorConfig, regionSpawnData);
 
         // Phase 3: Allocate budgets to regions
-        _budgetAllocator.AllocateBudgets(metadata, floorConfig, regionSpawnData, playerPosition);
+        _budgetAllocator.AllocateBudgets(metadata, powerBudget, regionSpawnData, playerPosition);
         _budgetAllocator.CalculateDangerLevels(metadata, regionSpawnData, playerPosition);
 
         // Record theme distribution

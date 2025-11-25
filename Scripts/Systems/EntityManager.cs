@@ -59,7 +59,7 @@ public partial class EntityManager : Node
         entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>((x, y) => OnEntityPositionChanged(entity, new GridPosition(x, y))));
 
         // Subscribe to death if entity has health
-        var healthComponent = entity.GetNode<HealthComponent>("HealthComponent");
+        var healthComponent = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
         if (healthComponent != null)
         {
             // Use lambda to capture entity reference

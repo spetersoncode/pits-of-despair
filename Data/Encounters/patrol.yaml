@@ -1,8 +1,8 @@
 name: Patrol
 type: Patrol
-minBudget: 2
+minBudget: 1
 maxBudget: 8
-minRegionSize: 16
+minRegionSize: 6
 
 slots:
   - role: scout
@@ -17,6 +17,7 @@ slots:
   - role: follower
     preferredArchetypes:
       - warrior
+      - assassin
     minCount: "1"
     maxCount: "1d2"
     threatMultiplier: 0.8
@@ -25,6 +26,7 @@ slots:
 placement:
   preferredRegions:
     - passage
+    - small
     - medium
   minDistanceFromEntrance: 5
   preferNearChokepoints: false

@@ -16,9 +16,7 @@ entries:
     endurance: -1
     health: 6
     ai:
-      - type: JoinPlayerOnSightComponent
-      - type: FollowTargetGoal
-      - type: DefendTargetGoal
+      - type: JoinPlayerOnSight
     attacks:
       - name: claws
         type: Melee
