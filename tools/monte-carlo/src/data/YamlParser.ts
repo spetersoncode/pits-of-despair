@@ -1,0 +1,281 @@
+/**
+ * YAML parser for creature and item definitions.
+ * Reads the game's YAML data files and converts them to TypeScript types.
+ */
+
+import { readFileSync } from 'fs';
+import { parse as parseYaml } from 'yaml';
+import type {
+  CreatureDefinition,
+  CreatureYamlFile,
+  ItemDefinition,
+  ItemYamlFile,
+  AttackDefinition,
+  DamageType,
+  EquipmentEntry,
+  ItemType,
+} from './types.js';
+
+// =============================================================================
+// Default Values
+// =============================================================================
+
+const CREATURE_DEFAULTS: Omit<CreatureDefinition, 'id' | 'name' | 'type'> = {
+  description: '',
+  glyph: '?',
+  color: 'Palette.Default',
+  threat: 1,
+  strength: 0,
+  agility: 0,
+  endurance: 0,
+  will: 0,
+  health: 10,
+  speed: 10,
+  equipment: [],
+  attacks: [],
+  immunities: [],
+  resistances: [],
+  vulnerabilities: [],
+};
+
+const ITEM_DEFAULTS: Omit<ItemDefinition, 'id' | 'name' | 'type'> = {
+  description: '',
+  glyph: '?',
+  color: 'Palette.Default',
+};
+
+// =============================================================================
+// Parsing Utilities
+// =============================================================================
+
+/**
+ * Parse an attack definition from YAML.
+ */
+function parseAttack(
+  data: Record<string, unknown>,
+  name?: string
+): AttackDefinition {
+  return {
+    name: (data.name as string) ?? name ?? 'attack',
+    type: (data.type as 'Melee' | 'Ranged') ?? 'Melee',
+    dice: (data.dice as string) ?? '1d4',
+    damageType: (data.damageType as DamageType) ?? 'Bludgeoning',
+    range: (data.range as number) ?? 1,
+    ammoType: data.ammoType as string | undefined,
+  };
+}
+
+/**
+ * Parse an array of attacks from YAML.
+ */
+function parseAttacks(data: unknown): AttackDefinition[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((attack, index) => {
+    if (typeof attack === 'object' && attack !== null) {
+      return parseAttack(attack as Record<string, unknown>);
+    }
+    return {
+      name: `attack_${index}`,
+      type: 'Melee' as const,
+      dice: '1d4',
+      damageType: 'Bludgeoning' as DamageType,
+      range: 1,
+    };
+  });
+}
+
+/**
+ * Parse damage type array from YAML.
+ */
+function parseDamageTypes(data: unknown): DamageType[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data.filter(
+    (item): item is DamageType => typeof item === 'string'
+  );
+}
+
+/**
+ * Parse equipment entries from YAML.
+ */
+function parseEquipment(data: unknown): EquipmentEntry[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((entry) => {
+    if (typeof entry === 'string') {
+      return entry;
+    }
+    if (typeof entry === 'object' && entry !== null) {
+      const obj = entry as Record<string, unknown>;
+      return {
+        id: (obj.id as string) ?? '',
+        quantity: (obj.quantity as number) ?? 1,
+      };
+    }
+    return '';
+  });
+}
+
+// =============================================================================
+// Creature Parsing
+// =============================================================================
+
+/**
+ * Parse a creature YAML file.
+ * @param filePath Path to the YAML file
+ * @returns Array of creature definitions
+ */
+export function parseCreatureFile(filePath: string): CreatureDefinition[] {
+  const content = readFileSync(filePath, 'utf-8');
+  const yaml = parseYaml(content) as CreatureYamlFile;
+
+  const creatures: CreatureDefinition[] = [];
+  const fileDefaults = yaml.defaults ?? {};
+  const creatureType = yaml.type;
+
+  for (const [id, entry] of Object.entries(yaml.entries)) {
+    // Skip template entries
+    if (id.startsWith('_')) {
+      continue;
+    }
+
+    // Merge defaults: global defaults < file defaults < entry
+    const merged = {
+      ...CREATURE_DEFAULTS,
+      ...fileDefaults,
+      ...entry,
+    };
+
+    const creature: CreatureDefinition = {
+      id,
+      name: (merged.name as string) ?? id,
+      description: merged.description as string,
+      type: creatureType,
+      glyph: merged.glyph as string,
+      color: merged.color as string,
+      threat: merged.threat as number,
+      strength: merged.strength as number,
+      agility: merged.agility as number,
+      endurance: merged.endurance as number,
+      will: merged.will as number,
+      health: merged.health as number,
+      speed: merged.speed as number,
+      equipment: parseEquipment(merged.equipment),
+      attacks: parseAttacks(merged.attacks),
+      immunities: parseDamageTypes(merged.immunities),
+      resistances: parseDamageTypes(merged.resistances),
+      vulnerabilities: parseDamageTypes(merged.vulnerabilities),
+      ai: merged.ai as { type: string }[] | undefined,
+      visionRange: merged.visionRange as number | undefined,
+    };
+
+    creatures.push(creature);
+  }
+
+  return creatures;
+}
+
+// =============================================================================
+// Item Parsing
+// =============================================================================
+
+/**
+ * Parse an item YAML file.
+ * @param filePath Path to the YAML file
+ * @returns Array of item definitions
+ */
+export function parseItemFile(filePath: string): ItemDefinition[] {
+  const content = readFileSync(filePath, 'utf-8');
+  const yaml = parseYaml(content) as ItemYamlFile;
+
+  const items: ItemDefinition[] = [];
+  const fileDefaults = yaml.defaults ?? {};
+  const itemType = yaml.type;
+
+  for (const [id, entry] of Object.entries(yaml.entries)) {
+    // Skip template entries
+    if (id.startsWith('_')) {
+      continue;
+    }
+
+    // Merge defaults: global defaults < file defaults < entry
+    const merged = {
+      ...ITEM_DEFAULTS,
+      ...fileDefaults,
+      ...entry,
+    };
+
+    const item: ItemDefinition = {
+      id,
+      name: (merged.name as string) ?? id,
+      description: merged.description as string,
+      type: itemType,
+      glyph: merged.glyph as string,
+      color: merged.color as string,
+    };
+
+    // Optional properties
+    if (merged.attack) {
+      item.attack = parseAttack(
+        merged.attack as unknown as Record<string, unknown>,
+        item.name
+      );
+    }
+    if (typeof merged.armor === 'number') {
+      item.armor = merged.armor;
+    }
+    if (typeof merged.evasion === 'number') {
+      item.evasion = merged.evasion;
+    }
+    if (typeof merged.strength === 'number') {
+      item.strength = merged.strength;
+    }
+    if (typeof merged.agility === 'number') {
+      item.agility = merged.agility;
+    }
+    if (typeof merged.endurance === 'number') {
+      item.endurance = merged.endurance;
+    }
+    if (typeof merged.will === 'number') {
+      item.will = merged.will;
+    }
+    if (typeof merged.regen === 'number') {
+      item.regen = merged.regen;
+    }
+    if (typeof merged.speed === 'number') {
+      item.speed = merged.speed;
+    }
+
+    items.push(item);
+  }
+
+  return items;
+}
+
+/**
+ * Parse multiple creature files.
+ */
+export function parseCreatureFiles(filePaths: string[]): CreatureDefinition[] {
+  const creatures: CreatureDefinition[] = [];
+  for (const filePath of filePaths) {
+    creatures.push(...parseCreatureFile(filePath));
+  }
+  return creatures;
+}
+
+/**
+ * Parse multiple item files.
+ */
+export function parseItemFiles(filePaths: string[]): ItemDefinition[] {
+  const items: ItemDefinition[] = [];
+  for (const filePath of filePaths) {
+    items.push(...parseItemFile(filePath));
+  }
+  return items;
+}
