@@ -168,6 +168,12 @@ public class FloorSpawnConfig
     public ItemSpawnConfig Items { get; set; } = new();
 
     /// <summary>
+    /// Unique creatures guaranteed to spawn on this floor.
+    /// Each unique only spawns once per run.
+    /// </summary>
+    public List<string> UniqueCreatures { get; set; } = new();
+
+    /// <summary>
     /// Rolls the power budget using dice notation.
     /// </summary>
     public int RollPowerBudget()
