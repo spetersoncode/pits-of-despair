@@ -1,7 +1,7 @@
 type: allies
 defaults:
   glyph: a
-  color: Player
+  color: Palette.Player
   faction: Neutral
 
 entries:

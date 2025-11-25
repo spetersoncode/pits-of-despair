@@ -5,7 +5,7 @@ defaults:
 entries:
   fireball:
     name: fireball
-    color: Fire
+    color: Palette.Fire
     description: A charred wooden wand that crackles with destructive energy. Flames lick at its tip, eager to be unleashed.
     charges: 2d3
     effects:
@@ -19,7 +19,7 @@ entries:
 
   vampiric_touch:
     name: vampiric touch
-    color: Crimson
+    color: Palette.Crimson
     description: A pale wand carved from bone, cold to the touch. Dark veins pulse beneath its surface, hungry for life essence.
     charges: 2d4
     effects:
@@ -31,7 +31,7 @@ entries:
 
   poison_cloud:
     name: poison cloud
-    color: Poison
+    color: Palette.Poison
     description: A gnarled wand that weeps a sickly green vapor. The air around it smells of decay and bitter almonds.
     charges: 2d3
     effects:
@@ -47,7 +47,7 @@ entries:
 
   cloning:
     name: cloning
-    color: Arcane
+    color: Palette.Arcane
     description: A crystalline wand that refracts light into impossible angles. Looking through it reveals doubled images.
     charges: 1d3
     effects:
@@ -59,7 +59,7 @@ entries:
 
   cone_of_cold:
     name: cone of cold
-    color: Ice
+    color: Palette.Ice
     description: A wand of frozen crystal that numbs the hand. Frost perpetually rimes its surface, crackling with each movement.
     charges: 2d3
     effects:
@@ -73,7 +73,7 @@ entries:
 
   confusion:
     name: confusion
-    color: ScrollConfusion
+    color: Palette.ScrollConfusion
     description: Twisted symbols that hurt to look at dance across this wand. Even a glance makes your thoughts scatter like frightened birds.
     charges: 2d4
     effects:

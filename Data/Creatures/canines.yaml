@@ -1,7 +1,7 @@
 type: canines
 defaults:
   glyph: d
-  color: Minion
+  color: Palette.Minion
 
 entries:
   wild_dog:

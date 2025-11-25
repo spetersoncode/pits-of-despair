@@ -1,7 +1,7 @@
 type: rodents
 defaults:
   glyph: r
-  color: Minion
+  color: Palette.Minion
 
 entries:
   rat:
@@ -24,7 +24,7 @@ entries:
     name: elder rat
     description: A massive rat, bloated on dungeon refuse and grown cunning with age. Its scarred muzzle speaks to countless violent encounters.
     level: 2
-    color: Fur
+    color: Palette.Fur
     strength: 0
     agility: 1
     endurance: -1

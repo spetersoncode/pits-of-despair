@@ -1,7 +1,7 @@
 type: undead
 defaults:
   glyph: z
-  color: Default
+  color: Palette.Default
 
 entries:
   skeleton:
@@ -26,7 +26,7 @@ entries:
 
   zombie:
     name: zombie
-    color: Clay
+    color: Palette.Clay
     description: A shambling corpse animated by dark magic. Its rotting flesh is resilient but its movements are sluggish.
     level: 2
     speed: 8

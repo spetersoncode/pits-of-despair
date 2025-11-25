@@ -8,6 +8,8 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Systems.Spawning.Data;
+using PitsOfDespair.Generation.Prefabs;
+using PitsOfDespair.Generation.Passes;
 
 namespace PitsOfDespair.Data;
 
@@ -22,6 +24,8 @@ public partial class DataLoader : Node
     private const string ItemsPath = "res://Data/Items/";
     private const string BandsPath = "res://Data/Bands/";
     private const string SkillsPath = "res://Data/Skills/";
+    private const string FloorsPath = "res://Data/Floors/";
+    private const string PrefabsPath = "res://Data/Prefabs/";
 
     private Dictionary<string, CreatureData> _creatures = new();
     private Dictionary<string, ItemData> _items = new();
@@ -31,6 +35,10 @@ public partial class DataLoader : Node
     private Dictionary<string, SpawnTableData> _spawnTables = new();
     private Dictionary<string, BandData> _bands = new();
 
+    // Floor generation data
+    private Dictionary<string, Generation.Config.FloorGenerationConfig> _floorConfigs = new();
+    private Dictionary<string, PrefabData> _prefabs = new();
+
     public override void _Ready()
     {
         LoadAllCreatures();
@@ -38,6 +46,8 @@ public partial class DataLoader : Node
         LoadAllSpawnTables();
         LoadAllBands();
         LoadAllSkills();
+        LoadAllFloorConfigs();
+        LoadAllPrefabs();
     }
 
     /// <summary>
@@ -110,6 +120,91 @@ public partial class DataLoader : Node
 
         GD.PrintErr($"DataLoader: Band '{bandId}' not found!");
         return null;
+    }
+
+    /// <summary>
+    /// Gets floor generation config by ID (filename without extension).
+    /// </summary>
+    public Generation.Config.FloorGenerationConfig GetFloorConfig(string configId)
+    {
+        if (_floorConfigs.TryGetValue(configId, out var config))
+        {
+            return config;
+        }
+
+        GD.PrintErr($"DataLoader: Floor config '{configId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets floor generation config for a specific floor depth.
+    /// Returns the first config where MinFloor <= depth <= MaxFloor.
+    /// Falls back to "default" if no matching config found.
+    /// </summary>
+    public Generation.Config.FloorGenerationConfig GetFloorConfigForDepth(int depth)
+    {
+        foreach (var config in _floorConfigs.Values)
+        {
+            if (depth >= config.MinFloor && depth <= config.MaxFloor)
+            {
+                return config;
+            }
+        }
+
+        // Fallback to default
+        if (_floorConfigs.TryGetValue("default", out var defaultConfig))
+        {
+            return defaultConfig;
+        }
+
+        GD.PushWarning($"DataLoader: No floor config found for depth {depth}, returning null");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all loaded floor config IDs.
+    /// </summary>
+    public IEnumerable<string> GetAllFloorConfigIds()
+    {
+        return _floorConfigs.Keys;
+    }
+
+    /// <summary>
+    /// Gets prefab data by ID (filename without extension).
+    /// </summary>
+    public PrefabData GetPrefab(string prefabId)
+    {
+        if (_prefabs.TryGetValue(prefabId, out var prefab))
+        {
+            return prefab;
+        }
+
+        GD.PrintErr($"DataLoader: Prefab '{prefabId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all prefabs valid for a specific floor depth.
+    /// </summary>
+    public List<PrefabData> GetPrefabsForFloor(int depth)
+    {
+        var result = new List<PrefabData>();
+        foreach (var prefab in _prefabs.Values)
+        {
+            if (depth >= prefab.Placement.MinFloor && depth <= prefab.Placement.MaxFloor)
+            {
+                result.Add(prefab);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Gets all loaded prefab IDs.
+    /// </summary>
+    public IEnumerable<string> GetAllPrefabIds()
+    {
+        return _prefabs.Keys;
     }
 
     /// <summary>
@@ -309,6 +404,47 @@ public partial class DataLoader : Node
         }
 
         LoadYamlFilesRecursive(BandsPath, "", _bands, "band");
+    }
+
+    private void LoadAllFloorConfigs()
+    {
+        _floorConfigs.Clear();
+
+        // Floors folder is optional
+        if (!DirAccess.DirExistsAbsolute(FloorsPath))
+        {
+            GD.Print("DataLoader: No Floors directory found, floor configs not loaded");
+            return;
+        }
+
+        LoadYamlFilesRecursive(FloorsPath, "", _floorConfigs, "floor config");
+        GD.Print($"DataLoader: Loaded {_floorConfigs.Count} floor configs");
+    }
+
+    private void LoadAllPrefabs()
+    {
+        _prefabs.Clear();
+
+        // Prefabs folder is optional
+        if (!DirAccess.DirExistsAbsolute(PrefabsPath))
+        {
+            GD.Print("DataLoader: No Prefabs directory found, prefabs not loaded");
+            return;
+        }
+
+        LoadYamlFilesRecursive(PrefabsPath, "", _prefabs, "prefab", (prefab, id) =>
+        {
+            // Set the name from the file ID if not specified
+            if (string.IsNullOrEmpty(prefab.Name))
+            {
+                prefab.Name = id;
+            }
+        });
+
+        // Register prefabs with the static accessor for generation passes
+        PrefabLoader.SetPrefabs(_prefabs);
+
+        GD.Print($"DataLoader: Loaded {_prefabs.Count} prefabs");
     }
 
     private void LoadAllSkills()
@@ -584,6 +720,8 @@ public class PaletteColorConverter : IYamlTypeConverter
         return type == typeof(string);
     }
 
+    private const string PalettePrefix = "Palette.";
+
     public object ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
     {
         var scalar = parser.Consume<Scalar>();
@@ -595,15 +733,18 @@ public class PaletteColorConverter : IYamlTypeConverter
             return value;
         }
 
-        // Try to map it to a Palette color name
-        var colorNameLower = value.ToLower();
-        if (_colorCache.TryGetValue(colorNameLower, out var hexValue))
+        // Only convert strings that explicitly request palette colors via "Palette." prefix
+        if (value.StartsWith(PalettePrefix, StringComparison.OrdinalIgnoreCase))
         {
-            return hexValue;
+            var colorName = value.Substring(PalettePrefix.Length).ToLower();
+            if (_colorCache.TryGetValue(colorName, out var hexValue))
+            {
+                return hexValue;
+            }
+            GD.PushWarning($"PaletteColorConverter: Unknown palette color '{colorName}', using as-is");
         }
 
-        // If not found, return the value as-is and let validation handle it
-        GD.PushWarning($"PaletteColorConverter: Unknown palette color '{value}', using as-is");
+        // Return non-prefixed strings unchanged
         return value;
     }
 

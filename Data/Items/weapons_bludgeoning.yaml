@@ -5,7 +5,7 @@ defaults:
 entries:
   club:
     name: club
-    color: AshWood
+    color: Palette.AshWood
     description: Worn smooth by countless hands, this crude bludgeon has seen its share of violence. Simple, but effective against skulls and bones alike.
     attack:
       type: Melee
@@ -14,7 +14,7 @@ entries:
 
   knobbed_club:
     name: knobbed club
-    color: Oak
+    color: Palette.Oak
     description: Heavy oak topped with iron studs that leave wicked indentations. The wood itself bears dark stains that speak to its brutal history.
     attack:
       type: Melee
@@ -23,7 +23,7 @@ entries:
 
   mace:
     name: mace
-    color: HeavyIron
+    color: Palette.HeavyIron
     description: A heavy iron head mounted on a sturdy shaft. It cares nothing for armor, only the bones beneath.
     attack:
       type: Melee

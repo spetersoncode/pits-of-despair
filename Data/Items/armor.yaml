@@ -5,82 +5,82 @@ defaults:
 entries:
   padded:
     name: padded armor
-    color: Wool
+    color: Palette.Wool
     description: Layers of quilted cloth and wool that offer minimal protection. Better than nothing, but only just.
     armor: 1
 
   leather:
     name: leather armor
-    color: SoftLeather
+    color: Palette.SoftLeather
     description: Supple leather hardened with oils and wax. Light enough to move freely, tough enough to turn a glancing blow.
     armor: 2
 
   studded_leather:
     name: studded leather armor
-    color: ToughLeather
+    color: Palette.ToughLeather
     description: Tough leather reinforced with metal studs along the vital areas. The weight slows you slightly, but the protection is worth it.
     armor: 3
     evasion: -1
 
   hide:
     name: hide armor
-    color: RawHide
+    color: Palette.RawHide
     description: Thick animal hide crudely stitched together. Bulky and awkward, but it can absorb tremendous punishment.
     armor: 3
     evasion: -3
 
   chain_shirt:
     name: chain shirt
-    color: Bronze
+    color: Palette.Bronze
     description: Interlocking rings of bronze that flow like water when worn. The weight settles on your shoulders with grim familiarity.
     armor: 4
     evasion: -2
 
   scale_mail:
     name: scale mail
-    color: Copper
+    color: Palette.Copper
     description: Overlapping copper plates sewn to leather backing, reminiscent of serpent scales. Heavy and cumbersome, but it catches blades effectively.
     armor: 4
     evasion: -4
 
   chainmail:
     name: chainmail
-    color: Silver
+    color: Palette.Silver
     description: A full hauberk of interlocked rings that jingles softly with every movement. The weight is crushing, but few weapons can penetrate its weave.
     armor: 5
     evasion: -5
 
   breastplate:
     name: breastplate
-    color: Steel
+    color: Palette.Steel
     description: Forged steel shaped to deflect blows from the heart and lungs. Battle-scarred but dependable, a fortress for your chest.
     armor: 5
     evasion: -4
 
   splint_mail:
     name: splint mail
-    color: CrudeIron
+    color: Palette.CrudeIron
     description: Vertical strips of iron riveted to a leather backing. Crude and brutally heavy, but it turns even savage blows.
     armor: 6
     evasion: -7
 
   banded_mail:
     name: banded mail
-    color: Iron
+    color: Palette.Iron
     description: Horizontal iron bands fastened to chain and leather. Each band bears the hammer marks of its forging, and the scars of past battles.
     armor: 6
     evasion: -6
 
   half_plate:
     name: half-plate
-    color: ForgedSteel
+    color: Palette.ForgedSteel
     description: Masterwork plates protecting chest, shoulders, and thighs, backed with mail. Moving in this is exhausting, but you feel nearly invincible.
     armor: 7
     evasion: -7
 
   full_plate:
     name: full plate
-    color: RefinedSteel
+    color: Palette.RefinedSteel
     description: The pinnacle of the armorer's art. Articulated steel encases you from head to toe, transforming you into a walking fortress.
     armor: 8
     evasion: -6

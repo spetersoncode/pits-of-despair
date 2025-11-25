@@ -5,7 +5,7 @@ defaults:
 entries:
   tunneling:
     name: tunneling
-    color: Ochre
+    color: Palette.Ochre
     description: A gnarled staff of petrified wood, thrumming with earthen power. Stone yields before its will.
     charges: 2d4
     rechargeTurns: 50

@@ -5,7 +5,7 @@ defaults:
 entries:
   short_sword:
     name: short sword
-    color: Steel
+    color: Palette.Steel
     description: A serviceable blade of cold steel, nicked from use but still keen. The leather-wrapped grip shows the marks of desperate combat.
     attack:
       type: Melee
@@ -14,7 +14,7 @@ entries:
 
   axe:
     name: hand axe
-    color: BrutalIron
+    color: Palette.BrutalIron
     description: A brutal wedge of iron on a wooden haft. It bites deep and leaves ragged wounds that weep.
     attack:
       type: Melee
@@ -23,7 +23,7 @@ entries:
 
   broadsword:
     name: broadsword
-    color: Bronze
+    color: Palette.Bronze
     description: A wide bronze blade, heavier than it looks. It hacks and cleaves where finer swords would thrust.
     attack:
       type: Melee
