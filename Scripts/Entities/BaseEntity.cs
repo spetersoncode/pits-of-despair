@@ -109,6 +109,12 @@ public partial class BaseEntity : Node2D
     public bool IsWalkable { get; set; } = false;
 
     /// <summary>
+    /// Entity we last swapped positions with. Prevents ping-pong swapping.
+    /// Cleared when we move without swapping.
+    /// </summary>
+    public BaseEntity LastSwappedWith { get; set; } = null;
+
+    /// <summary>
     /// Item data if this entity is a collectible item.
     /// Null for non-item entities (creatures, player, etc.).
     /// </summary>

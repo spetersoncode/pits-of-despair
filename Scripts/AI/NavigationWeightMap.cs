@@ -14,7 +14,7 @@ public class NavigationWeightMap
     // Standard weight values
     public const float NormalFloor = 1f;
     public const float Hazard = 3f;              // Webs, shallow water
-    public const float FriendlyCreature = 2f;    // Friendly = swap positions, low cost
+    public const float FriendlyCreature = 5f;    // Friendly = willing to swap, slight preference to go around
     public const float OtherCreature = 50f;      // Non-friendly = prefer going around
     public const float DangerousHazard = 100f;   // Fire, acid
     public const float Impassable = 999f;        // Walls (for non-burrowers)

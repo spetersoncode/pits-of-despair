@@ -42,12 +42,16 @@ public class MoveAction : Action
 
             // Creatures can swap positions with friendly creatures
             // But AI cannot swap with the player - only player can initiate that
+            // Also prevent ping-pong swapping (can't immediately swap back)
             if (actor.Faction.IsFriendlyTo(targetEntity.Faction) && targetEntity != context.Player)
             {
+                // Prevent immediate re-swap (ping-pong)
+                if (actor.LastSwappedWith == targetEntity)
+                    return false;
                 return true;
             }
 
-            // Player can swap with any friendly creature
+            // Player can swap with any friendly creature (no cooldown for player)
             if (actor == context.Player && actor.Faction.IsFriendlyTo(targetEntity.Faction))
             {
                 return true;
@@ -95,8 +99,20 @@ public class MoveAction : Action
 
             if (canSwap)
             {
+                // Prevent ping-pong: can't immediately swap back with same entity
+                if (actor.LastSwappedWith == targetEntity)
+                {
+                    // Blocked - can't re-swap, treat as blocked
+                    return ActionResult.CreateFailure("Cannot swap back immediately.");
+                }
+
                 targetEntity.SetGridPosition(currentPos);
                 actor.SetGridPosition(targetPos);
+
+                // Track swap for cooldown (both entities remember)
+                actor.LastSwappedWith = targetEntity;
+                targetEntity.LastSwappedWith = actor;
+
                 return ActionResult.CreateSuccess();
             }
 
@@ -115,8 +131,11 @@ public class MoveAction : Action
             }
         }
 
-        // Perform movement
+        // Perform normal movement (not a swap)
         actor.SetGridPosition(targetPos);
+
+        // Clear swap cooldown since we moved normally
+        actor.LastSwappedWith = null;
 
         return ActionResult.CreateSuccess();
     }
