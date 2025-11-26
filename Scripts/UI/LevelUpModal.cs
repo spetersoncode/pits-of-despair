@@ -125,6 +125,17 @@ public partial class LevelUpModal : PanelContainer
         content.AppendLine();
         content.AppendLine($"[center][color={Palette.ToHex(Palette.Success)}]You reached level {_newLevel}![/color][/center]");
         content.AppendLine();
+
+        // Show skills unlocked just by reaching this level
+        var levelUnlockedSkills = GetSkillsUnlockedByLevel();
+        if (levelUnlockedSkills.Count > 0)
+        {
+            content.Append($"[center][color={Palette.ToHex(Palette.Success)}]Level {_newLevel} unlocks: ");
+            content.Append(string.Join(", ", levelUnlockedSkills.Select(s => s.Name)));
+            content.AppendLine("[/color][/center]");
+            content.AppendLine();
+        }
+
         content.AppendLine($"[center][color={Palette.ToHex(Palette.Alert)}]Choose a stat to increase:[/color][/center]");
         content.AppendLine();
 
@@ -236,13 +247,17 @@ public partial class LevelUpModal : PanelContainer
         int simEnd = _stats.BaseEndurance + (statIndex == 2 ? 1 : 0);
         int simWil = _stats.BaseWill + (statIndex == 3 ? 1 : 0);
 
-        foreach (var skill in _dataLoader.GetAllSkills())
+        foreach (var skill in _dataLoader.Skills.GetAll())
         {
             // Skip if already learned
             if (_skills.HasSkill(skill.Id))
                 continue;
 
             var prereqs = skill.Prerequisites;
+
+            // Skip if level requirement not met at new level
+            if (_newLevel < prereqs.Level)
+                continue;
 
             // Check if currently NOT meetable but WOULD BE after stat increase
             bool currentlyMeets = _stats.BaseStrength >= prereqs.Str
@@ -262,6 +277,38 @@ public partial class LevelUpModal : PanelContainer
         }
 
         return unlockable;
+    }
+
+    /// <summary>
+    /// Gets skills that become available solely by reaching the new level.
+    /// These are skills where all stat requirements are already met but level was blocking.
+    /// </summary>
+    private List<SkillDefinition> GetSkillsUnlockedByLevel()
+    {
+        var unlocked = new List<SkillDefinition>();
+
+        if (_stats == null || _skills == null || _dataLoader == null)
+            return unlocked;
+
+        int previousLevel = _newLevel - 1;
+
+        foreach (var skill in _dataLoader.Skills.GetAll())
+        {
+            // Skip if already learned
+            if (_skills.HasSkill(skill.Id))
+                continue;
+
+            // Check if we NOW meet prereqs (at new level) but DIDN'T before
+            bool meetsNow = PrerequisiteChecker.MeetsPrerequisites(skill, _stats, _newLevel);
+            bool metBefore = PrerequisiteChecker.MeetsPrerequisites(skill, _stats, previousLevel);
+
+            if (meetsNow && !metBefore)
+            {
+                unlocked.Add(skill);
+            }
+        }
+
+        return unlocked;
     }
 
     public override void _Input(InputEvent @event)
@@ -369,7 +416,7 @@ public partial class LevelUpModal : PanelContainer
         int simEnd = _stats.BaseEndurance + (statIndex == 2 ? 1 : 0);
         int simWil = _stats.BaseWill + (statIndex == 3 ? 1 : 0);
 
-        foreach (var skill in _dataLoader.GetAllSkills())
+        foreach (var skill in _dataLoader.Skills.GetAll())
         {
             // Skip if already learned
             if (_skills.HasSkill(skill.Id))
@@ -377,8 +424,9 @@ public partial class LevelUpModal : PanelContainer
 
             var prereqs = skill.Prerequisites;
 
-            // Check if skill would be available after stat increase
-            bool wouldMeet = simStr >= prereqs.Str
+            // Check if skill would be available after stat increase (including level requirement)
+            bool wouldMeet = _newLevel >= prereqs.Level
+                          && simStr >= prereqs.Str
                           && simAgi >= prereqs.Agi
                           && simEnd >= prereqs.End
                           && simWil >= prereqs.Wil;

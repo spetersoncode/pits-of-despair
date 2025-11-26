@@ -181,6 +181,8 @@ public class SkillDefinition
     {
         var parts = new List<string>();
 
+        if (Prerequisites.Level > 0)
+            parts.Add($"LVL {Prerequisites.Level}");
         if (Prerequisites.Str > 0)
             parts.Add($"STR {Prerequisites.Str}");
         if (Prerequisites.Agi > 0)
@@ -235,11 +237,16 @@ public class SkillPrerequisites
     public int Wil { get; set; } = 0;
 
     /// <summary>
+    /// Minimum character level required.
+    /// </summary>
+    public int Level { get; set; } = 0;
+
+    /// <summary>
     /// Check if all prerequisites are zero (no requirements).
     /// </summary>
     public bool IsUniversal()
     {
-        return Str == 0 && Agi == 0 && End == 0 && Wil == 0;
+        return Str == 0 && Agi == 0 && End == 0 && Wil == 0 && Level == 0;
     }
 
     /// <summary>
@@ -332,4 +339,19 @@ public class SkillEffectDefinition
     /// Modifier to the caster's save roll. Positive = harder to resist, negative = easier.
     /// </summary>
     public int SaveModifier { get; set; } = 0;
+
+    /// <summary>
+    /// Maximum number of bounces for chain effects (e.g., Chain Lightning).
+    /// </summary>
+    public int MaxBounces { get; set; } = 3;
+
+    /// <summary>
+    /// Range (in tiles) that chain effects can bounce to nearby targets.
+    /// </summary>
+    public int BounceRange { get; set; } = 4;
+
+    /// <summary>
+    /// Damage multiplier applied to each subsequent bounce (e.g., 0.75 = 75% damage per bounce).
+    /// </summary>
+    public float DamageFalloff { get; set; } = 1.0f;
 }
