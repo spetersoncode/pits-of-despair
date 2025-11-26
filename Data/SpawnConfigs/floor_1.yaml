@@ -16,7 +16,8 @@ outOfDepthChance: 0.0
 
 # Unique creatures for this floor
 uniqueCreatures:
-  - grik_the_gouger
+  - id: grik_the_gouger
+    spawnChance: 0.5
 
 # Available themes
 themeWeights:

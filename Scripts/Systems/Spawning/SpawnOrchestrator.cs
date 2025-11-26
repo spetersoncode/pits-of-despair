@@ -96,7 +96,7 @@ public partial class SpawnOrchestrator : Node
         var summary = new SpawnSummary { FloorDepth = _floorDepth };
 
         // Phase 1: Load floor spawn config
-        var floorConfig = _dataLoader.GetFloorSpawnConfigForDepth(_floorDepth);
+        var floorConfig = _dataLoader.Spawning.GetFloorSpawnConfigForDepth(_floorDepth);
         if (floorConfig == null)
         {
             summary.AddWarning($"No spawn config found for floor {_floorDepth}, using fallback");
@@ -159,7 +159,8 @@ public partial class SpawnOrchestrator : Node
             floorConfig,
             metadata.Regions,
             metadata,
-            occupiedPositions);
+            occupiedPositions,
+            playerPosition);
 
         foreach (var (entity, threat) in uniqueSpawns)
         {
@@ -285,7 +286,7 @@ public partial class SpawnOrchestrator : Node
                 // Handle encounter template hints
                 if (!string.IsNullOrEmpty(hint.EncounterTemplateId))
                 {
-                    var template = _dataLoader.GetEncounterTemplate(hint.EncounterTemplateId);
+                    var template = _dataLoader.Spawning.GetEncounterTemplate(hint.EncounterTemplateId);
                     if (template != null && spawnData.Theme != null)
                     {
                         var encounter = new SpawnedEncounter
@@ -311,7 +312,7 @@ public partial class SpawnOrchestrator : Node
                 else if (hint.CreaturePool != null && hint.CreaturePool.Count > 0)
                 {
                     var creatureId = hint.CreaturePool[GD.RandRange(0, hint.CreaturePool.Count - 1)];
-                    var creatureData = _dataLoader.GetCreature(creatureId);
+                    var creatureData = _dataLoader.Creatures.Get(creatureId);
                     if (creatureData == null)
                     {
                         GD.PushWarning($"[SpawnOrchestrator] Prefab hint creature '{creatureId}' not found");
@@ -428,7 +429,7 @@ public partial class SpawnOrchestrator : Node
         var deeperConfigs = new List<FloorSpawnConfig>();
         for (int i = 1; i <= floorConfig.OutOfDepthFloors; i++)
         {
-            var deeper = _dataLoader.GetFloorSpawnConfigForDepth(_floorDepth + i);
+            var deeper = _dataLoader.Spawning.GetFloorSpawnConfigForDepth(_floorDepth + i);
             if (deeper != null)
             {
                 deeperConfigs.Add(deeper);

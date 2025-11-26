@@ -20,6 +20,22 @@ public class WeightedEntry
 }
 
 /// <summary>
+/// Configuration for a unique creature spawn on a floor.
+/// </summary>
+public class UniqueSpawnEntry
+{
+    /// <summary>
+    /// Creature ID to spawn.
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Chance to spawn on this floor (0.0-1.0).
+    /// </summary>
+    public float SpawnChance { get; set; } = 1.0f;
+}
+
+/// <summary>
 /// Item rarity levels for loot distribution.
 /// </summary>
 public enum ItemRarity
@@ -168,10 +184,10 @@ public class FloorSpawnConfig
     public ItemSpawnConfig Items { get; set; } = new();
 
     /// <summary>
-    /// Unique creatures guaranteed to spawn on this floor.
+    /// Unique creatures with spawn chances for this floor.
     /// Each unique only spawns once per run.
     /// </summary>
-    public List<string> UniqueCreatures { get; set; } = new();
+    public List<UniqueSpawnEntry> UniqueCreatures { get; set; } = new();
 
     /// <summary>
     /// Rolls the power budget using dice notation.
