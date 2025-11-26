@@ -1,6 +1,5 @@
-type: beasts
+type: others
 defaults:
-  glyph: b
   color: Palette.Minion
 
 entries:
@@ -51,6 +50,7 @@ entries:
   wild_boar:
     name: wild boar
     description: A bristly pig with curved tusks and a foul temper. It lowers its head and charges without hesitation, trampling anything in its path.
+    glyph: b
     color: Palette.Fur
     threat: 2
     strength: 1
@@ -62,3 +62,22 @@ entries:
         type: Melee
         dice: "1d4"
         damageType: Bludgeoning
+
+  cat:
+    name: cat
+    description: A scrawny dungeon cat with keen eyes and quick reflexes. It survived down here by being faster and smarter than the rats.
+    glyph: c
+    color: "#c8a060"
+    faction: Neutral
+    threat: 1
+    strength: -1
+    agility: 2
+    endurance: -1
+    health: 6
+    ai:
+      - type: JoinPlayerOnSight
+    attacks:
+      - name: claws
+        type: Melee
+        dice: "1d3"
+        damageType: Slashing

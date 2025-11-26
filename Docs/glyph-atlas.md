@@ -51,9 +51,13 @@ Complete catalog of glyphs used in Pits of Despair. For design philosophy and ex
 
 | Glyph | Type | Variants |
 |-------|------|----------|
-| `g` | Goblinoid | goblin, goblin_scout, goblin_ruffian, goblin_archer |
+| `g` | Goblinoid | goblin, goblin_scout, goblin_ruffian, goblin_archer, goblin_cutter |
 | `r` | Rodents | rat, elder_rat |
-| `s` | Undead | skeleton |
+| `u` | Undead | skeleton, zombie |
+| `b` | Others | wild_boar |
+| `c` | Others | cat |
+| `d` | Others | wild_dog |
+| `l` | Others | cave_lizard |
 
 **Variant Rule**: Creatures of the same type use distinct colors for threat differentiation.
 
@@ -88,13 +92,14 @@ From `ItemData.TypeInfo`:
 
 ## Creature Type Registry
 
-From `CreatureData.TypeInfo`:
+From YAML sheet defaults (`Data/Creatures/*.yaml`):
 
-| Type | Glyph |
-|------|-------|
-| goblinoid | `g` |
-| rodents | `r` |
-| undead | `s` |
+| Type | Glyph | Notes |
+|------|-------|-------|
+| goblinoid | `g` | |
+| rodents | `r` | |
+| undead | `u` | |
+| others | — | Mixed glyphs, each creature overrides |
 
 ## See Also
 

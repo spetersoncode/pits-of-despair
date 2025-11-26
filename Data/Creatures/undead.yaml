@@ -1,6 +1,6 @@
 type: undead
 defaults:
-  glyph: z
+  glyph: u
   color: Palette.Default
 
 entries:
