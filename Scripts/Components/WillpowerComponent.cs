@@ -34,11 +34,27 @@ public partial class WillpowerComponent : Node
     public int CurrentWillpower { get; private set; }
 
     /// <summary>
-    /// Base regeneration rate per turn.
-    /// Formula: 10 + MaxWillpower / 5
+    /// Total regeneration bonus from all modifier sources.
+    /// </summary>
+    public int TotalRegenBonus
+    {
+        get
+        {
+            int total = 0;
+            foreach (var value in _regenModifiers.Values)
+            {
+                total += value;
+            }
+            return total;
+        }
+    }
+
+    /// <summary>
+    /// Base regeneration rate per turn (including modifiers).
+    /// Formula: 20 + MaxWillpower / 6 + TotalRegenBonus
     /// At 100 points accumulated, restore 1 WP.
     /// </summary>
-    public int BaseRegenRate => 10 + MaxWillpower / 5;
+    public int BaseRegenRate => 20 + MaxWillpower / 6 + TotalRegenBonus;
 
     #endregion
 
@@ -60,6 +76,12 @@ public partial class WillpowerComponent : Node
     /// Key is source identifier (e.g., "skill_arcane_focus"), value is Willpower bonus.
     /// </summary>
     private readonly System.Collections.Generic.Dictionary<string, int> _maxWillpowerModifiers = new();
+
+    /// <summary>
+    /// Multi-source regen rate modifiers from equipment, conditions, etc.
+    /// Key is source identifier, value is regen bonus.
+    /// </summary>
+    private readonly System.Collections.Generic.Dictionary<string, int> _regenModifiers = new();
 
     #endregion
 
@@ -340,6 +362,30 @@ public partial class WillpowerComponent : Node
             total += value;
         }
         return total;
+    }
+
+    #endregion
+
+    #region Regen Modifiers
+
+    /// <summary>
+    /// Adds a regen rate modifier from a named source.
+    /// Used by equipment, conditions, etc.
+    /// </summary>
+    /// <param name="source">Source identifier (e.g., "equipped_ring1", "condition_regen")</param>
+    /// <param name="value">Regen bonus value</param>
+    public void AddRegenModifier(string source, int value)
+    {
+        _regenModifiers[source] = value;
+    }
+
+    /// <summary>
+    /// Removes a regen rate modifier by source name.
+    /// </summary>
+    /// <param name="source">Source identifier to remove</param>
+    public void RemoveRegenModifier(string source)
+    {
+        _regenModifiers.Remove(source);
     }
 
     #endregion
