@@ -5,6 +5,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
+using System.Linq;
 
 namespace PitsOfDespair.UI;
 
@@ -38,6 +39,7 @@ public partial class GameHUD : Control
     public delegate void StartSkillTargetingEventHandler(string skillId, char key);
 
     private SidePanel _sidePanel;
+    private StatusBar _statusBar;
     private MessageLog _messageLog;
     private InventoryModal _inventoryPanel;
     private ActivateItemModal _activateItemPanel;
@@ -67,6 +69,7 @@ public partial class GameHUD : Control
     public override void _Ready()
     {
         _sidePanel = GetNode<SidePanel>("HBoxContainer/SidePanel");
+        _statusBar = GetNode<StatusBar>("HBoxContainer/VBoxContainer/StatusBar");
         _messageLog = GetNode<MessageLog>("HBoxContainer/VBoxContainer/MessageLog");
         _inventoryPanel = GetNode<InventoryModal>("InventoryModal");
         _activateItemPanel = GetNode<ActivateItemModal>("ActivateItemModal");
@@ -102,6 +105,9 @@ public partial class GameHUD : Control
         _actionHandler = actionHandler;
         _messageSystem = messageSystem;
         _floorDepth = floorDepth;
+
+        // Initialize StatusBar with player reference
+        _statusBar?.Initialize(player);
 
         // Note: SidePanel is now initialized separately in GameLevel
 
@@ -747,6 +753,13 @@ public partial class GameHUD : Control
                     ? $"You see {entity.DisplayName}."
                     : $"{entity.DisplayName}: {entity.Description}";
 
+                // Append injury status and conditions if any
+                string conditionSuffix = GetStatusSuffix(entity);
+                if (!string.IsNullOrEmpty(conditionSuffix))
+                {
+                    message += $" {conditionSuffix}";
+                }
+
                 // Convert entity color to hex string for colored display name
                 string colorHex = Palette.ToHex(entity.GlyphColor);
                 string coloredMessage = $"[color={colorHex}]{message}[/color]";
@@ -755,6 +768,44 @@ public partial class GameHUD : Control
             }
             // Silent for empty tiles (as per user preference)
         }
+    }
+
+    /// <summary>
+    /// Gets a formatted string of injury status and visible conditions for an entity.
+    /// Returns empty string if uninjured and no displayable conditions.
+    /// </summary>
+    private static string GetStatusSuffix(BaseEntity entity)
+    {
+        var parts = new System.Collections.Generic.List<string>();
+
+        // Add injury status if injured
+        var health = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
+        if (health != null && !entity.IsDead)
+        {
+            float hpPercent = (float)health.CurrentHealth / health.MaxHealth;
+            string injury = hpPercent switch
+            {
+                >= 1.0f => null,
+                >= 0.75f => "Slightly Wounded",
+                >= 0.5f => "Wounded",
+                >= 0.25f => "Severely Wounded",
+                _ => "Near Death"
+            };
+            if (injury != null)
+                parts.Add(injury);
+        }
+
+        // Add conditions
+        var conditions = entity.GetActiveConditions()
+            .Where(c => c.ExamineDescription != null)
+            .Select(c => char.ToUpper(c.ExamineDescription![0]) + c.ExamineDescription[1..])
+            .Distinct();
+        parts.AddRange(conditions);
+
+        if (parts.Count == 0)
+            return "";
+
+        return $"({string.Join(", ", parts)})";
     }
 
     /// <summary>

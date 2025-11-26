@@ -8,7 +8,7 @@ defaults:
 entries:
   grik_the_gouger:
     name: Grik the Gouger
-    description: A notorious goblin who earned his name carving trophies from fallen adventurers. His bloodshot eyes gleam with cruel cunning, and fresh notches mark his weapon's handle.
+    description: A notorious goblin who earned his name gouging trophies from fallen adventurers. His bloodshot eyes gleam with cruel cunning, and finger bones rattle on a cord tied to his spear.
     glyph: ğ
     color: "#DDAA44"
     threat: 2
@@ -17,4 +17,4 @@ entries:
     endurance: 1
     health: 14
     equipment:
-      - weapon_knobbed_club
+      - weapon_spear

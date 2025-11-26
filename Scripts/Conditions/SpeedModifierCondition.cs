@@ -28,6 +28,8 @@ public class SpeedModifierCondition : Condition
 
     public override string TypeId => "speed_modifier";
 
+    public override string? ExamineDescription => Amount >= 0 ? "hasted" : "slowed";
+
     /// <summary>
     /// Parameterless constructor for deserialization.
     /// </summary>
