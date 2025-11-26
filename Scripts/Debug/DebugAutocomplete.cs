@@ -119,7 +119,7 @@ public static class DebugAutocomplete
 
         var lowerPrefix = prefix.ToLower();
         return DebugCommandFactory.GetRegisteredCommands()
-            .Where(cmd => cmd.StartsWith(lowerPrefix, StringComparison.OrdinalIgnoreCase))
+            .Where(cmd => cmd.Contains(lowerPrefix, StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
 
@@ -131,45 +131,4 @@ public static class DebugAutocomplete
         return DebugCommandFactory.GetArgumentSuggestions(commandName, argIndex, currentValue);
     }
 
-    /// <summary>
-    /// Get the completion suffix for ghost text display.
-    /// Works for both command and argument completion.
-    /// </summary>
-    /// <param name="input">The current input text (without leading slash)</param>
-    /// <param name="selectedSuggestion">The currently selected suggestion (or null for best match)</param>
-    /// <returns>The suffix to display as ghost text, or empty if no match</returns>
-    public static string GetCompletionSuffix(string input, string selectedSuggestion = null)
-    {
-        if (string.IsNullOrEmpty(input))
-        {
-            return string.Empty;
-        }
-
-        var context = ParseContext(input);
-        var suggestions = GetSuggestions(input);
-        var match = selectedSuggestion ?? (suggestions.Count > 0 ? suggestions[0] : null);
-
-        if (match == null)
-        {
-            return string.Empty;
-        }
-
-        // For argument context, the suffix is just the rest of the argument
-        if (context.IsArgumentContext)
-        {
-            if (match.StartsWith(context.CurrentValue, StringComparison.OrdinalIgnoreCase))
-            {
-                return match.Substring(context.CurrentValue.Length);
-            }
-            return string.Empty;
-        }
-
-        // For command context, the suffix is the rest of the command
-        if (match.StartsWith(context.CurrentValue, StringComparison.OrdinalIgnoreCase))
-        {
-            return match.Substring(context.CurrentValue.Length);
-        }
-
-        return string.Empty;
-    }
 }

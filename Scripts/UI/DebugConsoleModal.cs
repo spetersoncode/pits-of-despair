@@ -171,6 +171,11 @@ public partial class DebugConsoleModal : CenterContainer
                     AcceptCurrentSuggestion();
                     return true;
                 }
+                // Block Enter if command is invalid (prevent submission of invalid commands)
+                if (!IsCommandComplete(_commandInput.Text))
+                {
+                    return true;
+                }
                 return false;
 
             case Key.Up:
@@ -215,7 +220,7 @@ public partial class DebugConsoleModal : CenterContainer
 
     /// <summary>
     /// Check if the current input represents a complete, valid command.
-    /// A command is complete if it has a valid command name and all required arguments.
+    /// A command is complete if it has a valid command name and valid arguments.
     /// </summary>
     private bool IsCommandComplete(string input)
     {
@@ -245,7 +250,7 @@ public partial class DebugConsoleModal : CenterContainer
             return false;
         }
 
-        // Check if command expects arguments and none provided
+        // Check if command expects arguments
         var argSuggestions = DebugCommandFactory.GetArgumentSuggestions(commandName, 0, "");
         bool commandExpectsArgs = argSuggestions != null && argSuggestions.Count > 0;
         bool hasArgs = parts.Length > 1;
@@ -254,6 +259,18 @@ public partial class DebugConsoleModal : CenterContainer
         if (commandExpectsArgs && !hasArgs)
         {
             return false;
+        }
+
+        // If command expects arguments, validate the provided argument is valid
+        if (commandExpectsArgs && hasArgs)
+        {
+            var providedArg = parts[1];
+            // Check if the argument exactly matches one of the valid suggestions
+            bool isValidArg = argSuggestions.Any(s => s.Equals(providedArg, System.StringComparison.OrdinalIgnoreCase));
+            if (!isValidArg)
+            {
+                return false;
+            }
         }
 
         return true;
@@ -294,27 +311,7 @@ public partial class DebugConsoleModal : CenterContainer
         _selectedIndex = 0;
         _suggestionList.Select(0);
         _suggestionList.Show();
-
-        // Update ghost text
-        UpdateGhostText(input);
-    }
-
-    private void UpdateGhostText(string input)
-    {
-        if (_currentSuggestions.Count == 0 || string.IsNullOrEmpty(input))
-        {
-            _ghostText.Text = string.Empty;
-            return;
-        }
-
-        var selectedSuggestion = _selectedIndex >= 0 && _selectedIndex < _currentSuggestions.Count
-            ? _currentSuggestions[_selectedIndex]
-            : null;
-
-        var suffix = DebugAutocomplete.GetCompletionSuffix(input, selectedSuggestion);
-
-        // Ghost text shows the full line with completion (no / prefix)
-        _ghostText.Text = input + suffix;
+        _ghostText.Text = string.Empty;
     }
 
     private void NavigateSuggestions(int direction)
@@ -348,15 +345,11 @@ public partial class DebugConsoleModal : CenterContainer
 
         _suggestionList.Select(_selectedIndex);
         _suggestionList.EnsureCurrentIsVisible();
-
-        // Update ghost text to match new selection
-        UpdateGhostText(_commandInput.Text);
     }
 
     private void OnSuggestionSelected(long index)
     {
         _selectedIndex = (int)index;
-        UpdateGhostText(_commandInput.Text);
     }
 
     private void AcceptCurrentSuggestion()

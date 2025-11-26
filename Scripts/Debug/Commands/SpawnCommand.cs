@@ -40,7 +40,7 @@ public class SpawnCommand : DebugCommand
         }
 
         var lowerValue = currentValue.ToLower();
-        return allIds.Where(id => id.StartsWith(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
+        return allIds.Where(id => id.Contains(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     public override DebugCommandResult Execute(DebugContext context, string[] args)

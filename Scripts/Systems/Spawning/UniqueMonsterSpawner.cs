@@ -103,7 +103,7 @@ public class UniqueMonsterSpawner
             _spawnedUniques.Add(creatureId);
 
             spawned.Add((entity, creatureData.Threat));
-            GD.Print($"UniqueMonsterSpawner: Spawned unique '{creatureData.Name}' at {position.Value}");
+            GD.Print($"[UniqueMonsterSpawner] Spawned unique '{creatureData.Name}' at {position.Value}");
         }
 
         return spawned;

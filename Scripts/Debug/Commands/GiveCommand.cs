@@ -39,7 +39,7 @@ public class GiveCommand : DebugCommand
         }
 
         var lowerValue = currentValue.ToLower();
-        return allItems.Where(id => id.StartsWith(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
+        return allItems.Where(id => id.Contains(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     public override DebugCommandResult Execute(DebugContext context, string[] args)

@@ -38,7 +38,7 @@ public class AllyCommand : DebugCommand
         }
 
         var lowerValue = currentValue.ToLower();
-        return creatureIds.Where(id => id.StartsWith(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
+        return creatureIds.Where(id => id.Contains(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     public override DebugCommandResult Execute(DebugContext context, string[] args)
