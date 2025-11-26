@@ -14,6 +14,10 @@ maxThreat: 2
 # No out-of-depth on first floor
 outOfDepthChance: 0.0
 
+# Unique creatures for this floor
+uniqueCreatures:
+  - grik_the_gouger
+
 # Available themes
 themeWeights:
   - id: vermin
