@@ -27,6 +27,7 @@ public partial class DataLoader : Node
     private const string ThemesPath = "res://Data/Themes/";
     private const string EncountersPath = "res://Data/Encounters/";
     private const string SpawnConfigsPath = "res://Data/SpawnConfigs/";
+    private const string DecorationsPath = "res://Data/Decorations/";
 
     private Dictionary<string, CreatureData> _creatures = new();
     private Dictionary<string, ItemData> _items = new();
@@ -36,6 +37,10 @@ public partial class DataLoader : Node
     private Dictionary<string, FactionTheme> _factionThemes = new();
     private Dictionary<string, EncounterTemplate> _encounterTemplates = new();
     private Dictionary<string, FloorSpawnConfig> _floorSpawnConfigs = new();
+
+    // Decoration data
+    private Dictionary<string, DecorationData> _decorations = new();
+    private Dictionary<string, DecorationSet> _decorationSets = new();
 
     // Floor generation data
     private Dictionary<string, Generation.Config.FloorGenerationConfig> _floorConfigs = new();
@@ -51,6 +56,7 @@ public partial class DataLoader : Node
         LoadAllFactionThemes();
         LoadAllEncounterTemplates();
         LoadAllFloorSpawnConfigs();
+        LoadAllDecorations();
     }
 
     /// <summary>
@@ -298,6 +304,45 @@ public partial class DataLoader : Node
     public IEnumerable<FloorSpawnConfig> GetAllFloorSpawnConfigs()
     {
         return _floorSpawnConfigs.Values;
+    }
+
+    /// <summary>
+    /// Gets decoration data by ID.
+    /// </summary>
+    public DecorationData GetDecoration(string decorationId)
+    {
+        if (_decorations.TryGetValue(decorationId, out var decoration))
+        {
+            return decoration;
+        }
+        GD.PushWarning($"[DataLoader] Decoration '{decorationId}' not found!");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets decoration set by theme ID.
+    /// Pass null to get the generic decoration set.
+    /// </summary>
+    public DecorationSet GetDecorationSet(string themeId)
+    {
+        foreach (var set in _decorationSets.Values)
+        {
+            // Both null = generic set match
+            // Both same string = themed set match
+            if (set.ThemeId == themeId)
+            {
+                return set;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all loaded decoration sets.
+    /// </summary>
+    public IEnumerable<DecorationSet> GetAllDecorationSets()
+    {
+        return _decorationSets.Values;
     }
 
     private void LoadAllCreatures()
@@ -670,6 +715,58 @@ public partial class DataLoader : Node
         });
 
         GD.Print($"[DataLoader] Loaded {_floorSpawnConfigs.Count} floor spawn configs");
+    }
+
+    private void LoadAllDecorations()
+    {
+        _decorations.Clear();
+        _decorationSets.Clear();
+
+        if (!DirAccess.DirExistsAbsolute(DecorationsPath))
+        {
+            GD.Print("[DataLoader] No Decorations directory found, decorations not loaded");
+            return;
+        }
+
+        LoadYamlFilesRecursive(DecorationsPath, "", _decorationSets, "decoration set", (set, id) =>
+        {
+            if (string.IsNullOrEmpty(set.Id))
+            {
+                set.Id = id;
+            }
+
+            // Process entries from the set and add to global decoration dictionary
+            if (set.Entries != null)
+            {
+                foreach (var (entryKey, decoration) in set.Entries)
+                {
+                    var decorationId = entryKey.ToLower();
+
+                    // Set ID if not specified
+                    if (string.IsNullOrEmpty(decoration.Id))
+                    {
+                        decoration.Id = decorationId;
+                    }
+
+                    // Set theme from parent set if not specified
+                    if (string.IsNullOrEmpty(decoration.ThemeId) && !string.IsNullOrEmpty(set.ThemeId))
+                    {
+                        decoration.ThemeId = set.ThemeId;
+                    }
+
+                    if (_decorations.ContainsKey(decorationId))
+                    {
+                        GD.PushWarning($"[DataLoader] Duplicate decoration ID '{decorationId}', skipping");
+                    }
+                    else
+                    {
+                        _decorations[decorationId] = decoration;
+                    }
+                }
+            }
+        });
+
+        GD.Print($"[DataLoader] Loaded {_decorations.Count} decorations in {_decorationSets.Count} sets");
     }
 
     /// <summary>

@@ -267,6 +267,19 @@ public static class Palette
 
     #endregion
 
+    #region Materials - Decoration
+
+    /// <summary>Water (puddles, pools)</summary>
+    public static readonly Color Water = new("#4466AA");
+
+    /// <summary>Moss (green growth on stone)</summary>
+    public static readonly Color Moss = new("#557744");
+
+    /// <summary>Brick (clay containers)</summary>
+    public static readonly Color Brick = new("#AA6644");
+
+    #endregion
+
     #region Creatures & Organic
 
     /// <summary>CommonCreature, light gray for basic/weak creatures</summary>

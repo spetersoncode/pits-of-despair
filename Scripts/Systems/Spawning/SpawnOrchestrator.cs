@@ -35,6 +35,7 @@ public partial class SpawnOrchestrator : Node
     private StairsSpawner _stairsSpawner;
     private UniqueMonsterSpawner _uniqueSpawner;
     private OutOfDepthSpawner _outOfDepthSpawner;
+    private DecorationSpawner _decorationSpawner;
 
     // Configuration
     private const int PlayerExclusionRadius = 13;
@@ -80,6 +81,7 @@ public partial class SpawnOrchestrator : Node
         _stairsSpawner = new StairsSpawner(_entityManager);
         _uniqueSpawner = new UniqueMonsterSpawner(_dataLoader, _entityFactory, _entityManager);
         _outOfDepthSpawner = new OutOfDepthSpawner(_dataLoader, _entityFactory, _entityManager);
+        _decorationSpawner = new DecorationSpawner(_dataLoader, _entityFactory, _entityManager, _mapSystem);
     }
 
     /// <summary>
@@ -234,6 +236,16 @@ public partial class SpawnOrchestrator : Node
 
         // Phase 11: Out-of-depth spawn (if triggered)
         TrySpawnOutOfDepth(floorConfig, metadata, regionSpawnData, occupiedPositions, summary);
+
+        // Phase 12: Place decorations
+        // IMPORTANT: This must run after AI configuration (Phase 10) because patrol routes
+        // select waypoints from walkable tiles. If blocking decorations were placed before
+        // patrol generation, patrol waypoints could end up on blocked positions.
+        int decorationsPlaced = _decorationSpawner.SpawnDecorations(
+            metadata.Regions,
+            regionSpawnData,
+            occupiedPositions);
+        summary.DecorationsPlaced = decorationsPlaced;
 
         // Validation
         ValidateSpawning(summary, metadata, playerPosition);

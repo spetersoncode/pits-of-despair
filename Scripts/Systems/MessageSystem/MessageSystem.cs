@@ -77,6 +77,7 @@ public partial class MessageSystem : Node
     private Player _player;
     private EntityManager _entityManager;
     private CombatSystem _combatSystem;
+    private DataLoader _dataLoader;
 
     #region Setup Methods
 
@@ -102,6 +103,14 @@ public partial class MessageSystem : Node
     public void SetEntityManager(EntityManager entityManager)
     {
         _entityManager = entityManager;
+    }
+
+    /// <summary>
+    /// Sets the DataLoader reference for decoration data lookups.
+    /// </summary>
+    public void SetDataLoader(DataLoader dataLoader)
+    {
+        _dataLoader = dataLoader;
     }
 
     /// <summary>
@@ -691,6 +700,16 @@ public partial class MessageSystem : Node
     private string FormatDeathMessage(BaseEntity victim, BaseEntity killer, string sourceName)
     {
         bool isPlayer = victim.DisplayName == "Player";
+
+        // Check if this is a decoration with custom destruction message
+        if (!string.IsNullOrEmpty(victim.DecorationId) && _dataLoader != null)
+        {
+            var decorationData = _dataLoader.GetDecoration(victim.DecorationId);
+            if (decorationData != null)
+            {
+                return $"The {victim.DisplayName} {decorationData.DestructionMessage}.";
+            }
+        }
 
         if (killer != null)
         {

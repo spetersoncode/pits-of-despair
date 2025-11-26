@@ -101,6 +101,39 @@ From YAML sheet defaults (`Data/Creatures/*.yaml`):
 | undead | `u` | |
 | others | — | Mixed glyphs, each creature overrides |
 
+## Decorations
+
+**Design Rule**: Decorations use symbols and Unicode characters only. Letters are reserved for creatures to ensure instant visual distinction.
+
+### Generic Dungeon
+
+| Glyph | Name | Color | Walkable | Destructible |
+|-------|------|-------|----------|--------------|
+| `∪` | Clay vase | Brick | Yes | Yes |
+| `◎` | Wooden barrel | Walnut | Yes | Yes |
+| `▫` | Wooden crate | Oak | Yes | Yes |
+| `╥` | Stone pillar | Granite | No | No |
+| `¥` | Brazier | Iron | No | No |
+| `░` | Rubble | Granite | Yes | No |
+| `¤` | Bones | Bone | Yes | No |
+| `≈` | Cobwebs | FogOfWar | Yes | No |
+| `∿` | Puddle | Water | Yes | No |
+| `·` | Moss | Moss | Yes | No |
+| `⌇` | Crack | Basalt | Yes | No |
+
+### Goblinoid Theme
+
+| Glyph | Name | Color | Walkable | Destructible |
+|-------|------|-------|----------|--------------|
+| `╬` | Crude totem | Walnut | No | Yes |
+| `☠` | Skull pile | Bone | Yes | No |
+| `π` | Meat rack | ToughLeather | Yes | Yes |
+| `≡` | Filthy bedroll | Wool | Yes | No |
+| `⚑` | Crude banner | Rust | Yes | Yes |
+| `⌂` | Scrap pile | CrudeIron | Yes | No |
+| `†` | Bone trophy | Bone | Yes | No |
+| `○` | Firepit remains | Basalt | Yes | No |
+
 ## See Also
 
 - [glyphs.md](glyphs.md) - Design philosophy and extension guidelines

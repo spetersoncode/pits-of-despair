@@ -88,7 +88,8 @@ public class MeleeAttackEffect : Effect
         var attackerStats = caster.GetNodeOrNull<StatsComponent>("StatsComponent");
         var targetStats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
 
-        if (attackerStats == null || targetStats == null)
+        // Attacker must have stats to attack
+        if (attackerStats == null)
         {
             return EffectResult.CreateFailure(
                 "Missing stats for combat.",
@@ -100,8 +101,9 @@ public class MeleeAttackEffect : Effect
         var skillName = context.Skill?.Name ?? "attack";
 
         // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
+        // Targets without stats (decorations/objects) have -10 defense - essentially auto-hit
         int attackModifier = attackerStats.GetAttackModifier(isMelee: true);
-        int defenseModifier = targetStats.GetDefenseModifier();
+        int defenseModifier = targetStats?.GetDefenseModifier() ?? -10;
 
         int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
         int defenseRoll = DiceRoller.Roll(2, 6, defenseModifier);
@@ -123,9 +125,10 @@ public class MeleeAttackEffect : Effect
         }
 
         // PHASE 2: Damage Calculation (weapon damage + STR + bonus - armor)
+        // Targets without stats (decorations) have 0 armor
         int baseDamage = DiceRoller.Roll(attackData.DiceNotation);
         int strBonus = attackerStats.GetDamageBonus(isMelee: true);
-        int armor = targetStats.TotalArmor;
+        int armor = targetStats?.TotalArmor ?? 0;
 
         int finalDamage = Mathf.Max(0, baseDamage + strBonus + BonusDamage - armor);
 

@@ -137,6 +137,12 @@ public partial class NearbyEntitiesTracker : Node
 				continue;
 			}
 
+			// Skip decorations - they're not interesting to track
+			if (!string.IsNullOrEmpty(entity.DecorationId))
+			{
+				continue;
+			}
+
 			// Skip if not visible
 			if (!_visionSystem.IsVisible(entity.GridPosition))
 			{

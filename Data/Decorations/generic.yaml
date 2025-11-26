@@ -1,0 +1,129 @@
+id: generic
+decorations:
+  # Containers (destructible)
+  - id: clay_vase
+    weight: 3
+  - id: wooden_barrel
+    weight: 2
+  - id: crate
+    weight: 2
+
+  # Furniture (blocking)
+  - id: stone_pillar
+    weight: 2
+  - id: brazier
+    weight: 1
+
+  # Ambient (walkable)
+  - id: rubble
+    weight: 4
+  - id: bones
+    weight: 3
+  - id: cobwebs
+    weight: 3
+  - id: puddle
+    weight: 2
+  - id: moss_patch
+    weight: 2
+  - id: crack
+    weight: 2
+
+entries:
+  clay_vase:
+    name: clay vase
+    description: A dusty clay vase, fragile and old.
+    glyph: "∪"
+    color: Palette.Brick
+    isWalkable: true
+    isDestructible: true
+    health: 1
+    destructionMessage: shatters into fragments
+    placementHints: ["wall_adjacent", "corner"]
+
+  wooden_barrel:
+    name: wooden barrel
+    description: A rotting wooden barrel.
+    glyph: "◎"
+    color: Palette.Walnut
+    isWalkable: true
+    isDestructible: true
+    health: 2
+    destructionMessage: splinters apart
+    placementHints: ["wall_adjacent", "clustered"]
+
+  crate:
+    name: wooden crate
+    description: A battered storage crate.
+    glyph: "⊞"
+    color: Palette.Oak
+    isWalkable: true
+    isDestructible: true
+    health: 2
+    destructionMessage: breaks into pieces
+    placementHints: ["wall_adjacent", "clustered"]
+
+  stone_pillar:
+    name: stone pillar
+    description: A sturdy stone pillar supporting the ceiling.
+    glyph: "‡"
+    color: Palette.Granite
+    isWalkable: false
+    isDestructible: false
+    placementHints: ["center"]
+
+  brazier:
+    name: brazier
+    description: An iron brazier, cold and dark.
+    glyph: "¥"
+    color: Palette.Iron
+    isWalkable: false
+    isDestructible: false
+    placementHints: ["center", "corner"]
+
+  rubble:
+    name: rubble
+    description: Scattered stone debris.
+    glyph: "∴"
+    color: Palette.Granite
+    isWalkable: true
+    placementHints: ["scattered"]
+
+  bones:
+    name: bones
+    description: Scattered remains of some unfortunate creature.
+    glyph: "¤"
+    color: Palette.Bone
+    isWalkable: true
+    placementHints: ["scattered"]
+
+  cobwebs:
+    name: cobwebs
+    description: Thick dusty cobwebs cling to the walls.
+    glyph: "≈"
+    color: Palette.FogOfWar
+    isWalkable: true
+    placementHints: ["corner", "wall_adjacent"]
+
+  puddle:
+    name: puddle
+    description: A shallow pool of stagnant water.
+    glyph: "∿"
+    color: Palette.Water
+    isWalkable: true
+    placementHints: ["scattered"]
+
+  moss_patch:
+    name: moss
+    description: Damp moss growing on the stone floor.
+    glyph: "·"
+    color: Palette.Moss
+    isWalkable: true
+    placementHints: ["wall_adjacent", "scattered"]
+
+  crack:
+    name: crack
+    description: A deep crack in the stone floor.
+    glyph: "⌇"
+    color: Palette.Basalt
+    isWalkable: true
+    placementHints: ["scattered"]

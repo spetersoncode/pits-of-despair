@@ -523,6 +523,79 @@ public partial class EntityFactory : Node
 	}
 
 	/// <summary>
+	/// Creates a decoration entity from decoration data.
+	/// Decorations are flavor entities that add visual atmosphere to dungeons.
+	/// </summary>
+	/// <param name="decorationId">The decoration ID from the DecorationSet entries.</param>
+	/// <param name="position">The grid position to place the decoration.</param>
+	/// <returns>The created BaseEntity, or null if decoration not found.</returns>
+	public BaseEntity CreateDecoration(string decorationId, GridPosition position)
+	{
+		var data = _dataLoader.GetDecoration(decorationId);
+		if (data == null)
+		{
+			GD.PushWarning($"EntityFactory: Decoration '{decorationId}' not found");
+			return null;
+		}
+
+		var entity = new BaseEntity
+		{
+			GridPosition = position,
+			DisplayName = data.Name,
+			Description = data.Description,
+			Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
+			GlyphColor = ResolveColor(data.Color),
+			IsWalkable = data.IsWalkable,
+			Faction = Faction.Neutral,
+			DecorationId = decorationId,
+			Name = data.Name
+		};
+
+		// Add HealthComponent if destructible
+		if (data.IsDestructible)
+		{
+			var healthComponent = new HealthComponent
+			{
+				Name = "HealthComponent",
+				BaseMaxHealth = data.Health
+			};
+			entity.AddChild(healthComponent);
+		}
+
+		return entity;
+	}
+
+	/// <summary>
+	/// Resolves a color string to a Godot Color.
+	/// Supports "Palette.ColorName" and "#RRGGBB" formats.
+	/// </summary>
+	private Color ResolveColor(string colorString)
+	{
+		if (string.IsNullOrEmpty(colorString))
+			return Palette.Default;
+
+		// Handle hex colors
+		if (colorString.StartsWith("#"))
+			return new Color(colorString);
+
+		// Handle Palette references (already resolved by YAML loader, but fallback)
+		if (colorString.StartsWith("Palette."))
+		{
+			var colorName = colorString.Substring(8);
+			var field = typeof(Palette).GetField(colorName,
+				System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+			if (field != null && field.FieldType == typeof(Color))
+				return (Color)field.GetValue(null);
+		}
+
+		// Assume it's already been converted to hex by the YAML loader
+		if (colorString.Length == 7 && colorString.StartsWith("#"))
+			return new Color(colorString);
+
+		return Palette.Default;
+	}
+
+	/// <summary>
 	/// Gives items to an entity and optionally equips them.
 	/// Requires the entity to have an InventoryComponent.
 	/// </summary>

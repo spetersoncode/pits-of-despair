@@ -134,6 +134,13 @@ public partial class BaseEntity : Node2D
     /// </summary>
     public string CreatureId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The decoration data file ID used to create this entity (e.g., "clay_vase").
+    /// Used for custom destruction messages when decoration is destroyed.
+    /// Empty string for non-decoration entities.
+    /// </summary>
+    public string DecorationId { get; set; } = string.Empty;
+
     #region Condition System
 
     /// <summary>

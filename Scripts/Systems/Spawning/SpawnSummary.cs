@@ -62,6 +62,11 @@ public class SpawnSummary
     public int CreaturesSpawned { get; set; }
 
     /// <summary>
+    /// Total decorations spawned.
+    /// </summary>
+    public int DecorationsPlaced { get; set; }
+
+    /// <summary>
     /// Unique monsters spawned.
     /// </summary>
     public List<string> UniqueSpawns { get; set; } = new();
@@ -145,7 +150,7 @@ public class SpawnSummary
     public IEnumerable<string> GetDebugLines()
     {
         yield return $"[SpawnSummary] Floor {FloorDepth} ({SpawnTimeMs}ms): Power {TotalThreatSpawned}/{TotalPowerBudget} ({PowerBudgetUtilization:F1}%), Items {ItemsPlaced}/{TotalItemBudget}, Gold {GoldPlaced}/{TotalGoldBudget}";
-        yield return $"[SpawnSummary] {RegionsProcessed} regions, {EncountersPlaced} encounters, {CreaturesSpawned} creatures, stairs {StairsPosition ?? "none"}";
+        yield return $"[SpawnSummary] {RegionsProcessed} regions, {EncountersPlaced} encounters, {CreaturesSpawned} creatures, {DecorationsPlaced} decorations, stairs {StairsPosition ?? "none"}";
 
         if (UniqueSpawns.Count > 0)
             yield return $"[SpawnSummary] Uniques: {string.Join(", ", UniqueSpawns)}";

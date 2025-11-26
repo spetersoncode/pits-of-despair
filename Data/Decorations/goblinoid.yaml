@@ -1,0 +1,94 @@
+id: goblinoid
+themeId: goblinoid
+decorations:
+  - id: crude_totem
+    weight: 2
+  - id: skull_pile
+    weight: 3
+  - id: meat_rack
+    weight: 2
+  - id: goblin_bedroll
+    weight: 3
+  - id: crude_banner
+    weight: 2
+  - id: scrap_pile
+    weight: 3
+  - id: bone_trophy
+    weight: 2
+  - id: firepit_remains
+    weight: 2
+
+entries:
+  crude_totem:
+    name: crude totem
+    description: A crudely carved wooden totem adorned with feathers and bones.
+    glyph: "&"
+    color: Palette.Walnut
+    isWalkable: false
+    isDestructible: true
+    health: 3
+    destructionMessage: topples and crashes to the ground
+    placementHints: ["center", "corner"]
+
+  skull_pile:
+    name: skull pile
+    description: A grisly pile of skulls, trophies of goblin raids.
+    glyph: "☠"
+    color: Palette.Bone
+    isWalkable: true
+    isDestructible: false
+    placementHints: ["corner", "wall_adjacent"]
+
+  meat_rack:
+    name: meat rack
+    description: A rack of drying meat, the source unclear and best not questioned.
+    glyph: "π"
+    color: Palette.ToughLeather
+    isWalkable: true
+    isDestructible: true
+    health: 2
+    destructionMessage: collapses in a heap
+    placementHints: ["wall_adjacent"]
+
+  goblin_bedroll:
+    name: filthy bedroll
+    description: A disgusting pile of rags that serves as a goblin bed.
+    glyph: "≡"
+    color: Palette.Wool
+    isWalkable: true
+    placementHints: ["corner", "wall_adjacent", "clustered"]
+
+  crude_banner:
+    name: crude banner
+    description: A tattered banner bearing crude goblin symbols.
+    glyph: "⚑"
+    color: Palette.Rust
+    isWalkable: true
+    isDestructible: true
+    health: 1
+    destructionMessage: tears to shreds
+    placementHints: ["wall_adjacent"]
+
+  scrap_pile:
+    name: scrap pile
+    description: A heap of stolen junk and broken equipment.
+    glyph: "⌂"
+    color: Palette.CrudeIron
+    isWalkable: true
+    placementHints: ["corner", "scattered"]
+
+  bone_trophy:
+    name: bone trophy
+    description: A large bone mounted as a trophy, possibly from a slain adventurer.
+    glyph: "†"
+    color: Palette.Bone
+    isWalkable: true
+    placementHints: ["wall_adjacent", "corner"]
+
+  firepit_remains:
+    name: firepit remains
+    description: The charred remains of a goblin cooking fire.
+    glyph: "○"
+    color: Palette.Basalt
+    isWalkable: true
+    placementHints: ["center"]
