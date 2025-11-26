@@ -528,6 +528,37 @@ public static class Palette
 
     #endregion
 
+    #region Intent - AI State Display
+
+    /// <summary>Sleeping intent - creature is inactive</summary>
+    public static readonly Color IntentSleeping = new("#666666");
+
+    /// <summary>Idle intent - no current goal</summary>
+    public static readonly Color IntentIdle = new("#AAAAAA");
+
+    /// <summary>Patrolling intent - following patrol route</summary>
+    public static readonly Color IntentPatrolling = new("#5588CC");
+
+    /// <summary>Guarding intent - holding position, watching threats</summary>
+    public static readonly Color IntentGuarding = new("#DDAA55");
+
+    /// <summary>Attacking intent - actively trying to kill target</summary>
+    public static readonly Color IntentAttacking = new("#DD5544");
+
+    /// <summary>Fleeing intent - running from threat</summary>
+    public static readonly Color IntentFleeing = new("#AA66CC");
+
+    /// <summary>Following intent - following leader/ally</summary>
+    public static readonly Color IntentFollowing = new("#55CCCC");
+
+    /// <summary>Scavenging intent - searching for items</summary>
+    public static readonly Color IntentScavenging = new("#66BB66");
+
+    /// <summary>Wandering intent - aimlessly moving</summary>
+    public static readonly Color IntentWandering = new("#7799AA");
+
+    #endregion
+
     #region Gems and Jewelry
 
     /// <summary>Jade (soft green gemstone)</summary>

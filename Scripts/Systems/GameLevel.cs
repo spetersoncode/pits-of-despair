@@ -322,9 +322,9 @@ public partial class GameLevel : Node
         // Connect tile hazard manager to message system for damage messages
         _messageSystem.ConnectToTileHazardManager(_tileHazardManager);
 
-        // Initialize SidePanel with ViewModels
+        // Initialize SidePanel with ViewModels and TurnManager for intent updates
         var sidePanel = _gameHUD.GetNode<UI.SidePanel>("HBoxContainer/SidePanel");
-        sidePanel.Initialize(_player, _playerStatsViewModel, _equipmentViewModel, _nearbyEntitiesTracker);
+        sidePanel.Initialize(_player, _playerStatsViewModel, _equipmentViewModel, _nearbyEntitiesTracker, _turnManager);
 
         _turnManager.StartFirstPlayerTurn();
     }

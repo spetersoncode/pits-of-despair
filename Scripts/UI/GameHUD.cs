@@ -111,6 +111,7 @@ public partial class GameHUD : Control
         _messageSystem.SetEntityManager(entityManager);
         _messageSystem.SetDataLoader(GetNode<Data.DataLoader>("/root/DataLoader"));
         _messageSystem.ConnectToCombatSystem(combatSystem);
+        _messageSystem.ConnectToLevelUpSystem(levelUpSystem);
 
         _inventoryPanel.ConnectToPlayer(player);
         _inventoryPanel.Connect(InventoryModal.SignalName.Cancelled, Callable.From(OnInventoryCancelled));
@@ -171,13 +172,19 @@ public partial class GameHUD : Control
         _entityManager = entityManager;
         _entityManager.Connect(EntityManager.SignalName.EntityAdded, Callable.From<BaseEntity>(OnEntityAdded));
 
-        // Connect health components to MessageSystem for combat message sequencing
+        // Connect health and AI components to MessageSystem for combat message sequencing
         foreach (var entity in entityManager.GetAllEntities())
         {
             var healthComponent = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
             if (healthComponent != null)
             {
                 _messageSystem.ConnectToHealthComponent(healthComponent, entity);
+            }
+
+            var aiComponent = entity.GetNodeOrNull<Components.AIComponent>("AIComponent");
+            if (aiComponent != null)
+            {
+                _messageSystem.ConnectToAIComponent(aiComponent);
             }
         }
 
@@ -700,6 +707,13 @@ public partial class GameHUD : Control
         if (healthComponent != null)
         {
             _messageSystem.ConnectToHealthComponent(healthComponent, entity);
+        }
+
+        // Connect AIComponent for wake-up messages
+        var aiComponent = entity.GetNodeOrNull<Components.AIComponent>("AIComponent");
+        if (aiComponent != null)
+        {
+            _messageSystem.ConnectToAIComponent(aiComponent);
         }
     }
 

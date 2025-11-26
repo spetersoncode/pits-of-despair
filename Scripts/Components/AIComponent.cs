@@ -13,6 +13,13 @@ namespace PitsOfDespair.Components;
 /// </summary>
 public partial class AIComponent : Node
 {
+    /// <summary>
+    /// Emitted when the creature wakes from sleep.
+    /// Parameter: the entity that woke up
+    /// </summary>
+    [Signal]
+    public delegate void WokeUpEventHandler(BaseEntity entity);
+
     // Goal-based AI (stack-based system)
     public GoalStack GoalStack { get; private set; } = new GoalStack();
 
@@ -98,7 +105,11 @@ public partial class AIComponent : Node
         if (IsSleeping)
         {
             IsSleeping = false;
-            GD.Print($"{GetEntity()?.DisplayName ?? "Creature"} wakes up!");
+            var entity = GetEntity();
+            if (entity != null)
+            {
+                EmitSignal(SignalName.WokeUp, entity);
+            }
         }
     }
 
@@ -131,6 +142,7 @@ public partial class AIComponent : Node
 
     /// <summary>
     /// Gets the current intent (player-facing AI state) derived from goal stack.
+    /// Walks up the OriginalIntent chain to find the "real" intent behind atomic goals.
     /// </summary>
     public Intent GetIntent()
     {
@@ -142,13 +154,31 @@ public partial class AIComponent : Node
         if (currentGoal == null)
             return Intent.Idle;
 
-        // Check goal type to determine intent
-        return currentGoal switch
+        // Walk up the OriginalIntent chain to find the intent-bearing goal
+        // Atomic goals like MoveDirectionGoal don't represent intent themselves
+        var goal = currentGoal;
+        while (goal != null)
+        {
+            var intent = GetIntentFromGoal(goal);
+            if (intent != null)
+                return intent.Value;
+
+            // Walk up to parent goal
+            goal = goal.OriginalIntent;
+        }
+
+        return Intent.Idle;
+    }
+
+    /// <summary>
+    /// Gets the intent for a specific goal, or null if this goal type doesn't define intent.
+    /// </summary>
+    private Intent? GetIntentFromGoal(Goal goal)
+    {
+        return goal switch
         {
             FleeGoal => Intent.Fleeing,
-            KillTargetGoal killGoal => IsTargetAdjacent(killGoal)
-                ? Intent.Attacking
-                : Intent.Hunting,
+            KillTargetGoal => Intent.Attacking,
             PatrolGoal => Intent.Patrolling,
             PatrolRouteGoal => Intent.Patrolling,
             WanderGoal => Intent.Wandering,
@@ -156,20 +186,9 @@ public partial class AIComponent : Node
             SeekItemGoal => Intent.Scavenging,
             ApproachGoal approachGoal => DetermineApproachIntent(approachGoal),
             BoredGoal => DetermineBoredIntent(),
-            _ => Intent.Idle
+            // Atomic goals like MoveDirectionGoal don't define intent - return null to walk up chain
+            _ => null
         };
-    }
-
-    private bool IsTargetAdjacent(KillTargetGoal killGoal)
-    {
-        var entity = GetEntity();
-        if (entity == null || killGoal.Target == null)
-            return false;
-
-        int distance = DistanceHelper.ChebyshevDistance(
-            entity.GridPosition,
-            killGoal.Target.GridPosition);
-        return distance <= 1;
     }
 
     private Intent DetermineApproachIntent(ApproachGoal approachGoal)
@@ -178,11 +197,11 @@ public partial class AIComponent : Node
         var originalIntent = approachGoal.OriginalIntent;
         return originalIntent switch
         {
-            KillTargetGoal => Intent.Hunting,
+            KillTargetGoal => Intent.Attacking,
             FollowEntityGoal => Intent.Following,
             PatrolGoal => Intent.Patrolling,
             PatrolRouteGoal => Intent.Patrolling,
-            _ => Intent.Hunting // Default to hunting if approaching something
+            _ => Intent.Attacking // Default to attacking if approaching something
         };
     }
 

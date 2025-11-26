@@ -73,11 +73,17 @@ public partial class MessageSystem : Node
     /// </summary>
     private readonly List<(HealthComponent healthComponent, BaseEntity entity)> _healthConnections = new();
 
+    /// <summary>
+    /// Tracks connected AI components for cleanup.
+    /// </summary>
+    private readonly List<AIComponent> _aiConnections = new();
+
     private UI.MessageLog _messageLog;
     private Player _player;
     private EntityManager _entityManager;
     private CombatSystem _combatSystem;
     private DataLoader _dataLoader;
+    private LevelUpSystem _levelUpSystem;
 
     #region Setup Methods
 
@@ -144,6 +150,24 @@ public partial class MessageSystem : Node
     public void ConnectToTileHazardManager(TileHazardManager hazardManager)
     {
         hazardManager.Connect(TileHazardManager.SignalName.HazardDamageDealt, Callable.From<BaseEntity, int, string>(OnHazardDamageDealt));
+    }
+
+    /// <summary>
+    /// Connects to the LevelUpSystem to receive level-up events.
+    /// </summary>
+    public void ConnectToLevelUpSystem(LevelUpSystem levelUpSystem)
+    {
+        _levelUpSystem = levelUpSystem;
+        levelUpSystem.Connect(LevelUpSystem.SignalName.LevelUpMessage, Callable.From<int>(OnLevelUp));
+    }
+
+    /// <summary>
+    /// Connects to an entity's AI component to receive wake-up events.
+    /// </summary>
+    public void ConnectToAIComponent(AIComponent aiComponent)
+    {
+        aiComponent.Connect(AIComponent.SignalName.WokeUp, Callable.From<BaseEntity>(OnCreatureWokeUp));
+        _aiConnections.Add(aiComponent);
     }
 
     #endregion
@@ -275,6 +299,18 @@ public partial class MessageSystem : Node
             "acid" => "acid",
             _ => hazardType.Replace("_", " ")
         };
+    }
+
+    private void OnLevelUp(int newLevel)
+    {
+        // Level up is always immediate and prominent
+        string colorHex = Palette.ToHex(Palette.Alert);
+        _messageLog?.AddMessage($"*** LEVEL UP! You are now level {newLevel}! Press [L] to choose your reward. ***", colorHex);
+    }
+
+    private void OnCreatureWokeUp(BaseEntity entity)
+    {
+        _messageLog?.AddMessage($"The {entity.DisplayName} wakes up!", ColorDefault);
     }
 
     #endregion
@@ -890,6 +926,22 @@ public partial class MessageSystem : Node
             }
         }
         _healthConnections.Clear();
+
+        // Disconnect from level-up system
+        if (_levelUpSystem != null && GodotObject.IsInstanceValid(_levelUpSystem))
+        {
+            _levelUpSystem.Disconnect(LevelUpSystem.SignalName.LevelUpMessage, Callable.From<int>(OnLevelUp));
+        }
+
+        // Disconnect from AI components
+        foreach (var aiComponent in _aiConnections)
+        {
+            if (aiComponent != null && GodotObject.IsInstanceValid(aiComponent))
+            {
+                aiComponent.Disconnect(AIComponent.SignalName.WokeUp, Callable.From<BaseEntity>(OnCreatureWokeUp));
+            }
+        }
+        _aiConnections.Clear();
     }
 
     #endregion

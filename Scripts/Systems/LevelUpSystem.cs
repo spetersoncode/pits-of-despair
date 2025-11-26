@@ -38,6 +38,13 @@ public partial class LevelUpSystem : Node
 	[Signal]
 	public delegate void PendingLevelUpsChangedEventHandler(int count);
 
+	/// <summary>
+	/// Emitted when player reaches a new level (for message log display).
+	/// Parameter: new level reached
+	/// </summary>
+	[Signal]
+	public delegate void LevelUpMessageEventHandler(int newLevel);
+
 	#endregion
 
 	#region State
@@ -103,6 +110,9 @@ public partial class LevelUpSystem : Node
 		// Queue this level-up
 		_pendingLevelUps.Enqueue(newLevel);
 		EmitSignal(SignalName.PendingLevelUpsChanged, _pendingLevelUps.Count);
+
+		// Emit message for the log
+		EmitSignal(SignalName.LevelUpMessage, newLevel);
 
 		// Don't auto-open modal - player will see "LEVEL UP! [L]" indicator
 		// and can press L when ready to make their choices

@@ -1,4 +1,6 @@
 using Godot;
+using PitsOfDespair.AI;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
@@ -39,6 +41,7 @@ public partial class SidePanel : PanelContainer
     private ViewModels.PlayerStatsViewModel _statsViewModel;
     private ViewModels.EquipmentViewModel _equipmentViewModel;
     private Systems.NearbyEntitiesTracker _nearbyEntitiesTracker;
+    private Systems.TurnManager _turnManager;
 
     // Pending level-up tracking
     private int _pendingLevelUps = 0;
@@ -70,12 +73,14 @@ public partial class SidePanel : PanelContainer
         Entities.Player player,
         ViewModels.PlayerStatsViewModel statsViewModel,
         ViewModels.EquipmentViewModel equipmentViewModel,
-        Systems.NearbyEntitiesTracker nearbyEntitiesTracker)
+        Systems.NearbyEntitiesTracker nearbyEntitiesTracker,
+        Systems.TurnManager turnManager = null)
     {
         _player = player;
         _statsViewModel = statsViewModel;
         _equipmentViewModel = equipmentViewModel;
         _nearbyEntitiesTracker = nearbyEntitiesTracker;
+        _turnManager = turnManager;
 
         // Connect to ViewModel signals (single source for all stats updates)
         _statsViewModel.Connect(
@@ -93,8 +98,26 @@ public partial class SidePanel : PanelContainer
             Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
         );
 
+        // Connect to TurnManager to refresh intents after creature turns
+        if (_turnManager != null)
+        {
+            _turnManager.Connect(
+                Systems.TurnManager.SignalName.CreatureTurnsEnded,
+                Callable.From(OnCreatureTurnsEnded)
+            );
+        }
+
         // Initialize display with current values
         UpdateAllDisplays();
+    }
+
+    /// <summary>
+    /// Called after all creatures have taken their turns.
+    /// Refreshes visible entities display to show updated intents.
+    /// </summary>
+    private void OnCreatureTurnsEnded()
+    {
+        UpdateVisibleEntitiesDisplay();
     }
 
     /// <summary>
@@ -394,7 +417,21 @@ public partial class SidePanel : PanelContainer
                     ? entity.ItemData.Template.GetDisplayName(entity.ItemData.Quantity)
                     : entity.DisplayName;
 
-                sb.AppendLine($"[color={colorHex}]{entity.Glyph} {displayName}[/color]");
+                // Check for AI component to show intent for creatures
+                var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+                string intentSuffix = "";
+                if (aiComponent != null)
+                {
+                    var intent = aiComponent.GetIntent();
+                    string intentName = IntentHelper.GetShortName(intent);
+                    if (!string.IsNullOrEmpty(intentName))
+                    {
+                        string intentColorHex = Palette.ToHex(IntentHelper.GetColor(intent));
+                        intentSuffix = $" [color={intentColorHex}]({intentName})[/color]";
+                    }
+                }
+
+                sb.AppendLine($"[color={colorHex}]{entity.Glyph} {displayName}[/color]{intentSuffix}");
             }
         }
 
@@ -425,6 +462,14 @@ public partial class SidePanel : PanelContainer
             _nearbyEntitiesTracker.Disconnect(
                 Systems.NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
                 Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
+            );
+        }
+
+        if (_turnManager != null)
+        {
+            _turnManager.Disconnect(
+                Systems.TurnManager.SignalName.CreatureTurnsEnded,
+                Callable.From(OnCreatureTurnsEnded)
             );
         }
     }

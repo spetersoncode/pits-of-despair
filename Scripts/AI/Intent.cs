@@ -31,13 +31,7 @@ public enum Intent
     Guarding,
 
     /// <summary>
-    /// Actively pursuing a target.
-    /// Display: Orange, aggressive.
-    /// </summary>
-    Hunting,
-
-    /// <summary>
-    /// In combat, attacking.
+    /// Actively trying to kill a target.
     /// Display: Red, combat stance.
     /// </summary>
     Attacking,
