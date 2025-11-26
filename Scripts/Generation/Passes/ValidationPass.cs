@@ -56,8 +56,6 @@ public class ValidationPass : IGenerationPass
 
     public void Execute(GenerationContext context)
     {
-        GD.Print("[ValidationPass] Validating generation constraints...");
-
         var failures = new List<string>();
 
         // Validate walkable percentage
@@ -66,12 +64,8 @@ public class ValidationPass : IGenerationPass
         // Validate regions if metadata is available
         ValidateRegions(context, failures);
 
-        // Report results
-        if (failures.Count == 0)
-        {
-            GD.Print("[ValidationPass] All validation checks passed.");
-        }
-        else
+        // Report failures only
+        if (failures.Count > 0)
         {
             foreach (var failure in failures)
             {
@@ -109,8 +103,6 @@ public class ValidationPass : IGenerationPass
 
         float walkablePercent = (walkableTiles / (float)totalTiles) * 100f;
 
-        GD.Print($"[ValidationPass] Walkable tiles: {walkableTiles}/{totalTiles} ({walkablePercent:F1}%)");
-
         if (walkablePercent < _minWalkablePercent)
         {
             failures.Add($"Walkable percentage {walkablePercent:F1}% is below minimum {_minWalkablePercent}%");
@@ -125,21 +117,10 @@ public class ValidationPass : IGenerationPass
     private void ValidateRegions(GenerationContext context, List<string> failures)
     {
         // Skip region validation if no metadata or no constraints
-        if (context.Metadata == null)
-        {
-            GD.Print("[ValidationPass] No metadata available, skipping region validation.");
+        if (context.Metadata?.Regions == null)
             return;
-        }
 
-        var regions = context.Metadata.Regions;
-        if (regions == null)
-        {
-            GD.Print("[ValidationPass] No regions in metadata, skipping region validation.");
-            return;
-        }
-
-        int regionCount = regions.Count;
-        GD.Print($"[ValidationPass] Region count: {regionCount}");
+        int regionCount = context.Metadata.Regions.Count;
 
         // Validate region count
         if (_minRegions > 0 && regionCount < _minRegions)
@@ -156,7 +137,7 @@ public class ValidationPass : IGenerationPass
         if (_minRegionSize > 0)
         {
             int undersizedRegions = 0;
-            foreach (var region in regions)
+            foreach (var region in context.Metadata.Regions)
             {
                 if (region.Area < _minRegionSize)
                 {

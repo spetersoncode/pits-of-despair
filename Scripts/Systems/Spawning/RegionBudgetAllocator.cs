@@ -65,35 +65,51 @@ public class RegionBudgetAllocator
 
             int regionBudget = Mathf.RoundToInt(totalBudget * proportion);
 
-            // Ensure minimum budget for non-trivial regions
-            if (region.Area >= 9 && regionBudget < 1)
-            {
-                regionBudget = 1;
-            }
-
             spawnData.AllocatedBudget = regionBudget;
             spawnData.RemainingBudget = regionBudget;
             allocatedTotal += regionBudget;
         }
 
-        // Distribute any rounding remainder to largest regions
-        int remainder = totalBudget - allocatedTotal;
-        if (remainder > 0)
+        // Handle rounding differences
+        int difference = totalBudget - allocatedTotal;
+
+        if (difference > 0)
         {
+            // Distribute remainder to largest regions
             var sortedBySize = metadata.Regions
+                .Where(r => regionSpawnData.ContainsKey(r.Id))
                 .OrderByDescending(r => r.Area)
                 .ToList();
 
-            for (int i = 0; i < remainder && i < sortedBySize.Count; i++)
+            for (int i = 0; i < difference && i < sortedBySize.Count; i++)
             {
-                var region = sortedBySize[i];
-                if (regionSpawnData.TryGetValue(region.Id, out var spawnData))
-                {
-                    spawnData.AllocatedBudget++;
-                    spawnData.RemainingBudget++;
-                }
+                var spawnData = regionSpawnData[sortedBySize[i].Id];
+                spawnData.AllocatedBudget++;
+                spawnData.RemainingBudget++;
             }
         }
+        else if (difference < 0)
+        {
+            // Reduce from smallest regions that have budget
+            var sortedBySize = metadata.Regions
+                .Where(r => regionSpawnData.ContainsKey(r.Id) && regionSpawnData[r.Id].AllocatedBudget > 0)
+                .OrderBy(r => r.Area)
+                .ToList();
+
+            int toRemove = -difference;
+            foreach (var region in sortedBySize)
+            {
+                if (toRemove <= 0)
+                    break;
+
+                var spawnData = regionSpawnData[region.Id];
+                int canRemove = Mathf.Min(spawnData.AllocatedBudget, toRemove);
+                spawnData.AllocatedBudget -= canRemove;
+                spawnData.RemainingBudget -= canRemove;
+                toRemove -= canRemove;
+            }
+        }
+
     }
 
     /// <summary>

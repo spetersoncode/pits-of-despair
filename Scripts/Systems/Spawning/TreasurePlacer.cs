@@ -184,6 +184,10 @@ public class TreasurePlacer
             {
                 candidates.Add((itemId, data, weight));
             }
+            else
+            {
+                GD.PushWarning($"[TreasurePlacer] Item '{itemId}' not found in data loader");
+            }
         }
     }
 

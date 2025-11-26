@@ -30,8 +30,9 @@ public class SpawnStatsCommand : DebugCommand
             );
         }
 
-        // Output the debug string - it will be printed to the console
-        Godot.GD.Print(summary.ToDebugString());
+        // Output the debug lines - each will be printed to the console
+        foreach (var line in summary.GetDebugLines())
+            Godot.GD.Print(line);
 
         return DebugCommandResult.CreateSuccess(
             $"Floor {summary.FloorDepth}: {summary.CreaturesSpawned} creatures, {summary.EncountersPlaced} encounters, {summary.PowerBudgetUtilization:F0}% budget used",

@@ -3,9 +3,9 @@ minFloor: 1
 maxFloor: 1
 
 # Power budget - moderate density
-powerBudget: "3d6+15"
-itemBudget: "1d6+8"
-goldBudget: "2d10+20"
+powerBudget: "3d10+55"
+itemBudget: "2d6+25"
+goldBudget: "3d10+70"
 
 # Threat limits - keep creatures easy
 minThreat: 1

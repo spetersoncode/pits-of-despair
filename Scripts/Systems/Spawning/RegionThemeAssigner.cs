@@ -92,7 +92,7 @@ public class RegionThemeAssigner
     }
 
     /// <summary>
-    /// Builds a map of region adjacencies from passages.
+    /// Builds a map of region adjacencies from passages and direct tile adjacency.
     /// </summary>
     private Dictionary<int, List<int>> BuildAdjacencyMap(DungeonMetadata metadata)
     {
@@ -121,6 +121,43 @@ public class RegionThemeAssigner
                         int r1 = connectedRegions[i];
                         int r2 = connectedRegions[j];
 
+                        if (!adjacencyMap[r1].Contains(r2))
+                            adjacencyMap[r1].Add(r2);
+                        if (!adjacencyMap[r2].Contains(r1))
+                            adjacencyMap[r2].Add(r1);
+                    }
+                }
+            }
+        }
+
+        // Also detect direct tile adjacency (for wide openings without passages)
+        if (metadata.RegionIds != null)
+        {
+            var regionIds = metadata.RegionIds;
+            int width = regionIds.GetLength(0);
+            int height = regionIds.GetLength(1);
+
+            for (int x = 0; x < width - 1; x++)
+            {
+                for (int y = 0; y < height - 1; y++)
+                {
+                    int r1 = regionIds[x, y];
+                    if (r1 < 0) continue;
+
+                    // Check right neighbor
+                    int r2 = regionIds[x + 1, y];
+                    if (r2 >= 0 && r1 != r2)
+                    {
+                        if (!adjacencyMap[r1].Contains(r2))
+                            adjacencyMap[r1].Add(r2);
+                        if (!adjacencyMap[r2].Contains(r1))
+                            adjacencyMap[r2].Add(r1);
+                    }
+
+                    // Check bottom neighbor
+                    r2 = regionIds[x, y + 1];
+                    if (r2 >= 0 && r1 != r2)
+                    {
                         if (!adjacencyMap[r1].Contains(r2))
                             adjacencyMap[r1].Add(r2);
                         if (!adjacencyMap[r2].Contains(r1))
@@ -176,6 +213,10 @@ public class RegionThemeAssigner
             if (theme != null)
             {
                 themes.Add(theme);
+            }
+            else
+            {
+                GD.PushWarning($"[RegionThemeAssigner] Theme '{entry.Id}' not found in data loader");
             }
         }
 

@@ -83,7 +83,6 @@ public class StairsSpawner
 		// Update metadata
 		metadata.ExitPosition = position.Value;
 
-		GD.Print($"StairsSpawner: Placed {(floorDepth >= FINAL_FLOOR ? "throne" : "stairs")} at {position.Value}");
 		return position.Value;
 	}
 

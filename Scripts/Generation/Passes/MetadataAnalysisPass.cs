@@ -41,41 +41,31 @@ public class MetadataAnalysisPass : IGenerationPass
 
     public void Execute(GenerationContext context)
     {
-        GD.Print("[MetadataAnalysisPass] Starting metadata analysis...");
-
         // Step 1: Compute wall distance field
-        GD.Print("[MetadataAnalysisPass] Computing wall distance field...");
         var wallDistance = DistanceFieldComputer.ComputeWallDistance(context);
         context.Metadata.WallDistance = wallDistance;
 
         // Step 2: Classify all tiles
-        GD.Print("[MetadataAnalysisPass] Classifying tiles...");
         var classifications = TileClassifier.ClassifyAll(context, wallDistance);
         context.Metadata.TileClassifications = classifications;
 
         // Step 3: Detect regions (preserving BSP rooms if present)
-        GD.Print("[MetadataAnalysisPass] Detecting regions...");
         bool preserveExisting = context.Metadata.Regions.Count > 0;
         RegionDetector.DetectRegions(context, classifications, _minRegionSize, preserveExisting);
 
         // Step 4: Detect passages
-        GD.Print("[MetadataAnalysisPass] Detecting passages...");
         PassageDetector.DetectPassages(context, classifications, wallDistance);
 
         // Step 5: Detect chokepoints
-        GD.Print("[MetadataAnalysisPass] Detecting chokepoints...");
         ChokepointDetector.DetectChokepoints(context, classifications, wallDistance);
 
-        // Step 6: Build region graph
-        GD.Print("[MetadataAnalysisPass] Building region graph...");
+        // Step 6: Build region graph (for adjacency queries, not tile connectivity)
         var graph = new RegionGraph(context.Metadata.Regions, context.Metadata.Passages);
 
-        // Log results
-        GD.Print($"[MetadataAnalysisPass] Analysis complete:");
-        GD.Print($"  - Regions: {context.Metadata.Regions.Count}");
-        GD.Print($"  - Alcoves: {context.Metadata.Alcoves.Count}");
-        GD.Print($"  - Passages: {context.Metadata.Passages.Count}");
-        GD.Print($"  - Chokepoints: {context.Metadata.Chokepoints.Count}");
-        GD.Print($"  - Fully connected: {graph.IsFullyConnected()}");
+        // Warn if region graph has gaps (regions connected via wide openings, not passages)
+        if (!graph.IsFullyConnected())
+        {
+            GD.PushWarning($"[MetadataAnalysisPass] Region graph not fully connected - some regions connected via wide openings (no passage tiles). Passages: {context.Metadata.Passages.Count}, Regions: {context.Metadata.Regions.Count}");
+        }
     }
 }

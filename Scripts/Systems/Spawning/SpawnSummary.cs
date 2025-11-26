@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using PitsOfDespair.Systems.Spawning.Data;
 
@@ -139,74 +140,26 @@ public class SpawnSummary
         : 0f;
 
     /// <summary>
-    /// Generates a formatted debug string.
+    /// Generates debug log lines. Each line should be printed separately.
     /// </summary>
-    public string ToDebugString()
+    public IEnumerable<string> GetDebugLines()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine($"=== Spawn Summary: Floor {FloorDepth} ===");
-        sb.AppendLine($"Time: {SpawnTimeMs}ms");
-        sb.AppendLine();
-
-        sb.AppendLine("--- Budgets ---");
-        sb.AppendLine($"Power:  {TotalThreatSpawned}/{TotalPowerBudget} ({PowerBudgetUtilization:F1}%)");
-        sb.AppendLine($"Items:  {ItemsPlaced}/{TotalItemBudget}");
-        sb.AppendLine($"Gold:   {GoldPlaced}/{TotalGoldBudget}");
-        sb.AppendLine();
-
-        sb.AppendLine("--- Spawns ---");
-        sb.AppendLine($"Regions:    {RegionsProcessed}");
-        sb.AppendLine($"Encounters: {EncountersPlaced}");
-        sb.AppendLine($"Creatures:  {CreaturesSpawned}");
-        sb.AppendLine($"Stairs:     {StairsPosition ?? "Not placed"}");
-        sb.AppendLine();
+        yield return $"[SpawnSummary] Floor {FloorDepth} ({SpawnTimeMs}ms): Power {TotalThreatSpawned}/{TotalPowerBudget} ({PowerBudgetUtilization:F1}%), Items {ItemsPlaced}/{TotalItemBudget}, Gold {GoldPlaced}/{TotalGoldBudget}";
+        yield return $"[SpawnSummary] {RegionsProcessed} regions, {EncountersPlaced} encounters, {CreaturesSpawned} creatures, stairs {StairsPosition ?? "none"}";
 
         if (UniqueSpawns.Count > 0)
-        {
-            sb.AppendLine("--- Uniques ---");
-            foreach (var unique in UniqueSpawns)
-            {
-                sb.AppendLine($"  - {unique}");
-            }
-            sb.AppendLine();
-        }
+            yield return $"[SpawnSummary] Uniques: {string.Join(", ", UniqueSpawns)}";
 
         if (!string.IsNullOrEmpty(OutOfDepthSpawn))
-        {
-            sb.AppendLine($"--- Out of Depth ---");
-            sb.AppendLine($"  {OutOfDepthSpawn}");
-            sb.AppendLine();
-        }
+            yield return $"[SpawnSummary] Out-of-depth: {OutOfDepthSpawn}";
 
         if (ThemeDistribution.Count > 0)
-        {
-            sb.AppendLine("--- Theme Distribution ---");
-            foreach (var (theme, count) in ThemeDistribution)
-            {
-                sb.AppendLine($"  {theme}: {count} region(s)");
-            }
-            sb.AppendLine();
-        }
+            yield return $"[SpawnSummary] Themes: {string.Join(", ", ThemeDistribution.Select(t => $"{t.Key}:{t.Value}"))}";
 
         if (EncounterDistribution.Count > 0)
-        {
-            sb.AppendLine("--- Encounter Types ---");
-            foreach (var (encounter, count) in EncounterDistribution)
-            {
-                sb.AppendLine($"  {encounter}: {count}");
-            }
-            sb.AppendLine();
-        }
+            yield return $"[SpawnSummary] Encounters: {string.Join(", ", EncounterDistribution.Select(e => $"{e.Key}:{e.Value}"))}";
 
-        if (Warnings.Count > 0)
-        {
-            sb.AppendLine("--- Warnings ---");
-            foreach (var warning in Warnings)
-            {
-                sb.AppendLine($"  ! {warning}");
-            }
-        }
-
-        return sb.ToString();
+        foreach (var warning in Warnings)
+            yield return $"[SpawnSummary] Warning: {warning}";
     }
 }

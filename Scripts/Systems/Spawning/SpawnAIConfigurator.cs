@@ -188,7 +188,7 @@ public class SpawnAIConfigurator
 
         if (route == null || route.Waypoints.Count < 2)
         {
-            GD.Print($"[LeaderPack] Failed to generate {config.Scope} route");
+            GD.PushWarning($"[LeaderPack] Failed to generate {config.Scope} route");
             return;
         }
 
@@ -198,14 +198,12 @@ public class SpawnAIConfigurator
         if (encounter.Leader != null && patrollers.Any(p => p.creature == encounter.Leader))
         {
             leaderCreature = encounter.Leader;
-            GD.Print($"[LeaderPack] Using encounter leader: {leaderCreature.Entity.DisplayName}");
         }
         else
         {
             // Random selection
             var randomIndex = GD.RandRange(0, patrollers.Count - 1);
             leaderCreature = patrollers[randomIndex].creature;
-            GD.Print($"[LeaderPack] Randomly selected leader: {leaderCreature.Entity.DisplayName}");
         }
 
         // Create PackLeaderComponent for the leader
@@ -234,8 +232,6 @@ public class SpawnAIConfigurator
             // Register follower with leader
             leaderComp.AddFollower(creature.Entity);
         }
-
-        GD.Print($"[LeaderPack] Created {config.Scope} pack: 1 leader + {leaderComp.Followers.Count} followers, {route.Waypoints.Count} waypoints");
     }
 
     /// <summary>
@@ -261,11 +257,10 @@ public class SpawnAIConfigurator
 
         if (route == null || route.Waypoints.Count < 2)
         {
-            GD.Print($"[IndividualPatrol] Failed to generate {patrolComp.Scope} route for {creature.Entity.DisplayName}");
+            GD.PushWarning($"[IndividualPatrol] Failed to generate {patrolComp.Scope} route for {creature.Entity.DisplayName}");
             return;
         }
 
-        GD.Print($"[IndividualPatrol] Created {patrolComp.Scope} route for {creature.Entity.DisplayName}: {route.Waypoints.Count} waypoints");
         AddPatrolRouteComponent(creature.Entity, route);
     }
 

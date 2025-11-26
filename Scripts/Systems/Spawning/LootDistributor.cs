@@ -193,6 +193,10 @@ public class LootDistributor
             {
                 candidates.Add((itemId, data, weight));
             }
+            else
+            {
+                GD.PushWarning($"[LootDistributor] Item '{itemId}' not found in data loader");
+            }
         }
     }
 

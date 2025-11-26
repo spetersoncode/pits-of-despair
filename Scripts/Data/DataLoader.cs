@@ -63,7 +63,7 @@ public partial class DataLoader : Node
             return creature;
         }
 
-        GD.PrintErr($"DataLoader: Creature '{creatureId}' not found!");
+        GD.PrintErr($"[DataLoader] Creature '{creatureId}' not found!");
         return null;
     }
 
@@ -93,7 +93,7 @@ public partial class DataLoader : Node
             return item;
         }
 
-        GD.PrintErr($"DataLoader: Item '{itemId}' not found!");
+        GD.PrintErr($"[DataLoader] Item '{itemId}' not found!");
         return null;
     }
 
@@ -107,7 +107,7 @@ public partial class DataLoader : Node
             return config;
         }
 
-        GD.PrintErr($"DataLoader: Floor config '{configId}' not found!");
+        GD.PrintErr($"[DataLoader] Floor config '{configId}' not found!");
         return null;
     }
 
@@ -132,7 +132,7 @@ public partial class DataLoader : Node
             return defaultConfig;
         }
 
-        GD.PushWarning($"DataLoader: No floor config found for depth {depth}, returning null");
+        GD.PushWarning($"[DataLoader] No floor config found for depth {depth}, returning null");
         return null;
     }
 
@@ -154,7 +154,7 @@ public partial class DataLoader : Node
             return prefab;
         }
 
-        GD.PrintErr($"DataLoader: Prefab '{prefabId}' not found!");
+        GD.PrintErr($"[DataLoader] Prefab '{prefabId}' not found!");
         return null;
     }
 
@@ -192,7 +192,7 @@ public partial class DataLoader : Node
             return skill;
         }
 
-        GD.PrintErr($"DataLoader: Skill '{skillId}' not found!");
+        GD.PrintErr($"[DataLoader] Skill '{skillId}' not found!");
         return null;
     }
 
@@ -221,7 +221,7 @@ public partial class DataLoader : Node
         {
             return theme;
         }
-        GD.PrintErr($"DataLoader: Faction theme '{themeId}' not found!");
+        GD.PrintErr($"[DataLoader] Faction theme '{themeId}' not found!");
         return null;
     }
 
@@ -250,7 +250,7 @@ public partial class DataLoader : Node
         {
             return template;
         }
-        GD.PrintErr($"DataLoader: Encounter template '{templateId}' not found!");
+        GD.PrintErr($"[DataLoader] Encounter template '{templateId}' not found!");
         return null;
     }
 
@@ -271,7 +271,7 @@ public partial class DataLoader : Node
         {
             return config;
         }
-        GD.PrintErr($"DataLoader: Floor spawn config '{configId}' not found!");
+        GD.PrintErr($"[DataLoader] Floor spawn config '{configId}' not found!");
         return null;
     }
 
@@ -288,7 +288,7 @@ public partial class DataLoader : Node
                 return config;
             }
         }
-        GD.PushWarning($"DataLoader: No floor spawn config found for depth {depth}");
+        GD.PushWarning($"[DataLoader] No floor spawn config found for depth {depth}");
         return null;
     }
 
@@ -321,9 +321,19 @@ public partial class DataLoader : Node
                 // Apply type-based defaults from code (fallback)
                 creature.ApplyDefaults();
 
+                // Validate critical fields
+                if (creature.Glyph == DataDefaults.UnknownGlyph)
+                {
+                    GD.PushWarning($"[DataLoader] Creature '{id}' has no glyph defined");
+                }
+                if (string.IsNullOrEmpty(creature.Name))
+                {
+                    GD.PushWarning($"[DataLoader] Creature '{id}' has no name defined");
+                }
+
                 if (_creatures.ContainsKey(id))
                 {
-                    GD.PushWarning($"DataLoader: Duplicate creature ID '{id}' from {fileName}, skipping");
+                    GD.PushWarning($"[DataLoader] Duplicate creature ID '{id}' from {fileName}, skipping");
                 }
                 else
                 {
@@ -331,7 +341,7 @@ public partial class DataLoader : Node
                 }
             }
         });
-        GD.Print($"DataLoader: Loaded {_creatures.Count} creatures");
+        GD.Print($"[DataLoader] Loaded {_creatures.Count} creatures");
     }
 
     private void ApplyCreatureDefaults(CreatureData creature, CreatureDefaults defaults)
@@ -378,7 +388,7 @@ public partial class DataLoader : Node
         {
             if (sheet.Entries == null || sheet.Entries.Count == 0)
             {
-                GD.PushWarning($"DataLoader: Item sheet '{fileName}' has no entries");
+                GD.PushWarning($"[DataLoader] Item sheet '{fileName}' has no entries");
                 return;
             }
 
@@ -399,7 +409,7 @@ public partial class DataLoader : Node
                 else
                 {
                     id = entryKey.ToLower();
-                    GD.PushWarning($"DataLoader: Item '{entryKey}' in {fileName} has no type, using key as ID");
+                    GD.PushWarning($"[DataLoader] Item '{entryKey}' in {fileName} has no type, using key as ID");
                 }
 
                 // Apply sheet defaults
@@ -411,18 +421,27 @@ public partial class DataLoader : Node
                 // Apply type-based defaults from code (fallback)
                 item.ApplyDefaults();
 
+                // Validate critical fields
+                if (string.IsNullOrEmpty(item.Glyph))
+                {
+                    GD.PushWarning($"[DataLoader] Item '{id}' has no glyph defined");
+                }
+                if (string.IsNullOrEmpty(item.Name))
+                {
+                    GD.PushWarning($"[DataLoader] Item '{id}' has no name defined");
+                }
+
                 if (_items.ContainsKey(id))
                 {
-                    GD.PushWarning($"DataLoader: Duplicate item ID '{id}' from {fileName}, skipping");
+                    GD.PushWarning($"[DataLoader] Duplicate item ID '{id}' from {fileName}, skipping");
                 }
                 else
                 {
                     _items[id] = item;
-                    GD.Print($"DataLoader: Loaded item '{id}'");
                 }
             }
         });
-        GD.Print($"DataLoader: Loaded {_items.Count} items");
+        GD.Print($"[DataLoader] Loaded {_items.Count} items");
     }
 
     private void ApplyItemDefaults(ItemData item, ItemDefaults defaults)
@@ -456,12 +475,12 @@ public partial class DataLoader : Node
         // Floors folder is optional
         if (!DirAccess.DirExistsAbsolute(FloorsPath))
         {
-            GD.Print("DataLoader: No Floors directory found, floor configs not loaded");
+            GD.Print("[DataLoader] No Floors directory found, floor configs not loaded");
             return;
         }
 
         LoadYamlFilesRecursive(FloorsPath, "", _floorConfigs, "floor config");
-        GD.Print($"DataLoader: Loaded {_floorConfigs.Count} floor configs");
+        GD.Print($"[DataLoader] Loaded {_floorConfigs.Count} floor configs");
     }
 
     private void LoadAllPrefabs()
@@ -471,7 +490,7 @@ public partial class DataLoader : Node
         // Prefabs folder is optional
         if (!DirAccess.DirExistsAbsolute(PrefabsPath))
         {
-            GD.Print("DataLoader: No Prefabs directory found, prefabs not loaded");
+            GD.Print("[DataLoader] No Prefabs directory found, prefabs not loaded");
             return;
         }
 
@@ -487,7 +506,7 @@ public partial class DataLoader : Node
         // Register prefabs with the static accessor for generation passes
         PrefabLoader.SetPrefabs(_prefabs);
 
-        GD.Print($"DataLoader: Loaded {_prefabs.Count} prefabs");
+        GD.Print($"[DataLoader] Loaded {_prefabs.Count} prefabs");
     }
 
     private void LoadAllSkills()
@@ -513,7 +532,7 @@ public partial class DataLoader : Node
 
                 if (_skills.ContainsKey(id))
                 {
-                    GD.PushWarning($"DataLoader: Duplicate skill ID '{id}' from {fileName}, skipping");
+                    GD.PushWarning($"[DataLoader] Duplicate skill ID '{id}' from {fileName}, skipping");
                 }
                 else
                 {
@@ -522,7 +541,7 @@ public partial class DataLoader : Node
             }
         });
 
-        GD.Print($"DataLoader: Loaded {_skills.Count} skills");
+        GD.Print($"[DataLoader] Loaded {_skills.Count} skills");
     }
 
     private void ApplySkillDefaults(SkillDefinition skill, SkillDefaults defaults)
@@ -551,7 +570,7 @@ public partial class DataLoader : Node
 
         if (!DirAccess.DirExistsAbsolute(ThemesPath))
         {
-            GD.Print("DataLoader: No Themes directory found, faction themes not loaded");
+            GD.Print("[DataLoader] No Themes directory found, faction themes not loaded");
             return;
         }
 
@@ -570,7 +589,7 @@ public partial class DataLoader : Node
         // Validate creature references in themes (after creatures are loaded)
         ValidateFactionThemes();
 
-        GD.Print($"DataLoader: Loaded {_factionThemes.Count} faction themes");
+        GD.Print($"[DataLoader] Loaded {_factionThemes.Count} faction themes");
     }
 
     /// <summary>
@@ -583,7 +602,7 @@ public partial class DataLoader : Node
         {
             if (theme.Creatures == null || theme.Creatures.Count == 0)
             {
-                GD.PushWarning($"DataLoader: Theme '{themeId}' has no creatures defined");
+                GD.PushWarning($"[DataLoader] Theme '{themeId}' has no creatures defined");
                 continue;
             }
 
@@ -598,7 +617,7 @@ public partial class DataLoader : Node
 
             if (invalidCreatures.Count > 0)
             {
-                GD.PushWarning($"DataLoader: Theme '{themeId}' references unknown creatures: {string.Join(", ", invalidCreatures)}");
+                GD.PushWarning($"[DataLoader] Theme '{themeId}' references unknown creatures: {string.Join(", ", invalidCreatures)}");
             }
         }
     }
@@ -609,7 +628,7 @@ public partial class DataLoader : Node
 
         if (!DirAccess.DirExistsAbsolute(EncountersPath))
         {
-            GD.Print("DataLoader: No Encounters directory found, encounter templates not loaded");
+            GD.Print("[DataLoader] No Encounters directory found, encounter templates not loaded");
             return;
         }
 
@@ -625,7 +644,7 @@ public partial class DataLoader : Node
             }
         });
 
-        GD.Print($"DataLoader: Loaded {_encounterTemplates.Count} encounter templates");
+        GD.Print($"[DataLoader] Loaded {_encounterTemplates.Count} encounter templates");
     }
 
     private void LoadAllFloorSpawnConfigs()
@@ -634,7 +653,7 @@ public partial class DataLoader : Node
 
         if (!DirAccess.DirExistsAbsolute(SpawnConfigsPath))
         {
-            GD.Print("DataLoader: No SpawnConfigs directory found, floor spawn configs not loaded");
+            GD.Print("[DataLoader] No SpawnConfigs directory found, floor spawn configs not loaded");
             return;
         }
 
@@ -650,7 +669,7 @@ public partial class DataLoader : Node
             }
         });
 
-        GD.Print($"DataLoader: Loaded {_floorSpawnConfigs.Count} floor spawn configs");
+        GD.Print($"[DataLoader] Loaded {_floorSpawnConfigs.Count} floor spawn configs");
     }
 
     /// <summary>
@@ -661,14 +680,14 @@ public partial class DataLoader : Node
     {
         if (!DirAccess.DirExistsAbsolute(basePath))
         {
-            GD.PushWarning($"DataLoader: Directory not found: {basePath}");
+            GD.PushWarning($"[DataLoader] Directory not found: {basePath}");
             return;
         }
 
         var dir = DirAccess.Open(basePath);
         if (dir == null)
         {
-            GD.PrintErr($"DataLoader: Failed to open directory: {basePath}");
+            GD.PrintErr($"[DataLoader] Failed to open directory: {basePath}");
             return;
         }
 
@@ -698,7 +717,7 @@ public partial class DataLoader : Node
                     }
                     catch (System.Exception ex)
                     {
-                        GD.PrintErr($"DataLoader: Error processing sheet '{fileName}': {ex.Message}");
+                        GD.PrintErr($"[DataLoader] Error processing sheet '{fileName}': {ex.Message}");
                     }
                 }
             }
@@ -710,7 +729,7 @@ public partial class DataLoader : Node
 
         if (filesProcessed == 0)
         {
-            GD.PushWarning($"DataLoader: No sheet files processed in {basePath}");
+            GD.PushWarning($"[DataLoader] No sheet files processed in {basePath}");
         }
     }
 
@@ -777,7 +796,7 @@ public partial class DataLoader : Node
                 {
                     if (targetDictionary.ContainsKey(id))
                     {
-                        GD.PushWarning($"DataLoader: Duplicate {fileTypeName} ID '{id}' from {relativePath}, skipping");
+                        GD.PushWarning($"[DataLoader] Duplicate {fileTypeName} ID '{id}' from {relativePath}, skipping");
                     }
                     else
                     {
@@ -820,7 +839,7 @@ public partial class DataLoader : Node
             using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
             if (file == null)
             {
-                GD.PrintErr($"DataLoader: Failed to open file {path}");
+                GD.PrintErr($"[DataLoader] Failed to open file {path}");
                 return null;
             }
 
@@ -835,7 +854,7 @@ public partial class DataLoader : Node
         }
         catch (Exception ex)
         {
-            GD.PrintErr($"DataLoader: Error loading {path}: {ex.Message}");
+            GD.PrintErr($"[DataLoader] Error loading {path}: {ex.Message}");
             return null;
         }
     }
@@ -892,7 +911,8 @@ public class PaletteColorConverter : IYamlTypeConverter
             {
                 return hexValue;
             }
-            GD.PushWarning($"PaletteColorConverter: Unknown palette color '{colorName}', using as-is");
+            GD.PrintErr($"[PaletteColorConverter] Unknown palette color 'Palette.{colorName}' - this will cause rendering failures!");
+            return "#FF00FF"; // Return magenta as obvious error indicator
         }
 
         // Return non-prefixed strings unchanged

@@ -72,6 +72,9 @@ public class EncounterSpawner
 
         // Process each slot in the template
         SpawnedCreature leaderCreature = null;
+        int remainingBudget = encounter.TotalThreat;
+        int actualThreatSpawned = 0;
+        int allocatedBudget = encounter.TotalThreat; // Track for debug
 
         foreach (var slot in encounter.Template.Slots)
         {
@@ -80,10 +83,15 @@ public class EncounterSpawner
 
             for (int i = 0; i < count; i++)
             {
+                // Stop if budget exhausted
+                if (remainingBudget <= 0)
+                    break;
+
                 // Select a creature that matches the slot requirements
-                var creatureSelection = SelectCreatureForSlot(slot, themeCreatures, encounter.TotalThreat);
+                var creatureSelection = SelectCreatureForSlot(slot, themeCreatures, remainingBudget);
                 if (creatureSelection == null)
                 {
+                    GD.PushWarning($"[EncounterSpawner] No creature fits slot '{slot.Role}' within budget {remainingBudget}");
                     continue;
                 }
 
@@ -93,6 +101,7 @@ public class EncounterSpawner
                 var position = FindSlotPosition(slot, encounter, availableTiles, occupiedPositions);
                 if (position == null)
                 {
+                    GD.PushWarning($"[EncounterSpawner] No position for slot '{slot.Role}' in region {encounter.Region?.Id}");
                     continue;
                 }
 
@@ -104,6 +113,10 @@ public class EncounterSpawner
                     occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
                     availableTiles.Remove(new Vector2I(position.Value.X, position.Value.Y));
 
+                    // Deduct from remaining budget
+                    remainingBudget -= spawnedCreature.Threat;
+                    actualThreatSpawned += spawnedCreature.Threat;
+
                     // Track leader for AI configuration
                     if (slot.Role == "leader" || slot.Role == "alpha" || slot.Role == "guardian")
                     {
@@ -112,6 +125,19 @@ public class EncounterSpawner
                     }
                 }
             }
+
+            // Stop processing slots if budget exhausted
+            if (remainingBudget <= 0)
+                break;
+        }
+
+        // Update encounter with actual threat spawned
+        encounter.TotalThreat = actualThreatSpawned;
+
+        // Debug: warn if over budget
+        if (actualThreatSpawned > allocatedBudget)
+        {
+            GD.PushWarning($"EncounterSpawner: Over budget! Allocated {allocatedBudget}, spawned {actualThreatSpawned} for template '{encounter.Template?.Name}'");
         }
 
         // Configure AI relationships (followers protect leader, etc.)
@@ -134,6 +160,10 @@ public class EncounterSpawner
             if (data != null)
             {
                 creatures.Add((creatureId, data));
+            }
+            else
+            {
+                GD.PushWarning($"[EncounterSpawner] Theme '{theme.Id}' references unknown creature '{creatureId}'");
             }
         }
 

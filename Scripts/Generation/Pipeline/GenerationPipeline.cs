@@ -53,8 +53,6 @@ public class GenerationPipeline
         {
             if (pass.CanExecute(context))
             {
-                GD.Print($"[GenerationPipeline] Executing pass: {pass.Name} (Priority: {pass.Priority}, Role: {pass.Role})");
-
                 pass.Execute(context);
                 executedPasses.Add(pass.Name);
 

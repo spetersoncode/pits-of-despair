@@ -36,20 +36,13 @@ public class ConnectivityPass : IGenerationPass
 
     public void Execute(GenerationContext context)
     {
-        GD.Print("[ConnectivityPass] Validating dungeon connectivity...");
-
         // Validate connectivity
         var validation = ConnectivityValidator.Validate(context);
 
-        GD.Print($"[ConnectivityPass] Found {validation.Islands.Count} island(s), {validation.TotalWalkableTiles} walkable tiles");
-
         if (validation.IsFullyConnected)
-        {
-            GD.Print("[ConnectivityPass] Dungeon is fully connected.");
             return;
-        }
 
-        GD.Print($"[ConnectivityPass] Dungeon has {validation.Islands.Count} disconnected islands. Repairing...");
+        GD.Print($"[ConnectivityPass] Repairing {validation.Islands.Count} disconnected islands...");
 
         // Repair based on strategy
         int corridorsCarved = 0;

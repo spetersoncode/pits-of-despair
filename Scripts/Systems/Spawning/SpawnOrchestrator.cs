@@ -242,7 +242,8 @@ public partial class SpawnOrchestrator : Node
         summary.SpawnTimeMs = stopwatch.ElapsedMilliseconds;
 
         // Log summary
-        GD.Print(summary.ToDebugString());
+        foreach (var line in summary.GetDebugLines())
+            GD.Print(line);
 
         LastSpawnSummary = summary;
         return summary;
@@ -284,7 +285,8 @@ public partial class SpawnOrchestrator : Node
                             TotalThreat = template.MinBudget
                         };
 
-                        if (_encounterSpawner.SpawnEncounter(encounter, occupiedPositions))
+                        if (spawnData.RemainingBudget >= template.MinBudget &&
+                            _encounterSpawner.SpawnEncounter(encounter, occupiedPositions))
                         {
                             spawnData.ConsumeBudget(encounter.TotalThreat);
                             summary.EncountersPlaced++;
@@ -299,6 +301,13 @@ public partial class SpawnOrchestrator : Node
                     var creatureId = hint.CreaturePool[GD.RandRange(0, hint.CreaturePool.Count - 1)];
                     var creatureData = _dataLoader.GetCreature(creatureId);
                     if (creatureData == null)
+                    {
+                        GD.PushWarning($"[SpawnOrchestrator] Prefab hint creature '{creatureId}' not found");
+                        continue;
+                    }
+
+                    // Check budget before spawning
+                    if (creatureData.Threat > spawnData.RemainingBudget)
                         continue;
 
                     var position = hint.Position ?? FindAvailablePosition(region, occupiedPositions);
@@ -314,6 +323,10 @@ public partial class SpawnOrchestrator : Node
                         summary.CreaturesSpawned++;
                         summary.TotalThreatSpawned += creatureData.Threat;
                     }
+                    else
+                    {
+                        GD.PushWarning($"[SpawnOrchestrator] Failed to create prefab hint creature '{creatureId}'");
+                    }
                 }
                 // Handle item spawns
                 else if (!string.IsNullOrEmpty(hint.ItemId))
@@ -328,6 +341,10 @@ public partial class SpawnOrchestrator : Node
                         _entityManager.AddEntity(itemEntity);
                         occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
                         summary.ItemsPlaced++;
+                    }
+                    else
+                    {
+                        GD.PushWarning($"[SpawnOrchestrator] Failed to create prefab hint item '{hint.ItemId}'");
                     }
                 }
             }
