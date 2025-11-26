@@ -15,7 +15,10 @@ entries:
     health: 6
     ai:
       - type: Patrol
+        mode: LeaderPack
         scope: Roaming
+        waitTurns: 4
+        followDistance: 2
         minDistance: 10
         maxDistance: 50
     attacks:

@@ -7,11 +7,18 @@ namespace PitsOfDespair.AI.Components;
 
 /// <summary>
 /// Makes creature patrol to random distant locations when bored.
-/// Responds to OnIAmBored to push PatrolGoal with configurable probability and distance.
-/// Only creatures with this component will patrol.
+/// Responds to OnIAmBored to push patrol goals with configurable probability and distance.
+/// Supports two modes: FreeRoaming (individual) and LeaderPack (leader-follower).
 /// </summary>
 public partial class PatrolComponent : Node, IAIEventHandler
 {
+    /// <summary>
+    /// Patrol coordination mode.
+    /// FreeRoaming: Each creature patrols independently.
+    /// LeaderPack: Leader navigates waypoints, followers pursue leader.
+    /// </summary>
+    [Export] public PatrolMode Mode { get; set; } = PatrolMode.FreeRoaming;
+
     /// <summary>
     /// Chance to start patrolling each turn when bored (0.0 - 1.0).
     /// Higher values = more active patrolling, lower = more idle time.
@@ -48,17 +55,16 @@ public partial class PatrolComponent : Node, IAIEventHandler
     [Export] public int WaypointCount { get; set; } = 4;
 
     /// <summary>
-    /// If true, this creature shares waypoint state with other grouped patrollers.
-    /// All grouped creatures in an encounter move to the same waypoint together.
-    /// Good for pack animals, squads. Default false for independent patrol.
+    /// How many turns the leader waits at each waypoint (LeaderPack mode only).
+    /// Gives followers time to catch up before moving to next waypoint.
     /// </summary>
-    [Export] public bool Grouped { get; set; } = false;
+    [Export] public int WaitTurns { get; set; } = 4;
 
     /// <summary>
-    /// Shared patrol group for synchronized waypoint movement.
-    /// Set by SpawnAIConfigurator when Grouped is true.
+    /// How close followers stay to the leader (LeaderPack mode only).
+    /// Measured in tiles (Chebyshev distance).
     /// </summary>
-    public PatrolGroup PatrolGroup { get; set; }
+    [Export] public int FollowDistance { get; set; } = 2;
 
     public void HandleAIEvent(string eventName, GetActionsEventArgs args)
     {
@@ -71,22 +77,52 @@ public partial class PatrolComponent : Node, IAIEventHandler
             return;
 
         // Random chance to patrol
-        if (GD.Randf() < PatrolChance)
+        if (GD.Randf() >= PatrolChance)
+            return;
+
+        Goal patrolGoal = Mode switch
         {
-            Goal patrolGoal;
+            PatrolMode.LeaderPack => CreateLeaderPackGoal(args.Context),
+            _ => CreateFreeRoamGoal(args.Context)
+        };
 
-            // Use route-based patrol if we have a patrol group or route component
-            if (PatrolGroup != null || args.Context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent") != null)
-            {
-                patrolGoal = new PatrolRouteGoal(PatrolGroup);
-            }
-            else
-            {
-                patrolGoal = new PatrolGoal(MinDistance);
-            }
-
+        if (patrolGoal != null)
+        {
             args.Context.AIComponent.GoalStack.Push(patrolGoal);
             args.Handled = true;
         }
+    }
+
+    private Goal CreateFreeRoamGoal(AIContext context)
+    {
+        // Use route-based patrol if we have a route component
+        if (context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent") != null)
+        {
+            return new PatrolRouteGoal();
+        }
+
+        // Fall back to simple random patrol (for Local scope without pre-generated route)
+        return new PatrolGoal(MinDistance);
+    }
+
+    private Goal CreateLeaderPackGoal(AIContext context)
+    {
+        // Check if we're the leader
+        var leaderComp = context.Entity.GetNodeOrNull<PackLeaderComponent>("PackLeaderComponent");
+        if (leaderComp != null)
+        {
+            return new LeaderPatrolGoal();
+        }
+
+        // Check if we're a follower
+        var followerComp = context.Entity.GetNodeOrNull<PackFollowerComponent>("PackFollowerComponent");
+        if (followerComp != null)
+        {
+            return new FollowPackLeaderGoal();
+        }
+
+        // No pack role assigned - fall back to free roam
+        GD.PushWarning($"[PatrolComponent] {context.Entity.DisplayName} has LeaderPack mode but no pack role - falling back to free roam");
+        return CreateFreeRoamGoal(context);
     }
 }

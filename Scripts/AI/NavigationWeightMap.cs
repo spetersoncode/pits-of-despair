@@ -14,7 +14,8 @@ public class NavigationWeightMap
     // Standard weight values
     public const float NormalFloor = 1f;
     public const float Hazard = 3f;              // Webs, shallow water
-    public const float OtherCreature = 50f;      // Prefer going around
+    public const float FriendlyCreature = 2f;    // Friendly = swap positions, low cost
+    public const float OtherCreature = 50f;      // Non-friendly = prefer going around
     public const float DangerousHazard = 100f;   // Fire, acid
     public const float Impassable = 999f;        // Walls (for non-burrowers)
     public const float Door = 2f;                // Slight penalty for doors
@@ -141,7 +142,13 @@ public class NavigationWeightMap
         var entity = entityManager.GetEntityAtPosition(pos);
         if (entity != null && entity != self)
         {
-            // Can path through creatures but prefer going around
+            // Friendly creatures can swap positions - low cost to path through
+            if (self.Faction.IsFriendlyTo(entity.Faction))
+            {
+                return FriendlyCreature;
+            }
+
+            // Non-friendly creatures - prefer going around
             return OtherCreature;
         }
 

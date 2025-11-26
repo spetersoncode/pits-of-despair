@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.AI.Components;
@@ -43,8 +44,8 @@ public class SpawnAIConfigurator
         // Configure group relationships
         ConfigureGroupRelationships(encounter, aiConfig);
 
-        // Configure grouped patrol behavior
-        ConfigureGroupedPatrol(encounter);
+        // Configure patrol behavior (grouped and individual)
+        ConfigurePatrols(encounter);
     }
 
     /// <summary>
@@ -69,13 +70,6 @@ public class SpawnAIConfigurator
 
         // Configure initial state based on template
         ConfigureInitialState(aiComponent, creature, aiConfig);
-
-        // Configure patrol route if enabled
-        if (aiConfig?.GeneratePatrolRoute == true && encounter.Region != null)
-        {
-            GD.Print($"[Patrol] Configuring patrol route for {creature.Entity?.DisplayName}");
-            ConfigurePatrolRoute(creature, encounter);
-        }
     }
 
     /// <summary>
@@ -98,45 +92,6 @@ public class SpawnAIConfigurator
 
         // Note: Guarding and other states are handled via the existing goal system.
         // The BoredGoal checks for threats and handles guarding behavior naturally.
-    }
-
-    /// <summary>
-    /// Configures patrol route for a creature based on its spawn region.
-    /// </summary>
-    private void ConfigurePatrolRoute(SpawnedCreature creature, SpawnedEncounter encounter)
-    {
-        if (creature.Entity == null || encounter.Region == null)
-        {
-            GD.Print($"[Patrol] Skipped: entity={creature.Entity != null}, region={encounter.Region != null}");
-            return;
-        }
-
-        var route = PatrolRouteGenerator.GenerateRegionPatrol(
-            encounter.Region,
-            creature.Entity.GridPosition,
-            waypointCount: 4);
-
-        if (route == null || route.Waypoints.Count < 2)
-        {
-            GD.Print($"[Patrol] Route generation failed: route={route != null}, waypoints={route?.Waypoints?.Count ?? 0}");
-            return;
-        }
-
-        GD.Print($"[Patrol] Created route with {route.Waypoints.Count} waypoints for {creature.Entity.DisplayName}");
-
-        // Add PatrolRouteComponent to entity
-        var routeComp = new PatrolRouteComponent();
-        routeComp.Name = "PatrolRouteComponent";
-        routeComp.Route = route;
-        creature.Entity.AddChild(routeComp);
-
-        // Add injector if not present
-        if (creature.Entity.GetNodeOrNull<PatrolRouteInjector>("PatrolRouteInjector") == null)
-        {
-            var injector = new PatrolRouteInjector();
-            injector.Name = "PatrolRouteInjector";
-            creature.Entity.AddChild(injector);
-        }
     }
 
     /// <summary>
@@ -167,37 +122,61 @@ public class SpawnAIConfigurator
     }
 
     /// <summary>
-    /// Configures grouped patrol behavior for creatures with Grouped=true PatrolComponent.
-    /// Creates a shared PatrolGroup and assigns it to all grouped patrollers.
-    /// Uses the first patroller's config for route generation.
+    /// Configures patrol behavior for all creatures with PatrolComponent.
+    /// FreeRoaming patrollers get individual routes; LeaderPack patrollers form a pack.
     /// </summary>
-    private void ConfigureGroupedPatrol(SpawnedEncounter encounter)
+    private void ConfigurePatrols(SpawnedEncounter encounter)
     {
         if (encounter?.Creatures == null)
             return;
 
-        // Find all creatures with grouped PatrolComponent
-        var groupedPatrollers = new List<(SpawnedCreature creature, PatrolComponent patrol)>();
+        // Separate patrollers by mode
+        var freeRoamingPatrollers = new List<(SpawnedCreature creature, PatrolComponent patrol)>();
+        var leaderPackPatrollers = new List<(SpawnedCreature creature, PatrolComponent patrol)>();
+
         foreach (var creature in encounter.Creatures)
         {
             if (creature.Entity == null)
                 continue;
 
             var patrolComp = creature.Entity.GetNodeOrNull<PatrolComponent>("PatrolComponent");
-            if (patrolComp != null && patrolComp.Grouped)
-            {
-                groupedPatrollers.Add((creature, patrolComp));
-            }
+            if (patrolComp == null)
+                continue;
+
+            if (patrolComp.Mode == PatrolMode.LeaderPack)
+                leaderPackPatrollers.Add((creature, patrolComp));
+            else
+                freeRoamingPatrollers.Add((creature, patrolComp));
         }
 
-        if (groupedPatrollers.Count == 0)
+        // Configure leader pack patrollers with pack components
+        if (leaderPackPatrollers.Count > 0)
+        {
+            ConfigureLeaderPackPatrollers(leaderPackPatrollers, encounter);
+        }
+
+        // Configure free roaming patrollers with individual routes
+        foreach (var (creature, patrolComp) in freeRoamingPatrollers)
+        {
+            ConfigureIndividualPatroller(creature, patrolComp, encounter);
+        }
+    }
+
+    /// <summary>
+    /// Configures LeaderPack patrollers with PackLeaderComponent and PackFollowerComponent.
+    /// Leader is selected from encounter.Leader if present, otherwise randomly.
+    /// </summary>
+    private void ConfigureLeaderPackPatrollers(
+        List<(SpawnedCreature creature, PatrolComponent patrol)> patrollers,
+        SpawnedEncounter encounter)
+    {
+        if (patrollers.Count == 0)
             return;
 
-        // Use the first patroller's config for route generation
-        var config = groupedPatrollers[0].patrol;
+        var config = patrollers[0].patrol;
         var centerPos = encounter.CenterPosition;
 
-        // Generate route based on scope
+        // Generate the shared patrol route
         var route = PatrolRouteGenerator.GeneratePatrol(
             config.Scope,
             centerPos,
@@ -209,30 +188,99 @@ public class SpawnAIConfigurator
 
         if (route == null || route.Waypoints.Count < 2)
         {
-            GD.Print($"[GroupedPatrol] Failed to generate {config.Scope} route for encounter");
+            GD.Print($"[LeaderPack] Failed to generate {config.Scope} route");
             return;
         }
 
-        // Create shared patrol group
-        var patrolGroup = new PatrolGroup(route);
+        // Select the leader: use encounter leader if in pack, otherwise random
+        SpawnedCreature leaderCreature = null;
 
-        GD.Print($"[GroupedPatrol] Created {config.Scope} group with {groupedPatrollers.Count} members, {route.Waypoints.Count} waypoints");
-
-        // Assign patrol group to all grouped patrollers
-        foreach (var (creature, patrolComp) in groupedPatrollers)
+        if (encounter.Leader != null && patrollers.Any(p => p.creature == encounter.Leader))
         {
-            patrolComp.PatrolGroup = patrolGroup;
-            patrolGroup.AddMember(creature.Entity);
-
-            // Also add PatrolRouteComponent for compatibility with existing patrol goal
-            if (creature.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent") == null)
-            {
-                var routeComp = new PatrolRouteComponent();
-                routeComp.Name = "PatrolRouteComponent";
-                routeComp.Route = route;
-                creature.Entity.AddChild(routeComp);
-            }
+            leaderCreature = encounter.Leader;
+            GD.Print($"[LeaderPack] Using encounter leader: {leaderCreature.Entity.DisplayName}");
         }
+        else
+        {
+            // Random selection
+            var randomIndex = GD.RandRange(0, patrollers.Count - 1);
+            leaderCreature = patrollers[randomIndex].creature;
+            GD.Print($"[LeaderPack] Randomly selected leader: {leaderCreature.Entity.DisplayName}");
+        }
+
+        // Create PackLeaderComponent for the leader
+        var leaderComp = new PackLeaderComponent
+        {
+            Route = route,
+            WaitTurnsAtWaypoint = config.WaitTurns
+        };
+        leaderComp.Name = "PackLeaderComponent";
+        leaderCreature.Entity.AddChild(leaderComp);
+
+        // Create PackFollowerComponent for each follower
+        foreach (var (creature, patrolComp) in patrollers)
+        {
+            if (creature == leaderCreature)
+                continue;
+
+            var followerComp = new PackFollowerComponent
+            {
+                Leader = leaderCreature.Entity,
+                FollowDistance = patrolComp.FollowDistance
+            };
+            followerComp.Name = "PackFollowerComponent";
+            creature.Entity.AddChild(followerComp);
+
+            // Register follower with leader
+            leaderComp.AddFollower(creature.Entity);
+        }
+
+        GD.Print($"[LeaderPack] Created {config.Scope} pack: 1 leader + {leaderComp.Followers.Count} followers, {route.Waypoints.Count} waypoints");
+    }
+
+    /// <summary>
+    /// Configures an individual patroller with their own route based on scope.
+    /// </summary>
+    private void ConfigureIndividualPatroller(
+        SpawnedCreature creature,
+        PatrolComponent patrolComp,
+        SpawnedEncounter encounter)
+    {
+        // Local scope uses existing behavior (no pre-generated route needed)
+        if (patrolComp.Scope == PatrolScope.Local)
+            return;
+
+        var route = PatrolRouteGenerator.GeneratePatrol(
+            patrolComp.Scope,
+            creature.Entity.GridPosition,
+            encounter.Region,
+            _mapSystem,
+            patrolComp.WaypointCount,
+            patrolComp.MinDistance,
+            patrolComp.MaxDistance);
+
+        if (route == null || route.Waypoints.Count < 2)
+        {
+            GD.Print($"[IndividualPatrol] Failed to generate {patrolComp.Scope} route for {creature.Entity.DisplayName}");
+            return;
+        }
+
+        GD.Print($"[IndividualPatrol] Created {patrolComp.Scope} route for {creature.Entity.DisplayName}: {route.Waypoints.Count} waypoints");
+        AddPatrolRouteComponent(creature.Entity, route);
+    }
+
+    /// <summary>
+    /// Adds a PatrolRouteComponent to an entity if not already present.
+    /// </summary>
+    private void AddPatrolRouteComponent(BaseEntity entity, AI.Patrol.PatrolRoute route)
+    {
+        if (entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent") != null)
+            return;
+
+        var routeComp = new PatrolRouteComponent();
+        routeComp.Name = "PatrolRouteComponent";
+        routeComp.Route = route;
+        entity.AddChild(routeComp);
     }
 
     /// <summary>
