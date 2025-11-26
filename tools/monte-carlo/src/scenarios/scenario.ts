@@ -3,7 +3,7 @@
  */
 
 import type { AggregateResult, SimulationResult, GameData } from '../data/types.js';
-import type { RandomGenerator } from '../data/DiceNotation.js';
+import type { RandomGenerator } from '../data/dice-notation.js';
 
 /**
  * Base interface for all scenario types.

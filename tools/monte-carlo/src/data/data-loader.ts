@@ -5,7 +5,7 @@
 
 import { readdirSync } from 'fs';
 import { join, resolve } from 'path';
-import { parseCreatureFile, parseItemFile } from './YamlParser.js';
+import { parseCreatureFile, parseItemFile } from './yaml-parser.js';
 import type { CreatureDefinition, ItemDefinition } from './types.js';
 
 // =============================================================================

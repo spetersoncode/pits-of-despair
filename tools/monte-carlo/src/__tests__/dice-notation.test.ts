@@ -13,7 +13,7 @@ import {
   avgRoll,
   weightedRound,
   SeededRng,
-} from '../data/DiceNotation.js';
+} from '../data/dice-notation.js';
 
 describe('parseDice', () => {
   it('parses simple dice notation', () => {

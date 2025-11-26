@@ -16,7 +16,7 @@ import {
   getRangedAttack,
   distance,
   canAttack,
-} from './Combatant.js';
+} from './combatant.js';
 
 // =============================================================================
 // AI Decision Types

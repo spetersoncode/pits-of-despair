@@ -13,7 +13,7 @@ import type {
   EquipmentEntry,
   GameData,
 } from '../data/types.js';
-import { getItem } from '../data/DataLoader.js';
+import { getItem } from '../data/data-loader.js';
 
 // =============================================================================
 // HP Formula

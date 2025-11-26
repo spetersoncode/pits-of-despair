@@ -8,11 +8,11 @@ import type {
   SimulationResult,
   AggregateResult,
 } from '../data/types.js';
-import type { RandomGenerator } from '../data/DiceNotation.js';
-import { getCreature } from '../data/DataLoader.js';
-import { createCombatant, resetCombatantIdCounter } from '../simulation/Combatant.js';
-import { runCombat, DEFAULT_CONFIG } from '../simulation/CombatEngine.js';
-import { aggregateResults, type Scenario } from './Scenario.js';
+import type { RandomGenerator } from '../data/dice-notation.js';
+import { getCreature } from '../data/data-loader.js';
+import { createCombatant, resetCombatantIdCounter } from '../simulation/combatant.js';
+import { runCombat, DEFAULT_CONFIG } from '../simulation/combat-engine.js';
+import { aggregateResults, type Scenario } from './scenario.js';
 
 /**
  * Run a duel scenario.

@@ -3,21 +3,21 @@
  */
 
 import { Command } from 'commander';
-import { SeededRng } from '../data/DiceNotation.js';
+import { SeededRng } from '../data/dice-notation.js';
 import {
   loadGameData,
   listCreatures,
   listItems,
   getCreature,
   getItem,
-} from '../data/DataLoader.js';
-import { runDuel } from '../scenarios/DuelScenario.js';
-import { runGroupBattle, parseTeamString } from '../scenarios/GroupScenario.js';
-import { runVariations, printVariationResults } from '../scenarios/VariationScenario.js';
-import { printResults, printCompactResult } from '../output/ConsoleReporter.js';
-import { writeJsonFile, printJson } from '../output/JsonReporter.js';
-import { writeCsvFile, printCsv } from '../output/CsvReporter.js';
-import { calculateMaxHealth } from '../simulation/Combatant.js';
+} from '../data/data-loader.js';
+import { runDuel } from '../scenarios/duel-scenario.js';
+import { runGroupBattle, parseTeamString } from '../scenarios/group-scenario.js';
+import { runVariations, printVariationResults } from '../scenarios/variation-scenario.js';
+import { printResults, printCompactResult } from '../output/console-reporter.js';
+import { writeJsonFile, printJson } from '../output/json-reporter.js';
+import { writeCsvFile, printCsv } from '../output/csv-reporter.js';
+import { calculateMaxHealth } from '../simulation/combatant.js';
 import type { AggregateResult } from '../data/types.js';
 
 type OutputFormat = 'console' | 'json' | 'csv';

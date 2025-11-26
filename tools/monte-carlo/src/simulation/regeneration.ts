@@ -4,7 +4,7 @@
  */
 
 import type { Combatant as CombatantState } from '../data/types.js';
-import { isAlive } from './Combatant.js';
+import { isAlive } from './combatant.js';
 
 // =============================================================================
 // Constants

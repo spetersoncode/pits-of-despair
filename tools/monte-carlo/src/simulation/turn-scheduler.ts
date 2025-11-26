@@ -4,8 +4,8 @@
  */
 
 import type { Combatant as CombatantState } from '../data/types.js';
-import { weightedRound, type RandomGenerator, defaultRng } from '../data/DiceNotation.js';
-import { isAlive } from './Combatant.js';
+import { weightedRound, type RandomGenerator, defaultRng } from '../data/dice-notation.js';
+import { isAlive } from './combatant.js';
 
 // =============================================================================
 // Constants

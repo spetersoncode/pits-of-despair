@@ -9,8 +9,8 @@ import type {
   GameData,
   AggregateResult,
 } from '../data/types.js';
-import type { RandomGenerator } from '../data/DiceNotation.js';
-import { runDuel } from './DuelScenario.js';
+import type { RandomGenerator } from '../data/dice-notation.js';
+import { runDuel } from './duel-scenario.js';
 
 /**
  * Result for a single variation test.

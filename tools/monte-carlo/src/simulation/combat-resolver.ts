@@ -8,8 +8,8 @@ import type {
   AttackDefinition,
   DamageType,
 } from '../data/types.js';
-import { rollDice, rollTotal, type RandomGenerator, defaultRng } from '../data/DiceNotation.js';
-import { consumeAmmo } from './Combatant.js';
+import { rollDice, rollTotal, type RandomGenerator, defaultRng } from '../data/dice-notation.js';
+import { consumeAmmo } from './combatant.js';
 
 // =============================================================================
 // Attack Result Types

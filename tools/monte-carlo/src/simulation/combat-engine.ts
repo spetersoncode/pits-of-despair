@@ -8,17 +8,17 @@ import type {
   SimulationResult,
   Position,
 } from '../data/types.js';
-import { type RandomGenerator, defaultRng } from '../data/DiceNotation.js';
-import { isAlive } from './Combatant.js';
-import { resolveAttack, applyDamage, type AttackResult } from './CombatResolver.js';
-import { processRegeneration } from './Regeneration.js';
-import { decideAction, applyMovement, type AIAction } from './AIController.js';
+import { type RandomGenerator, defaultRng } from '../data/dice-notation.js';
+import { isAlive } from './combatant.js';
+import { resolveAttack, applyDamage, type AttackResult } from './combat-resolver.js';
+import { processRegeneration } from './regeneration.js';
+import { decideAction, applyMovement, type AIAction } from './ai-controller.js';
 import {
   advanceTime,
   getNextReady,
   deductTime,
   STANDARD_ACTION_DELAY,
-} from './TurnScheduler.js';
+} from './turn-scheduler.js';
 
 // =============================================================================
 // Combat Configuration
