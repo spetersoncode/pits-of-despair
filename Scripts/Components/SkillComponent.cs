@@ -83,7 +83,7 @@ public partial class SkillComponent : Node
 
         // Auto-assign slot for active skills
         var dataLoader = GetNode<DataLoader>("/root/DataLoader");
-        var skill = dataLoader?.GetSkill(skillId);
+        var skill = dataLoader?.Skills.Get(skillId);
         if (skill != null && skill.GetCategory() == SkillCategory.Active)
         {
             AssignNextAvailableSlot(skillId);
@@ -152,7 +152,7 @@ public partial class SkillComponent : Node
 
         // Get skill name for signal
         var dataLoader = GetNode<DataLoader>("/root/DataLoader");
-        var skill = dataLoader?.GetSkill(skillId);
+        var skill = dataLoader?.Skills.Get(skillId);
         string skillName = skill?.Name ?? skillId;
 
         // Same key - no change needed
@@ -201,7 +201,7 @@ public partial class SkillComponent : Node
     {
         var available = new List<SkillDefinition>();
 
-        foreach (var skill in dataLoader.GetAllSkills())
+        foreach (var skill in dataLoader.Skills.GetAll())
         {
             if (!HasSkill(skill.Id) && PrerequisiteChecker.MeetsPrerequisites(skill, stats))
             {
@@ -224,7 +224,7 @@ public partial class SkillComponent : Node
         if (HasSkill(skillId))
             return false;
 
-        var skill = dataLoader.GetSkill(skillId);
+        var skill = dataLoader.Skills.Get(skillId);
         if (skill == null)
             return false;
 
@@ -248,7 +248,7 @@ public partial class SkillComponent : Node
 
         foreach (var skillId in _learnedSkills)
         {
-            var skill = dataLoader.GetSkill(skillId);
+            var skill = dataLoader.Skills.Get(skillId);
             if (skill != null)
             {
                 grouped[skill.GetCategory()].Add(skill);
@@ -269,7 +269,7 @@ public partial class SkillComponent : Node
 
         foreach (var skillId in _learnedSkills)
         {
-            var skill = dataLoader.GetSkill(skillId);
+            var skill = dataLoader.Skills.Get(skillId);
             if (skill != null)
             {
                 skills.Add(skill);
@@ -302,7 +302,7 @@ public partial class SkillComponent : Node
         if (!HasSkill(skillId))
             return false;
 
-        var skill = dataLoader.GetSkill(skillId);
+        var skill = dataLoader.Skills.Get(skillId);
         if (skill == null)
             return false;
 
