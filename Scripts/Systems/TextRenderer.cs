@@ -323,9 +323,10 @@ public partial class TextRenderer : Control
 
 				TileType tile = _mapSystem.GetTileAt(pos);
 
-				// Skip floor dot rendering if an entity occupies this tile
+				// Skip floor dot rendering if an entity occupies this tile AND it's visible
 				// Entities render their own glyphs which should take precedence
-				if (tile == TileType.Floor && occupiedPositions.Contains(pos))
+				// Only hide dots in visible tiles to avoid revealing creature positions in fog-of-war
+				if (tile == TileType.Floor && occupiedPositions.Contains(pos) && isVisible)
 				{
 					continue;
 				}
