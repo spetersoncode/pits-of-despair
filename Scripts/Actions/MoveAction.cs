@@ -40,8 +40,15 @@ public class MoveAction : Action
                 return context.MapSystem.IsWalkable(targetPos);
             }
 
-            // Any creature can swap positions with friendly creatures
-            if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
+            // Creatures can swap positions with friendly creatures
+            // But AI cannot swap with the player - only player can initiate that
+            if (actor.Faction.IsFriendlyTo(targetEntity.Faction) && targetEntity != context.Player)
+            {
+                return true;
+            }
+
+            // Player can swap with any friendly creature
+            if (actor == context.Player && actor.Faction.IsFriendlyTo(targetEntity.Faction))
             {
                 return true;
             }
@@ -81,8 +88,12 @@ public class MoveAction : Action
         // Check for bump interactions
         if (targetEntity != null && !targetEntity.IsWalkable)
         {
-            // Any creature can swap positions with friendly creatures
-            if (actor.Faction.IsFriendlyTo(targetEntity.Faction))
+            // Creatures can swap positions with friendly creatures
+            // But AI cannot swap with the player - only player can initiate that
+            bool canSwap = actor.Faction.IsFriendlyTo(targetEntity.Faction) &&
+                           (actor == context.Player || targetEntity != context.Player);
+
+            if (canSwap)
             {
                 targetEntity.SetGridPosition(currentPos);
                 actor.SetGridPosition(targetPos);
