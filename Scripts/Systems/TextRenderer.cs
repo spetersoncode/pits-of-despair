@@ -295,6 +295,15 @@ public partial class TextRenderer : Control
 		// Offset needed to center player on screen
 		Vector2 offset = viewportCenter - playerWorldPos;
 
+		// Build set of positions occupied by entities (to suppress floor dot rendering)
+		var occupiedPositions = new System.Collections.Generic.HashSet<GridPosition>();
+		foreach (var entity in _entities)
+		{
+			occupiedPositions.Add(entity.GridPosition);
+		}
+		// Player position also suppresses floor dot
+		occupiedPositions.Add(_player.GridPosition);
+
 		// Draw the map
 		for (int x = 0; x < _mapSystem.MapWidth; x++)
 		{
@@ -313,6 +322,14 @@ public partial class TextRenderer : Control
 				}
 
 				TileType tile = _mapSystem.GetTileAt(pos);
+
+				// Skip floor dot rendering if an entity occupies this tile
+				// Entities render their own glyphs which should take precedence
+				if (tile == TileType.Floor && occupiedPositions.Contains(pos))
+				{
+					continue;
+				}
+
 				char glyph = _mapSystem.GetGlyphForTile(tile);
 				Color color = _mapSystem.GetColorForTile(tile);
 

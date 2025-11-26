@@ -570,7 +570,23 @@ public partial class MessageSystem : Node
         // Add death if applicable
         if (data.TargetDied)
         {
-            message += ", killing it!";
+            // Check for decoration custom destruction message
+            if (!string.IsNullOrEmpty(data.Target?.DecorationId) && _dataLoader != null)
+            {
+                var decorationData = _dataLoader.Decorations.Get(data.Target.DecorationId);
+                if (decorationData != null && !string.IsNullOrEmpty(decorationData.DestructionMessage))
+                {
+                    message += $" - it {decorationData.DestructionMessage}!";
+                }
+                else
+                {
+                    message += ", destroying it!";
+                }
+            }
+            else
+            {
+                message += ", killing it!";
+            }
         }
         else
         {
@@ -704,7 +720,7 @@ public partial class MessageSystem : Node
         // Check if this is a decoration with custom destruction message
         if (!string.IsNullOrEmpty(victim.DecorationId) && _dataLoader != null)
         {
-            var decorationData = _dataLoader.GetDecoration(victim.DecorationId);
+            var decorationData = _dataLoader.Decorations.Get(victim.DecorationId);
             if (decorationData != null)
             {
                 return $"The {victim.DisplayName} {decorationData.DestructionMessage}.";

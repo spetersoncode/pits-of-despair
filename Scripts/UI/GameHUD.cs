@@ -109,6 +109,7 @@ public partial class GameHUD : Control
         _messageSystem.SetMessageLog(_messageLog);
         _messageSystem.SetPlayer(player);
         _messageSystem.SetEntityManager(entityManager);
+        _messageSystem.SetDataLoader(GetNode<Data.DataLoader>("/root/DataLoader"));
         _messageSystem.ConnectToCombatSystem(combatSystem);
 
         _inventoryPanel.ConnectToPlayer(player);
@@ -575,7 +576,7 @@ public partial class GameHUD : Control
         {
             // Get skill name for message
             var skillId = _playerSkills.GetSkillAtKey(newKey);
-            var skillDef = skillId != null ? _dataLoader?.GetSkill(skillId) : null;
+            var skillDef = skillId != null ? _dataLoader?.Skills.Get(skillId) : null;
             string skillName = skillDef?.Name ?? "Skill";
 
             if (oldKey == newKey)
@@ -588,7 +589,7 @@ public partial class GameHUD : Control
                 var swappedId = _playerSkills.GetSkillAtKey(oldKey);
                 if (swappedId != null)
                 {
-                    var swappedDef = _dataLoader?.GetSkill(swappedId);
+                    var swappedDef = _dataLoader?.Skills.Get(swappedId);
                     string swappedName = swappedDef?.Name ?? "Skill";
                     _messageLog.AddMessage($"{skillName} rebound to '{newKey}' (swapped with {swappedName} on '{oldKey}').", Palette.ToHex(Palette.Success));
                 }
@@ -830,7 +831,7 @@ public partial class GameHUD : Control
         // Learn the skill
         if (_playerSkills != null && _playerSkills.LearnSkill(skillId))
         {
-            var skillDef = _dataLoader?.GetSkill(skillId);
+            var skillDef = _dataLoader?.Skills.Get(skillId);
             string skillName = skillDef?.Name ?? skillId;
             _messageLog.AddMessage($"Learned {skillName}!", Palette.ToHex(Palette.PotionWill));
         }

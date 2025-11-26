@@ -57,7 +57,7 @@ public class MoveAction : Action
                 return true;
             }
 
-            // Player-only: bump-to-attack hostile creatures
+            // Player-only: bump-to-attack anything with health (creatures, destructible decorations)
             if (actor == context.Player)
             {
                 var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");
@@ -116,7 +116,7 @@ public class MoveAction : Action
                 return ActionResult.CreateSuccess();
             }
 
-            // Player-only: bump-to-attack hostile creatures
+            // Player-only: bump-to-attack anything with health (creatures, destructible decorations)
             if (actor == context.Player)
             {
                 var targetHealth = targetEntity.GetNodeOrNull<HealthComponent>("HealthComponent");

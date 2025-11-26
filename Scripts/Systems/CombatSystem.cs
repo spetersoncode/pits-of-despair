@@ -121,7 +121,7 @@ public partial class CombatSystem : Node
             return;
         }
 
-        // Get stats components
+        // Get stats components (targetStats may be null for destructible objects like decorations)
         var attackerStats = attacker.GetNodeOrNull<StatsComponent>("StatsComponent");
         var targetStats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
 
@@ -131,39 +131,46 @@ public partial class CombatSystem : Node
             return;
         }
 
-        if (targetStats == null)
-        {
-            GD.PushWarning($"CombatSystem: Target {target.DisplayName} has no StatsComponent");
-            return;
-        }
-
         // Determine if this is a melee or ranged attack
         bool isMelee = attackData.Type == AttackType.Melee;
 
-        // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
-        int attackModifier = attackerStats.GetAttackModifier(isMelee);
-        int defenseModifier = targetStats.GetDefenseModifier();
+        int baseDamage;
+        int finalDamage;
 
-        int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
-        int defenseRoll = DiceRoller.Roll(2, 6, defenseModifier);
-
-        // Check if attack hits (attacker roll >= defender roll, ties go to attacker)
-        bool hit = attackRoll >= defenseRoll;
-
-        if (!hit)
+        // Targets with HealthComponent but no StatsComponent (e.g., destructible decorations)
+        // Auto-hit and deal full weapon damage (no opposed roll, no armor)
+        if (targetStats == null)
         {
-            // Attack missed
-            EmitSignal(SignalName.AttackMissed, attacker, target, attackData.Name);
-            EmitSignal(SignalName.AttackExecuted, attacker, target, 0, attackData.Name); // Legacy support
-            return;
+            baseDamage = DiceRoller.Roll(attackData.DiceNotation);
+            int damageBonus = attackerStats.GetDamageBonus(isMelee);
+            finalDamage = Mathf.Max(0, baseDamage + damageBonus);
         }
+        else
+        {
+            // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
+            int attackModifier = attackerStats.GetAttackModifier(isMelee);
+            int defenseModifier = targetStats.GetDefenseModifier();
 
-        // PHASE 2: Damage Calculation (weapon damage + STR [if melee] - armor)
-        int baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-        int damageBonus = attackerStats.GetDamageBonus(isMelee);
-        int armor = targetStats.TotalArmor;
+            int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
+            int defenseRoll = DiceRoller.Roll(2, 6, defenseModifier);
 
-        int finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
+            // Check if attack hits (attacker roll >= defender roll, ties go to attacker)
+            bool hit = attackRoll >= defenseRoll;
+
+            if (!hit)
+            {
+                // Attack missed
+                EmitSignal(SignalName.AttackMissed, attacker, target, attackData.Name);
+                EmitSignal(SignalName.AttackExecuted, attacker, target, 0, attackData.Name); // Legacy support
+                return;
+            }
+
+            // PHASE 2: Damage Calculation (weapon damage + STR [if melee] - armor)
+            baseDamage = DiceRoller.Roll(attackData.DiceNotation);
+            int damageBonus = attackerStats.GetDamageBonus(isMelee);
+            int armor = targetStats.TotalArmor;
+            finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
+        }
 
         // PHASE 3: Calculate Actual Damage, Emit Feedback, Then Apply Damage
         if (finalDamage > 0)

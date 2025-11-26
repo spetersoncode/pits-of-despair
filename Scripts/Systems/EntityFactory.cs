@@ -31,7 +31,7 @@ public partial class EntityFactory : Node
 	/// <returns>The created and configured BaseEntity, or null if creature not found.</returns>
 	public BaseEntity CreateCreature(string creatureId, GridPosition position)
 	{
-		var data = _dataLoader.GetCreature(creatureId);
+		var data = _dataLoader.Creatures.Get(creatureId);
 		if (data == null)
 		{
 			GD.PrintErr($"EntityFactory: Failed to create creature '{creatureId}' - creature data not found");
@@ -51,7 +51,7 @@ public partial class EntityFactory : Node
 	/// <returns>The created and configured BaseEntity with ItemData, or null if item not found.</returns>
 	public BaseEntity CreateItem(string itemId, GridPosition position, int quantity = 1)
 	{
-		var data = _dataLoader.GetItem(itemId);
+		var data = _dataLoader.Items.Get(itemId);
 		if (data == null)
 		{
 			GD.PrintErr($"EntityFactory: Failed to create item '{itemId}' - item data not found");
@@ -283,7 +283,7 @@ public partial class EntityFactory : Node
 						continue;
 					}
 
-					var itemData = _dataLoader.GetItem(itemId);
+					var itemData = _dataLoader.Items.Get(itemId);
 					if (itemData == null)
 					{
 						GD.PushWarning($"EntityFactory: Equipment item '{itemId}' not found for creature '{data.Name}'");
@@ -495,7 +495,7 @@ public partial class EntityFactory : Node
 		// Add and equip each item
 		foreach (var itemId in startingItems)
 		{
-			var itemData = _dataLoader.GetItem(itemId);
+			var itemData = _dataLoader.Items.Get(itemId);
 			if (itemData == null)
 			{
 				GD.PushWarning($"EntityFactory: Starting item '{itemId}' not found. Player starting without it.");
@@ -531,7 +531,7 @@ public partial class EntityFactory : Node
 	/// <returns>The created BaseEntity, or null if decoration not found.</returns>
 	public BaseEntity CreateDecoration(string decorationId, GridPosition position)
 	{
-		var data = _dataLoader.GetDecoration(decorationId);
+		var data = _dataLoader.Decorations.Get(decorationId);
 		if (data == null)
 		{
 			GD.PushWarning($"EntityFactory: Decoration '{decorationId}' not found");
@@ -551,8 +551,8 @@ public partial class EntityFactory : Node
 			Name = data.Name
 		};
 
-		// Add HealthComponent if destructible
-		if (data.IsDestructible)
+		// Add HealthComponent if health is specified (same pattern as creatures)
+		if (data.Health > 0)
 		{
 			var healthComponent = new HealthComponent
 			{
@@ -615,7 +615,7 @@ public partial class EntityFactory : Node
 
 		foreach (var itemId in itemDataIds)
 		{
-			var itemData = _dataLoader.GetItem(itemId);
+			var itemData = _dataLoader.Items.Get(itemId);
 			if (itemData == null)
 			{
 				GD.PushWarning($"EntityFactory: Item '{itemId}' not found.");

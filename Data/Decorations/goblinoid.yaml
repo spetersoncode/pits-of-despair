@@ -25,7 +25,6 @@ entries:
     glyph: "&"
     color: Palette.Walnut
     isWalkable: false
-    isDestructible: true
     health: 3
     destructionMessage: topples and crashes to the ground
     placementHints: ["center", "corner"]
@@ -36,7 +35,6 @@ entries:
     glyph: "☠"
     color: Palette.Bone
     isWalkable: true
-    isDestructible: false
     placementHints: ["corner", "wall_adjacent"]
 
   meat_rack:
@@ -45,7 +43,6 @@ entries:
     glyph: "π"
     color: Palette.ToughLeather
     isWalkable: true
-    isDestructible: true
     health: 2
     destructionMessage: collapses in a heap
     placementHints: ["wall_adjacent"]
@@ -64,7 +61,6 @@ entries:
     glyph: "⚑"
     color: Palette.Rust
     isWalkable: true
-    isDestructible: true
     health: 1
     destructionMessage: tears to shreds
     placementHints: ["wall_adjacent"]

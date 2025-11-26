@@ -42,14 +42,9 @@ public class DecorationData
     public bool IsWalkable { get; set; } = true;
 
     /// <summary>
-    /// Whether this decoration can be destroyed by attacks.
+    /// Health points. If > 0, decoration is destructible and can be attacked.
     /// </summary>
-    public bool IsDestructible { get; set; } = false;
-
-    /// <summary>
-    /// Health points if destructible.
-    /// </summary>
-    public int Health { get; set; } = 1;
+    public int Health { get; set; } = 0;
 
     /// <summary>
     /// Custom message when destroyed (e.g., "shatters into fragments").

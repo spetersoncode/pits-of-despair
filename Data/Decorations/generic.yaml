@@ -34,8 +34,7 @@ entries:
     description: A dusty clay vase, fragile and old.
     glyph: "∪"
     color: Palette.Brick
-    isWalkable: true
-    isDestructible: true
+    isWalkable: false
     health: 1
     destructionMessage: shatters into fragments
     placementHints: ["wall_adjacent", "corner"]
@@ -45,8 +44,7 @@ entries:
     description: A rotting wooden barrel.
     glyph: "◎"
     color: Palette.Walnut
-    isWalkable: true
-    isDestructible: true
+    isWalkable: false
     health: 2
     destructionMessage: splinters apart
     placementHints: ["wall_adjacent", "clustered"]
@@ -56,8 +54,7 @@ entries:
     description: A battered storage crate.
     glyph: "⊞"
     color: Palette.Oak
-    isWalkable: true
-    isDestructible: true
+    isWalkable: false
     health: 2
     destructionMessage: breaks into pieces
     placementHints: ["wall_adjacent", "clustered"]
