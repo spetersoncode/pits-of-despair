@@ -25,6 +25,14 @@ public class PatrolRouteGoal : Goal
 
     public override void TakeAction(AIContext context)
     {
+        // Abort patrol if we see enemies - combat takes priority
+        var enemies = context.GetVisibleEnemies();
+        if (enemies.Count > 0)
+        {
+            Fail(context);
+            return;
+        }
+
         _routeComponent ??= context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent");
 
         if (_routeComponent?.Route == null || _routeComponent.CurrentTarget == null)

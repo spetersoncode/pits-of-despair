@@ -29,6 +29,14 @@ public class FollowPackLeaderGoal : Goal
 
     public override void TakeAction(AIContext context)
     {
+        // Abort patrol if we see enemies - combat takes priority
+        var enemies = context.GetVisibleEnemies();
+        if (enemies.Count > 0)
+        {
+            Fail(context);
+            return;
+        }
+
         _followerComp ??= context.Entity.GetNodeOrNull<PackFollowerComponent>("PackFollowerComponent");
 
         if (_followerComp == null || !_followerComp.HasValidLeader)

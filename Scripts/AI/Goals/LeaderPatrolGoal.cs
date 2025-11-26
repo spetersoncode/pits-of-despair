@@ -28,6 +28,14 @@ public class LeaderPatrolGoal : Goal
 
     public override void TakeAction(AIContext context)
     {
+        // Abort patrol if we see enemies - combat takes priority
+        var enemies = context.GetVisibleEnemies();
+        if (enemies.Count > 0)
+        {
+            Fail(context);
+            return;
+        }
+
         _leaderComp ??= context.Entity.GetNodeOrNull<PackLeaderComponent>("PackLeaderComponent");
 
         if (_leaderComp == null || _leaderComp.Route == null)
