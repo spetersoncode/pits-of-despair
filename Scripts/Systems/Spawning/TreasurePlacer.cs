@@ -179,7 +179,7 @@ public class TreasurePlacer
     {
         foreach (var itemId in itemIds)
         {
-            var data = _dataLoader.GetItem(itemId);
+            var data = _dataLoader.Items.Get(itemId);
             if (data != null)
             {
                 candidates.Add((itemId, data, weight));

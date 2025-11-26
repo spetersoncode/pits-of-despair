@@ -125,13 +125,13 @@ public class OutOfDepthSpawner
         // Get creatures from deeper floor's themes
         foreach (var themeEntry in deeperConfig.ThemeWeights)
         {
-            var theme = _dataLoader.GetFactionTheme(themeEntry.Id);
+            var theme = _dataLoader.Spawning.GetFactionTheme(themeEntry.Id);
             if (theme?.Creatures == null)
                 continue;
 
             foreach (var creatureId in theme.Creatures)
             {
-                var data = _dataLoader.GetCreature(creatureId);
+                var data = _dataLoader.Creatures.Get(creatureId);
                 if (data == null)
                     continue;
 
@@ -148,13 +148,13 @@ public class OutOfDepthSpawner
         {
             foreach (var themeEntry in deeperConfig.ThemeWeights)
             {
-                var theme = _dataLoader.GetFactionTheme(themeEntry.Id);
+                var theme = _dataLoader.Spawning.GetFactionTheme(themeEntry.Id);
                 if (theme?.Creatures == null)
                     continue;
 
                 foreach (var creatureId in theme.Creatures)
                 {
-                    var data = _dataLoader.GetCreature(creatureId);
+                    var data = _dataLoader.Creatures.Get(creatureId);
                     if (data != null && data.Threat >= deeperConfig.MinThreat)
                     {
                         candidates.Add((creatureId, data));

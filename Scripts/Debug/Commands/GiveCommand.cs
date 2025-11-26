@@ -31,7 +31,7 @@ public class GiveCommand : DebugCommand
             return null;
         }
 
-        var allItems = dataLoader.GetAllItemIds().OrderBy(id => id).ToList();
+        var allItems = dataLoader.Items.GetAllIds().OrderBy(id => id).ToList();
 
         if (string.IsNullOrEmpty(currentValue))
         {
@@ -65,7 +65,7 @@ public class GiveCommand : DebugCommand
         }
 
         // Get item data to check type for quantity
-        var itemData = context.DataLoader?.GetItem(itemId);
+        var itemData = context.DataLoader?.Items.Get(itemId);
         GD.Print($"GiveCommand: Got itemData for '{itemId}': {(itemData != null ? "found" : "null")}");
         int quantity = itemData?.Type?.ToLower() == "ammo" ? 50 : 1;
 

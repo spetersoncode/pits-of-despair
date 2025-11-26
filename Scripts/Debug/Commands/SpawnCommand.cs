@@ -30,8 +30,8 @@ public class SpawnCommand : DebugCommand
         }
 
         // Combine creature and item IDs
-        var creatureIds = dataLoader.GetAllCreatureIds().Select(id => id);
-        var itemIds = dataLoader.GetAllItemIds().Select(id => id);
+        var creatureIds = dataLoader.Creatures.GetAllIds().Select(id => id);
+        var itemIds = dataLoader.Items.GetAllIds().Select(id => id);
         var allIds = creatureIds.Concat(itemIds).OrderBy(id => id).ToList();
 
         if (string.IsNullOrEmpty(currentValue))
@@ -65,14 +65,14 @@ public class SpawnCommand : DebugCommand
         }
 
         // Check if it's a creature
-        var creature = dataLoader.GetCreature(entityId);
+        var creature = dataLoader.Creatures.Get(entityId);
         if (creature != null)
         {
             return DebugCommandResult.CreateTargetingRequest(entityId, SpawnEntityType.Creature);
         }
 
         // Check if it's an item
-        var item = dataLoader.GetItem(entityId);
+        var item = dataLoader.Items.Get(entityId);
         if (item != null)
         {
             return DebugCommandResult.CreateTargetingRequest(entityId, SpawnEntityType.Item);

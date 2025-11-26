@@ -30,7 +30,7 @@ public class AllyCommand : DebugCommand
         }
 
         // Only creature IDs for ally command
-        var creatureIds = dataLoader.GetAllCreatureIds().OrderBy(id => id).ToList();
+        var creatureIds = dataLoader.Creatures.GetAllIds().OrderBy(id => id).ToList();
 
         if (string.IsNullOrEmpty(currentValue))
         {
@@ -63,7 +63,7 @@ public class AllyCommand : DebugCommand
         }
 
         // Validate creature exists
-        var creature = dataLoader.GetCreature(creatureId);
+        var creature = dataLoader.Creatures.Get(creatureId);
         if (creature == null)
         {
             return DebugCommandResult.CreateFailure(

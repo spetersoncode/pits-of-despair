@@ -73,7 +73,7 @@ public partial class MapSystem : Node
     /// <param name="floorConfigId">ID of the floor config (filename without extension).</param>
     public void GenerateFromConfig(string floorConfigId)
     {
-        var config = _dataLoader.GetFloorConfig(floorConfigId);
+        var config = _dataLoader.FloorConfigs.Get(floorConfigId);
         if (config == null)
         {
             GD.PushError($"MapSystem: Floor config '{floorConfigId}' not found, falling back to legacy generation");
@@ -112,7 +112,7 @@ public partial class MapSystem : Node
     /// <param name="floorDepth">The floor depth (1-based).</param>
     public void GenerateForFloor(int floorDepth)
     {
-        var config = _dataLoader.GetFloorConfigForDepth(floorDepth);
+        var config = _dataLoader.FloorConfigs.GetForDepth(floorDepth);
         if (config == null)
         {
             GD.PushWarning($"MapSystem: No floor config for depth {floorDepth}, falling back to legacy generation");

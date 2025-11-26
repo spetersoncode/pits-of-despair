@@ -223,7 +223,7 @@ public class PlayerState
 			var dataLoader = player.GetNode<DataLoader>("/root/DataLoader");
 			foreach (var slot in Inventory)
 			{
-				var itemTemplate = dataLoader.GetItem(slot.ItemDataFileId);
+				var itemTemplate = dataLoader.Items.Get(slot.ItemDataFileId);
 				if (itemTemplate != null)
 				{
 					var itemInstance = new ItemInstance(itemTemplate)

@@ -74,7 +74,7 @@ public class ArchetypeSelector
 
         foreach (var creatureId in theme.Creatures)
         {
-            var data = _dataLoader.GetCreature(creatureId);
+            var data = _dataLoader.Creatures.Get(creatureId);
             if (data == null)
                 continue;
 
@@ -132,7 +132,7 @@ public class ArchetypeSelector
 
         foreach (var creatureId in theme.Creatures)
         {
-            var data = _dataLoader.GetCreature(creatureId);
+            var data = _dataLoader.Creatures.Get(creatureId);
             if (data == null)
                 continue;
 
@@ -153,7 +153,7 @@ public class ArchetypeSelector
     {
         foreach (var creatureId in theme.Creatures)
         {
-            var data = _dataLoader.GetCreature(creatureId);
+            var data = _dataLoader.Creatures.Get(creatureId);
             if (data == null)
                 continue;
 
@@ -176,7 +176,7 @@ public class ArchetypeSelector
 
         foreach (var creatureId in theme.Creatures)
         {
-            var data = _dataLoader.GetCreature(creatureId);
+            var data = _dataLoader.Creatures.Get(creatureId);
             if (data != null && data.Threat < lowestThreat)
             {
                 lowestThreat = data.Threat;
@@ -199,7 +199,7 @@ public class ArchetypeSelector
 
         foreach (var creatureId in theme.Creatures)
         {
-            var data = _dataLoader.GetCreature(creatureId);
+            var data = _dataLoader.Creatures.Get(creatureId);
             if (data != null && data.Threat > highestThreat && data.Threat <= maxThreat)
             {
                 highestThreat = data.Threat;

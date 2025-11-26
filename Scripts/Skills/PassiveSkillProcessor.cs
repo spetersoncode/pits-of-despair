@@ -72,7 +72,7 @@ public partial class PassiveSkillProcessor : Node
     {
         if (_dataLoader == null) return;
 
-        var skill = _dataLoader.GetSkill(skillId);
+        var skill = _dataLoader.Skills.Get(skillId);
         if (skill == null || skill.GetCategory() != SkillCategory.Passive)
             return;
 
@@ -89,7 +89,7 @@ public partial class PassiveSkillProcessor : Node
 
         foreach (var skillId in _skillComponent.LearnedSkills)
         {
-            var skill = _dataLoader.GetSkill(skillId);
+            var skill = _dataLoader.Skills.Get(skillId);
             if (skill != null && skill.GetCategory() == SkillCategory.Passive)
             {
                 ApplyPassiveSkill(skill);
@@ -186,7 +186,7 @@ public partial class PassiveSkillProcessor : Node
         if (!_appliedPassives.Contains(skillId)) return;
         if (_dataLoader == null) return;
 
-        var skill = _dataLoader.GetSkill(skillId);
+        var skill = _dataLoader.Skills.Get(skillId);
         if (skill == null) return;
 
         string source = GetModifierSource(skillId);

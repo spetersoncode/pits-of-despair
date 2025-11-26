@@ -209,7 +209,7 @@ public class RegionThemeAssigner
 
         foreach (var entry in config.ThemeWeights)
         {
-            var theme = _dataLoader.GetFactionTheme(entry.Id);
+            var theme = _dataLoader.Spawning.GetFactionTheme(entry.Id);
             if (theme != null)
             {
                 themes.Add(theme);
@@ -223,7 +223,7 @@ public class RegionThemeAssigner
         // If no themes configured, try to get all themes valid for this floor range
         if (themes.Count == 0)
         {
-            foreach (var theme in _dataLoader.GetAllFactionThemes())
+            foreach (var theme in _dataLoader.Spawning.GetAllFactionThemes())
             {
                 if (config.MinFloor >= theme.MinFloor && config.MaxFloor <= theme.MaxFloor)
                 {
@@ -248,7 +248,7 @@ public class RegionThemeAssigner
             // Check if hint specifies a theme
             if (!string.IsNullOrEmpty(hint.ThemeId))
             {
-                var theme = _dataLoader.GetFactionTheme(hint.ThemeId);
+                var theme = _dataLoader.Spawning.GetFactionTheme(hint.ThemeId);
                 if (theme != null)
                     return theme;
             }

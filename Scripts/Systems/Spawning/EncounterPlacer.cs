@@ -124,7 +124,7 @@ public class EncounterPlacer
         // First try weighted templates from config
         foreach (var entry in config.EncounterWeights)
         {
-            var template = _dataLoader.GetEncounterTemplate(entry.Id);
+            var template = _dataLoader.Spawning.GetEncounterTemplate(entry.Id);
             if (template != null && IsTemplateValidForRegion(template, region))
             {
                 templates.Add((template, entry.Weight));
@@ -134,7 +134,7 @@ public class EncounterPlacer
         // If none configured, get all templates that fit the region (default weight 10)
         if (templates.Count == 0)
         {
-            foreach (var template in _dataLoader.GetAllEncounterTemplates())
+            foreach (var template in _dataLoader.Spawning.GetAllEncounterTemplates())
             {
                 if (IsTemplateValidForRegion(template, region))
                 {

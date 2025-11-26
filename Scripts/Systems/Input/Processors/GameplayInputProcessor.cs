@@ -163,7 +163,7 @@ public class GameplayInputProcessor
         if (dataLoader == null)
             return;
 
-        var skill = dataLoader.GetSkill(skillId);
+        var skill = dataLoader.Skills.Get(skillId);
         if (skill == null)
             return;
 

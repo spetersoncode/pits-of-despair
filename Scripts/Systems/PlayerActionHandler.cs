@@ -195,7 +195,7 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		var skill = _dataLoader.GetSkill(skillId);
+		var skill = _dataLoader.Skills.Get(skillId);
 		if (skill == null)
 		{
 			GD.PushWarning($"PlayerActionHandler: Unknown skill '{skillId}'.");

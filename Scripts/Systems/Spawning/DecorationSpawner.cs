@@ -86,8 +86,8 @@ public class DecorationSpawner
         targetCount = Mathf.Clamp(targetCount, MinDecorationsPerRegion, MaxDecorationsPerRegion);
 
         // Get decoration sets to use
-        var genericSet = _dataLoader.GetDecorationSet(null);
-        var themedSet = theme != null ? _dataLoader.GetDecorationSet(theme.Id) : null;
+        var genericSet = _dataLoader.Decorations.GetSet(null);
+        var themedSet = theme != null ? _dataLoader.Decorations.GetSet(theme.Id) : null;
 
         // If no generic set available, skip decoration placement
         if (genericSet == null)
@@ -114,7 +114,7 @@ public class DecorationSpawner
             var decorationId = SelectWeightedDecoration(set);
             if (decorationId == null) continue;
 
-            var data = _dataLoader.GetDecoration(decorationId);
+            var data = _dataLoader.Decorations.Get(decorationId);
             if (data == null) continue;
 
             // Find valid position based on placement hints

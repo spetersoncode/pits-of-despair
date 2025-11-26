@@ -121,7 +121,7 @@ public partial class AuraProcessor : Node
     {
         if (_dataLoader == null) return;
 
-        var skill = _dataLoader.GetSkill(skillId);
+        var skill = _dataLoader.Skills.Get(skillId);
         if (skill == null || skill.GetCategory() != SkillCategory.Aura)
             return;
 

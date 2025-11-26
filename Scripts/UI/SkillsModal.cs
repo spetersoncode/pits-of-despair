@@ -205,7 +205,7 @@ public partial class SkillsModal : PanelContainer
 
         // Load skill definitions
         var learnedSkills = learnedSkillIds
-            .Select(id => _dataLoader.GetSkill(id))
+            .Select(id => _dataLoader.Skills.Get(id))
             .Where(s => s != null)
             .ToList();
 

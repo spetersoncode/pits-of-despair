@@ -156,7 +156,7 @@ public class EncounterSpawner
 
         foreach (var creatureId in theme.Creatures)
         {
-            var data = _dataLoader.GetCreature(creatureId);
+            var data = _dataLoader.Creatures.Get(creatureId);
             if (data != null)
             {
                 creatures.Add((creatureId, data));

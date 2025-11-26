@@ -43,7 +43,7 @@ public class SkillCommand : DebugCommand
             if (dataLoader == null)
                 return null;
 
-            var allSkills = dataLoader.GetAllSkillIds().OrderBy(id => id).ToList();
+            var allSkills = dataLoader.Skills.GetAllIds().OrderBy(id => id).ToList();
 
             if (string.IsNullOrEmpty(currentValue))
                 return allSkills;
@@ -111,7 +111,7 @@ public class SkillCommand : DebugCommand
             );
         }
 
-        var skill = dataLoader.GetSkill(skillId);
+        var skill = dataLoader.Skills.Get(skillId);
         if (skill == null)
         {
             return DebugCommandResult.CreateFailure(
@@ -174,7 +174,7 @@ public class SkillCommand : DebugCommand
         var lines = new List<string> { $"Learned skills ({learned.Count}):" };
         foreach (var skillId in learned)
         {
-            var skill = dataLoader.GetSkill(skillId);
+            var skill = dataLoader.Skills.Get(skillId);
             if (skill != null)
             {
                 lines.Add($"  {skill.GetCategoryIndicator()} {skill.Name} - {skill.Description}");
@@ -264,7 +264,7 @@ public class SkillCommand : DebugCommand
             );
         }
 
-        var skill = dataLoader.GetSkill(skillId);
+        var skill = dataLoader.Skills.Get(skillId);
         if (skill == null)
         {
             return DebugCommandResult.CreateFailure(
