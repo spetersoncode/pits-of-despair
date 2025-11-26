@@ -255,6 +255,26 @@ public class UseTargetedItemAction : Action
 					context.VisualEffectSystem.SpawnBeam(actor.GridPosition, endPos, Palette.Ochre, 0.5f);
 				}
 			}
+			else if (effect is LightningBoltEffect lightningEffect)
+			{
+				// Apply lightning bolt effect with range from targeting definition
+				var results = lightningEffect.ApplyToLine(actor, _targetPosition, range, context);
+
+				foreach (var result in results)
+				{
+					if (result.Success)
+					{
+						anySucceeded = true;
+					}
+
+					if (!string.IsNullOrEmpty(result.Message))
+					{
+						messages.AppendLine(result.Message);
+					}
+				}
+
+				// Visual is spawned by ApplyToLine
+			}
 			else
 			{
 				// Other line effects (future: lightning bolt, etc.)

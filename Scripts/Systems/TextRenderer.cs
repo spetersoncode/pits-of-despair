@@ -473,8 +473,14 @@ public partial class TextRenderer : Control
 					}
 				}
 
-				// Draw trace line from origin to cursor
-				DrawTraceLine(_cursorSystem.OriginPosition, cursorPos, offset);
+				// Draw trace line from origin to cursor (skip for Line/Cone modes where template is the focus)
+				var targetingType = _cursorSystem.TargetingDefinition?.Type;
+				bool skipTraceLine = targetingType == Targeting.TargetingType.Line ||
+				                     targetingType == Targeting.TargetingType.Cone;
+				if (!skipTraceLine)
+				{
+					DrawTraceLine(_cursorSystem.OriginPosition, cursorPos, offset);
+				}
 			}
 
 			// Draw box border cursor for ALL modes

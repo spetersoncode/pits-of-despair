@@ -68,6 +68,8 @@ public abstract class Effect
             "cone_of_cold" => new ConeOfColdEffect(definition),
             "move_tiles" => new MoveTilesEffect(definition),
             "melee_attack" => new MeleeAttackEffect(definition),
+            "lightning_bolt" => new LightningBoltEffect(definition),
+            "chain_lightning" => new ChainLightningEffect(definition),
             _ => null
         };
     }

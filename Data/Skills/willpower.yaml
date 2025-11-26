@@ -1,6 +1,46 @@
 type: willpower
 
 entries:
+  lightning_bolt:
+    name: Lightning Bolt
+    description: A bolt of lightning strikes all enemies in a line.
+    category: active
+    targeting: line
+    range: 8
+    willpowerCost: 3
+    tier: 1
+    prerequisites: {}
+    tags:
+      - spell
+      - lightning
+      - damage
+      - line
+    effects:
+      - type: lightning_bolt
+        dice: 2d6
+        damageType: Lightning
+
+  chain_lightning:
+    name: Chain Lightning
+    description: Lightning arcs between enemies, bouncing to nearby foes.
+    category: active
+    targeting: enemy
+    range: 6
+    willpowerCost: 4
+    tier: 1
+    prerequisites: {}
+    tags:
+      - spell
+      - lightning
+      - damage
+    effects:
+      - type: chain_lightning
+        dice: 2d4
+        damageType: Lightning
+        maxBounces: 3
+        bounceRange: 4
+        damageFalloff: 0.75
+
   magic_missile:
     name: Magic Missile
     description: 2d4 damage, never misses, 6 range.

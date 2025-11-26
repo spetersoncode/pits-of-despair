@@ -151,41 +151,32 @@ public class LineTargetingHandler : TargetingHandler
 
         int dx = System.Math.Abs(x1 - x0);
         int dy = System.Math.Abs(y1 - y0);
-        int sx = x0 < x1 ? 1 : -1;
-        int sy = y0 < y1 ? 1 : -1;
+
+        // Handle edge case: origin == target (no direction)
+        // Use the target direction to extend the line to max range
+        if (dx == 0 && dy == 0)
+        {
+            return positions; // No direction, return empty
+        }
+
+        int sx = x0 < x1 ? 1 : (x0 > x1 ? -1 : 0);
+        int sy = y0 < y1 ? 1 : (y0 > y1 ? -1 : 0);
         int err = dx - dy;
 
         int currentX = x0;
         int currentY = y0;
         int tilesTraversed = 0;
 
-        while (true)
+        // Safety limit to prevent infinite loops
+        int maxIterations = maxRange * 3;
+        int iterations = 0;
+
+        while (iterations++ < maxIterations)
         {
-            // Skip the origin position
-            if (currentX != x0 || currentY != y0)
-            {
-                var pos = new GridPosition(currentX, currentY);
+            int prevX = currentX;
+            int prevY = currentY;
 
-                // Check bounds
-                if (!mapSystem.IsInBounds(pos))
-                    break;
-
-                // Check range
-                tilesTraversed++;
-                if (tilesTraversed > maxRange)
-                    break;
-
-                positions.Add(pos);
-
-                // If LOS is required, stop at walls
-                if (stopAtWalls && !mapSystem.IsWalkable(pos))
-                    break;
-            }
-
-            // Check if we've reached the target
-            if (currentX == x1 && currentY == y1)
-                break;
-
+            // Bresenham step
             int e2 = 2 * err;
             if (e2 > -dy)
             {
@@ -197,6 +188,35 @@ public class LineTargetingHandler : TargetingHandler
                 err += dx;
                 currentY += sy;
             }
+
+            // Safety check: ensure we moved
+            if (currentX == prevX && currentY == prevY)
+            {
+                // Force movement in the dominant direction
+                if (dx >= dy && sx != 0)
+                    currentX += sx;
+                else if (sy != 0)
+                    currentY += sy;
+                else
+                    break; // Can't move, exit
+            }
+
+            var pos = new GridPosition(currentX, currentY);
+
+            // Check bounds
+            if (!mapSystem.IsInBounds(pos))
+                break;
+
+            // Check range
+            tilesTraversed++;
+            if (tilesTraversed > maxRange)
+                break;
+
+            positions.Add(pos);
+
+            // If LOS is required, stop at walls
+            if (stopAtWalls && !mapSystem.IsWalkable(pos))
+                break;
         }
 
         return positions;

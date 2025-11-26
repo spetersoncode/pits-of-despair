@@ -230,6 +230,32 @@ public static class SkillExecutor
                 continue;
             }
 
+            // Handle line-based effects specially (they manage their own targeting and visuals)
+            if (effect is LightningBoltEffect lightningEffect && targetPosition.HasValue)
+            {
+                int range = skillDef.Range > 0 ? skillDef.Range : 8;
+                var effectResults = lightningEffect.ApplyToLine(caster, targetPosition.Value, range, context);
+
+                foreach (var effectResult in effectResults)
+                {
+                    if (effectResult.Success)
+                    {
+                        anyEffectSucceeded = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(effectResult.Message))
+                    {
+                        result.AddMessage(effectResult.Message);
+                    }
+
+                    if (effectResult.AffectedEntity != null)
+                    {
+                        result.AddAffectedEntity(effectResult.AffectedEntity);
+                    }
+                }
+                continue;
+            }
+
             // Expand targets for multi-target melee effects (e.g., Cleave)
             var effectTargets = targets;
             if (effectDef.Targets > 1 && effectDef.Type == "melee_attack" && targets.Count > 0)

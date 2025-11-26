@@ -19,13 +19,14 @@ public static class VisualEffectDefinitions
 
     // Shader paths - Beams
     private const string TunnelingBeamShader = "res://Resources/Shaders/Beams/tunneling.gdshader";
+    private const string LightningBeamShader = "res://Resources/Shaders/Beams/lightning_beam.gdshader";
 
     // Shader paths - Projectiles
     private const string FireballShader = "res://Resources/Shaders/Projectiles/fireball.gdshader";
     private const string ArrowShader = "res://Resources/Shaders/Projectiles/arrow.gdshader";
     private const string MagicMissileShader = "res://Resources/Shaders/Projectiles/magic_missile.gdshader";
     private const string IceShardShader = "res://Resources/Shaders/Projectiles/ice_shard.gdshader";
-    private const string LightningBoltShader = "res://Resources/Shaders/Projectiles/lightning_bolt.gdshader";
+    private const string ChainLightningShader = "res://Resources/Shaders/Projectiles/chain_lightning.gdshader";
     private const string PoisonBoltShader = "res://Resources/Shaders/Projectiles/poison_bolt.gdshader";
 
     /// <summary>
@@ -85,6 +86,19 @@ public static class VisualEffectDefinitions
         innerColor: new Color(1.0f, 0.9f, 0.7f, 1.0f),  // Hot white-yellow core
         midColor: Palette.Ochre,
         outerColor: Palette.Ochre.Darkened(0.4f)
+    );
+
+    /// <summary>
+    /// Lightning beam - instant electric bolt for lightning bolt skill.
+    /// </summary>
+    public static readonly VisualEffectDefinition LightningBeam = new(
+        id: "lightning_beam",
+        type: VisualEffectType.Beam,
+        shaderPath: LightningBeamShader,
+        duration: 0.4f,
+        innerColor: new Color(1.0f, 1.0f, 1.0f, 1.0f),  // White hot core
+        midColor: Palette.Lightning,
+        outerColor: WithAlpha(Palette.Lightning, 0.6f)
     );
 
     #endregion
@@ -185,11 +199,11 @@ public static class VisualEffectDefinitions
     #region Projectile Effects - Lightning
 
     /// <summary>
-    /// Lightning bolt - crackling electric projectile.
+    /// Chain lightning arc - crackling electric projectile for chain bounces.
     /// </summary>
-    public static readonly VisualEffectDefinition LightningBolt = new(
-        id: "lightning_bolt",
-        shaderPath: LightningBoltShader,
+    public static readonly VisualEffectDefinition ChainLightningArc = new(
+        id: "chain_lightning",
+        shaderPath: ChainLightningShader,
         headColor: Palette.Lightning,
         trailColor: WithAlpha(Palette.Lightning, 0.5f),
         speed: 45.0f,
@@ -198,12 +212,12 @@ public static class VisualEffectDefinitions
     );
 
     /// <summary>
-    /// Spark - small, quick lightning projectile.
-    /// Uses lightning shader with smaller size.
+    /// Spark - small, quick lightning projectile for chain lightning bounces.
+    /// Uses chain lightning shader with smaller size.
     /// </summary>
     public static readonly VisualEffectDefinition Spark = new(
         id: "spark",
-        shaderPath: LightningBoltShader,
+        shaderPath: ChainLightningShader,
         headColor: Palette.Lightning,
         trailColor: WithAlpha(Palette.Lightning, 0.3f),
         speed: 40.0f,
@@ -289,6 +303,7 @@ public static class VisualEffectDefinitions
             "cone_of_cold" => ConeOfCold,
             // Beam effects
             "tunneling" => Tunneling,
+            "lightning_beam" => LightningBeam,
             // Projectiles - Physical
             "arrow" => Arrow,
             "bolt" => Bolt,
@@ -299,7 +314,7 @@ public static class VisualEffectDefinitions
             "ice_shard" => IceShard,
             "frost_bolt" => FrostBolt,
             // Projectiles - Lightning
-            "lightning_bolt" => LightningBolt,
+            "chain_lightning" => ChainLightningArc,
             "spark" => Spark,
             // Projectiles - Poison/Acid
             "poison_bolt" => PoisonBolt,
@@ -322,6 +337,7 @@ public static class VisualEffectDefinitions
         yield return ConeOfCold;
         // Beam effects
         yield return Tunneling;
+        yield return LightningBeam;
         // Projectiles
         yield return Arrow;
         yield return Bolt;
@@ -329,7 +345,7 @@ public static class VisualEffectDefinitions
         yield return FireBolt;
         yield return IceShard;
         yield return FrostBolt;
-        yield return LightningBolt;
+        yield return ChainLightningArc;
         yield return Spark;
         yield return PoisonBolt;
         yield return AcidSplash;

@@ -40,5 +40,10 @@ public enum DamageType
     /// <summary>
     /// Necrotic damage from life-draining and death magic.
     /// </summary>
-    Necrotic
+    Necrotic,
+
+    /// <summary>
+    /// Lightning damage from electrical and storm magic.
+    /// </summary>
+    Lightning
 }

@@ -102,6 +102,21 @@ public class EffectDefinition
     public int SaveModifier { get; set; } = 0;
 
     /// <summary>
+    /// Maximum number of bounces for chain effects (e.g., Chain Lightning).
+    /// </summary>
+    public int MaxBounces { get; set; } = 3;
+
+    /// <summary>
+    /// Range (in tiles) that chain effects can bounce to nearby targets.
+    /// </summary>
+    public int BounceRange { get; set; } = 4;
+
+    /// <summary>
+    /// Damage multiplier applied to each subsequent bounce (e.g., 0.75 = 75% damage per bounce).
+    /// </summary>
+    public float DamageFalloff { get; set; } = 1.0f;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -131,7 +146,10 @@ public class EffectDefinition
             Percent = skillEffect.Percent,
             SaveStat = skillEffect.SaveStat,
             AttackStat = skillEffect.AttackStat,
-            SaveModifier = skillEffect.SaveModifier
+            SaveModifier = skillEffect.SaveModifier,
+            MaxBounces = skillEffect.MaxBounces,
+            BounceRange = skillEffect.BounceRange,
+            DamageFalloff = skillEffect.DamageFalloff
         };
     }
 

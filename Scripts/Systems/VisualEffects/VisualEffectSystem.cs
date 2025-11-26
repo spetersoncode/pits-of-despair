@@ -233,6 +233,14 @@ public partial class VisualEffectSystem : Node
         SpawnConeEffect(VisualEffectDefinitions.ConeOfCold, origin, target, range, spreadRadius);
     }
 
+    /// <summary>
+    /// Spawns a lightning beam from origin to target.
+    /// </summary>
+    public void SpawnLightningBeam(GridPosition origin, GridPosition target, float? duration = null)
+    {
+        SpawnEffect(VisualEffectDefinitions.LightningBeam, origin, 1.0f, target, duration);
+    }
+
     #endregion
 
     #region Projectile Spawn Methods
