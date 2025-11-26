@@ -17,6 +17,11 @@ public class PatrolRouteGoal : Goal
 
     public override bool IsFinished(AIContext context)
     {
+        // Abort if we see enemies - combat takes priority
+        var enemies = context.GetVisibleEnemies();
+        if (enemies.Count > 0)
+            return true;
+
         _routeComponent ??= context.Entity.GetNodeOrNull<PatrolRouteComponent>("PatrolRouteComponent");
 
         return _routeComponent?.Route?.Type == PatrolRouteType.OneWay

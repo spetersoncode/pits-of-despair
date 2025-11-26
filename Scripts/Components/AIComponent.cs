@@ -22,14 +22,14 @@ public partial class AIComponent : Node
     // Protection/follow target (for friendly AI)
     /// <summary>
     /// The entity this AI should follow and protect.
-    /// Used by FollowTargetGoal and DefendTargetGoal.
+    /// Used by FollowLeaderComponent to determine follow behavior.
     /// Typically set to the player for friendly creatures.
     /// </summary>
     public BaseEntity? ProtectionTarget { get; set; }
 
     /// <summary>
     /// Desired distance to maintain from the protection target.
-    /// Used by FollowTargetGoal to determine when to move closer.
+    /// Used by FollowLeaderComponent when FollowEntityGoal is not parameterized.
     /// </summary>
     [Export] public int FollowDistance { get; set; } = 3;
 
@@ -152,8 +152,7 @@ public partial class AIComponent : Node
             PatrolGoal => Intent.Patrolling,
             PatrolRouteGoal => Intent.Patrolling,
             WanderGoal => Intent.Wandering,
-            FollowTargetGoal => Intent.Following,
-            DefendTargetGoal => Intent.Guarding,
+            FollowEntityGoal => Intent.Following,
             SeekItemGoal => Intent.Scavenging,
             ApproachGoal approachGoal => DetermineApproachIntent(approachGoal),
             BoredGoal => DetermineBoredIntent(),
@@ -180,7 +179,7 @@ public partial class AIComponent : Node
         return originalIntent switch
         {
             KillTargetGoal => Intent.Hunting,
-            FollowTargetGoal => Intent.Following,
+            FollowEntityGoal => Intent.Following,
             PatrolGoal => Intent.Patrolling,
             PatrolRouteGoal => Intent.Patrolling,
             _ => Intent.Hunting // Default to hunting if approaching something

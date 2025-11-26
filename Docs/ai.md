@@ -71,9 +71,7 @@ Finished when target is dead or invalid.
 
 **FleeGoal**: Moves away from a threat for a duration. Prioritizes fleeing toward allies using Dijkstra maps. Fires `OnGetDefensiveActions` for yelling/healing while fleeing. Finished when turns expire AND (can't see threat OR far enough away).
 
-**DefendTargetGoal**: Attacks enemies threatening the protection target. Uses union of VIP's and protector's vision, prioritizes threats VIP can see. Pushes `KillTargetGoal` for each threat. Finished when no visible enemies.
-
-**FollowTargetGoal**: Stays within `FollowDistance` of protection target. Pushes `ApproachGoal` to close distance. Finished when close enough.
+**FollowEntityGoal**: Follows a target entity, staying within a specified distance. Used by bodyguards (following protection target) and pack followers (following leader). Pushes `ApproachGoal` to close distance. Aborts when enemies visible. Finished when close enough or target gone.
 
 **WanderGoal**: Single random step in a valid direction. Optional radius constraint around a center point for search behavior. Pushes `MoveDirectionGoal`. Completes after one move attempt.
 
@@ -138,7 +136,7 @@ Personalities emerge from component configuration and faction rather than goal l
 
 **Cowardly**: Component listens to `OnIAmBored`, pushes `FleeGoal` when health low or enemies visible. Can yell for help via `OnGetDefensiveActions`.
 
-**Bodyguard** (Friendly faction): BoredGoal checks protection target → FollowTargetGoal when distant → DefendTargetGoal when threats visible. Prioritizes VIP safety.
+**Bodyguard** (Friendly faction): BoredGoal fires `OnIAmBored` → `FollowLeaderComponent` pushes `FollowEntityGoal` when distant. Combat check in BoredGoal handles enemies. Stays near and protects VIP.
 
 **Ranged Tactical**: Component provides ranged attacks via `OnGetRangedActions`, listens to `OnRangedAttackSuccess` to push retreat behavior (shoot-and-scoot).
 

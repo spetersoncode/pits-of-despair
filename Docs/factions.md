@@ -35,13 +35,16 @@ The faction system determines allegiance and combat targeting between entities. 
 - `GetEnemiesNearProtectionTarget(maxDistance)`: Returns hostile entities near the protection target
 - `GetClosestEnemy(enemies)`: Utility to find nearest enemy from a list
 
-## Friendly AI Goals
+## Friendly AI Behavior
 
-**DefendTargetGoal**: Score 80f when enemies near protection target. Attacks closest hostile enemy threatening the protection target. Pathfinds to enemies out of melee range.
+Friendly creatures use `BoredGoal` like all other creatures. Their behavior emerges from:
 
-**FollowTargetGoal**: Score 50f+ when too far from protection target. Maintains `AIComponent.FollowDistance` (default 3 tiles) from protection target. Lower priority than DefendTarget—defending takes precedence.
+1. **Combat check**: BoredGoal attacks visible enemies first (same as hostiles)
+2. **FollowLeaderComponent**: Responds to `OnIAmBored`, pushes `FollowEntityGoal` when too far from protection target
 
-Both goals use `AIComponent.ProtectionTarget` to determine who to follow/defend.
+**FollowEntityGoal**: Unified follow goal used by both bodyguards and pack followers. Takes target entity and follow distance as parameters. Aborts when enemies visible.
+
+The `AIComponent.ProtectionTarget` determines who to follow. `FollowLeaderComponent.FollowDistance` determines how close to stay.
 
 ## Configuration
 
@@ -50,19 +53,13 @@ Both goals use `AIComponent.ProtectionTarget` to determine who to follow/defend.
 ```yaml
 name: allied_warrior
 faction: Friendly
-goals:
-  - DefendTarget
-  - FollowTarget
-  - Idle
 visionRange: 10
 hasMovement: true
 hasAI: true
+ai:
+  - type: FollowLeader
+    followDistance: 3
 ```
-
-### GoalFactory Registry
-
-- "DefendTarget" → DefendTargetGoal
-- "FollowTarget" → FollowTargetGoal
 
 ## Creating Friendly Creatures
 

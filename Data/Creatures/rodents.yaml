@@ -12,6 +12,8 @@ entries:
     agility: 1
     endurance: -2
     health: 4
+    ai:
+      - type: Wandering
     attacks:
       - name: bite
         type: Melee

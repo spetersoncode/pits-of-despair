@@ -31,15 +31,27 @@ public class GoalStack
 
     /// <summary>
     /// Removes all goals where IsFinished() returns true.
+    /// Also removes child goals whose OriginalIntent was removed (cascade removal).
     /// Called at the start of each turn.
     /// </summary>
     public void RemoveFinished(AIContext context)
     {
-        // Rebuild stack without finished goals
+        // Track which goals are being removed so we can cascade to children
+        var removedGoals = new HashSet<Goal>();
+
+        // Rebuild stack without finished goals (iterate bottom to top)
         var remaining = new Stack<Goal>();
         foreach (var goal in _stack.Reverse())
         {
-            if (!goal.IsFinished(context))
+            // Remove if: goal is finished OR its parent (OriginalIntent) was removed
+            bool parentRemoved = goal.OriginalIntent != null && removedGoals.Contains(goal.OriginalIntent);
+            bool isFinished = goal.IsFinished(context);
+
+            if (isFinished || parentRemoved)
+            {
+                removedGoals.Add(goal);
+            }
+            else
             {
                 remaining.Push(goal);
             }

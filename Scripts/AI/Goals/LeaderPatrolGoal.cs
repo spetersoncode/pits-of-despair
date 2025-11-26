@@ -16,6 +16,11 @@ public class LeaderPatrolGoal : Goal
 
     public override bool IsFinished(AIContext context)
     {
+        // Abort if we see enemies - combat takes priority
+        var enemies = context.GetVisibleEnemies();
+        if (enemies.Count > 0)
+            return true;
+
         _leaderComp ??= context.Entity.GetNodeOrNull<PackLeaderComponent>("PackLeaderComponent");
 
         if (_leaderComp == null || !GodotObject.IsInstanceValid(_leaderComp))

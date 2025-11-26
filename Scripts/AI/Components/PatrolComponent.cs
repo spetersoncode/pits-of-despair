@@ -116,9 +116,9 @@ public partial class PatrolComponent : Node, IAIEventHandler
 
         // Check if we're a follower
         var followerComp = context.Entity.GetNodeOrNull<PackFollowerComponent>("PackFollowerComponent");
-        if (followerComp != null)
+        if (followerComp != null && followerComp.HasValidLeader)
         {
-            return new FollowPackLeaderGoal();
+            return new FollowEntityGoal(followerComp.Leader, followerComp.FollowDistance);
         }
 
         // No pack role assigned - fall back to free roam

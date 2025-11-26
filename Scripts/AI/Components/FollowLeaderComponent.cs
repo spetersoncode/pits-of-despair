@@ -6,14 +6,14 @@ using PitsOfDespair.Helpers;
 namespace PitsOfDespair.AI.Components;
 
 /// <summary>
-/// Makes creature follow their protection target (leader) when bored.
-/// Responds to OnIAmBored to push FollowTargetGoal with configurable distance.
-/// Used by pack followers to stay near their leader.
+/// Makes creature follow their protection target when bored.
+/// Responds to OnIAmBored to push FollowEntityGoal with configurable distance.
+/// Used by friendly creatures (bodyguards) to stay near their VIP.
 /// </summary>
 public partial class FollowLeaderComponent : Node, IAIEventHandler
 {
     /// <summary>
-    /// Desired distance to maintain from the leader.
+    /// Desired distance to maintain from the protection target.
     /// Will move closer if further than this distance.
     /// </summary>
     [Export] public int FollowDistance { get; set; } = 3;
@@ -40,11 +40,8 @@ public partial class FollowLeaderComponent : Node, IAIEventHandler
         if (distance <= FollowDistance)
             return;
 
-        // Update AIComponent's follow distance to match our setting
-        args.Context.AIComponent.FollowDistance = FollowDistance;
-
-        // Push follow goal to move toward leader
-        var followGoal = new FollowTargetGoal();
+        // Push follow goal to move toward protection target
+        var followGoal = new FollowEntityGoal(target, FollowDistance);
         args.Context.AIComponent.GoalStack.Push(followGoal);
         args.Handled = true;
     }

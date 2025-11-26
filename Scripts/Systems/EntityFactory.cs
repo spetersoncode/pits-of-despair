@@ -412,7 +412,19 @@ public partial class EntityFactory : Node
 			{
 				try
 				{
-					var value = Convert.ChangeType(kvp.Value, property.PropertyType);
+					object value;
+					var propertyType = property.PropertyType;
+
+					// Handle enum types specially (Convert.ChangeType doesn't work for enums)
+					if (propertyType.IsEnum)
+					{
+						value = Enum.Parse(propertyType, kvp.Value.ToString(), ignoreCase: true);
+					}
+					else
+					{
+						value = Convert.ChangeType(kvp.Value, propertyType);
+					}
+
 					property.SetValue(component, value);
 				}
 				catch (Exception ex)
