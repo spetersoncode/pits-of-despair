@@ -546,7 +546,6 @@ public partial class EntityFactory : Node
 			Glyph = !string.IsNullOrEmpty(data.Glyph) ? data.Glyph : "?",
 			GlyphColor = ResolveColor(data.Color),
 			IsWalkable = data.IsWalkable,
-			Faction = Faction.Neutral,
 			DecorationId = decorationId,
 			Name = data.Name
 		};

@@ -14,7 +14,7 @@ The faction system determines allegiance and combat targeting between entities. 
 
 ### Faction Property
 
-`BaseEntity.Faction` property stores the entity's allegiance. Defaults to `Hostile`. Player is always `Friendly`.
+`BaseEntity.Faction` property stores the entity's allegiance. Defaults to `Neutral` for non-combatants (items, decorations, features). Creatures get their faction from YAML data (defaulting to `Hostile`). Player is always `Player` faction.
 
 ### Faction Extension Methods
 

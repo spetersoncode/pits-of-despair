@@ -123,9 +123,9 @@ public partial class BaseEntity : Node2D
     /// <summary>
     /// Faction allegiance of this entity.
     /// Determines combat targeting and AI behavior.
-    /// Player is always Friendly faction.
+    /// Defaults to Neutral for non-combatants. Creatures get faction from YAML data.
     /// </summary>
-    public Faction Faction { get; set; } = Faction.Hostile;
+    public Faction Faction { get; set; } = Faction.Neutral;
 
     /// <summary>
     /// The creature data file ID used to create this entity (e.g., "cat", "goblin").
