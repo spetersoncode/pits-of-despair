@@ -50,6 +50,11 @@ public partial class InputHandler : Node
     private CursorTargetingSystem _cursorSystem;
     private AutoExploreSystem _autoExploreSystem;
     private AutoRestSystem _autoRestSystem;
+    private AutoStairsSystem _autoStairsSystem;
+
+    // Double-press detection for auto-stairs
+    private double _lastDescendTime = 0;
+    private const double DoublePressWindow = 0.4; // 400ms window for double-press
 
     // Input processors
     private readonly KeybindingService _keybindingService = KeybindingService.Instance;
@@ -130,6 +135,11 @@ public partial class InputHandler : Node
         _autoRestSystem = autoRestSystem;
     }
 
+    public void SetAutoStairsSystem(AutoStairsSystem autoStairsSystem)
+    {
+        _autoStairsSystem = autoStairsSystem;
+    }
+
     public override void _ExitTree()
     {
         if (_player != null)
@@ -181,6 +191,14 @@ public partial class InputHandler : Node
 
             // Any other key cancels auto-rest
             _autoRestSystem.OnAnyKeyPressed();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // If auto-stairs is active, any keypress cancels it
+        if (_autoStairsSystem != null && _autoStairsSystem.IsActive)
+        {
+            _autoStairsSystem.OnAnyKeyPressed();
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -334,6 +352,26 @@ public partial class InputHandler : Node
                 _autoRestSystem.Start();
                 GetViewport().SetInputAsHandled();
                 return true;
+            }
+
+            // Double-press > to auto-path to stairs
+            if (action == InputAction.Descend && _autoStairsSystem != null)
+            {
+                double currentTime = Time.GetTicksMsec() / 1000.0;
+
+                if ((currentTime - _lastDescendTime) < DoublePressWindow)
+                {
+                    // Double-press detected - start auto-stairs
+                    _autoExploreSystem?.Stop();
+                    _autoRestSystem?.Stop();
+                    _autoStairsSystem.Start();
+                    _lastDescendTime = 0; // Reset to prevent triple-press
+                    GetViewport().SetInputAsHandled();
+                    return true;
+                }
+
+                // First press - record time and let normal descend proceed
+                _lastDescendTime = currentTime;
             }
         }
 

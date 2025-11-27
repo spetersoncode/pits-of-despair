@@ -60,6 +60,7 @@ public partial class GameLevel : Node
     private NearbyEntitiesTracker _nearbyEntitiesTracker;
     private AutoExploreSystem _autoExploreSystem;
     private AutoRestSystem _autoRestSystem;
+    private AutoStairsSystem _autoStairsSystem;
     private MessageSystem _messageSystem;
     private TileHazardManager _tileHazardManager;
     private TimeSystem _timeSystem;
@@ -120,6 +121,9 @@ public partial class GameLevel : Node
 
         _autoRestSystem = new AutoRestSystem { Name = "AutoRestSystem" };
         AddChild(_autoRestSystem);
+
+        _autoStairsSystem = new AutoStairsSystem { Name = "AutoStairsSystem" };
+        AddChild(_autoStairsSystem);
 
         _messageSystem = new MessageSystem { Name = "MessageSystem" };
         AddChild(_messageSystem);
@@ -236,6 +240,10 @@ public partial class GameLevel : Node
         // Initialize auto-rest system
         _autoRestSystem.Initialize(_player, _entityManager, _visionSystem, _turnManager, actionContext);
         _inputHandler.SetAutoRestSystem(_autoRestSystem);
+
+        // Initialize auto-stairs system
+        _autoStairsSystem.Initialize(_player, _mapSystem, _entityManager, _visionSystem, _turnManager, actionContext);
+        _inputHandler.SetAutoStairsSystem(_autoStairsSystem);
 
         _inputHandler.Connect(InputHandler.SignalName.InventoryToggleRequested, Callable.From(_gameHUD.ToggleInventory));
         _inputHandler.Connect(InputHandler.SignalName.ActivateItemRequested, Callable.From(_gameHUD.ShowActivateMenu));
