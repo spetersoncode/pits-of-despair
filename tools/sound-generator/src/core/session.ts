@@ -5,17 +5,20 @@
 import { readFile, writeFile, mkdir, readdir, rm } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { nanoid } from 'nanoid';
+import { customAlphabet } from 'nanoid';
 import type { Session, SessionMetadata, SoundCategory, JsfxrParams, JsfxrPreset } from '../data/types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const nanoid = customAlphabet(alphabet, 8);
 const WORKING_DIR = join(__dirname, '..', '..', 'working');
 
 /**
  * Generate a unique session ID.
  */
 export function generateSessionId(): string {
-  return nanoid(8);
+  return nanoid();
 }
 
 /**
