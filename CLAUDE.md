@@ -133,6 +133,19 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) specificatio
 7. Refactor for quality and maintainability
 8. Document complex logic (follow `Docs/documentation.md` guidelines)
 
+### Refactoring & Legacy Code
+**No backwards compatibility concerns.** When refactoring, do not preserve deprecated APIs, maintain legacy patterns, or add compatibility shims. Remove obsolete code entirely to keep the codebase clean.
+
+**Branching strategy:**
+- **Simple refactors**: Work directly in `main`, rip out obsolete code immediately
+- **Complex features**: Commit current work first, create a feature branch, then refactor freely
+
+**Guidelines:**
+- Delete unused code completely—no `// deprecated` comments or disabled code blocks
+- Remove old implementations when replacing with new ones
+- Do not maintain multiple code paths for "gradual migration"
+- Update all call sites when changing APIs rather than preserving old signatures
+
 ### Communication
 - Ask clarifying questions when requirements are ambiguous
 - Explain architectural decisions and trade-offs
