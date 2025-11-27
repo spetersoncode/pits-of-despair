@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using PitsOfDespair.Generation.Config;
+using PitsOfDespair.Generation.Passes.Config;
 
 namespace PitsOfDespair.Generation.Pipeline;
 

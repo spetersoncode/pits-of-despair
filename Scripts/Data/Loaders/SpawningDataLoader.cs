@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using PitsOfDespair.Data.Loaders.Core;
-using PitsOfDespair.Systems.Spawning.Data;
+using PitsOfDespair.Generation.Spawning.Data;
 
 namespace PitsOfDespair.Data.Loaders;
 

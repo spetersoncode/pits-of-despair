@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using PitsOfDespair.Systems.Spawning.Data;
+using PitsOfDespair.Generation.Spawning.Data;
 
 namespace PitsOfDespair.Generation.Config;
 
@@ -80,17 +80,6 @@ public class FloorConfig
     /// Maximum item value for this floor. If null, defaults to MaxThreat.
     /// </summary>
     public int? MaxItemValue { get; set; } = null;
-
-    /// <summary>
-    /// Base gold amount per pile before floor scaling.
-    /// </summary>
-    public int BaseGoldPerPile { get; set; } = 5;
-
-    /// <summary>
-    /// Additional gold per pile per floor depth.
-    /// Default: 1.0 means +1 gold per pile per floor.
-    /// </summary>
-    public float GoldFloorScale { get; set; } = 1.0f;
 
     /// <summary>
     /// Chance (0.0-1.0) to spawn an out-of-depth creature.

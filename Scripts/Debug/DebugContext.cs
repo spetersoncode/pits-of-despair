@@ -1,7 +1,7 @@
 using PitsOfDespair.Actions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Systems;
-using PitsOfDespair.Systems.Spawning;
+using PitsOfDespair.Generation.Spawning;
 
 namespace PitsOfDespair.Debug;
 

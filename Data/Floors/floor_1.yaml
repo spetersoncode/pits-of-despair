@@ -8,10 +8,6 @@ pipeline: bsp_standard
 minThreat: 1
 maxThreat: 2
 
-# Gold scaling
-baseGoldPerPile: 8
-goldFloorScale: 1.0
-
 # No out-of-depth on first floor
 creatureOutOfDepthChance: 0.0
 outOfDepthFloors: 2

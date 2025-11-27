@@ -34,7 +34,7 @@ The spawning system populates dungeon floors through a region-based, encounter-d
 
 **Phase 8 - Place Items**: Scatter items across floor based on itemDensity (% of walkable tiles). Item values filtered by Floor's min/max item value.
 
-**Phase 9 - Place Gold**: Distribute gold piles based on goldDensity (% of walkable tiles). Pile amounts scale with floor depth.
+**Phase 9 - Place Gold**: Distribute 7-12 gold piles with amounts calculated from floor depth using exponential formula (1.2x growth per floor).
 
 **Phase 10 - Place Stairs**: Position level exit (or throne on final floor) in region farthest from entrance.
 
@@ -44,7 +44,7 @@ The spawning system populates dungeon floors through a region-based, encounter-d
 
 **Item Density**: Pipeline configs specify `itemDensity` as percentage of walkable tiles (e.g., 0.006 = 0.6%). System calculates target count from total walkable tiles and distributes items across floor.
 
-**Gold Density**: Similarly, `goldDensity` determines gold pile count. Pile amounts use Floor config's `baseGoldPerPile` scaled by `goldFloorScale` per depth.
+**Gold Formula**: Gold is calculated automatically from floor depth using `GoldFormula`. Total budget = 50 × 1.2^(depth-1). Spawns 7-12 piles with ~25% size variance. No configuration needed.
 
 **Encounter Chance**: Each region has `encounterChance` probability of receiving an encounter. `maxEncounterRatio` caps total encounters as fraction of regions. `minEncounterSpacing` prevents clustering.
 
@@ -158,10 +158,9 @@ Floor configs define difficulty/content settings in `Data/Floors/*.yaml`:
 2. Reference `pipeline` to use (or list with weights for random selection)
 3. Set `minThreat`/`maxThreat` for creature filtering
 4. Specify `themeWeights` for faction distribution
-5. Configure gold scaling (`baseGoldPerPile`, `goldFloorScale`)
-6. Set out-of-depth settings (`creatureOutOfDepthChance`, `outOfDepthFloors`)
-7. Add `uniqueCreatures` for guaranteed boss spawns
-8. Design considerations: How difficult should this depth feel? What factions dominate? What's the risk/reward balance?
+5. Set out-of-depth settings (`creatureOutOfDepthChance`, `outOfDepthFloors`)
+6. Add `uniqueCreatures` for guaranteed boss spawns
+7. Design considerations: How difficult should this depth feel? What factions dominate? What's the risk/reward balance?
 
 ---
 

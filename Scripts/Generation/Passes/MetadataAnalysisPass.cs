@@ -1,7 +1,7 @@
 using System;
 using Godot;
 using PitsOfDespair.Generation.Analyzers;
-using PitsOfDespair.Generation.Config;
+using PitsOfDespair.Generation.Passes.Config;
 using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Generation.Pipeline;
 

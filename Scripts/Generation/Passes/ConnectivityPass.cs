@@ -1,5 +1,5 @@
 using Godot;
-using PitsOfDespair.Generation.Config;
+using PitsOfDespair.Generation.Passes.Config;
 using PitsOfDespair.Generation.Pipeline;
 using PitsOfDespair.Generation.Validators;
 

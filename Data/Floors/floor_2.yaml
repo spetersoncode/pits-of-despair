@@ -8,10 +8,6 @@ pipeline: bsp_drunkard
 minThreat: 2
 maxThreat: 3
 
-# Gold scaling
-baseGoldPerPile: 8
-goldFloorScale: 1.0
-
 # Small chance for out-of-depth
 creatureOutOfDepthChance: 0.05
 outOfDepthFloors: 2

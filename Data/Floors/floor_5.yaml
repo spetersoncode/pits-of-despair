@@ -14,10 +14,6 @@ pipelines:
 minThreat: 1
 maxThreat: 5
 
-# Gold scaling
-baseGoldPerPile: 12
-goldFloorScale: 1.3
-
 # Higher out-of-depth chance
 creatureOutOfDepthChance: 0.12
 outOfDepthFloors: 2

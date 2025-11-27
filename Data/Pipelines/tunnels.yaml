@@ -49,7 +49,6 @@ metadata:
 # Layout-dependent spawn settings
 spawnSettings:
   itemDensity: 0.005
-  goldDensity: 0.012
   encounterChance: 0.65
   maxEncounterRatio: 0.55
   minEncounterSpacing: 8

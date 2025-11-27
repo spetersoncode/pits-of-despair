@@ -8,7 +8,7 @@ using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Audio;
 using PitsOfDespair.Systems.Input;
-using PitsOfDespair.Systems.Spawning;
+using PitsOfDespair.Generation.Spawning;
 using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.UI;
 using System.Collections.Generic;

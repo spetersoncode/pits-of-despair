@@ -8,10 +8,6 @@ pipeline: hybrid
 minThreat: 3
 maxThreat: 10
 
-# Gold scaling
-baseGoldPerPile: 20
-goldFloorScale: 2.0
-
 # High out-of-depth chance
 creatureOutOfDepthChance: 0.20
 outOfDepthFloors: 3

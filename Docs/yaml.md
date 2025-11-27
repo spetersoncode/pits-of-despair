@@ -69,7 +69,6 @@ Pipeline configs in `Data/Pipelines/*.yaml` define generation passes and layout-
 
 **Spawn Settings** (layout-dependent):
 - `itemDensity`: Items as % of walkable tiles (e.g., 0.006)
-- `goldDensity`: Gold piles as % of walkable tiles
 - `encounterChance`: Probability per region (0.0-1.0)
 - `maxEncounterRatio`: Max encounters as fraction of regions
 - `minEncounterSpacing`: Minimum tiles between encounter centers
@@ -83,7 +82,7 @@ Floor configs in `Data/Floors/*.yaml` define difficulty/content for specific flo
 
 **Required**: name, floor, pipeline
 
-**Optional**: minThreat/maxThreat (creature filtering), themeWeights (faction distribution), baseGoldPerPile, goldFloorScale, creatureOutOfDepthChance, outOfDepthFloors, uniqueCreatures, creatureSelection (scoring parameters)
+**Optional**: minThreat/maxThreat (creature filtering), themeWeights (faction distribution), creatureOutOfDepthChance, outOfDepthFloors, uniqueCreatures, creatureSelection (scoring parameters)
 
 **Pipeline Selection**: Single pipeline ID or weighted list for random selection:
 ```yaml

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using PitsOfDespair.Systems.Spawning.Data;
+using PitsOfDespair.Generation.Passes.Config;
+using PitsOfDespair.Generation.Spawning.Data;
 
 namespace PitsOfDespair.Generation.Config;
 
@@ -30,12 +31,6 @@ public class PipelineSpawnSettings
     /// Default: 0.03 (3% of tiles get items)
     /// </summary>
     public float ItemDensity { get; set; } = 0.03f;
-
-    /// <summary>
-    /// Target gold pile density as percentage of walkable tiles (0.0-1.0).
-    /// Default: 0.04 (4% of tiles get gold piles)
-    /// </summary>
-    public float GoldDensity { get; set; } = 0.04f;
 
     /// <summary>
     /// Chance (0.0-1.0) for each region to receive an encounter.

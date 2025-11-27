@@ -8,10 +8,6 @@ pipeline: caves
 minThreat: 2
 maxThreat: 6
 
-# Gold scaling
-baseGoldPerPile: 12
-goldFloorScale: 1.4
-
 # Higher out-of-depth chance
 creatureOutOfDepthChance: 0.15
 outOfDepthFloors: 2

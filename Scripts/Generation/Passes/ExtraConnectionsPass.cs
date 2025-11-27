@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.Core;
-using PitsOfDespair.Generation.Config;
+using PitsOfDespair.Generation.Passes.Config;
 using PitsOfDespair.Generation.Pipeline;
 
 namespace PitsOfDespair.Generation.Passes;
