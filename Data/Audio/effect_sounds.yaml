@@ -1,0 +1,9 @@
+# Effect Sound Registry
+# Maps effect type IDs to sound file paths
+# Paths are relative to Resources/Audio/SoundEffects/
+
+effects:
+  fireball: Magic/fireball.wav
+  lightning_bolt: Magic/lightning_bolt.wav
+  cone_of_cold: Magic/cone_of_cold.wav
+  chain_lightning: Magic/lightning_bolt.wav

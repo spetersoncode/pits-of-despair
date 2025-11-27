@@ -6,6 +6,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Audio;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Spawning;
 using PitsOfDespair.Systems.VisualEffects;
@@ -62,6 +63,8 @@ public partial class GameLevel : Node
     private MessageSystem _messageSystem;
     private TileHazardManager _tileHazardManager;
     private TimeSystem _timeSystem;
+    private AudioManager _audioManager;
+    private SystemAudioHandler _systemAudioHandler;
 
     public override void _Ready()
     {
@@ -126,6 +129,12 @@ public partial class GameLevel : Node
 
         _timeSystem = new TimeSystem { Name = "TimeSystem" };
         AddChild(_timeSystem);
+
+        _audioManager = new AudioManager { Name = "AudioManager" };
+        AddChild(_audioManager);
+
+        _systemAudioHandler = new SystemAudioHandler { Name = "SystemAudioHandler" };
+        AddChild(_systemAudioHandler);
 
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
@@ -280,6 +289,7 @@ public partial class GameLevel : Node
 
         // Initialize new systems for decoupling
         _levelUpSystem.Initialize(_player);
+        _systemAudioHandler.Initialize(_levelUpSystem);
         _actionHandler.Initialize(_player, actionContext);
         _playerStatsViewModel.Initialize(_player, _goldManager, FloorDepth);
         _equipmentViewModel.Initialize(_player);

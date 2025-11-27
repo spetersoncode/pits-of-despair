@@ -1,12 +1,6 @@
-using System.Collections.Generic;
-using System.Text;
-using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
-using PitsOfDespair.Entities;
-using PitsOfDespair.Helpers;
-using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Effects;
 
@@ -90,61 +84,5 @@ public class FireballEffect : Effect
         );
         result.DamageDealt = actualDamage;
         return result;
-    }
-
-    /// <summary>
-    /// Applies the fireball effect to all entities within the area.
-    /// This is the primary method for AOE application.
-    /// </summary>
-    /// <param name="caster">The entity casting the fireball.</param>
-    /// <param name="centerPosition">The center of the explosion.</param>
-    /// <param name="context">The action context.</param>
-    /// <returns>Combined result of all damage applications.</returns>
-    public List<EffectResult> ApplyToArea(BaseEntity caster, GridPosition centerPosition, ActionContext context)
-    {
-        var results = new List<EffectResult>();
-        var affectedEntities = GetEntitiesInArea(centerPosition, context);
-
-        foreach (var entity in affectedEntities)
-        {
-            var effectContext = EffectContext.ForItem(entity, caster, context);
-            var result = Apply(effectContext);
-            results.Add(result);
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Gets all entities within the fireball's area of effect.
-    /// Uses Euclidean distance for circular blast radius.
-    /// </summary>
-    private List<BaseEntity> GetEntitiesInArea(GridPosition center, ActionContext context)
-    {
-        var entities = new List<BaseEntity>();
-
-        for (int dx = -Radius; dx <= Radius; dx++)
-        {
-            for (int dy = -Radius; dy <= Radius; dy++)
-            {
-                var checkPos = new GridPosition(center.X + dx, center.Y + dy);
-
-                // Use Euclidean distance for circular area
-                if (!DistanceHelper.IsInEuclideanRange(center, checkPos, Radius))
-                    continue;
-
-                var entity = context.EntityManager.GetEntityAtPosition(checkPos);
-                if (entity != null && !entities.Contains(entity))
-                {
-                    // Only affect entities with health
-                    if (entity.GetNodeOrNull<HealthComponent>("HealthComponent") != null)
-                    {
-                        entities.Add(entity);
-                    }
-                }
-            }
-        }
-
-        return entities;
     }
 }

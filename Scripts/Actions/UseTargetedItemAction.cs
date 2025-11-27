@@ -1,10 +1,12 @@
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.Targeting;
+using System.Collections.Generic;
 using System.Text;
 
 namespace PitsOfDespair.Actions;
@@ -111,41 +113,85 @@ public class UseTargetedItemAction : Action
 			return ActionResult.CreateFailure($"{itemName} has no effects.");
 		}
 
-		// Determine targeting type
-		var targetingType = itemTemplate.Targeting?.Type?.ToLower() ?? "";
+		// Get targeting definition
+		var definition = TargetingDefinition.FromItem(itemTemplate);
+		var targetingType = definition.Type;
 
-		var messages = new StringBuilder();
-		bool anyEffectSucceeded = false;
-
-		if (targetingType == "line")
+		// For creature targeting, require entity at target position
+		if (targetingType == TargetingType.Creature)
 		{
-			// Line-targeted item (tunneling, lightning bolt, etc.)
-			anyEffectSucceeded = ApplyLineEffects(actor, effects, context, messages);
-		}
-		else if (targetingType == "area")
-		{
-			// AOE item: apply effects to all entities in the area
-			anyEffectSucceeded = ApplyAreaEffects(actor, effects, context, messages);
-		}
-		else if (targetingType == "cone")
-		{
-			// Cone-targeted item (cone of cold, fire breath, etc.)
-			anyEffectSucceeded = ApplyConeEffects(actor, effects, context, messages);
-		}
-		else if (targetingType == "tile")
-		{
-			// Tile-targeted item (poison cloud, etc.) - doesn't require entity
-			anyEffectSucceeded = ApplyTileEffects(actor, effects, context, messages);
-		}
-		else
-		{
-			// Single-target item: require entity at target position
 			var targetEntity = context.EntityManager.GetEntityAtPosition(_targetPosition);
 			if (targetEntity == null)
 			{
 				return ActionResult.CreateFailure("No target at that location.");
 			}
-			anyEffectSucceeded = ApplySingleTargetEffects(actor, targetEntity, effects, context, messages);
+		}
+
+		// Check for fireball projectile (special case: deferred application)
+		if (targetingType == TargetingType.Area && HasFireballEffect(effects) && context.VisualEffectSystem != null)
+		{
+			return ExecuteFireballProjectile(actor, effects, definition, context, inventory, itemTemplate, itemName);
+		}
+
+		// Check for tunneling effect (special case: terrain modification)
+		if (targetingType == TargetingType.Line && HasTunnelingEffect(effects))
+		{
+			return ExecuteTunnelingEffect(actor, effects, definition, context, inventory, itemTemplate, itemName);
+		}
+
+		// Standard flow: get targets, spawn visual, apply effects
+		var messages = new StringBuilder();
+		bool anyEffectSucceeded = false;
+
+		// Get affected targets using targeting handler
+		var handler = TargetingHandler.CreateForDefinition(definition);
+		var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
+
+		// Spawn visual based on targeting type
+		SpawnTargetingVisual(actor, _targetPosition, definition, context);
+
+		// Apply all effects to targets
+		foreach (var effect in effects)
+		{
+			// For tile effects (hazards), we need to pass position differently
+			if (effect is CreateHazardEffect hazardEffect)
+			{
+				hazardEffect.TargetPosition = _targetPosition;
+				hazardEffect.Radius = definition.Radius > 0 ? definition.Radius : hazardEffect.Radius;
+				var effectContext = EffectContext.ForItem(actor, actor, context);
+				var effectResult = hazardEffect.Apply(effectContext);
+				if (effectResult.Success)
+				{
+					anyEffectSucceeded = true;
+				}
+				if (!string.IsNullOrEmpty(effectResult.Message))
+				{
+					messages.AppendLine(effectResult.Message);
+				}
+				continue;
+			}
+
+			// Standard effect application via ApplyToTargets
+			var effectResults = effect.ApplyToTargets(actor, targets, context);
+
+			foreach (var effectResult in effectResults)
+			{
+				if (effectResult.Success)
+				{
+					anyEffectSucceeded = true;
+				}
+				if (!string.IsNullOrEmpty(effectResult.Message))
+				{
+					messages.AppendLine(effectResult.Message);
+				}
+			}
+
+			// Add miss message for positional targeting with no hits
+			if (effectResults.Count == 0 && IsPositionalTargeting(targetingType))
+			{
+				messages.AppendLine("The effect affects nothing.");
+				anyEffectSucceeded = true;
+			}
 		}
 
 		// If no effects succeeded, don't consume the item
@@ -154,29 +200,8 @@ public class UseTargetedItemAction : Action
 			return ActionResult.CreateFailure(messages.ToString().TrimEnd());
 		}
 
-		// Handle consumption based on item type
-		if (itemTemplate.GetIsConsumable())
-		{
-			inventory.RemoveItem(_itemKey, 1);
-		}
-		else if (itemTemplate.GetMaxCharges() > 0)
-		{
-			slot.Item.UseCharge();
-
-			// Check if charged item is depleted
-			if (slot.Item.CurrentCharges <= 0)
-			{
-				// Wands crumble when depleted, staves remain (they recharge)
-				bool isStaff = itemTemplate.Type?.ToLower() == "staff";
-				if (!isStaff)
-				{
-					// Wand crumbles to dust
-					messages.AppendLine("The wand crumbles to dust.");
-					inventory.RemoveItem(_itemKey, 1);
-				}
-				// Staves just become temporarily unusable until recharged
-			}
-		}
+		// Handle consumption
+		HandleItemConsumption(inventory, slot, itemTemplate, messages);
 
 		string resultMessage = messages.ToString().TrimEnd();
 
@@ -190,358 +215,214 @@ public class UseTargetedItemAction : Action
 	}
 
 	/// <summary>
-	/// Applies effects to a single target entity.
+	/// Spawns visual effects based on targeting type.
 	/// </summary>
-	private bool ApplySingleTargetEffects(BaseEntity actor, BaseEntity target, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	private void SpawnTargetingVisual(BaseEntity actor, GridPosition targetPosition, TargetingDefinition definition, ActionContext context)
 	{
-		bool anySucceeded = false;
-		var effectContext = EffectContext.ForItem(target, actor, context);
+		if (context.VisualEffectSystem == null)
+			return;
 
-		foreach (var effect in effects)
+		int range = definition.Range > 0 ? definition.Range : 8;
+		int radius = definition.Radius > 0 ? definition.Radius : 2;
+
+		switch (definition.Type)
 		{
-			var effectResult = effect.Apply(effectContext);
-			if (effectResult.Success)
-			{
-				anySucceeded = true;
-			}
+			case TargetingType.Line:
+				var linePositions = LineTargetingHandler.GetLinePositions(
+					actor.GridPosition,
+					targetPosition,
+					range,
+					context.MapSystem,
+					stopAtWalls: true
+				);
+				var endPos = linePositions.Count > 0 ? linePositions[^1] : targetPosition;
+				context.VisualEffectSystem.SpawnLightningBeam(actor.GridPosition, endPos);
+				break;
 
-			if (!string.IsNullOrEmpty(effectResult.Message))
-			{
-				messages.AppendLine(effectResult.Message);
-			}
+			case TargetingType.Cone:
+				context.VisualEffectSystem.SpawnConeOfCold(actor.GridPosition, targetPosition, range, radius);
+				break;
+
+			case TargetingType.Area:
+				context.VisualEffectSystem.SpawnExplosion(targetPosition, radius, Palette.Fire);
+				break;
 		}
-
-		return anySucceeded;
 	}
 
 	/// <summary>
-	/// Applies effects along a line from caster to target position.
-	/// Handles tunneling and other line-based effects with beam visual.
+	/// Handles fireball projectile with deferred damage application.
 	/// </summary>
-	private bool ApplyLineEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	private ActionResult ExecuteFireballProjectile(
+		BaseEntity actor,
+		List<Effect> effects,
+		TargetingDefinition definition,
+		ActionContext context,
+		InventoryComponent inventory,
+		ItemData itemTemplate,
+		string itemName)
 	{
-		// Get targeting definition for range
-		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-		var slot = inventory?.GetSlot(_itemKey);
-		if (slot == null) return false;
+		var fireballEffect = GetFireballEffect(effects);
+		if (fireballEffect == null)
+			return ActionResult.CreateFailure("No fireball effect found.");
 
-		var definition = TargetingDefinition.FromItem(slot.Item.Template);
-		int range = definition.Range > 0 ? definition.Range : 8;
+		int radius = definition.Radius > 0 ? definition.Radius : fireballEffect.Radius;
 
+		// Get targets at time of casting (for deferred application)
+		var handler = TargetingHandler.CreateForDefinition(definition);
+		var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
+
+		System.Action onImpact = () =>
+		{
+			// Apply effects using ApplyToTargets
+			var results = fireballEffect.ApplyToTargets(actor, targets, context);
+
+			// Log messages via combat system
+			foreach (var result in results)
+			{
+				if (!string.IsNullOrEmpty(result.Message))
+				{
+					context.CombatSystem?.EmitActionMessage(actor, result.Message, Palette.ToHex(Palette.Fire));
+				}
+			}
+			if (results.Count == 0)
+			{
+				context.CombatSystem?.EmitActionMessage(actor, "The flames dissipate harmlessly.", Palette.ToHex(Palette.Fire));
+			}
+
+			// Spawn explosion visual
+			context.VisualEffectSystem?.SpawnExplosion(_targetPosition, radius, Palette.Fire);
+		};
+
+		// Spawn the fireball projectile
+		context.VisualEffectSystem!.SpawnProjectile(
+			VisualEffectDefinitions.FireballProjectile,
+			actor.GridPosition,
+			_targetPosition,
+			onImpact);
+
+		// Handle consumption
+		var messages = new StringBuilder();
+		HandleItemConsumption(inventory, inventory.GetSlot(_itemKey)!, itemTemplate, messages);
+
+		if (actor is Player player)
+		{
+			player.EmitItemUsed(itemName, true, "");
+		}
+
+		return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
+	}
+
+	/// <summary>
+	/// Handles tunneling effect which modifies terrain.
+	/// </summary>
+	private ActionResult ExecuteTunnelingEffect(
+		BaseEntity actor,
+		List<Effect> effects,
+		TargetingDefinition definition,
+		ActionContext context,
+		InventoryComponent inventory,
+		ItemData itemTemplate,
+		string itemName)
+	{
+		var messages = new StringBuilder();
 		bool anySucceeded = false;
+		int range = definition.Range > 0 ? definition.Range : 8;
 
 		foreach (var effect in effects)
 		{
 			if (effect is TunnelingEffect tunnelingEffect)
 			{
-				// Apply tunneling effect with range from targeting definition
 				var result = tunnelingEffect.ApplyToLine(actor, _targetPosition, range, context);
-
 				if (result.Success)
 				{
 					anySucceeded = true;
 				}
-
 				if (!string.IsNullOrEmpty(result.Message))
 				{
 					messages.AppendLine(result.Message);
 				}
 
-				// Spawn beam visual effect
+				// Spawn beam visual
 				if (context.VisualEffectSystem != null)
 				{
-					// Calculate actual beam end position (may stop at boundary)
 					var endPos = tunnelingEffect.GetBeamEndPosition(actor, _targetPosition, range, context);
 					context.VisualEffectSystem.SpawnBeam(actor.GridPosition, endPos, Palette.Ochre, 0.5f);
 				}
 			}
-			else if (effect is LightningBoltEffect lightningEffect)
-			{
-				// Apply lightning bolt effect with range from targeting definition
-				var results = lightningEffect.ApplyToLine(actor, _targetPosition, range, context);
-
-				foreach (var result in results)
-				{
-					if (result.Success)
-					{
-						anySucceeded = true;
-					}
-
-					if (!string.IsNullOrEmpty(result.Message))
-					{
-						messages.AppendLine(result.Message);
-					}
-				}
-
-				// Visual is spawned by ApplyToLine
-			}
-			else
-			{
-				// Other line effects (future: lightning bolt, etc.)
-				// Apply to all entities along the line using the already-retrieved definition
-				var handler = new LineTargetingHandler();
-				var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
-				foreach (var target in targets)
-				{
-					var effectContext = EffectContext.ForItem(target, actor, context);
-					var effectResult = effect.Apply(effectContext);
-					if (effectResult.Success)
-					{
-						anySucceeded = true;
-					}
-					if (!string.IsNullOrEmpty(effectResult.Message))
-					{
-						messages.AppendLine(effectResult.Message);
-					}
-				}
-
-				// If no targets but effect was valid, still count as success for terrain effects
-				if (targets.Count == 0)
-				{
-					anySucceeded = true;
-				}
-			}
 		}
 
-		return anySucceeded;
+		if (!anySucceeded)
+		{
+			return ActionResult.CreateFailure(messages.ToString().TrimEnd());
+		}
+
+		HandleItemConsumption(inventory, inventory.GetSlot(_itemKey)!, itemTemplate, messages);
+
+		if (actor is Player player)
+		{
+			player.EmitItemUsed(itemName, true, messages.ToString().TrimEnd());
+		}
+
+		return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
 	}
 
 	/// <summary>
-	/// Applies effects to all entities in the target area.
-	/// Uses targeting handler to determine affected entities.
-	/// For fireball effects, spawns a projectile that triggers on impact.
+	/// Handles item consumption and charge depletion.
 	/// </summary>
-	private bool ApplyAreaEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	private void HandleItemConsumption(InventoryComponent inventory, InventorySlot slot, ItemData itemTemplate, StringBuilder messages)
 	{
-		// Get targeting definition and handler for the item
-		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-		var slot = inventory?.GetSlot(_itemKey);
-		if (slot == null) return false;
+		if (itemTemplate.GetIsConsumable())
+		{
+			inventory.RemoveItem(_itemKey, 1);
+		}
+		else if (itemTemplate.GetMaxCharges() > 0)
+		{
+			slot.Item.UseCharge();
 
-		var definition = TargetingDefinition.FromItem(slot.Item.Template);
+			if (slot.Item.CurrentCharges <= 0)
+			{
+				bool isStaff = itemTemplate.Type?.ToLower() == "staff";
+				if (!isStaff)
+				{
+					messages.AppendLine("The wand crumbles to dust.");
+					inventory.RemoveItem(_itemKey, 1);
+				}
+			}
+		}
+	}
 
-		// Check if any effect is a fireball (needs projectile)
-		FireballEffect? fireballEffect = null;
+	private static bool IsPositionalTargeting(TargetingType type)
+	{
+		return type == TargetingType.Line || type == TargetingType.Area || type == TargetingType.Cone || type == TargetingType.Tile;
+	}
+
+	private static bool HasFireballEffect(List<Effect> effects)
+	{
+		foreach (var effect in effects)
+		{
+			if (effect is FireballEffect)
+				return true;
+		}
+		return false;
+	}
+
+	private static FireballEffect? GetFireballEffect(List<Effect> effects)
+	{
 		foreach (var effect in effects)
 		{
 			if (effect is FireballEffect fb)
-			{
-				fireballEffect = fb;
-				break;
-			}
+				return fb;
 		}
-
-		// For fireball, spawn a projectile with callback
-		if (fireballEffect != null && context.VisualEffectSystem != null)
-		{
-			// Use targeting definition's radius, falling back to effect's default
-			int radius = definition.Radius > 0 ? definition.Radius : fireballEffect.Radius;
-
-			// Ensure the effect uses the same radius as targeting
-			fireballEffect.Radius = radius;
-
-			// Create callback that applies damage and spawns explosion visual on impact
-			System.Action onImpact = () =>
-			{
-				// Apply AOE damage
-				var results = fireballEffect.ApplyToArea(actor, _targetPosition, context);
-
-				// Log messages via combat system
-				foreach (var result in results)
-				{
-					if (!string.IsNullOrEmpty(result.Message))
-					{
-						context.CombatSystem?.EmitActionMessage(actor, result.Message, Palette.ToHex(Palette.Fire));
-					}
-				}
-				if (results.Count == 0)
-				{
-					context.CombatSystem?.EmitActionMessage(actor, "The flames dissipate harmlessly.", Palette.ToHex(Palette.Fire));
-				}
-
-				// Spawn explosion visual
-				context.VisualEffectSystem?.SpawnExplosion(_targetPosition, radius, Palette.Fire);
-			};
-
-			// Spawn the fireball projectile via VFX system
-			context.VisualEffectSystem.SpawnProjectile(
-				VisualEffectDefinitions.FireballProjectile,
-				actor.GridPosition,
-				_targetPosition,
-				onImpact);
-
-			// Projectile spawned successfully - damage will be applied on impact
-			return true;
-		}
-
-		// Non-projectile AOE effects (apply immediately)
-		bool anySucceeded = false;
-		var handler = TargetingHandler.CreateForDefinition(definition);
-		var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
-
-		foreach (var effect in effects)
-		{
-			foreach (var target in targets)
-			{
-				var effectContext = EffectContext.ForItem(target, actor, context);
-				var effectResult = effect.Apply(effectContext);
-				if (effectResult.Success)
-				{
-					anySucceeded = true;
-				}
-				if (!string.IsNullOrEmpty(effectResult.Message))
-				{
-					messages.AppendLine(effectResult.Message);
-				}
-			}
-		}
-
-		// If no targets were hit but the effect was valid, still count as success
-		if (targets.Count == 0 && effects.Count > 0)
-		{
-			messages.AppendLine("The effect dissipates harmlessly.");
-			anySucceeded = true;
-		}
-
-		return anySucceeded;
+		return null;
 	}
 
-	/// <summary>
-	/// Applies effects in a cone from caster toward target position.
-	/// Handles cone of cold and other cone-based effects.
-	/// </summary>
-	private bool ApplyConeEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
+	private static bool HasTunnelingEffect(List<Effect> effects)
 	{
-		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-		var slot = inventory?.GetSlot(_itemKey);
-		if (slot == null) return false;
-
-		var definition = TargetingDefinition.FromItem(slot.Item.Template);
-		bool anySucceeded = false;
-
 		foreach (var effect in effects)
 		{
-			if (effect is ConeOfColdEffect coneEffect)
-			{
-				// Use targeting definition values
-				coneEffect.Range = definition.Range > 0 ? definition.Range : coneEffect.Range;
-				coneEffect.Radius = definition.Radius > 0 ? definition.Radius : coneEffect.Radius;
-
-				var results = coneEffect.ApplyToCone(actor, _targetPosition, context);
-				foreach (var result in results)
-				{
-					if (result.Success)
-					{
-						anySucceeded = true;
-					}
-					if (!string.IsNullOrEmpty(result.Message))
-					{
-						messages.AppendLine(result.Message);
-					}
-				}
-
-				if (results.Count == 0)
-				{
-					messages.AppendLine("The freezing blast hits nothing.");
-					anySucceeded = true;
-				}
-
-				// Spawn cone of cold visual effect
-				context.VisualEffectSystem?.SpawnConeOfCold(
-					actor.GridPosition,
-					_targetPosition,
-					coneEffect.Range,
-					coneEffect.Radius);
-			}
-			else
-			{
-				// Generic cone effect - get affected entities via handler
-				var handler = new ConeTargetingHandler();
-				var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
-
-				foreach (var target in targets)
-				{
-					var effectContext = EffectContext.ForItem(target, actor, context);
-					var effectResult = effect.Apply(effectContext);
-					if (effectResult.Success)
-					{
-						anySucceeded = true;
-					}
-					if (!string.IsNullOrEmpty(effectResult.Message))
-					{
-						messages.AppendLine(effectResult.Message);
-					}
-				}
-
-				if (targets.Count == 0)
-				{
-					anySucceeded = true;
-				}
-			}
+			if (effect is TunnelingEffect)
+				return true;
 		}
-
-		return anySucceeded;
-	}
-
-	/// <summary>
-	/// Applies effects to a tile position (doesn't require an entity).
-	/// Used for tile hazards like poison cloud.
-	/// </summary>
-	private bool ApplyTileEffects(BaseEntity actor, System.Collections.Generic.List<Effect> effects, ActionContext context, StringBuilder messages)
-	{
-		var inventory = actor.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-		var slot = inventory?.GetSlot(_itemKey);
-		if (slot == null) return false;
-
-		var definition = TargetingDefinition.FromItem(slot.Item.Template);
-		bool anySucceeded = false;
-
-		foreach (var effect in effects)
-		{
-			if (effect is CreateHazardEffect hazardEffect)
-			{
-				// Set target position and radius from targeting definition
-				hazardEffect.TargetPosition = _targetPosition;
-				hazardEffect.Radius = definition.Radius > 0 ? definition.Radius : hazardEffect.Radius;
-
-				// Create a dummy context with no specific target
-				var effectContext = EffectContext.ForItem(actor, actor, context);
-				var effectResult = hazardEffect.Apply(effectContext);
-
-				if (effectResult.Success)
-				{
-					anySucceeded = true;
-				}
-				if (!string.IsNullOrEmpty(effectResult.Message))
-				{
-					messages.AppendLine(effectResult.Message);
-				}
-			}
-			else
-			{
-				// Other tile effects - apply to any entity at position if present
-				var targetEntity = context.EntityManager.GetEntityAtPosition(_targetPosition);
-				if (targetEntity != null)
-				{
-					var effectContext = EffectContext.ForItem(targetEntity, actor, context);
-					var effectResult = effect.Apply(effectContext);
-					if (effectResult.Success)
-					{
-						anySucceeded = true;
-					}
-					if (!string.IsNullOrEmpty(effectResult.Message))
-					{
-						messages.AppendLine(effectResult.Message);
-					}
-				}
-				else
-				{
-					// No entity at tile - effect still "succeeds" for tile-targeting
-					anySucceeded = true;
-				}
-			}
-		}
-
-		return anySucceeded;
+		return false;
 	}
 }

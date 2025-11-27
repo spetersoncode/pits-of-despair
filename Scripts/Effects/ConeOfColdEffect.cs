@@ -1,11 +1,6 @@
-using System.Collections.Generic;
-using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
-using PitsOfDespair.Entities;
-using PitsOfDespair.Helpers;
-using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Effects;
 
@@ -85,42 +80,5 @@ public class ConeOfColdEffect : Effect
         );
         result.DamageDealt = actualDamage;
         return result;
-    }
-
-    /// <summary>
-    /// Applies the cone of cold effect to all entities within the cone.
-    /// </summary>
-    /// <param name="caster">The entity casting the effect.</param>
-    /// <param name="targetPosition">The target position defining cone direction.</param>
-    /// <param name="context">The action context.</param>
-    /// <returns>Combined result of all damage applications.</returns>
-    public List<EffectResult> ApplyToCone(BaseEntity caster, GridPosition targetPosition, ActionContext context)
-    {
-        var results = new List<EffectResult>();
-        var affectedPositions = ConeTargetingHandler.GetConePositions(
-            caster.GridPosition,
-            targetPosition,
-            Range,
-            Radius,
-            context.MapSystem,
-            stopAtWalls: true
-        );
-
-        foreach (var pos in affectedPositions)
-        {
-            var entity = context.EntityManager.GetEntityAtPosition(pos);
-            if (entity != null)
-            {
-                var healthComponent = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
-                if (healthComponent != null)
-                {
-                    var effectContext = EffectContext.ForItem(entity, caster, context);
-                    var result = Apply(effectContext);
-                    results.Add(result);
-                }
-            }
-        }
-
-        return results;
     }
 }

@@ -8,6 +8,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.VisualEffects;
+using PitsOfDespair.Targeting;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Skills;
@@ -220,6 +221,13 @@ public static class SkillExecutor
         GridPosition? targetPosition = null)
     {
         bool anyEffectSucceeded = false;
+        var targetingType = skillDef.GetTargetingType();
+
+        // Spawn visual effects based on targeting type (before applying effects)
+        if (targetPosition.HasValue)
+        {
+            SpawnTargetingVisual(caster, targetPosition.Value, skillDef, context);
+        }
 
         foreach (var effectDef in skillDef.Effects)
         {
@@ -230,32 +238,6 @@ public static class SkillExecutor
                 continue;
             }
 
-            // Handle line-based effects specially (they manage their own targeting and visuals)
-            if (effect is LightningBoltEffect lightningEffect && targetPosition.HasValue)
-            {
-                int range = skillDef.Range > 0 ? skillDef.Range : 8;
-                var effectResults = lightningEffect.ApplyToLine(caster, targetPosition.Value, range, context);
-
-                foreach (var effectResult in effectResults)
-                {
-                    if (effectResult.Success)
-                    {
-                        anyEffectSucceeded = true;
-                    }
-
-                    if (!string.IsNullOrEmpty(effectResult.Message))
-                    {
-                        result.AddMessage(effectResult.Message);
-                    }
-
-                    if (effectResult.AffectedEntity != null)
-                    {
-                        result.AddAffectedEntity(effectResult.AffectedEntity);
-                    }
-                }
-                continue;
-            }
-
             // Expand targets for multi-target melee effects (e.g., Cleave)
             var effectTargets = targets;
             if (effectDef.Targets > 1 && effectDef.Type == "melee_attack" && targets.Count > 0)
@@ -263,11 +245,11 @@ public static class SkillExecutor
                 effectTargets = ExpandMeleeTargets(caster, targets[0], effectDef.Targets, context);
             }
 
-            foreach (var target in effectTargets)
-            {
-                var effectContext = EffectContext.ForSkill(target, caster, context, skillDef, targetPosition);
-                var effectResult = effect.Apply(effectContext);
+            // Use unified ApplyToTargets for all effects
+            var effectResults = effect.ApplyToTargets(caster, effectTargets, context);
 
+            foreach (var effectResult in effectResults)
+            {
                 if (effectResult.Success)
                 {
                     anyEffectSucceeded = true;
@@ -283,6 +265,13 @@ public static class SkillExecutor
                     result.AddAffectedEntity(effectResult.AffectedEntity);
                 }
             }
+
+            // Add "miss" message for empty results on positional targeting
+            if (effectResults.Count == 0 && (targetingType == TargetingType.Line || targetingType == TargetingType.Area || targetingType == TargetingType.Cone))
+            {
+                result.AddMessage($"The {skillDef.Name} affects nothing.");
+                anyEffectSucceeded = true; // Skill was cast successfully, just no targets
+            }
         }
 
         if (result.Messages.Count == 0)
@@ -292,6 +281,48 @@ public static class SkillExecutor
 
         result.Success = anyEffectSucceeded || skillDef.Effects.Count == 0;
         return result;
+    }
+
+    /// <summary>
+    /// Spawns visual effects based on skill targeting type.
+    /// </summary>
+    private static void SpawnTargetingVisual(
+        BaseEntity caster,
+        GridPosition targetPosition,
+        SkillDefinition skillDef,
+        ActionContext context)
+    {
+        if (context.VisualEffectSystem == null)
+            return;
+
+        var targetingType = skillDef.GetTargetingType();
+        int range = skillDef.Range > 0 ? skillDef.Range : 8;
+
+        switch (targetingType)
+        {
+            case TargetingType.Line:
+                // Calculate line end position for beam visual
+                var linePositions = LineTargetingHandler.GetLinePositions(
+                    caster.GridPosition,
+                    targetPosition,
+                    range,
+                    context.MapSystem,
+                    stopAtWalls: true
+                );
+                var endPos = linePositions.Count > 0 ? linePositions[^1] : targetPosition;
+                context.VisualEffectSystem.SpawnLightningBeam(caster.GridPosition, endPos);
+                break;
+
+            case TargetingType.Cone:
+                int coneRadius = skillDef.Radius > 0 ? skillDef.Radius : 3;
+                context.VisualEffectSystem.SpawnConeOfCold(caster.GridPosition, targetPosition, range, coneRadius);
+                break;
+
+            case TargetingType.Area:
+                int areaRadius = skillDef.Radius > 0 ? skillDef.Radius : 2;
+                context.VisualEffectSystem.SpawnExplosion(targetPosition, areaRadius, Palette.Fire);
+                break;
+        }
     }
 
     /// <summary>

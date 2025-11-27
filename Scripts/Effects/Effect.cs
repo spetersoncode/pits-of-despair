@@ -4,6 +4,8 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Audio;
+using System.Collections.Generic;
 
 namespace PitsOfDespair.Effects;
 
@@ -107,6 +109,35 @@ public abstract class Effect
         }
 
         return amount;
+    }
+
+    /// <summary>
+    /// Plays the sound associated with this effect type (if one is registered).
+    /// </summary>
+    protected void PlayEffectSound()
+    {
+        AudioManager.PlayEffectSound(Type);
+    }
+
+    /// <summary>
+    /// Applies this effect to multiple targets.
+    /// Handles audio playback centrally and iterates through all targets.
+    /// </summary>
+    /// <param name="caster">The entity applying the effect.</param>
+    /// <param name="targets">List of target entities.</param>
+    /// <param name="context">The action context.</param>
+    /// <returns>List of results for each target.</returns>
+    public virtual List<EffectResult> ApplyToTargets(BaseEntity caster, List<BaseEntity> targets, ActionContext context)
+    {
+        PlayEffectSound();
+
+        var results = new List<EffectResult>();
+        foreach (var target in targets)
+        {
+            var effectContext = EffectContext.ForItem(target, caster, context);
+            results.Add(Apply(effectContext));
+        }
+        return results;
     }
 }
 

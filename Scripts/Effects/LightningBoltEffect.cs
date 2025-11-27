@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
-using PitsOfDespair.Entities;
-using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Effects;
 
@@ -90,77 +86,5 @@ public class LightningBoltEffect : Effect
         );
         result.DamageDealt = actualDamage;
         return result;
-    }
-
-    /// <summary>
-    /// Applies lightning bolt to all entities along a line from caster to target direction.
-    /// Also spawns the lightning beam visual effect.
-    /// </summary>
-    /// <param name="caster">The entity casting the effect.</param>
-    /// <param name="targetPosition">The target position defining line direction.</param>
-    /// <param name="range">Maximum range from skill definition.</param>
-    /// <param name="context">The action context.</param>
-    /// <returns>List of effect results for each entity hit.</returns>
-    public List<EffectResult> ApplyToLine(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
-    {
-        var results = new List<EffectResult>();
-
-        // Get all positions along the line (full range, stops at walls)
-        var linePositions = LineTargetingHandler.GetLinePositions(
-            caster.GridPosition,
-            targetPosition,
-            range,
-            context.MapSystem,
-            stopAtWalls: true
-        );
-
-        // Find the end position for the visual
-        GridPosition endPos = linePositions.Count > 0 ? linePositions[^1] : caster.GridPosition;
-
-        // Spawn lightning beam visual
-        context.VisualEffectSystem?.SpawnLightningBeam(caster.GridPosition, endPos);
-
-        // Apply damage to each entity along the line
-        foreach (var pos in linePositions)
-        {
-            var entity = context.EntityManager.GetEntityAtPosition(pos);
-            if (entity != null)
-            {
-                var healthComponent = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
-                if (healthComponent != null)
-                {
-                    var effectContext = EffectContext.ForItem(entity, caster, context);
-                    var result = Apply(effectContext);
-                    results.Add(result);
-                }
-            }
-        }
-
-        // If no targets were hit, add a message
-        if (results.Count == 0)
-        {
-            results.Add(EffectResult.CreateSuccess(
-                "The lightning bolt crackles through the air harmlessly.",
-                Palette.ToHex(Palette.Lightning)
-            ));
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Gets the end position of the lightning bolt line (for visual effect targeting).
-    /// </summary>
-    public GridPosition GetBeamEndPosition(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
-    {
-        var linePositions = LineTargetingHandler.GetLinePositions(
-            caster.GridPosition,
-            targetPosition,
-            range,
-            context.MapSystem,
-            stopAtWalls: true
-        );
-
-        return linePositions.Count > 0 ? linePositions[^1] : caster.GridPosition;
     }
 }
