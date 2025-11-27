@@ -131,7 +131,8 @@ public class TreasurePlacer
 
     /// <summary>
     /// Selects an item within the given value range.
-    /// Uses inverse value weighting (lower value = more common).
+    /// Uses combined weighting: inverse value (lower = more common) + type multiplier.
+    /// Items with Value <= 0 bypass floor filtering and are treated as minValue for weighting.
     /// </summary>
     private (string id, ItemData data) SelectItemByValueRange(int minValue, int maxValue)
     {
@@ -143,11 +144,22 @@ public class TreasurePlacer
             if (itemData.NoAutoSpawn)
                 continue;
 
-            // Check value range
-            if (itemData.Value >= minValue && itemData.Value <= maxValue)
+            // Items with no value (0 or less) bypass floor filtering
+            bool isValueless = itemData.Value <= 0;
+            bool inValueRange = itemData.Value >= minValue && itemData.Value <= maxValue;
+
+            if (isValueless || inValueRange)
             {
-                // Inverse value weighting: lower value = higher weight
-                int weight = Mathf.Max(1, maxValue - itemData.Value + 1);
+                // Valueless items use minValue for weighting
+                int effectiveValue = isValueless ? minValue : itemData.Value;
+
+                // Inverse value weighting: lower value = higher base weight
+                int baseWeight = Mathf.Max(1, maxValue - effectiveValue + 1);
+
+                // Apply type-based spawn weight multiplier
+                float finalWeight = baseWeight * itemData.GetSpawnWeightMultiplier();
+                int weight = Mathf.Max(1, Mathf.RoundToInt(finalWeight));
+
                 candidates.Add((itemData.DataFileId, itemData, weight));
             }
         }

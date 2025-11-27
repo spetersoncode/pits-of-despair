@@ -21,6 +21,12 @@ public class ItemTypeInfo
     public string? EquipSlot { get; set; } = null;
     public bool AutoPickup { get; set; } = false;
     public bool UsesOfPattern { get; set; } = false;
+
+    /// <summary>
+    /// Spawn weight multiplier for this item type.
+    /// Values > 1.0 spawn more frequently, values < 1.0 spawn less frequently.
+    /// </summary>
+    public float SpawnWeightMultiplier { get; set; } = 1.0f;
 }
 
 /// <summary>
@@ -39,43 +45,51 @@ public class ItemData
         ["potion"] = new ItemTypeInfo
         {
             IsConsumable = true,
-            UsesOfPattern = true
+            UsesOfPattern = true,
+            SpawnWeightMultiplier = 1.4f
         },
         ["scroll"] = new ItemTypeInfo
         {
             IsConsumable = true,
-            UsesOfPattern = true
+            UsesOfPattern = true,
+            SpawnWeightMultiplier = 1.4f
         },
         ["weapon"] = new ItemTypeInfo
         {
             IsEquippable = true,
-            EquipSlot = "MeleeWeapon"
+            EquipSlot = "MeleeWeapon",
+            SpawnWeightMultiplier = 0.8f
         },
         ["armor"] = new ItemTypeInfo
         {
             IsEquippable = true,
-            EquipSlot = "Armor"
+            EquipSlot = "Armor",
+            SpawnWeightMultiplier = 0.8f
         },
         ["ammo"] = new ItemTypeInfo
         {
             IsEquippable = true,
             IsConsumable = true,
             EquipSlot = "Ammo",
-            AutoPickup = true
+            AutoPickup = true,
+            SpawnWeightMultiplier = 1.2f
         },
         ["ring"] = new ItemTypeInfo
         {
             IsEquippable = true,
             EquipSlot = "Ring",
-            UsesOfPattern = true
+            UsesOfPattern = true,
+            SpawnWeightMultiplier = 0.4f
         },
         ["wand"] = new ItemTypeInfo
         {
-            UsesOfPattern = true
+            UsesOfPattern = true,
+            SpawnWeightMultiplier = 0.6f
         },
         ["staff"] = new ItemTypeInfo
         {
-            UsesOfPattern = true
+            UsesOfPattern = true,
+            SpawnWeightMultiplier = 0.4f
         }
     };
 
@@ -104,6 +118,12 @@ public class ItemData
     /// Use for quest items, unique rewards, or items that should only appear in specific contexts.
     /// </summary>
     public bool NoAutoSpawn { get; set; } = false;
+
+    /// <summary>
+    /// Optional spawn weight override. If set, overrides the type-based multiplier.
+    /// Values > 1.0 spawn more frequently, values < 1.0 spawn less frequently.
+    /// </summary>
+    public float? SpawnWeight { get; set; } = null;
 
     /// <summary>
     /// Item type for category-based defaults (e.g., "potion", "scroll").
@@ -269,6 +289,21 @@ public class ItemData
     public bool GetIsEquippable()
     {
         return IsEquippable ?? false;
+    }
+
+    /// <summary>
+    /// Gets the spawn weight multiplier for this item.
+    /// Uses per-item override if set, otherwise falls back to type-based multiplier.
+    /// </summary>
+    public float GetSpawnWeightMultiplier()
+    {
+        if (SpawnWeight.HasValue)
+            return SpawnWeight.Value;
+
+        if (!string.IsNullOrEmpty(Type) && TypeInfo.TryGetValue(Type.ToLower(), out var info))
+            return info.SpawnWeightMultiplier;
+
+        return 1.0f;
     }
 
     /// <summary>

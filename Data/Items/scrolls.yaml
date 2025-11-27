@@ -5,7 +5,7 @@ defaults:
 entries:
   blink:
     name: blink
-    value: 2
+    # value omitted = always spawnable on all floors
     color: Palette.ScrollBlink
     description: Ancient words of translocation writhe across yellowed parchment. Reading them tears reality asunder for the briefest moment.
     effects:
@@ -14,7 +14,7 @@ entries:
 
   teleport:
     name: teleport
-    value: 2
+    # value omitted = always spawnable on all floors
     color: Palette.ScrollTeleport
     description: Glowing runes pulse with unstable energy, their power barely contained by arcane bindings. Speaking them unmakes you and remakes you elsewhere.
     effects:
@@ -59,7 +59,7 @@ entries:
 
   magic_mapping:
     name: magic mapping
-    value: 2
+    # value omitted = always spawnable on all floors
     color: Palette.Arcane
     description: Arcane cartography fills this scroll. Reading it imprints the dungeon's layout upon your mind.
     effects:

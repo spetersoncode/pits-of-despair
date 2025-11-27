@@ -99,8 +99,8 @@ public class LootDistributor
             int regionIndex = i % sortedRegions.Count;
             var region = sortedRegions[regionIndex];
 
-            // Select item with inverse value weighting
-            var (itemId, itemData) = SelectItemWeighted(validItems, maxValue);
+            // Select item with inverse value weighting and type multiplier
+            var (itemId, itemData) = SelectItemWeighted(validItems, minValue, maxValue);
             if (itemData == null)
                 continue;
 
@@ -124,6 +124,7 @@ public class LootDistributor
 
     /// <summary>
     /// Gets all items that can spawn automatically within the given value range.
+    /// Items with Value <= 0 bypass floor filtering (always spawnable).
     /// </summary>
     private List<(string id, ItemData data)> GetSpawnableItems(int minValue, int maxValue)
     {
@@ -135,7 +136,14 @@ public class LootDistributor
             if (itemData.NoAutoSpawn)
                 continue;
 
-            // Check value range
+            // Items with no value (0 or less) bypass floor filtering - always spawnable
+            if (itemData.Value <= 0)
+            {
+                result.Add((itemData.DataFileId, itemData));
+                continue;
+            }
+
+            // Check value range for items with positive value
             if (itemData.Value >= minValue && itemData.Value <= maxValue)
             {
                 result.Add((itemData.DataFileId, itemData));
@@ -146,20 +154,33 @@ public class LootDistributor
     }
 
     /// <summary>
-    /// Selects an item using inverse value weighting (lower value = more common).
+    /// Selects an item using combined weighting:
+    /// 1. Inverse value weighting (lower value = more common)
+    /// 2. Type-based spawn weight multiplier (consumables more common than equipment)
+    /// Items with Value <= 0 are treated as having minValue for weighting.
     /// </summary>
-    private (string id, ItemData data) SelectItemWeighted(List<(string id, ItemData data)> items, int maxValue)
+    private (string id, ItemData data) SelectItemWeighted(List<(string id, ItemData data)> items, int minValue, int maxValue)
     {
         if (items == null || items.Count == 0)
             return (null, null);
 
-        // Calculate weights: lower value items are more common
-        // Weight = maxValue - item.Value + 1 (so value 1 has weight maxValue, value maxValue has weight 1)
-        var weighted = items.Select(i => (
-            id: i.id,
-            data: i.data,
-            weight: Mathf.Max(1, maxValue - i.data.Value + 1)
-        )).ToList();
+        // Calculate weights with type multiplier
+        var weighted = items.Select(i => {
+            // Valueless items use minValue (most common tier for this floor)
+            int effectiveValue = i.data.Value > 0 ? i.data.Value : minValue;
+
+            // Base weight from inverse value (lower value = higher weight)
+            int baseWeight = Mathf.Max(1, maxValue - effectiveValue + 1);
+
+            // Apply type-based spawn weight multiplier
+            float finalWeight = baseWeight * i.data.GetSpawnWeightMultiplier();
+
+            return (
+                id: i.id,
+                data: i.data,
+                weight: Mathf.Max(1, Mathf.RoundToInt(finalWeight))
+            );
+        }).ToList();
 
         int totalWeight = weighted.Sum(w => w.weight);
         if (totalWeight == 0)

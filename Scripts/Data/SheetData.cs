@@ -99,6 +99,7 @@ public class ItemDefaults
     public bool? IsEquippable { get; set; }
     public string? EquipSlot { get; set; }
     public bool? AutoPickup { get; set; }
+    public float? SpawnWeight { get; set; }
 }
 
 /// <summary>
