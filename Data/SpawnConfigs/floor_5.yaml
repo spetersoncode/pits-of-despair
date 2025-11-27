@@ -2,9 +2,10 @@ name: "Deeper Halls"
 minFloor: 5
 maxFloor: 5
 
-powerBudget: "4d6+10"
-itemBudget: "1d6+2"
-goldBudget: "5d10+30"
+# Crawl-style: 3dN+15 where N scales with depth
+powerBudget: "3d8+15"
+itemBudget: "3d9+3"
+goldBudget: "3d10+27"
 
 minThreat: 1
 maxThreat: 5

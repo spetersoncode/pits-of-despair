@@ -2,9 +2,10 @@ name: "Upper Dungeon"
 minFloor: 2
 maxFloor: 2
 
-powerBudget: "2d6+6"
-itemBudget: "1d4+1"
-goldBudget: "3d10+15"
+# Crawl-style: 3dN+15 where N scales with depth
+powerBudget: "3d5+15"
+itemBudget: "3d9+3"
+goldBudget: "3d10+18"
 
 minThreat: 1
 maxThreat: 2

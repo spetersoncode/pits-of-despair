@@ -2,9 +2,10 @@ name: "Deep Crypts"
 minFloor: 7
 maxFloor: 10
 
-powerBudget: "5d6+15"
-itemBudget: "2d4+2"
-goldBudget: "8d10+40"
+# Crawl-style: 3dN+15 where N scales with depth (max die size)
+powerBudget: "3d12+15"
+itemBudget: "3d9+3"
+goldBudget: "3d10+35"
 
 minThreat: 2
 maxThreat: 8

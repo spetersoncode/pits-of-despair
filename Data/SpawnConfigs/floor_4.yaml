@@ -2,9 +2,10 @@ name: "Goblin Territory"
 minFloor: 4
 maxFloor: 4
 
-powerBudget: "3d6+10"
-itemBudget: "1d4+3"
-goldBudget: "4d10+25"
+# Crawl-style: 3dN+15 where N scales with depth
+powerBudget: "3d7+15"
+itemBudget: "3d9+3"
+goldBudget: "3d10+24"
 
 minThreat: 1
 maxThreat: 4
