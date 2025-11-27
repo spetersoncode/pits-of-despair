@@ -3,7 +3,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.AutoPathing;
 
 /// <summary>
 /// Manages automatic pathing to known stairs for the player.

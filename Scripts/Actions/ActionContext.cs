@@ -1,5 +1,7 @@
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
 using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Actions;

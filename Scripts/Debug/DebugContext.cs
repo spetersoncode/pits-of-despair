@@ -1,6 +1,9 @@
 using PitsOfDespair.Actions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
+using PitsOfDespair.Targeting;
 using PitsOfDespair.Generation.Spawning;
 
 namespace PitsOfDespair.Debug;

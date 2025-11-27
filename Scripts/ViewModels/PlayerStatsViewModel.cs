@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Entity;
 
 namespace PitsOfDespair.ViewModels;
 

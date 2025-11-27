@@ -4,8 +4,9 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Entity;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.Vision;
 
 /// <summary>
 /// Manages non-player entity vision and detection.

@@ -2,7 +2,7 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Represents a persistent hazard on a tile that affects entities each turn.

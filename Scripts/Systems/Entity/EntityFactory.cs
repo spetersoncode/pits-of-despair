@@ -8,7 +8,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Data;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.Entity;
 
 /// <summary>
 /// Factory for creating entities from YAML data.

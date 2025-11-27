@@ -4,6 +4,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Systems.Entity;
 using System.Linq;
 using System.Text;
 
@@ -40,7 +41,7 @@ public partial class SidePanel : PanelContainer
     // ViewModels for decoupled data access
     private ViewModels.PlayerStatsViewModel _statsViewModel;
     private ViewModels.EquipmentViewModel _equipmentViewModel;
-    private Systems.NearbyEntitiesTracker _nearbyEntitiesTracker;
+    private NearbyEntitiesTracker _nearbyEntitiesTracker;
     private Systems.TurnManager _turnManager;
 
     // Pending level-up tracking
@@ -73,7 +74,7 @@ public partial class SidePanel : PanelContainer
         Entities.Player player,
         ViewModels.PlayerStatsViewModel statsViewModel,
         ViewModels.EquipmentViewModel equipmentViewModel,
-        Systems.NearbyEntitiesTracker nearbyEntitiesTracker,
+        NearbyEntitiesTracker nearbyEntitiesTracker,
         Systems.TurnManager turnManager = null)
     {
         _player = player;
@@ -94,7 +95,7 @@ public partial class SidePanel : PanelContainer
         );
 
         _nearbyEntitiesTracker.Connect(
-            Systems.NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
+            NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
             Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
         );
 
@@ -460,7 +461,7 @@ public partial class SidePanel : PanelContainer
         if (_nearbyEntitiesTracker != null)
         {
             _nearbyEntitiesTracker.Disconnect(
-                Systems.NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
+                NearbyEntitiesTracker.SignalName.NearbyEntitiesChanged,
                 Callable.From<Godot.Collections.Array>(OnNearbyEntitiesChanged)
             );
         }

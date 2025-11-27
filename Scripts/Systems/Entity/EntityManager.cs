@@ -7,7 +7,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using Faction = PitsOfDespair.Core.Faction;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.Entity;
 
 /// <summary>
 /// Manages all non-player entities in the game.

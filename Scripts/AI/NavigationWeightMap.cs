@@ -1,6 +1,7 @@
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Entity;
 
 namespace PitsOfDespair.AI;
 

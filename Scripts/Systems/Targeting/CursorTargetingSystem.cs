@@ -5,9 +5,11 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Targeting;
+using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Targeting;
 
 /// <summary>
 /// Unified cursor targeting system supporting both examine mode and action targeting.

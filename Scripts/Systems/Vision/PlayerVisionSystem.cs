@@ -4,8 +4,9 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Entity;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.Vision;
 
 /// <summary>
 /// Manages player field-of-view and fog-of-war state.

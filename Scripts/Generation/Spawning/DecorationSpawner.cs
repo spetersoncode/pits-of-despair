@@ -6,6 +6,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Generation.Spawning.Data;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.Entity;
 
 namespace PitsOfDespair.Generation.Spawning;
 

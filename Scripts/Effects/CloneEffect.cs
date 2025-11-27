@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Entity;
 
 namespace PitsOfDespair.Effects;
 
@@ -91,7 +92,7 @@ public class CloneEffect : Effect
     /// <summary>
     /// Finds an adjacent walkable position that doesn't have an entity.
     /// </summary>
-    private GridPosition? FindAdjacentWalkablePosition(GridPosition center, Systems.MapSystem mapSystem, Systems.EntityManager entityManager)
+    private GridPosition? FindAdjacentWalkablePosition(GridPosition center, Systems.MapSystem mapSystem, EntityManager entityManager)
     {
         // Check all 8 adjacent positions
         var directions = new List<(int dx, int dy)>

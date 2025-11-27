@@ -5,6 +5,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Entity;
 
 namespace PitsOfDespair.Systems;
 

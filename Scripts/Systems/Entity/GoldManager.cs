@@ -1,6 +1,6 @@
 using Godot;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.Entity;
 
 /// <summary>
 /// Manages the player's gold currency for the current game session.

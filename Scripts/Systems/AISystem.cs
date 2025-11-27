@@ -7,6 +7,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Entity;
 using PitsOfDespair.Systems.VisualEffects;
 
 namespace PitsOfDespair.Systems;

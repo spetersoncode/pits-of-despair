@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Entity;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -87,7 +88,7 @@ public class StairsCommand : DebugCommand
 		GridPosition center,
 		int range,
 		Systems.MapSystem mapSystem,
-		Systems.EntityManager entityManager)
+		EntityManager entityManager)
 	{
 		var validPositions = new List<GridPosition>();
 

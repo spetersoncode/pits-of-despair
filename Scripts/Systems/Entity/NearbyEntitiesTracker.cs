@@ -1,10 +1,11 @@
 using Godot;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Vision;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.Entity;
 
 /// <summary>
 /// Tracks nearby visible entities relative to the player.

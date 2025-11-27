@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Entity;
 using System.Collections.Generic;
 using System.Linq;
 

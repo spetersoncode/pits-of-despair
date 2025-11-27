@@ -2,7 +2,10 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
 using PitsOfDespair.Systems.VisualEffects;
+using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Systems;
 

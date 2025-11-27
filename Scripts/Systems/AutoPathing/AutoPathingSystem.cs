@@ -4,8 +4,10 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
 
-namespace PitsOfDespair.Systems;
+namespace PitsOfDespair.Systems.AutoPathing;
 
 /// <summary>
 /// Base class for automatic pathing systems (autoexplore, auto-stairs, etc.).

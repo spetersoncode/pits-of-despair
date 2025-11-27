@@ -5,6 +5,10 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
+using PitsOfDespair.Systems.AutoPathing;
+using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
+using PitsOfDespair.Targeting;
 using System.Linq;
 
 namespace PitsOfDespair.UI;
@@ -57,7 +61,7 @@ public partial class GameHUD : Control
     private AutoExploreSystem _autoExploreSystem;
     private Components.StatsComponent _playerStats;
     private Components.SkillComponent _playerSkills;
-    private Systems.EntityManager _entityManager;
+    private EntityManager _entityManager;
     private DataLoader _dataLoader;
 
     // New systems for decoupling
