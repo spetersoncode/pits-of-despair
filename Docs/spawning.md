@@ -1,12 +1,16 @@
 # Spawning System
 
-The spawning system populates dungeon floors through a region-based, encounter-driven pipeline. Power budgets distribute across regions by size and danger level, faction themes create territorial coherence, and encounter templates define creature compositions with tactical behaviors.
+The spawning system populates dungeon floors through a region-based, encounter-driven pipeline. Density-based distribution spreads content across walkable tiles, faction themes create territorial coherence, and encounter templates define creature compositions with tactical behaviors.
 
 ## Core Architecture
 
-**Pipeline Orchestration**: Spawning executes as an 11-phase pipeline. Each phase has clear inputs, outputs, and dependencies. Phases execute sequentially—theme assignment before budget allocation, encounters before items, AI configuration last. This separation enables independent testing and modification of individual phases.
+**Two-Config System**: Spawning configuration splits between Pipeline configs (layout-dependent) and Floor configs (difficulty/content). Pipeline configs in `Data/Pipelines/*.yaml` define spawn densities and encounter types suited to specific layouts. Floor configs in `Data/Floors/*.yaml` define threat ranges, themes, and content for depth progression. SpawnContext merges both at runtime.
 
-**Region-Based Distribution**: Rather than per-room or random placement, spawning operates on detected regions from dungeon metadata. Regions receive theme assignments and power budgets proportional to their characteristics. This creates natural variation—large distant regions feel dangerous, small entry regions feel safe.
+**Pipeline Orchestration**: Spawning executes as a multi-phase pipeline. Each phase has clear inputs, outputs, and dependencies. Phases execute sequentially—theme assignment before encounters, encounters before items, AI configuration last. This separation enables independent testing and modification of individual phases.
+
+**Region-Based Distribution**: Rather than per-room or random placement, spawning operates on detected regions from dungeon metadata. Regions receive theme assignments and encounters proportional to their characteristics. This creates natural variation—large distant regions feel dangerous, small entry regions feel safe.
+
+**Density-Based Spawning**: Items and gold use density values (percentage of walkable tiles) rather than fixed budgets. This scales naturally with dungeon size—larger dungeons get proportionally more content without manual tuning.
 
 **Encounter-Driven Composition**: Instead of spawning individual creatures, the system spawns encounters—structured groups with defined roles, positions, and behaviors. Encounters transform generic creature lists into tactical situations: ambushes near passages, lairs in large rooms, patrols through corridors.
 
@@ -14,39 +18,37 @@ The spawning system populates dungeon floors through a region-based, encounter-d
 
 ## Spawning Pipeline
 
-**Phase 1 - Load Configuration**: Retrieve floor spawn config for current depth. Config defines budgets, theme weights, encounter weights, threat limits.
+**Phase 1 - Load Configuration**: Merge Pipeline config (from MapSystem) and Floor config (by depth) into SpawnContext. Pipeline provides layout-suited spawn settings; Floor provides difficulty/content settings.
 
-**Phase 2 - Assign Themes**: Distribute faction themes across regions using weighted selection. Adjacent regions may cluster. Prefab spawn hints can override theme assignment.
+**Phase 2 - Assign Themes**: Distribute faction themes across regions using weighted selection from Floor config. Adjacent regions may cluster (40% chance). Prefab spawn hints can override theme assignment.
 
-**Phase 3 - Allocate Budgets**: Distribute floor power budget across regions. Weight factors: region size, distance from entrance, isolation (dead-ends more dangerous), region tags. Each region receives proportional share.
+**Phase 3 - Process Prefabs**: Handle spawn hints from prefab rooms. These can specify exact creatures, encounter templates, items, or theme overrides.
 
-**Phase 4 - Process Prefabs**: Handle spawn hints from prefab rooms. These can specify exact creatures, encounter templates, items, or theme overrides. Prefab spawns deduct from region budgets.
+**Phase 4 - Spawn Uniques**: Place unique/boss creatures if configured for this floor. Uniques tracked per-run to prevent duplicates. Prefer large regions far from entrance.
 
-**Phase 5 - Spawn Uniques**: Place unique/boss creatures if configured for this floor. Uniques tracked per-run to prevent duplicates. Prefer large regions far from entrance.
+**Phase 5 - Spawn Encounters**: Main spawning loop. For each region: check encounter chance, select encounter template from Pipeline's encounter weights, spawn creatures within Floor's threat range, track positions.
 
-**Phase 6 - Spawn Encounters**: Main spawning loop. For each region with remaining budget: select encounter template fitting budget, spawn creatures filling template slots, track positions, repeat until budget exhausted.
+**Phase 6 - Out-of-Depth**: Attempt to spawn creature from deeper floor's pools based on configured chance. Creates memorable danger moments.
 
-**Phase 7 - Place Treasures**: Distribute valuable items with guardians. Higher-value items placed in more dangerous regions. Risk equals reward principle.
+**Phase 7 - Place Treasures**: Distribute valuable items with guardians. Higher-value items placed in more dangerous regions.
 
-**Phase 8 - Place Items**: Scatter remaining items across regions. Distribution weighted by region danger level.
+**Phase 8 - Place Items**: Scatter items across floor based on itemDensity (% of walkable tiles). Item values filtered by Floor's min/max item value.
 
-**Phase 9 - Place Gold**: Distribute gold piles across floor. Pile sizes vary randomly within configured range.
+**Phase 9 - Place Gold**: Distribute gold piles based on goldDensity (% of walkable tiles). Pile amounts scale with floor depth.
 
-**Phase 10 - Place Stairs**: Position level exit (or throne on final floor) in region farthest from entrance. Validates player can path to exit.
+**Phase 10 - Place Stairs**: Position level exit (or throne on final floor) in region farthest from entrance.
 
-**Phase 11 - Configure AI**: Set up AI behaviors for all spawned encounters. Configure territory bounds, initial states (sleeping for ambushes), leader-follower relationships.
+**Phase 11 - Configure AI**: Set up AI behaviors for spawned encounters. Configure territory bounds, initial states, leader-follower relationships.
 
-## Power Budget System
+## Density-Based Distribution
 
-**Budget Calculation**: Floor configs specify budgets as dice notation (e.g., `3d6+8`). Rolled once per floor, distributed across regions. Creatures have threat ratings consuming budget on spawn.
+**Item Density**: Pipeline configs specify `itemDensity` as percentage of walkable tiles (e.g., 0.006 = 0.6%). System calculates target count from total walkable tiles and distributes items across floor.
 
-**Threat Rating**: Unbounded integer measuring creature danger. Guidelines: 1-5 trivial (rats, bats), 6-15 standard (goblins, skeletons), 16-30 dangerous (ogres, wraiths), 31-50 elite, 51+ boss. XP awards derive from threat.
+**Gold Density**: Similarly, `goldDensity` determines gold pile count. Pile amounts use Floor config's `baseGoldPerPile` scaled by `goldFloorScale` per depth.
 
-**Budget Allocation**: Regions receive budget proportional to weighted area. Weight factors:
-- **Size**: Larger regions get more budget
-- **Distance**: Farther from entrance increases weight
-- **Isolation**: Single-connection regions (dead-ends) get danger bonus
-- **Tags**: Special regions (treasure rooms) can have modifiers
+**Encounter Chance**: Each region has `encounterChance` probability of receiving an encounter. `maxEncounterRatio` caps total encounters as fraction of regions. `minEncounterSpacing` prevents clustering.
+
+**Threat Rating**: Unbounded integer measuring creature danger. Guidelines: 1-5 trivial (rats, bats), 6-15 standard (goblins, skeletons), 16-30 dangerous (ogres, wraiths), 31-50 elite, 51+ boss. Floor configs specify `minThreat`/`maxThreat` to filter appropriate creatures.
 
 ## Encounter Templates
 
@@ -138,15 +140,29 @@ Prefab spawns execute before regular spawning, deducting from region budget.
 3. Reference theme in floor spawn configs with appropriate weight
 4. Design considerations: What creatures belong together thematically? What depths feel appropriate? Does the creature list cover needed archetypes?
 
-## Adding New Floor Spawn Configs
+## Adding New Pipeline Configs
 
-1. Define config with budgets (power, item, gold) as dice notation
-2. Specify theme weights for faction distribution
-3. Specify encounter weights for tactical variety
-4. Set threat limits (min/max) for creature filtering
-5. Configure out-of-depth settings for danger moments
-6. Design considerations: How difficult should this floor feel? What themes dominate? What encounter types create the right pacing?
+Pipeline configs define layout-dependent spawn settings in `Data/Pipelines/*.yaml`:
+
+1. Define generation passes (BSP, cellular automata, etc.) with parameters
+2. Configure `spawnSettings` block with density values suited to layout type
+3. Specify `encounterWeights` for encounter types that work with the layout
+4. Set spacing/exclusion parameters appropriate for typical region sizes
+5. Design considerations: What encounter types suit this layout? How dense should content be given typical open space?
+
+## Adding New Floor Configs
+
+Floor configs define difficulty/content settings in `Data/Floors/*.yaml`:
+
+1. Set `minFloor`/`maxFloor` depth range for this config
+2. Reference `pipeline` to use (or list with weights for random selection)
+3. Set `minThreat`/`maxThreat` for creature filtering
+4. Specify `themeWeights` for faction distribution
+5. Configure gold scaling (`baseGoldPerPile`, `goldFloorScale`)
+6. Set out-of-depth settings (`creatureOutOfDepthChance`, `outOfDepthFloors`)
+7. Add `uniqueCreatures` for guaranteed boss spawns
+8. Design considerations: How difficult should this depth feel? What factions dominate? What's the risk/reward balance?
 
 ---
 
-*See [dungeon-generator.md](dungeon-generator.md) for region generation, [yaml.md](yaml.md) for data formats, [entities.md](entities.md) for creature creation, [ai.md](ai.md) for AI configuration.*
+*See [dungeon-generator.md](dungeon-generator.md) for generation pipeline, [yaml.md](yaml.md) for data formats, [entities.md](entities.md) for creature creation, [ai.md](ai.md) for AI configuration.*

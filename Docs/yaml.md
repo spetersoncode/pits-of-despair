@@ -24,7 +24,8 @@ Game data (creatures, items, spawn configs, encounter templates, faction themes)
 **ID Generation**: DataLoader creates IDs from filenames with intentionally different patterns by data category:
 - **Creatures**: Filename-only (`rat.yaml` → `"rat"`, `goblin_scout.yaml` → `"goblin_scout"`)
 - **Items**: Type-prefixed (`club.yaml` → `"weapon_club"`, `healing_8.yaml` → `"potion_healing_8"`)
-- **Spawn Configs**: Filename-only (`floor_1.yaml` → `"floor_1"`)
+- **Pipeline Configs**: Filename-only (`bsp_standard.yaml` → `"bsp_standard"`)
+- **Floor Configs**: Filename-only (`floor_1.yaml` → `"floor_1"`)
 - **Encounter Templates**: Filename-only (`lair.yaml` → `"lair"`)
 - **Faction Themes**: Filename-only (`goblinoid.yaml` → `"goblinoid"`)
 
@@ -58,17 +59,44 @@ Game data (creatures, items, spawn configs, encounter templates, faction themes)
 
 **Automatic Properties**: `isConsumable`, `isEquippable`, `equipSlot` auto-set based on type unless explicitly overridden.
 
-### Floor Spawn Configs
+### Pipeline Configs
 
-**Structure**: Budget dice for power/items/gold, weighted theme and encounter lists, threat limits, out-of-depth settings.
+Pipeline configs in `Data/Pipelines/*.yaml` define generation passes and layout-dependent spawn settings.
 
-**Required**: name, powerBudget, itemBudget, goldBudget
+**Required**: name, passes (generation pass list)
 
-**Optional**: minFloor/maxFloor (depth range), themeWeights (weighted faction theme list), encounterWeights (weighted encounter template list), minThreat/maxThreat (creature filtering), outOfDepthChance/outOfDepthFloors, uniqueCreatures (guaranteed spawns), items (rarity pools)
+**Optional**: description, dimensions (width/height), metadata settings, spawnSettings block
 
-**Budgets**: Dice notation determines total budget per floor generation (`"3d6+8"`). Power budget distributes across regions, consumed by creature threat ratings.
+**Spawn Settings** (layout-dependent):
+- `itemDensity`: Items as % of walkable tiles (e.g., 0.006)
+- `goldDensity`: Gold piles as % of walkable tiles
+- `encounterChance`: Probability per region (0.0-1.0)
+- `maxEncounterRatio`: Max encounters as fraction of regions
+- `minEncounterSpacing`: Minimum tiles between encounter centers
+- `maxEncountersPerRegion`: Cap per region
+- `playerExclusionRadius`: Safe zone around player start
+- `encounterWeights`: Weighted list of encounter templates suited to layout
 
-**Weights**: Theme and encounter weights control selection probability. Higher weight = more likely. Format: `[{id: "goblinoid", weight: 40}, {id: "undead", weight: 30}]`
+### Floor Configs
+
+Floor configs in `Data/Floors/*.yaml` define difficulty/content for depth ranges.
+
+**Required**: name, minFloor, maxFloor, pipeline
+
+**Optional**: minThreat/maxThreat (creature filtering), themeWeights (faction distribution), baseGoldPerPile, goldFloorScale, creatureOutOfDepthChance, outOfDepthFloors, uniqueCreatures, creatureSelection (scoring parameters)
+
+**Pipeline Selection**: Single pipeline ID or weighted list for random selection:
+```yaml
+pipeline: bsp_standard  # Single pipeline
+# OR
+pipelines:  # Weighted random selection
+  - id: bsp_standard
+    weight: 60
+  - id: caves
+    weight: 40
+```
+
+**Weights**: Theme weights control faction distribution. Higher weight = more likely. Format: `[{id: "goblinoid", weight: 40}, {id: "undead", weight: 30}]`
 
 ### Encounter Templates
 
@@ -110,7 +138,7 @@ String format for random values: `"XdY+Z"` where X = number of dice, Y = die siz
 
 ## Comments in Data Files
 
-YAML comments (`#`) document complex structures, explain design decisions, and clarify optional fields. See `Data/SpawnConfigs/floor_1.yaml` for comprehensive commenting example showing both inline and end-of-line comment patterns.
+YAML comments (`#`) document complex structures, explain design decisions, and clarify optional fields. See `Data/Pipelines/bsp_standard.yaml` and `Data/Floors/floor_1.yaml` for commented examples.
 
 ## Adding New Types
 

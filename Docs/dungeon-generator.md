@@ -6,7 +6,7 @@ Modular pipeline-based dungeon generation supporting multiple algorithms (BSP, C
 
 **Pass-Based Generation**: Generation pipeline executes ordered passes on shared context. Each pass implements `IGenerationPass` interface with priority-based execution. Three roles: Base (primary topology), Modifier (transforms existing), PostProcess (analysis/repair). Pipeline validates exactly one Base pass exists.
 
-**YAML Configuration**: Floor configs define pipeline in `Data/Floors/*.yaml`. Each pass specifies algorithm, priority, and parameters. Configs support floor depth ranges for progression. See `Data/Floors/default.yaml` for reference.
+**YAML Configuration**: Pipeline configs in `Data/Pipelines/*.yaml` define generation passes, dimensions, and layout-dependent spawn settings. Floor configs in `Data/Floors/*.yaml` reference pipelines and define difficulty/content. See `Data/Pipelines/bsp_standard.yaml` for reference.
 
 **Generation Context**: Shared state passed through all passes containing grid, metadata, random instance, and inter-pass data. Passes read/write grid and contribute to metadata. Context provides utility methods for bounds checking and tile operations.
 
@@ -158,8 +158,10 @@ Modular pipeline-based dungeon generation supporting multiple algorithms (BSP, C
 
 ### YAML Configuration
 
+In `Data/Pipelines/*.yaml`:
 ```yaml
-pipeline:
+name: my_pipeline
+passes:
   - pass: my_pass
     priority: 100
     config:
