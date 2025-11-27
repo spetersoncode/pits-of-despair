@@ -2,15 +2,17 @@ name: "Upper Dungeon"
 minFloor: 2
 maxFloor: 2
 
-# Item and gold budgets
-itemBudget: "3d9+3"
-goldBudget: "3d10+18"
-
 minThreat: 2
 maxThreat: 3
 
+# Density-based spawning
+itemDensity: 0.006
+goldDensity: 0.015
+baseGoldPerPile: 8
+goldFloorScale: 1.0
+
 # Small chance for out-of-depth
-outOfDepthChance: 0.05
+creatureOutOfDepthChance: 0.05
 outOfDepthFloors: 2
 
 # Undead start appearing, beasts roam
@@ -38,29 +40,3 @@ encounterWeights:
     weight: 15
   - id: guard
     weight: 10
-
-items:
-  commonItems:
-    - potion_strength_1
-    - potion_agility_1
-    - potion_endurance_1
-    - potion_armor_1
-    - potion_will_1
-  uncommonItems:
-    - potion_strength_2
-    - potion_agility_2
-    - potion_endurance_2
-    - scroll_fear
-    - scroll_sleep
-    - wand_fatigue
-  rareItems:
-    - potion_haste
-    - scroll_magic_mapping
-    - wand_acid_arrow
-  epicItems: []
-  unguardedItemChance: 0.4
-  minGuardedRarity: uncommon
-  commonWeight: 70
-  uncommonWeight: 25
-  rareWeight: 5
-  epicWeight: 0

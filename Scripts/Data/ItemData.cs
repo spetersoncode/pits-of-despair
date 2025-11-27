@@ -100,6 +100,12 @@ public class ItemData
     public string Rarity { get; set; } = "common";
 
     /// <summary>
+    /// If true, this item will not be automatically spawned by the dungeon generator.
+    /// Use for quest items, unique rewards, or items that should only appear in specific contexts.
+    /// </summary>
+    public bool NoAutoSpawn { get; set; } = false;
+
+    /// <summary>
     /// Item type for category-based defaults (e.g., "potion", "scroll").
     /// Optional - blank type means no inherited defaults.
     /// </summary>

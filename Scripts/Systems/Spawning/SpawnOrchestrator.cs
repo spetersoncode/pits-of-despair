@@ -126,12 +126,10 @@ public partial class SpawnOrchestrator : Node
         // Region spawn data tracking
         var regionSpawnData = new Dictionary<int, RegionSpawnData>();
 
-        // Roll item/gold budgets (power budget removed - density-driven spawning)
-        int itemBudget = floorConfig.RollItemBudget();
-        int goldBudget = floorConfig.RollGoldBudget();
-
-        summary.TotalItemBudget = itemBudget;
-        summary.TotalGoldBudget = goldBudget;
+        // Note: Item/gold budgets are now density-driven, no longer rolled
+        // Keep summary fields for backwards compatibility
+        summary.TotalItemBudget = 0;
+        summary.TotalGoldBudget = 0;
 
         // Phase 2: Assign themes to regions
         _themeAssigner.AssignThemes(metadata, floorConfig, regionSpawnData);
@@ -207,16 +205,16 @@ public partial class SpawnOrchestrator : Node
             summary.RegionsProcessed++;
         }
 
-        // Phase 7: Place treasures and items
+        // Phase 7: Place treasures and items (density-based)
         int itemsPlaced = PlaceItemsAndTreasure(
-            metadata, floorConfig, regionSpawnData, itemBudget, occupiedPositions);
+            metadata, floorConfig, regionSpawnData, occupiedPositions);
         summary.ItemsPlaced = itemsPlaced;
 
-        // Phase 8: Place gold
-        int goldPlaced = _goldPlacer.DistributeGold(
+        // Phase 8: Place gold (density-based with floor scaling)
+        int goldPlaced = _goldPlacer.DistributeGoldByDensity(
             metadata.Regions,
             regionSpawnData,
-            goldBudget,
+            floorConfig,
             _floorDepth,
             occupiedPositions);
         summary.GoldPlaced = goldPlaced;
@@ -367,13 +365,12 @@ public partial class SpawnOrchestrator : Node
     }
 
     /// <summary>
-    /// Places items and treasure based on region danger and budget.
+    /// Places items and treasure based on region danger and density.
     /// </summary>
     private int PlaceItemsAndTreasure(
         DungeonMetadata metadata,
         FloorSpawnConfig floorConfig,
         Dictionary<int, RegionSpawnData> regionSpawnData,
-        int itemBudget,
         HashSet<Vector2I> occupiedPositions)
     {
         int totalPlaced = 0;
@@ -391,28 +388,20 @@ public partial class SpawnOrchestrator : Node
             var spawnData = regionSpawnData[region.Id];
             int guardianThreat = spawnData.TotalThreatSpawned / 2;
 
-            int cost = _treasurePlacer.PlaceGuardedTreasure(
-                region, floorConfig.Items, itemBudget, guardianThreat, occupiedPositions);
+            int placed = _treasurePlacer.PlaceGuardedTreasure(
+                region, floorConfig, guardianThreat, occupiedPositions);
 
-            if (cost > 0)
-            {
-                totalPlaced++;
-                itemBudget -= cost;
-            }
+            totalPlaced += placed;
         }
 
-        // Distribute remaining items across all regions
-        if (itemBudget > 0)
-        {
-            int distributed = _lootDistributor.DistributeItems(
-                metadata.Regions,
-                regionSpawnData,
-                floorConfig.Items,
-                itemBudget,
-                occupiedPositions);
+        // Distribute items across all regions using density-based spawning
+        int distributed = _lootDistributor.DistributeItemsByDensity(
+            metadata.Regions,
+            regionSpawnData,
+            floorConfig,
+            occupiedPositions);
 
-            totalPlaced += distributed;
-        }
+        totalPlaced += distributed;
 
         return totalPlaced;
     }
@@ -521,8 +510,13 @@ public partial class SpawnOrchestrator : Node
             Name = $"Fallback Floor {_floorDepth}",
             MinFloor = _floorDepth,
             MaxFloor = _floorDepth,
-            ItemBudget = "1d4+1",
-            GoldBudget = $"{_floorDepth}d10+10",
+            // Density-based spawning parameters
+            ItemDensity = 0.03f,
+            MinItemValue = 1,
+            MaxItemValue = Mathf.Min(_floorDepth, 5),
+            GoldDensity = 0.04f,
+            BaseGoldPerPile = 5,
+            GoldFloorScale = 1.0f,
             MinThreat = 1,
             MaxThreat = _floorDepth * 3 + 5
         };

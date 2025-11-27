@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.Systems.Spawning.Data;
 
@@ -36,74 +35,6 @@ public class UniqueSpawnEntry
 }
 
 /// <summary>
-/// Item rarity levels for loot distribution.
-/// </summary>
-public enum ItemRarity
-{
-    Common,
-    Uncommon,
-    Rare,
-    Epic
-}
-
-/// <summary>
-/// Configuration for item spawning on a floor.
-/// Defines item pools by rarity and distribution rules.
-/// </summary>
-public class ItemSpawnConfig
-{
-    /// <summary>
-    /// Item IDs available at common rarity on this floor.
-    /// </summary>
-    public List<string> CommonItems { get; set; } = new();
-
-    /// <summary>
-    /// Item IDs available at uncommon rarity on this floor.
-    /// </summary>
-    public List<string> UncommonItems { get; set; } = new();
-
-    /// <summary>
-    /// Item IDs available at rare rarity on this floor.
-    /// </summary>
-    public List<string> RareItems { get; set; } = new();
-
-    /// <summary>
-    /// Item IDs available at epic rarity on this floor.
-    /// </summary>
-    public List<string> EpicItems { get; set; } = new();
-
-    /// <summary>
-    /// Chance for unguarded items to spawn (0.0-1.0).
-    /// </summary>
-    public float UnguardedItemChance { get; set; } = 0.3f;
-
-    /// <summary>
-    /// Minimum item rarity for treasure guard encounters.
-    /// </summary>
-    public ItemRarity MinGuardedRarity { get; set; } = ItemRarity.Uncommon;
-
-    /// <summary>
-    /// Weight for common item selection (default 60).
-    /// </summary>
-    public int CommonWeight { get; set; } = 60;
-
-    /// <summary>
-    /// Weight for uncommon item selection (default 30).
-    /// </summary>
-    public int UncommonWeight { get; set; } = 30;
-
-    /// <summary>
-    /// Weight for rare item selection (default 9).
-    /// </summary>
-    public int RareWeight { get; set; } = 9;
-
-    /// <summary>
-    /// Weight for epic item selection (default 1).
-    /// </summary>
-    public int EpicWeight { get; set; } = 1;
-}
-
-/// <summary>
 /// Configuration for spawning on a specific floor or floor range.
 /// Uses density-driven spawning with threat bands and encounter templates.
 /// </summary>
@@ -130,16 +61,6 @@ public class FloorSpawnConfig
     public int MaxFloor { get; set; } = 99;
 
     /// <summary>
-    /// Item spawn budget (dice notation).
-    /// </summary>
-    public string ItemBudget { get; set; } = "1d4+2";
-
-    /// <summary>
-    /// Gold spawn budget (dice notation).
-    /// </summary>
-    public string GoldBudget { get; set; } = "3d10+10";
-
-    /// <summary>
     /// Weighted list of faction themes available on this floor.
     /// </summary>
     public List<WeightedEntry> ThemeWeights { get; set; } = new();
@@ -150,12 +71,12 @@ public class FloorSpawnConfig
     public List<WeightedEntry> EncounterWeights { get; set; } = new();
 
     /// <summary>
-    /// Chance (0.0-1.0) to spawn an out-of-depth creature.
+    /// Chance (0.0-1.0) to spawn an out-of-depth creature or item.
     /// </summary>
-    public float OutOfDepthChance { get; set; } = 0.0f;
+    public float CreatureOutOfDepthChance { get; set; } = 0.0f;
 
     /// <summary>
-    /// How many floors ahead to pull out-of-depth creatures from.
+    /// How many floors ahead to pull out-of-depth creatures/items from.
     /// </summary>
     public int OutOfDepthFloors { get; set; } = 2;
 
@@ -183,31 +104,60 @@ public class FloorSpawnConfig
     /// </summary>
     public float MaxEncounterRatio { get; set; } = 0.6f;
 
+    #region Item Density Spawning
+
     /// <summary>
-    /// Item spawning configuration for this floor.
-    /// Defines item pools by rarity and distribution rules.
+    /// Target item density as percentage of walkable tiles (0.0-1.0).
+    /// Default 0.03 (3% of tiles get items).
     /// </summary>
-    public ItemSpawnConfig Items { get; set; } = new();
+    public float ItemDensity { get; set; } = 0.03f;
+
+    /// <summary>
+    /// Minimum item value for this floor. If null, defaults to MinThreat.
+    /// </summary>
+    public int? MinItemValue { get; set; } = null;
+
+    /// <summary>
+    /// Maximum item value for this floor. If null, defaults to MaxThreat.
+    /// </summary>
+    public int? MaxItemValue { get; set; } = null;
+
+    /// <summary>
+    /// Gets the effective minimum item value (defaults to MinThreat if not specified).
+    /// </summary>
+    public int GetMinItemValue() => MinItemValue ?? MinThreat;
+
+    /// <summary>
+    /// Gets the effective maximum item value (defaults to MaxThreat if not specified).
+    /// </summary>
+    public int GetMaxItemValue() => MaxItemValue ?? MaxThreat;
+
+    #endregion
+
+    #region Gold Density Spawning
+
+    /// <summary>
+    /// Target gold pile density as percentage of walkable tiles (0.0-1.0).
+    /// Default 0.04 (4% of tiles get gold piles).
+    /// </summary>
+    public float GoldDensity { get; set; } = 0.04f;
+
+    /// <summary>
+    /// Base gold amount per pile before floor scaling.
+    /// </summary>
+    public int BaseGoldPerPile { get; set; } = 5;
+
+    /// <summary>
+    /// Additional gold per pile per floor depth (multiplied by floor number).
+    /// Default 1.0 means +1 gold per pile per floor.
+    /// </summary>
+    public float GoldFloorScale { get; set; } = 1.0f;
+
+    #endregion
 
     /// <summary>
     /// Unique creatures with spawn chances for this floor.
     /// Each unique only spawns once per run.
     /// </summary>
     public List<UniqueSpawnEntry> UniqueCreatures { get; set; } = new();
-
-    /// <summary>
-    /// Rolls the item budget using dice notation.
-    /// </summary>
-    public int RollItemBudget()
-    {
-        return DiceRoller.Roll(ItemBudget);
-    }
-
-    /// <summary>
-    /// Rolls the gold budget using dice notation.
-    /// </summary>
-    public int RollGoldBudget()
-    {
-        return DiceRoller.Roll(GoldBudget);
-    }
 }

@@ -5,6 +5,7 @@ defaults:
 entries:
   spear:
     name: spear
+    value: 4
     color: Palette.AshWood
     description: An iron-tipped shaft of ash wood, balanced for both thrust and throw. Its reach keeps the dangers of the deep at arm's length.
     attack:

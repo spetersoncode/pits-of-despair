@@ -2,14 +2,16 @@ name: "Vermin Warrens"
 minFloor: 3
 maxFloor: 3
 
-# Item and gold budgets
-itemBudget: "3d9+3"
-goldBudget: "3d10+21"
-
 minThreat: 1
 maxThreat: 3
 
-outOfDepthChance: 0.08
+# Density-based spawning
+itemDensity: 0.006
+goldDensity: 0.015
+baseGoldPerPile: 8
+goldFloorScale: 1.0
+
+creatureOutOfDepthChance: 0.08
 outOfDepthFloors: 2
 
 # Last floor with vermin, more undead
@@ -36,26 +38,3 @@ encounterWeights:
     weight: 10
   - id: solitary
     weight: 5
-
-items:
-  commonItems:
-    - potion_strength_1
-    - potion_agility_1
-    - potion_endurance_1
-    - potion_armor_1
-    - potion_will_1
-  uncommonItems:
-    - potion_strength_2
-    - potion_agility_2
-    - potion_endurance_2
-    - potion_armor_2
-  rareItems:
-    - potion_haste
-    - potion_strength_3
-  epicItems: []
-  unguardedItemChance: 0.35
-  minGuardedRarity: uncommon
-  commonWeight: 60
-  uncommonWeight: 30
-  rareWeight: 10
-  epicWeight: 0

@@ -10,8 +10,8 @@ using PitsOfDespair.Systems.Spawning.Data;
 namespace PitsOfDespair.Systems.Spawning;
 
 /// <summary>
-/// Distributes consumables and lesser items across the dungeon floor.
-/// Places items based on region danger levels and remaining budget.
+/// Distributes items across the dungeon floor using density-based spawning.
+/// Items are filtered by value range and weighted inversely by value (common items more frequent).
 /// </summary>
 public class LootDistributor
 {
@@ -33,171 +33,148 @@ public class LootDistributor
     }
 
     /// <summary>
-    /// Distributes items across regions based on budget and danger levels.
+    /// Distributes items across regions using density-based spawning.
+    /// Items are selected based on value range and weighted inversely by value.
     /// </summary>
     /// <param name="regions">Regions to distribute items across</param>
     /// <param name="regionSpawnData">Spawn data per region (for danger levels)</param>
-    /// <param name="itemConfig">Item pool configuration</param>
-    /// <param name="itemBudget">Total item budget to spend</param>
+    /// <param name="config">Floor spawn configuration with density and value parameters</param>
     /// <param name="occupiedPositions">Already occupied positions</param>
-    /// <returns>Total budget consumed</returns>
-    public int DistributeItems(
+    /// <returns>Number of items placed</returns>
+    public int DistributeItemsByDensity(
         List<Region> regions,
         Dictionary<int, RegionSpawnData> regionSpawnData,
-        ItemSpawnConfig itemConfig,
-        int itemBudget,
+        FloorSpawnConfig config,
         HashSet<Vector2I> occupiedPositions)
     {
-        if (regions == null || regions.Count == 0 || itemBudget <= 0)
+        if (regions == null || regions.Count == 0)
             return 0;
 
-        int budgetSpent = 0;
+        // Calculate target item count from density
+        int totalTiles = regions.Sum(r => r.Tiles?.Count ?? 0);
+        int targetItems = Mathf.Max(1, Mathf.RoundToInt(totalTiles * config.ItemDensity));
 
-        // Sort regions by danger level (safer regions get more loot)
+        // Get valid items within value range
+        int minValue = config.GetMinItemValue();
+        int maxValue = config.GetMaxItemValue();
+        var validItems = GetSpawnableItems(minValue, maxValue);
+
+        // Check for out-of-depth items
+        if (config.CreatureOutOfDepthChance > 0 && _rng.Randf() < config.CreatureOutOfDepthChance)
+        {
+            int oodMinValue = maxValue + 1;
+            int oodMaxValue = maxValue + config.OutOfDepthFloors * 2;
+            var oodItems = GetSpawnableItems(oodMinValue, oodMaxValue);
+            if (oodItems.Count > 0)
+            {
+                validItems.AddRange(oodItems);
+                GD.Print($"[LootDistributor] Out-of-depth triggered! Added {oodItems.Count} items from value range {oodMinValue}-{oodMaxValue}");
+            }
+        }
+
+        if (validItems.Count == 0)
+        {
+            GD.PushWarning($"[LootDistributor] No spawnable items found in value range {minValue}-{maxValue}");
+            return 0;
+        }
+
+        int itemsPlaced = 0;
+
+        // Sort regions by danger (more dangerous = better loot placement preference)
         var sortedRegions = regions
             .Where(r => regionSpawnData.ContainsKey(r.Id))
-            .OrderBy(r => regionSpawnData[r.Id].TotalThreatSpawned)
+            .OrderByDescending(r => regionSpawnData[r.Id].DangerLevel)
             .ToList();
 
-        // Distribute budget proportionally, with safer regions getting more
-        int regionsToUse = Mathf.Min(sortedRegions.Count, itemBudget);
+        if (sortedRegions.Count == 0)
+            sortedRegions = regions.ToList();
 
-        for (int i = 0; i < regionsToUse && budgetSpent < itemBudget; i++)
+        // Distribute items across regions
+        for (int i = 0; i < targetItems; i++)
         {
+            // Cycle through regions, with bias towards dangerous regions for higher value items
             int regionIndex = i % sortedRegions.Count;
             var region = sortedRegions[regionIndex];
-            var spawnData = regionSpawnData[region.Id];
 
-            // Determine rarity based on region danger
-            ItemRarity maxRarity = spawnData.TotalThreatSpawned switch
+            // Select item with inverse value weighting
+            var (itemId, itemData) = SelectItemWeighted(validItems, maxValue);
+            if (itemData == null)
+                continue;
+
+            var position = FindLootPosition(region, occupiedPositions);
+            if (position == null)
+                continue;
+
+            var itemEntity = _entityFactory.CreateItem(itemId, position.Value);
+            if (itemEntity == null)
+                continue;
+
+            _entityManager.AddEntity(itemEntity);
+            occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
+            itemsPlaced++;
+        }
+
+        GD.Print($"[LootDistributor] Placed {itemsPlaced}/{targetItems} items (density {config.ItemDensity:P0} of {totalTiles} tiles, value range {minValue}-{maxValue})");
+        return itemsPlaced;
+    }
+
+    /// <summary>
+    /// Gets all items that can spawn automatically within the given value range.
+    /// </summary>
+    private List<(string id, ItemData data)> GetSpawnableItems(int minValue, int maxValue)
+    {
+        var result = new List<(string id, ItemData data)>();
+
+        foreach (var itemData in _dataLoader.Items.GetAll())
+        {
+            // Skip items marked as not auto-spawning
+            if (itemData.NoAutoSpawn)
+                continue;
+
+            // Check value range
+            if (itemData.Value >= minValue && itemData.Value <= maxValue)
             {
-                > 15 => ItemRarity.Rare,      // Dangerous regions can have rare items
-                > 5 => ItemRarity.Uncommon,   // Medium regions get uncommon
-                _ => ItemRarity.Common         // Safe regions get common
-            };
-
-            // Select and place an item
-            var (itemId, itemData) = SelectItemWithinRarity(itemConfig, maxRarity);
-            if (itemData == null)
-                continue;
-
-            var position = FindLootPosition(region, occupiedPositions);
-            if (position == null)
-                continue;
-
-            var itemEntity = _entityFactory.CreateItem(itemId, position.Value);
-            if (itemEntity == null)
-                continue;
-
-            _entityManager.AddEntity(itemEntity);
-            occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
-
-            budgetSpent += itemData.Value > 0 ? itemData.Value : 1;
+                result.Add((itemData.DataFileId, itemData));
+            }
         }
 
-        return budgetSpent;
+        return result;
     }
 
     /// <summary>
-    /// Places consumable items (potions, scrolls) in the dungeon.
+    /// Selects an item using inverse value weighting (lower value = more common).
     /// </summary>
-    public int PlaceConsumables(
-        List<Region> regions,
-        ItemSpawnConfig itemConfig,
-        int count,
-        HashSet<Vector2I> occupiedPositions)
+    private (string id, ItemData data) SelectItemWeighted(List<(string id, ItemData data)> items, int maxValue)
     {
-        int placed = 0;
-
-        for (int i = 0; i < count && regions.Count > 0; i++)
-        {
-            var region = regions[_rng.RandiRange(0, regions.Count - 1)];
-
-            // Select a consumable item (common rarity)
-            var (itemId, itemData) = SelectItemWithinRarity(itemConfig, ItemRarity.Common);
-            if (itemData == null)
-                continue;
-
-            var position = FindLootPosition(region, occupiedPositions);
-            if (position == null)
-                continue;
-
-            var itemEntity = _entityFactory.CreateItem(itemId, position.Value);
-            if (itemEntity == null)
-                continue;
-
-            _entityManager.AddEntity(itemEntity);
-            occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
-            placed++;
-        }
-
-        return placed;
-    }
-
-    /// <summary>
-    /// Selects an item up to the given maximum rarity.
-    /// </summary>
-    private (string id, ItemData data) SelectItemWithinRarity(ItemSpawnConfig config, ItemRarity maxRarity)
-    {
-        var candidates = new List<(string id, ItemData data, int weight)>();
-
-        // Always include common items
-        AddItemsFromPool(candidates, config.CommonItems, config.CommonWeight);
-
-        if (maxRarity >= ItemRarity.Uncommon)
-        {
-            AddItemsFromPool(candidates, config.UncommonItems, config.UncommonWeight);
-        }
-        if (maxRarity >= ItemRarity.Rare)
-        {
-            AddItemsFromPool(candidates, config.RareItems, config.RareWeight);
-        }
-        if (maxRarity >= ItemRarity.Epic)
-        {
-            AddItemsFromPool(candidates, config.EpicItems, config.EpicWeight);
-        }
-
-        if (candidates.Count == 0)
+        if (items == null || items.Count == 0)
             return (null, null);
 
-        // Weighted random selection
-        int totalWeight = candidates.Sum(c => c.weight);
+        // Calculate weights: lower value items are more common
+        // Weight = maxValue - item.Value + 1 (so value 1 has weight maxValue, value maxValue has weight 1)
+        var weighted = items.Select(i => (
+            id: i.id,
+            data: i.data,
+            weight: Mathf.Max(1, maxValue - i.data.Value + 1)
+        )).ToList();
+
+        int totalWeight = weighted.Sum(w => w.weight);
         if (totalWeight == 0)
         {
-            var random = candidates[_rng.RandiRange(0, candidates.Count - 1)];
+            var random = items[_rng.RandiRange(0, items.Count - 1)];
             return (random.id, random.data);
         }
 
         int roll = _rng.RandiRange(0, totalWeight - 1);
         int cumulative = 0;
 
-        foreach (var (id, data, weight) in candidates)
+        foreach (var (id, data, weight) in weighted)
         {
             cumulative += weight;
             if (roll < cumulative)
                 return (id, data);
         }
 
-        return (candidates[0].id, candidates[0].data);
-    }
-
-    private void AddItemsFromPool(
-        List<(string id, ItemData data, int weight)> candidates,
-        List<string> itemIds,
-        int weight)
-    {
-        foreach (var itemId in itemIds)
-        {
-            var data = _dataLoader.Items.Get(itemId);
-            if (data != null)
-            {
-                candidates.Add((itemId, data, weight));
-            }
-            else
-            {
-                GD.PushWarning($"[LootDistributor] Item '{itemId}' not found in data loader");
-            }
-        }
+        return (items[0].id, items[0].data);
     }
 
     /// <summary>

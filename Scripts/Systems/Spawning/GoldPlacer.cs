@@ -4,6 +4,7 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Generation.Metadata;
+using PitsOfDespair.Systems.Spawning.Data;
 
 namespace PitsOfDespair.Systems.Spawning;
 
@@ -24,42 +25,81 @@ public class GoldPlacer
 	}
 
 	/// <summary>
-	/// Distributes gold across the dungeon floor.
+	/// Distributes gold across the dungeon floor using density-based spawning.
+	/// Gold pile sizes scale with floor depth.
 	/// </summary>
 	/// <param name="regions">All regions on the floor</param>
 	/// <param name="regionSpawnData">Spawn data per region</param>
-	/// <param name="goldBudget">Total gold to place</param>
+	/// <param name="config">Floor spawn configuration with density and scaling parameters</param>
 	/// <param name="floorDepth">Current floor depth (affects pile sizes)</param>
 	/// <param name="occupiedPositions">Already occupied positions</param>
 	/// <returns>Total gold placed</returns>
-	public int DistributeGold(
+	public int DistributeGoldByDensity(
 		List<Region> regions,
 		Dictionary<int, RegionSpawnData> regionSpawnData,
-		int goldBudget,
+		FloorSpawnConfig config,
 		int floorDepth,
 		HashSet<Vector2I> occupiedPositions)
 	{
-		if (regions == null || regions.Count == 0 || goldBudget <= 0)
+		if (regions == null || regions.Count == 0)
 			return 0;
+
+		// Calculate target piles from density
+		int totalTiles = regions.Sum(r => r.Tiles?.Count ?? 0);
+		int targetPiles = Mathf.Max(1, Mathf.RoundToInt(totalTiles * config.GoldDensity));
+
+		// Calculate pile size from floor depth
+		float floorMultiplier = 1.0f + (floorDepth - 1) * config.GoldFloorScale;
+		int basePile = Mathf.RoundToInt(config.BaseGoldPerPile * floorMultiplier);
+		int minPileSize = Mathf.Max(1, basePile - 2);
+		int maxPileSize = basePile + 3;
 
 		int goldPlaced = 0;
 
-		// Calculate number of piles based on budget
-		int minPileSize = 1 + floorDepth;
-		int maxPileSize = 5 + (floorDepth * 2);
-		int avgPileSize = (minPileSize + maxPileSize) / 2;
-		int targetPiles = Mathf.Max(1, goldBudget / avgPileSize);
-
-		// Place some gold in dangerous regions (guarded treasure)
+		// Place some gold in dangerous regions (guarded treasure) - about 1/3
 		int guardedPiles = targetPiles / 3;
 		goldPlaced += PlaceGuardedGold(regions, regionSpawnData, guardedPiles,
 			minPileSize, maxPileSize, occupiedPositions);
 
-		// Place remaining gold scattered throughout
+		// Place remaining gold scattered throughout - about 2/3
 		int scatteredPiles = targetPiles - guardedPiles;
-		int remainingBudget = goldBudget - goldPlaced;
-		goldPlaced += PlaceScatteredGold(regions, scatteredPiles, remainingBudget,
+		goldPlaced += PlaceScatteredGoldByDensity(regions, scatteredPiles,
 			minPileSize, maxPileSize, occupiedPositions);
+
+		GD.Print($"[GoldPlacer] Placed {goldPlaced} gold in {targetPiles} piles (density {config.GoldDensity:P0} of {totalTiles} tiles, floor {floorDepth} multiplier {floorMultiplier:F2}x)");
+		return goldPlaced;
+	}
+
+	/// <summary>
+	/// Places gold piles scattered throughout regions (density-based version, no budget cap).
+	/// </summary>
+	private int PlaceScatteredGoldByDensity(
+		List<Region> regions,
+		int pileCount,
+		int minPile,
+		int maxPile,
+		HashSet<Vector2I> occupiedPositions)
+	{
+		int goldPlaced = 0;
+
+		for (int i = 0; i < pileCount && regions.Count > 0; i++)
+		{
+			var region = regions[_rng.RandiRange(0, regions.Count - 1)];
+
+			var position = FindGoldPosition(region, occupiedPositions);
+			if (position == null)
+				continue;
+
+			int amount = _rng.RandiRange(minPile, maxPile);
+
+			var goldPile = CreateGoldPile(amount, position.Value);
+			if (goldPile != null)
+			{
+				_entityManager.AddEntity(goldPile);
+				occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
+				goldPlaced += amount;
+			}
+		}
 
 		return goldPlaced;
 	}
@@ -95,45 +135,6 @@ public class GoldPlacer
 			// Larger piles in more dangerous areas
 			int dangerBonus = regionSpawnData[region.Id].TotalThreatSpawned / 5;
 			int amount = _rng.RandiRange(minPile + dangerBonus, maxPile + dangerBonus);
-
-			var goldPile = CreateGoldPile(amount, position.Value);
-			if (goldPile != null)
-			{
-				_entityManager.AddEntity(goldPile);
-				occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
-				goldPlaced += amount;
-			}
-		}
-
-		return goldPlaced;
-	}
-
-	/// <summary>
-	/// Places gold piles scattered throughout all regions.
-	/// </summary>
-	private int PlaceScatteredGold(
-		List<Region> regions,
-		int pileCount,
-		int maxGold,
-		int minPile,
-		int maxPile,
-		HashSet<Vector2I> occupiedPositions)
-	{
-		int goldPlaced = 0;
-
-		for (int i = 0; i < pileCount && goldPlaced < maxGold && regions.Count > 0; i++)
-		{
-			var region = regions[_rng.RandiRange(0, regions.Count - 1)];
-
-			var position = FindGoldPosition(region, occupiedPositions);
-			if (position == null)
-				continue;
-
-			int amount = _rng.RandiRange(minPile, maxPile);
-			amount = Mathf.Min(amount, maxGold - goldPlaced);
-
-			if (amount <= 0)
-				break;
 
 			var goldPile = CreateGoldPile(amount, position.Value);
 			if (goldPile != null)

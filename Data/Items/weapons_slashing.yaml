@@ -5,6 +5,7 @@ defaults:
 entries:
   rusty_knife:
     name: rusty knife
+    value: 1
     color: Palette.RustedIron
     description: A corroded blade caked with old blood. What it lacks in craftsmanship it makes up for in tetanus.
     attack:
@@ -14,6 +15,7 @@ entries:
 
   short_sword:
     name: short sword
+    value: 2
     color: Palette.Steel
     description: A serviceable blade of cold steel, nicked from use but still keen. The leather-wrapped grip shows the marks of desperate combat.
     attack:
@@ -23,6 +25,7 @@ entries:
 
   axe:
     name: hand axe
+    value: 3
     color: Palette.BrutalIron
     description: A brutal wedge of iron on a wooden haft. It bites deep and leaves ragged wounds that weep.
     attack:
@@ -32,6 +35,7 @@ entries:
 
   broadsword:
     name: broadsword
+    value: 4
     color: Palette.Bronze
     description: A wide bronze blade, heavier than it looks. It hacks and cleaves where finer swords would thrust.
     attack:

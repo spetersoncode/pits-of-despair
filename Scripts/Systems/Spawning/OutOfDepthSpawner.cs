@@ -52,14 +52,14 @@ public class OutOfDepthSpawner
         HashSet<Vector2I> occupiedPositions)
     {
         // Check if out-of-depth triggers
-        if (floorConfig.OutOfDepthChance <= 0)
+        if (floorConfig.CreatureOutOfDepthChance <= 0)
             return null;
 
         float roll = _rng.Randf();
-        if (roll > floorConfig.OutOfDepthChance)
+        if (roll > floorConfig.CreatureOutOfDepthChance)
             return null;
 
-        GD.Print($"OutOfDepthSpawner: Out-of-depth triggered! (rolled {roll:F2} vs {floorConfig.OutOfDepthChance:F2})");
+        GD.Print($"OutOfDepthSpawner: Out-of-depth triggered! (rolled {roll:F2} vs {floorConfig.CreatureOutOfDepthChance:F2})");
 
         // Find valid deeper floor config
         int targetFloor = currentFloor + floorConfig.OutOfDepthFloors;

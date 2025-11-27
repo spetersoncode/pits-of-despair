@@ -2,16 +2,18 @@ name: "Dungeon Entrance"
 minFloor: 1
 maxFloor: 1
 
-# Crawl-style budgets for items/gold
-itemBudget: "3d9+3"
-goldBudget: "3d10+15"
-
 # Threat limits - easy creatures with some variety
 minThreat: 1
 maxThreat: 2
 
+# Density-based spawning
+itemDensity: 0.006
+goldDensity: 0.015
+baseGoldPerPile: 8
+goldFloorScale: 1.0
+
 # No out-of-depth on first floor
-outOfDepthChance: 0.0
+creatureOutOfDepthChance: 0.0
 
 # Unique creatures for this floor
 uniqueCreatures:
@@ -39,31 +41,3 @@ encounterWeights:
     weight: 15
   - id: guard
     weight: 15
-
-# Item configuration
-items:
-  commonItems:
-    - ammo_arrow
-    - potion_agility_1
-    - potion_armor_1
-    - potion_endurance_1
-  uncommonItems:
-    - armor_leather
-    - potion_strength_1
-    - scroll_blink
-    - scroll_teleport
-    - weapon_short_bow
-    - weapon_short_sword
-  rareItems:
-    - scroll_charm
-    - scroll_fear
-    - scroll_sleep
-    - ring_evasion
-    - weapon_spear
-  epicItems: []
-  unguardedItemChance: 0.5
-  minGuardedRarity: uncommon
-  commonWeight: 70
-  uncommonWeight: 25
-  rareWeight: 5
-  epicWeight: 0

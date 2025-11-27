@@ -2,14 +2,16 @@ name: "Deeper Halls"
 minFloor: 5
 maxFloor: 5
 
-# Item and gold budgets
-itemBudget: "3d9+3"
-goldBudget: "3d10+27"
-
 minThreat: 1
 maxThreat: 5
 
-outOfDepthChance: 0.12
+# Density-based spawning
+itemDensity: 0.006
+goldDensity: 0.015
+baseGoldPerPile: 8
+goldFloorScale: 1.0
+
+creatureOutOfDepthChance: 0.12
 outOfDepthFloors: 2
 
 # Last goblinoid floor, balanced themes
@@ -34,31 +36,3 @@ encounterWeights:
     weight: 10
   - id: swarm
     weight: 10
-
-items:
-  commonItems:
-    - potion_strength_1
-    - potion_agility_1
-    - potion_endurance_1
-    - potion_armor_1
-    - potion_will_1
-  uncommonItems:
-    - potion_strength_2
-    - potion_agility_2
-    - potion_endurance_2
-    - potion_armor_2
-    - potion_will_2
-  rareItems:
-    - potion_haste
-    - potion_strength_3
-    - potion_agility_3
-    - potion_armor_3
-  epicItems:
-    - potion_endurance_3
-    - potion_will_3
-  unguardedItemChance: 0.25
-  minGuardedRarity: rare
-  commonWeight: 50
-  uncommonWeight: 30
-  rareWeight: 15
-  epicWeight: 5

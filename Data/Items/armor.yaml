@@ -5,18 +5,21 @@ defaults:
 entries:
   padded:
     name: padded armor
+    value: 1
     color: Palette.Wool
     description: Layers of quilted cloth and wool that offer minimal protection. Better than nothing, but only just.
     armor: 1
 
   leather:
     name: leather armor
+    value: 2
     color: Palette.SoftLeather
     description: Supple leather hardened with oils and wax. Light enough to move freely, tough enough to turn a glancing blow.
     armor: 2
 
   studded_leather:
     name: studded leather armor
+    value: 3
     color: Palette.ToughLeather
     description: Tough leather reinforced with metal studs along the vital areas. The weight slows you slightly, but the protection is worth it.
     armor: 3
@@ -24,6 +27,7 @@ entries:
 
   hide:
     name: hide armor
+    value: 3
     color: Palette.RawHide
     description: Thick animal hide crudely stitched together. Bulky and awkward, but it can absorb tremendous punishment.
     armor: 3
@@ -31,6 +35,7 @@ entries:
 
   chain_shirt:
     name: chain shirt
+    value: 4
     color: Palette.Bronze
     description: Interlocking rings of bronze that flow like water when worn. The weight settles on your shoulders with grim familiarity.
     armor: 4
@@ -38,6 +43,7 @@ entries:
 
   scale_mail:
     name: scale mail
+    value: 4
     color: Palette.Copper
     description: Overlapping copper plates sewn to leather backing, reminiscent of serpent scales. Heavy and cumbersome, but it catches blades effectively.
     armor: 4
@@ -45,6 +51,7 @@ entries:
 
   chainmail:
     name: chainmail
+    value: 5
     color: Palette.Silver
     description: A full hauberk of interlocked rings that jingles softly with every movement. The weight is crushing, but few weapons can penetrate its weave.
     armor: 5
@@ -52,6 +59,7 @@ entries:
 
   breastplate:
     name: breastplate
+    value: 5
     color: Palette.Steel
     description: Forged steel shaped to deflect blows from the heart and lungs. Battle-scarred but dependable, a fortress for your chest.
     armor: 5
@@ -59,6 +67,7 @@ entries:
 
   splint_mail:
     name: splint mail
+    value: 6
     color: Palette.CrudeIron
     description: Vertical strips of iron riveted to a leather backing. Crude and brutally heavy, but it turns even savage blows.
     armor: 6
@@ -66,6 +75,7 @@ entries:
 
   banded_mail:
     name: banded mail
+    value: 6
     color: Palette.Iron
     description: Horizontal iron bands fastened to chain and leather. Each band bears the hammer marks of its forging, and the scars of past battles.
     armor: 6
@@ -73,6 +83,7 @@ entries:
 
   half_plate:
     name: half-plate
+    value: 7
     color: Palette.ForgedSteel
     description: Masterwork plates protecting chest, shoulders, and thighs, backed with mail. Moving in this is exhausting, but you feel nearly invincible.
     armor: 7
@@ -80,7 +91,33 @@ entries:
 
   full_plate:
     name: full plate
+    value: 9
     color: Palette.RefinedSteel
     description: The pinnacle of the armorer's art. Articulated steel encases you from head to toe, transforming you into a walking fortress.
     armor: 8
     evasion: -6
+
+  # Evasion-focused armor (low protection, evasion bonuses)
+  silk_robes:
+    name: silk robes
+    value: 2
+    color: Palette.Ivory
+    description: Flowing robes of enchanted silk that ripple like water. They offer no protection, but enemies find you impossibly hard to hit.
+    armor: 0
+    evasion: 2
+
+  shadow_cloak:
+    name: shadow cloak
+    value: 4
+    color: Palette.Shadow
+    description: A cloak woven from darkness itself, its edges blur and shift. Attacks pass through where you seemed to be a moment ago.
+    armor: 1
+    evasion: 3
+
+  elven_mail:
+    name: elven mail
+    value: 6
+    color: Palette.Mithril
+    description: Gossamer-thin rings of silvery metal, light as cloth yet strong as steel. Elven craftsmanship at its finest, favoring grace over brute protection.
+    armor: 2
+    evasion: 4

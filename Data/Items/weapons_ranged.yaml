@@ -6,6 +6,7 @@ defaults:
 entries:
   short_bow:
     name: short bow
+    value: 4
     color: Palette.Yew
     description: Crafted from supple yew, this bow has ended lives from the shadows. The string hums with barely-contained tension when drawn.
     attack:

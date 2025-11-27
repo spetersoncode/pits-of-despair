@@ -33,17 +33,22 @@ public class TreasurePlacer
     }
 
     /// <summary>
-    /// Places a guarded treasure in a region. Returns the item value consumed from budget.
+    /// Places a guarded treasure in a region using value-based selection.
+    /// Higher threat guardians guard higher value items.
     /// </summary>
+    /// <param name="region">Region to place treasure in</param>
+    /// <param name="config">Floor spawn config with value ranges</param>
+    /// <param name="guardianThreat">Threat level of guardians in this region</param>
+    /// <param name="occupiedPositions">Already occupied positions</param>
+    /// <returns>Number of items placed</returns>
     public int PlaceGuardedTreasure(
         Region region,
-        ItemSpawnConfig itemConfig,
-        int itemBudget,
+        FloorSpawnConfig config,
         int guardianThreat,
         HashSet<Vector2I> occupiedPositions)
     {
-        // Select item based on guardian strength (stronger guardian = rarer item)
-        var (itemId, itemData) = SelectItemForGuardian(itemConfig, guardianThreat);
+        // Select item based on guardian strength (stronger guardian = higher value item)
+        var (itemId, itemData) = SelectItemForGuardian(config, guardianThreat);
         if (itemData == null)
             return 0;
 
@@ -60,7 +65,8 @@ public class TreasurePlacer
         _entityManager.AddEntity(itemEntity);
         occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
 
-        return itemData.Value > 0 ? itemData.Value : 1;
+        GD.Print($"[TreasurePlacer] Placed guarded treasure '{itemId}' (value {itemData.Value}) with guardian threat {guardianThreat}");
+        return 1;
     }
 
     /// <summary>
@@ -68,12 +74,14 @@ public class TreasurePlacer
     /// </summary>
     public int PlaceUnguardedTreasure(
         Region region,
-        ItemSpawnConfig itemConfig,
-        int itemBudget,
+        FloorSpawnConfig config,
         HashSet<Vector2I> occupiedPositions)
     {
-        // Select a common/uncommon item for unguarded placement
-        var (itemId, itemData) = SelectItemByRarity(itemConfig, ItemRarity.Common, ItemRarity.Uncommon);
+        // Select a lower-value item for unguarded placement
+        int minValue = config.GetMinItemValue();
+        int maxValue = minValue + 1; // Only lowest tier items unguarded
+
+        var (itemId, itemData) = SelectItemByValueRange(minValue, maxValue);
         if (itemData == null)
             return 0;
 
@@ -88,64 +96,58 @@ public class TreasurePlacer
         _entityManager.AddEntity(itemEntity);
         occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
 
-        return itemData.Value > 0 ? itemData.Value : 1;
+        return 1;
     }
 
     /// <summary>
     /// Selects an item appropriate for the guardian's threat level.
-    /// Higher threat guardians guard rarer items.
+    /// Higher threat guardians guard higher value items.
     /// </summary>
-    private (string id, ItemData data) SelectItemForGuardian(ItemSpawnConfig config, int guardianThreat)
+    private (string id, ItemData data) SelectItemForGuardian(FloorSpawnConfig config, int guardianThreat)
     {
-        // Map guardian threat to item rarity
-        ItemRarity minRarity;
-        ItemRarity maxRarity;
+        int minValue = config.GetMinItemValue();
+        int maxValue = config.GetMaxItemValue();
+
+        // Map guardian threat to item value range
+        // Higher threat = bias towards higher value items
+        int valueRange = maxValue - minValue;
 
         if (guardianThreat >= 16)
         {
-            minRarity = ItemRarity.Rare;
-            maxRarity = ItemRarity.Epic;
+            // Very dangerous - high value items only
+            minValue = maxValue - (valueRange / 3);
         }
         else if (guardianThreat >= 8)
         {
-            minRarity = ItemRarity.Uncommon;
-            maxRarity = ItemRarity.Rare;
+            // Moderately dangerous - mid-to-high value items
+            minValue = minValue + (valueRange / 3);
         }
-        else
-        {
-            minRarity = ItemRarity.Common;
-            maxRarity = ItemRarity.Uncommon;
-        }
+        // else: lower danger regions get full value range
 
-        return SelectItemByRarity(config, minRarity, maxRarity);
+        return SelectItemByValueRange(minValue, maxValue);
     }
 
     /// <summary>
-    /// Selects an item within the given rarity range using weighted random.
+    /// Selects an item within the given value range.
+    /// Uses inverse value weighting (lower value = more common).
     /// </summary>
-    private (string id, ItemData data) SelectItemByRarity(
-        ItemSpawnConfig config,
-        ItemRarity minRarity,
-        ItemRarity maxRarity)
+    private (string id, ItemData data) SelectItemByValueRange(int minValue, int maxValue)
     {
         var candidates = new List<(string id, ItemData data, int weight)>();
 
-        // Add items from each rarity tier within range
-        if (minRarity <= ItemRarity.Common && maxRarity >= ItemRarity.Common)
+        foreach (var itemData in _dataLoader.Items.GetAll())
         {
-            AddItemsFromPool(candidates, config.CommonItems, config.CommonWeight);
-        }
-        if (minRarity <= ItemRarity.Uncommon && maxRarity >= ItemRarity.Uncommon)
-        {
-            AddItemsFromPool(candidates, config.UncommonItems, config.UncommonWeight);
-        }
-        if (minRarity <= ItemRarity.Rare && maxRarity >= ItemRarity.Rare)
-        {
-            AddItemsFromPool(candidates, config.RareItems, config.RareWeight);
-        }
-        if (minRarity <= ItemRarity.Epic && maxRarity >= ItemRarity.Epic)
-        {
-            AddItemsFromPool(candidates, config.EpicItems, config.EpicWeight);
+            // Skip items marked as not auto-spawning
+            if (itemData.NoAutoSpawn)
+                continue;
+
+            // Check value range
+            if (itemData.Value >= minValue && itemData.Value <= maxValue)
+            {
+                // Inverse value weighting: lower value = higher weight
+                int weight = Mathf.Max(1, maxValue - itemData.Value + 1);
+                candidates.Add((itemData.DataFileId, itemData, weight));
+            }
         }
 
         if (candidates.Count == 0)
@@ -170,25 +172,6 @@ public class TreasurePlacer
         }
 
         return (candidates[0].id, candidates[0].data);
-    }
-
-    private void AddItemsFromPool(
-        List<(string id, ItemData data, int weight)> candidates,
-        List<string> itemIds,
-        int weight)
-    {
-        foreach (var itemId in itemIds)
-        {
-            var data = _dataLoader.Items.Get(itemId);
-            if (data != null)
-            {
-                candidates.Add((itemId, data, weight));
-            }
-            else
-            {
-                GD.PushWarning($"[TreasurePlacer] Item '{itemId}' not found in data loader");
-            }
-        }
     }
 
     /// <summary>
