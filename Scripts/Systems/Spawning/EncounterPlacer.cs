@@ -16,16 +16,6 @@ public class EncounterPlacer
     private readonly DataLoader _dataLoader;
     private readonly RandomNumberGenerator _rng;
 
-    /// <summary>
-    /// Minimum distance (squared) between encounter centers.
-    /// </summary>
-    private const int MinEncounterSpacingSquared = 36; // 6 tiles
-
-    /// <summary>
-    /// Maximum encounters per region. One encounter per region spreads population naturally.
-    /// </summary>
-    private const int MaxEncountersPerRegion = 1;
-
     public EncounterPlacer(DataLoader dataLoader)
     {
         _dataLoader = dataLoader;
@@ -77,21 +67,21 @@ public class EncounterPlacer
         int attempts = 0;
 
         // Calculate max encounters for this region based on size
-        int maxEncounters = GetMaxEncountersForRegion(region);
+        int maxEncounters = config?.MaxEncountersPerRegion ?? 1;
 
         while (attempts < maxAttempts && placedEncounters.Count < maxEncounters)
         {
             attempts++;
 
             // Select an encounter template
-            var template = SelectTemplate(availableTemplates, spawnData, region);
+            var template = SelectTemplate(availableTemplates, spawnData, region, config);
             if (template == null)
             {
                 break; // No templates available
             }
 
             // Find a valid position for this encounter
-            var position = FindEncounterPosition(region, template, encounterCenters, occupiedPositions);
+            var position = FindEncounterPosition(region, template, encounterCenters, occupiedPositions, config);
             if (position == null)
             {
                 continue; // No valid position, try different template
@@ -190,12 +180,17 @@ public class EncounterPlacer
     private EncounterTemplate SelectTemplate(
         List<(EncounterTemplate template, int configWeight)> templates,
         RegionSpawnData spawnData,
-        Region region)
+        Region region,
+        FloorSpawnConfig config)
     {
         var validTemplates = templates.ToList();
 
         if (validTemplates.Count == 0)
             return null;
+
+        // Get multipliers from config
+        float regionMatchMult = config?.RegionMatchMultiplier ?? 1.5f;
+        float dangerBonusMult = config?.DangerBonusMultiplier ?? 1.3f;
 
         // Weight templates using config weight × fit multiplier
         var weightedTemplates = new List<(EncounterTemplate template, int weight)>();
@@ -205,23 +200,23 @@ public class EncounterPlacer
         {
             float fitMultiplier = 1.0f;
 
-            // Region preference match: 1.5x
+            // Region preference match
             if (template.Placement.PreferredRegions.Count > 0)
             {
                 foreach (var preferred in template.Placement.PreferredRegions)
                 {
                     if (MatchesRegionType(region, preferred))
                     {
-                        fitMultiplier *= 1.5f;
+                        fitMultiplier *= regionMatchMult;
                         break;
                     }
                 }
             }
 
-            // Danger level bonus for ambush: 1.3x
+            // Danger level bonus for ambush
             if (spawnData.DangerLevel > 1.2f && template.Type == EncounterType.Ambush)
             {
-                fitMultiplier *= 1.3f;
+                fitMultiplier *= dangerBonusMult;
             }
 
             int finalWeight = Mathf.RoundToInt(configWeight * fitMultiplier);
@@ -253,8 +248,12 @@ public class EncounterPlacer
         Region region,
         EncounterTemplate template,
         List<GridPosition> existingCenters,
-        HashSet<Vector2I> occupiedPositions)
+        HashSet<Vector2I> occupiedPositions,
+        FloorSpawnConfig config)
     {
+        // Get spacing from config
+        int minSpacing = config?.MinEncounterSpacing ?? 6;
+        int minSpacingSquared = minSpacing * minSpacing;
         List<GridPosition> candidates;
 
         // Select candidates based on template preferences
@@ -301,7 +300,7 @@ public class EncounterPlacer
             {
                 int distSquared = (candidate.X - existing.X) * (candidate.X - existing.X) +
                                  (candidate.Y - existing.Y) * (candidate.Y - existing.Y);
-                if (distSquared < MinEncounterSpacingSquared)
+                if (distSquared < minSpacingSquared)
                 {
                     tooClose = true;
                     break;
@@ -315,13 +314,5 @@ public class EncounterPlacer
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Gets the maximum number of encounters allowed in a region.
-    /// </summary>
-    private int GetMaxEncountersForRegion(Region region)
-    {
-        return MaxEncountersPerRegion;
     }
 }

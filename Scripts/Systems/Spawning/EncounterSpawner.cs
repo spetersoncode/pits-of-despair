@@ -198,16 +198,33 @@ public class EncounterSpawner
                     continue;
             }
 
+            // Get config values for scoring
+            int baseScore = encounter.FloorConfig?.BaseScore ?? 50;
+            int noMatchScore = encounter.FloorConfig?.NoMatchScore ?? 10;
+            int matchScoreBonus = encounter.FloorConfig?.MatchScoreBonus ?? 50;
+            int roleKeywordBonus = encounter.FloorConfig?.RoleKeywordBonus ?? 20;
+            int maxThreat = encounter.FloorConfig?.MaxThreat ?? 999;
+
             // Calculate match score (using preferred archetypes for scoring)
-            int score = ArchetypeInferrer.CalculateArchetypeMatchScore(creature.data, slot.PreferredArchetypes);
+            int score = ArchetypeInferrer.CalculateArchetypeMatchScore(
+                creature.data,
+                slot.PreferredArchetypes,
+                baseScore,
+                noMatchScore,
+                matchScoreBonus);
 
             // Bonus for role-specific keywords in creature name/type
             if (MatchesRoleKeywords(creature.data, slot.Role))
             {
-                score += 20;
+                score += roleKeywordBonus;
             }
 
-            candidates.Add((creature, score));
+            // Apply inverse threat weighting (lower threat = more common)
+            // Formula: weight = max(1, maxThreat - threat + 1)
+            int threatWeight = Mathf.Max(1, maxThreat - creature.data.Threat + 1);
+            int weightedScore = score * threatWeight;
+
+            candidates.Add((creature, weightedScore));
         }
 
         if (candidates.Count == 0)

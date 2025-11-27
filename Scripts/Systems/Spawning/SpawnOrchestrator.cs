@@ -37,10 +37,6 @@ public partial class SpawnOrchestrator : Node
     private OutOfDepthSpawner _outOfDepthSpawner;
     private DecorationSpawner _decorationSpawner;
 
-    // Configuration
-    private const int PlayerExclusionRadius = 13;
-    private const int MinimumCreatureCount = 3;
-
     /// <summary>
     /// Last spawn summary for debug inspection.
     /// </summary>
@@ -177,7 +173,7 @@ public partial class SpawnOrchestrator : Node
                 continue;
 
             // Skip regions in player exclusion zone
-            if (IsRegionInExclusionZone(region, playerPosition))
+            if (IsRegionInExclusionZone(region, playerPosition, floorConfig))
                 continue;
 
             // Place encounters in this region
@@ -250,7 +246,7 @@ public partial class SpawnOrchestrator : Node
         summary.DecorationsPlaced = decorationsPlaced;
 
         // Validation
-        ValidateSpawning(summary, metadata, playerPosition);
+        ValidateSpawning(summary, metadata, playerPosition, floorConfig);
 
         stopwatch.Stop();
         summary.SpawnTimeMs = stopwatch.ElapsedMilliseconds;
@@ -447,12 +443,13 @@ public partial class SpawnOrchestrator : Node
     /// <summary>
     /// Validates the spawning results.
     /// </summary>
-    private void ValidateSpawning(SpawnSummary summary, DungeonMetadata metadata, GridPosition playerPosition)
+    private void ValidateSpawning(SpawnSummary summary, DungeonMetadata metadata, GridPosition playerPosition, FloorSpawnConfig config)
     {
         // Check minimum creature count
-        if (summary.CreaturesSpawned < MinimumCreatureCount)
+        int minCreatures = config?.MinCreatureCount ?? 3;
+        if (summary.CreaturesSpawned < minCreatures)
         {
-            summary.AddWarning($"Below minimum creature count: {summary.CreaturesSpawned}/{MinimumCreatureCount}");
+            summary.AddWarning($"Below minimum creature count: {summary.CreaturesSpawned}/{minCreatures}");
         }
 
         // Check stairs were placed
@@ -476,9 +473,10 @@ public partial class SpawnOrchestrator : Node
     /// <summary>
     /// Checks if a region is within the player exclusion zone.
     /// </summary>
-    private bool IsRegionInExclusionZone(Region region, GridPosition playerPosition)
+    private bool IsRegionInExclusionZone(Region region, GridPosition playerPosition, FloorSpawnConfig config)
     {
-        int radiusSquared = PlayerExclusionRadius * PlayerExclusionRadius;
+        int radius = config?.PlayerExclusionRadius ?? 13;
+        int radiusSquared = radius * radius;
         int distSquared = DistanceHelper.EuclideanDistance(region.Centroid, playerPosition);
         return distSquared < radiusSquared;
     }

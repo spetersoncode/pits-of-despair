@@ -160,4 +160,72 @@ public class FloorSpawnConfig
     /// Each unique only spawns once per run.
     /// </summary>
     public List<UniqueSpawnEntry> UniqueCreatures { get; set; } = new();
+
+    #region Creature Selection Weights
+
+    /// <summary>
+    /// Base score for archetype matching when no preference specified.
+    /// Default 50 (neutral score).
+    /// </summary>
+    public int BaseScore { get; set; } = 50;
+
+    /// <summary>
+    /// Score when creature has no matching archetypes.
+    /// Default 10 (low but non-zero).
+    /// </summary>
+    public int NoMatchScore { get; set; } = 10;
+
+    /// <summary>
+    /// Bonus score range for archetype matches.
+    /// Full matches get this as max bonus. Default 50.
+    /// </summary>
+    public int MatchScoreBonus { get; set; } = 50;
+
+    /// <summary>
+    /// Bonus score for role keyword matches (e.g., "leader", "scout").
+    /// Default 20.
+    /// </summary>
+    public int RoleKeywordBonus { get; set; } = 20;
+
+    #endregion
+
+    #region Encounter Placement
+
+    /// <summary>
+    /// Minimum distance between encounter centers (in tiles).
+    /// Default 6.
+    /// </summary>
+    public int MinEncounterSpacing { get; set; } = 6;
+
+    /// <summary>
+    /// Maximum number of encounters per region.
+    /// Default 1.
+    /// </summary>
+    public int MaxEncountersPerRegion { get; set; } = 1;
+
+    /// <summary>
+    /// Radius around player start where no encounters spawn (in tiles).
+    /// Default 13.
+    /// </summary>
+    public int PlayerExclusionRadius { get; set; } = 13;
+
+    /// <summary>
+    /// Multiplier for template weight when region type matches preferred regions.
+    /// Default 1.5 (50% bonus).
+    /// </summary>
+    public float RegionMatchMultiplier { get; set; } = 1.5f;
+
+    /// <summary>
+    /// Multiplier for ambush template weight in dangerous regions.
+    /// Default 1.3 (30% bonus).
+    /// </summary>
+    public float DangerBonusMultiplier { get; set; } = 1.3f;
+
+    /// <summary>
+    /// Minimum creature count for floor validation.
+    /// Default 3.
+    /// </summary>
+    public int MinCreatureCount { get; set; } = 3;
+
+    #endregion
 }

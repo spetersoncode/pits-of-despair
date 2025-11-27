@@ -235,12 +235,22 @@ public static class ArchetypeInferrer
 
     /// <summary>
     /// Calculates how well a creature matches preferred archetypes.
-    /// Returns 0-100 score.
+    /// Returns score based on match quality.
     /// </summary>
-    public static int CalculateArchetypeMatchScore(CreatureData creature, List<string> preferredArchetypes)
+    /// <param name="creature">Creature to evaluate.</param>
+    /// <param name="preferredArchetypes">List of preferred archetype strings.</param>
+    /// <param name="baseScore">Score when no preference specified (default 50).</param>
+    /// <param name="noMatchScore">Score when no archetypes match (default 10).</param>
+    /// <param name="matchScoreBonus">Bonus range for matches (default 50).</param>
+    public static int CalculateArchetypeMatchScore(
+        CreatureData creature,
+        List<string> preferredArchetypes,
+        int baseScore = 50,
+        int noMatchScore = 10,
+        int matchScoreBonus = 50)
     {
         if (preferredArchetypes == null || preferredArchetypes.Count == 0)
-            return 50; // Neutral score for no preference
+            return baseScore; // Neutral score for no preference
 
         var creatureArchetypes = InferArchetypes(creature);
         int matchCount = 0;
@@ -255,10 +265,10 @@ public static class ArchetypeInferrer
         }
 
         if (matchCount == 0)
-            return 10; // Low but non-zero score
+            return noMatchScore; // Low but non-zero score
 
         // Score based on match ratio
-        return 50 + (matchCount * 50 / preferredArchetypes.Count);
+        return baseScore + (matchCount * matchScoreBonus / preferredArchetypes.Count);
     }
 
     /// <summary>
