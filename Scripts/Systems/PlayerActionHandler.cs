@@ -217,13 +217,9 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Create targeting definition from skill
-		var definition = TargetingDefinition.FromSkill(skill);
-
-		// Check if targeting is required
-		if (!definition.RequiresSelection)
+		// Check if skill is self-targeting - execute immediately without targeting mode
+		if (skill.IsSelfTargeting())
 		{
-			// Self-targeting skill - execute immediately
 			var action = new UseSkillAction(skill);
 			_player.ExecuteAction(action, _actionContext);
 			return;
@@ -254,13 +250,9 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Create targeting definition from skill
-		var definition = TargetingDefinition.FromSkill(skill);
-
-		// Check if targeting is required
-		if (!definition.RequiresSelection)
+		// Check if skill is self-targeting - execute immediately without targeting mode
+		if (skill.IsSelfTargeting())
 		{
-			// Self-targeting skill - execute immediately
 			var action = new UseSkillAction(skill);
 			_player.ExecuteAction(action, _actionContext);
 			return;

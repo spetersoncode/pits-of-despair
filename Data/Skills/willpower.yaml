@@ -9,7 +9,8 @@ entries:
     range: 8
     willpowerCost: 3
     tier: 1
-    prerequisites: {}
+    prerequisites:
+      level: 99
     tags:
       - spell
       - lightning
@@ -28,7 +29,8 @@ entries:
     range: 6
     willpowerCost: 4
     tier: 1
-    prerequisites: {}
+    prerequisites:
+      level: 99
     tags:
       - spell
       - lightning

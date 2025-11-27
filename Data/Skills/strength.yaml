@@ -3,11 +3,12 @@ type: strength
 entries:
   power_attack:
     name: Power Attack
-    description: Your next melee attack gains +3 to hit and damage.
+    description: Gain +3 STR for this turn.
     category: active
     targeting: self
     willpowerCost: 3
     consumesTurn: false
+    delayCost: 0
     tier: 1
     prerequisites:
       str: 1
