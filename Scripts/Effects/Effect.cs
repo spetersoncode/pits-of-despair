@@ -36,17 +36,6 @@ public abstract class Effect
     public abstract EffectResult Apply(EffectContext context);
 
     /// <summary>
-    /// Legacy method for backward compatibility during migration.
-    /// Wraps the old signature into the new context-based approach.
-    /// </summary>
-    [System.Obsolete("Use Apply(EffectContext) instead. This method exists for backward compatibility.")]
-    public EffectResult Apply(BaseEntity target, ActionContext actionContext)
-    {
-        var context = EffectContext.ForItem(target, target, actionContext);
-        return Apply(context);
-    }
-
-    /// <summary>
     /// Creates an effect from a unified effect definition.
     /// </summary>
     public static Effect? CreateFromDefinition(EffectDefinition definition)
