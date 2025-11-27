@@ -2,12 +2,11 @@ name: "Upper Dungeon"
 minFloor: 2
 maxFloor: 2
 
-# Crawl-style: 3dN+15 where N scales with depth
-powerBudget: "3d6+18"
+# Item and gold budgets
 itemBudget: "3d9+3"
 goldBudget: "3d10+18"
 
-minThreat: 1
+minThreat: 2
 maxThreat: 3
 
 # Small chance for out-of-depth
@@ -17,13 +16,13 @@ outOfDepthFloors: 2
 # Undead start appearing, beasts roam
 themeWeights:
   - id: vermin
-    weight: 30
+    weight: 10
   - id: goblinoid
     weight: 30
   - id: undead
-    weight: 25
+    weight: 30
   - id: beast
-    weight: 15
+    weight: 30
 
 # Encounter types
 encounterWeights:

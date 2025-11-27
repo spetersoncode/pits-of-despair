@@ -6,6 +6,7 @@ defaults:
 entries:
   wild_dog:
     name: wild dog
+    color: Palette.FurGray
     description: A feral hound with matted fur and hungry eyes. It travels in packs, patrolling the dungeon corridors in search of prey.
     threat: 1
     strength: 0
@@ -28,6 +29,7 @@ entries:
 
   wolf:
     name: wolf
+    color: Palette.FurTan
     description: A lean predator with intelligent eyes and powerful jaws. It hunts in coordinated packs, circling prey before striking.
     threat: 2
     strength: 1
@@ -50,7 +52,7 @@ entries:
 
   dire_wolf:
     name: dire wolf
-    color: Palette.Brute
+    color: Palette.FurFrost
     description: A massive wolf with frost-white fur and eyes like winter storms. Its howl freezes the blood of prey.
     threat: 3
     strength: 2

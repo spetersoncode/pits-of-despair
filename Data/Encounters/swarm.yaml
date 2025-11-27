@@ -9,8 +9,8 @@ slots:
     preferredArchetypes:
       - warrior
       - assassin
-    minCount: "2d3"
-    maxCount: "3d4"
+    minCount: "1d3+1"
+    maxCount: "2d3"
     threatMultiplier: 0.5
     placement: random
 

@@ -2,14 +2,11 @@ name: "Dungeon Entrance"
 minFloor: 1
 maxFloor: 1
 
-# Crawl-style budgets for 80x70 map
-# Monsters: 3dN+15 where N scales with depth
-# Items: 3 + 3d9 = 6-30 (Crawl formula)
-powerBudget: "3d4+15"
+# Crawl-style budgets for items/gold
 itemBudget: "3d9+3"
 goldBudget: "3d10+15"
 
-# Threat limits - keep creatures easy
+# Threat limits - easy creatures with some variety
 minThreat: 1
 maxThreat: 2
 

@@ -12,7 +12,7 @@ namespace PitsOfDespair.Systems.Spawning;
 
 /// <summary>
 /// Main orchestrator for dungeon population.
-/// Coordinates all spawning phases in the correct order using the power-budget system.
+/// Coordinates all spawning phases in the correct order using density-driven spawning.
 /// Replaces the old SpawnManager with encounter-based, region-themed spawning.
 /// </summary>
 public partial class SpawnOrchestrator : Node
@@ -25,7 +25,7 @@ public partial class SpawnOrchestrator : Node
 
     // Sub-systems
     private RegionThemeAssigner _themeAssigner;
-    private RegionBudgetAllocator _budgetAllocator;
+    private RegionDangerCalculator _dangerCalculator;
     private EncounterPlacer _encounterPlacer;
     private EncounterSpawner _encounterSpawner;
     private SpawnAIConfigurator _aiConfigurator;
@@ -71,7 +71,7 @@ public partial class SpawnOrchestrator : Node
     private void InitializeSubSystems()
     {
         _themeAssigner = new RegionThemeAssigner(_dataLoader);
-        _budgetAllocator = new RegionBudgetAllocator();
+        _dangerCalculator = new RegionDangerCalculator();
         _encounterPlacer = new EncounterPlacer(_dataLoader);
         _encounterSpawner = new EncounterSpawner(_entityFactory, _entityManager, _dataLoader);
         _aiConfigurator = new SpawnAIConfigurator(_mapSystem);
@@ -126,21 +126,18 @@ public partial class SpawnOrchestrator : Node
         // Region spawn data tracking
         var regionSpawnData = new Dictionary<int, RegionSpawnData>();
 
-        // Roll budgets
-        int powerBudget = floorConfig.RollPowerBudget();
+        // Roll item/gold budgets (power budget removed - density-driven spawning)
         int itemBudget = floorConfig.RollItemBudget();
         int goldBudget = floorConfig.RollGoldBudget();
 
-        summary.TotalPowerBudget = powerBudget;
         summary.TotalItemBudget = itemBudget;
         summary.TotalGoldBudget = goldBudget;
 
         // Phase 2: Assign themes to regions
         _themeAssigner.AssignThemes(metadata, floorConfig, regionSpawnData);
 
-        // Phase 3: Allocate budgets to regions
-        _budgetAllocator.AllocateBudgets(metadata, powerBudget, regionSpawnData, playerPosition);
-        _budgetAllocator.CalculateDangerLevels(metadata, regionSpawnData, playerPosition);
+        // Phase 3: Calculate danger levels for regions
+        _dangerCalculator.CalculateDangerLevels(metadata, regionSpawnData, playerPosition);
 
         // Record theme distribution
         foreach (var (regionId, spawnData) in regionSpawnData)
@@ -170,8 +167,14 @@ public partial class SpawnOrchestrator : Node
 
         // Phase 6: Spawn encounters per region
         var allEncounters = new List<SpawnedEncounter>();
+        int maxEncounters = Mathf.RoundToInt(metadata.Regions.Count * floorConfig.MaxEncounterRatio);
+
         foreach (var region in metadata.Regions)
         {
+            // Stop if we've hit the encounter cap
+            if (allEncounters.Count >= maxEncounters)
+                break;
+
             if (!regionSpawnData.TryGetValue(region.Id, out var spawnData))
                 continue;
 
@@ -298,10 +301,9 @@ public partial class SpawnOrchestrator : Node
                             TotalThreat = template.MinBudget
                         };
 
-                        if (spawnData.RemainingBudget >= template.MinBudget &&
-                            _encounterSpawner.SpawnEncounter(encounter, occupiedPositions))
+                        if (_encounterSpawner.SpawnEncounter(encounter, occupiedPositions))
                         {
-                            spawnData.ConsumeBudget(encounter.TotalThreat);
+                            spawnData.TotalThreatSpawned += encounter.TotalThreat;
                             summary.EncountersPlaced++;
                             summary.CreaturesSpawned += encounter.CreatureCount;
                             summary.TotalThreatSpawned += encounter.TotalThreat;
@@ -319,8 +321,8 @@ public partial class SpawnOrchestrator : Node
                         continue;
                     }
 
-                    // Check budget before spawning
-                    if (creatureData.Threat > spawnData.RemainingBudget)
+                    // Check threat band
+                    if (creatureData.Threat < floorConfig.MinThreat || creatureData.Threat > floorConfig.MaxThreat)
                         continue;
 
                     var position = hint.Position ?? FindAvailablePosition(region, occupiedPositions);
@@ -332,7 +334,7 @@ public partial class SpawnOrchestrator : Node
                     {
                         _entityManager.AddEntity(entity);
                         occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
-                        spawnData.ConsumeBudget(creatureData.Threat);
+                        spawnData.TotalThreatSpawned += creatureData.Threat;
                         summary.CreaturesSpawned++;
                         summary.TotalThreatSpawned += creatureData.Threat;
                     }
@@ -480,11 +482,6 @@ public partial class SpawnOrchestrator : Node
             }
         }
 
-        // Check budget utilization
-        if (summary.PowerBudgetUtilization < 50f)
-        {
-            summary.AddWarning($"Low power budget utilization: {summary.PowerBudgetUtilization:F1}%");
-        }
     }
 
     /// <summary>
@@ -524,7 +521,6 @@ public partial class SpawnOrchestrator : Node
             Name = $"Fallback Floor {_floorDepth}",
             MinFloor = _floorDepth,
             MaxFloor = _floorDepth,
-            PowerBudget = $"{_floorDepth + 2}d4+{_floorDepth * 2}",
             ItemBudget = "1d4+1",
             GoldBudget = $"{_floorDepth}d10+10",
             MinThreat = 1,

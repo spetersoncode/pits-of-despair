@@ -11,7 +11,7 @@ slots:
       - warrior
       - brute
     minCount: "1"
-    maxCount: "3"
+    maxCount: "2"
     threatMultiplier: 1.0
     placement: center
 

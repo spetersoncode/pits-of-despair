@@ -208,6 +208,21 @@ public static class Palette
     /// <summary>Fur, warm medium brown pelts</summary>
     public static readonly Color Fur = new("#8A6A4A");
 
+    /// <summary>Fur tan, sandy light brown (feral dogs)</summary>
+    public static readonly Color FurTan = new("#C4A878");
+
+    /// <summary>Fur gray, standard wolf gray</summary>
+    public static readonly Color FurGray = new("#909098");
+
+    /// <summary>Fur dark, black/charcoal pelts</summary>
+    public static readonly Color FurDark = new("#4A4044");
+
+    /// <summary>Fur frost, pale silver-white (arctic/dire wolves)</summary>
+    public static readonly Color FurFrost = new("#C8D0D8");
+
+    /// <summary>Fur russet, reddish-brown (foxes, red wolves)</summary>
+    public static readonly Color FurRusset = new("#A06040");
+
     /// <summary>Raw hide, gray-brown untreated leather</summary>
     public static readonly Color RawHide = new("#9A8060");
 

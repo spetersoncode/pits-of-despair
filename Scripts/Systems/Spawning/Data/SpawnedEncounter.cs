@@ -64,6 +64,11 @@ public class SpawnedEncounter
     public Region Region { get; set; }
 
     /// <summary>
+    /// Floor spawn configuration for threat band filtering.
+    /// </summary>
+    public FloorSpawnConfig FloorConfig { get; set; }
+
+    /// <summary>
     /// All creatures spawned in this encounter.
     /// </summary>
     public List<SpawnedCreature> Creatures { get; set; } = new();

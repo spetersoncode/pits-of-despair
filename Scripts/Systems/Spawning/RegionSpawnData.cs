@@ -5,7 +5,7 @@ namespace PitsOfDespair.Systems.Spawning;
 
 /// <summary>
 /// Spawn-related data assigned to a region during dungeon population.
-/// Tracks theme, budget, and spawned encounters for a single region.
+/// Tracks theme, danger level, and spawned encounters for a single region.
 /// </summary>
 public class RegionSpawnData
 {
@@ -20,16 +20,6 @@ public class RegionSpawnData
     /// Affected by: distance from entrance, isolation, prefab tags.
     /// </summary>
     public float DangerLevel { get; set; } = 1.0f;
-
-    /// <summary>
-    /// Total power budget allocated to this region.
-    /// </summary>
-    public int AllocatedBudget { get; set; } = 0;
-
-    /// <summary>
-    /// Remaining power budget after spawning.
-    /// </summary>
-    public int RemainingBudget { get; set; } = 0;
 
     /// <summary>
     /// Encounters spawned in this region.
@@ -55,26 +45,4 @@ public class RegionSpawnData
     /// Total threat spawned in this region.
     /// </summary>
     public int TotalThreatSpawned { get; set; } = 0;
-
-    /// <summary>
-    /// Consumes budget when spawning creatures.
-    /// </summary>
-    /// <param name="threat">Threat cost to consume</param>
-    /// <returns>True if budget was available and consumed</returns>
-    public bool ConsumeBudget(int threat)
-    {
-        if (threat > RemainingBudget)
-            return false;
-
-        RemainingBudget -= threat;
-        TotalThreatSpawned += threat;
-        return true;
-    }
-
-    /// <summary>
-    /// Gets the budget utilization percentage.
-    /// </summary>
-    public float BudgetUtilization => AllocatedBudget > 0
-        ? (float)TotalThreatSpawned / AllocatedBudget
-        : 0f;
 }

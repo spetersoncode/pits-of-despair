@@ -2,8 +2,7 @@ name: "Vermin Warrens"
 minFloor: 3
 maxFloor: 3
 
-# Crawl-style: 3dN+15 where N scales with depth
-powerBudget: "3d6+15"
+# Item and gold budgets
 itemBudget: "3d9+3"
 goldBudget: "3d10+21"
 

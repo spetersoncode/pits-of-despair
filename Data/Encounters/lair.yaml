@@ -19,8 +19,8 @@ slots:
     preferredArchetypes:
       - warrior
       - assassin
-    minCount: "1d3"
-    maxCount: "2d4"
+    minCount: "1d2"
+    maxCount: "1d3+1"
     threatMultiplier: 0.6
     placement: surrounding
 

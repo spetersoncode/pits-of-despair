@@ -105,7 +105,7 @@ public class ItemSpawnConfig
 
 /// <summary>
 /// Configuration for spawning on a specific floor or floor range.
-/// Replaces SpawnTableData with power-budget-based system.
+/// Uses density-driven spawning with threat bands and encounter templates.
 /// </summary>
 public class FloorSpawnConfig
 {
@@ -128,12 +128,6 @@ public class FloorSpawnConfig
     /// Maximum floor depth this config applies to.
     /// </summary>
     public int MaxFloor { get; set; } = 99;
-
-    /// <summary>
-    /// Total creature threat budget for the floor (dice notation).
-    /// Example: "3d6+10" for 13-28 total threat points.
-    /// </summary>
-    public string PowerBudget { get; set; } = "2d6+5";
 
     /// <summary>
     /// Item spawn budget (dice notation).
@@ -178,6 +172,18 @@ public class FloorSpawnConfig
     public int MaxThreat { get; set; } = 999;
 
     /// <summary>
+    /// Chance (0.0-1.0) for each region to receive an encounter.
+    /// Default 0.7 (70%).
+    /// </summary>
+    public float EncounterChance { get; set; } = 0.7f;
+
+    /// <summary>
+    /// Maximum encounters as a ratio of total regions (0.0-1.0).
+    /// Caps total encounters to prevent over-spawning. Default 0.6 (60% of regions).
+    /// </summary>
+    public float MaxEncounterRatio { get; set; } = 0.6f;
+
+    /// <summary>
     /// Item spawning configuration for this floor.
     /// Defines item pools by rarity and distribution rules.
     /// </summary>
@@ -188,14 +194,6 @@ public class FloorSpawnConfig
     /// Each unique only spawns once per run.
     /// </summary>
     public List<UniqueSpawnEntry> UniqueCreatures { get; set; } = new();
-
-    /// <summary>
-    /// Rolls the power budget using dice notation.
-    /// </summary>
-    public int RollPowerBudget()
-    {
-        return DiceRoller.Roll(PowerBudget);
-    }
 
     /// <summary>
     /// Rolls the item budget using dice notation.

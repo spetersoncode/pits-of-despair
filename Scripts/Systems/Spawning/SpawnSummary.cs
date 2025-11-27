@@ -7,7 +7,7 @@ namespace PitsOfDespair.Systems.Spawning;
 
 /// <summary>
 /// Summary of spawning results for debugging and analytics.
-/// Tracks budgets, creature counts, and regional distribution.
+/// Tracks creature counts, threat totals, and regional distribution.
 /// </summary>
 public class SpawnSummary
 {
@@ -15,11 +15,6 @@ public class SpawnSummary
     /// Floor depth this summary is for.
     /// </summary>
     public int FloorDepth { get; set; }
-
-    /// <summary>
-    /// Total power budget allocated for this floor.
-    /// </summary>
-    public int TotalPowerBudget { get; set; }
 
     /// <summary>
     /// Total threat actually spawned.
@@ -138,18 +133,11 @@ public class SpawnSummary
     }
 
     /// <summary>
-    /// Calculates budget utilization percentage for power.
-    /// </summary>
-    public float PowerBudgetUtilization => TotalPowerBudget > 0
-        ? (float)TotalThreatSpawned / TotalPowerBudget * 100f
-        : 0f;
-
-    /// <summary>
     /// Generates debug log lines. Each line should be printed separately.
     /// </summary>
     public IEnumerable<string> GetDebugLines()
     {
-        yield return $"[SpawnSummary] Floor {FloorDepth} ({SpawnTimeMs}ms): Power {TotalThreatSpawned}/{TotalPowerBudget} ({PowerBudgetUtilization:F1}%), Items {ItemsPlaced}/{TotalItemBudget}, Gold {GoldPlaced}/{TotalGoldBudget}";
+        yield return $"[SpawnSummary] Floor {FloorDepth} ({SpawnTimeMs}ms): Threat {TotalThreatSpawned}, Items {ItemsPlaced}/{TotalItemBudget}, Gold {GoldPlaced}/{TotalGoldBudget}";
         yield return $"[SpawnSummary] {RegionsProcessed} regions, {EncountersPlaced} encounters, {CreaturesSpawned} creatures, {DecorationsPlaced} decorations, stairs {StairsPosition ?? "none"}";
 
         if (UniqueSpawns.Count > 0)

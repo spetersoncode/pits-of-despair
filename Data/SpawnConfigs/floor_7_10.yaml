@@ -2,8 +2,7 @@ name: "Deep Crypts"
 minFloor: 7
 maxFloor: 10
 
-# Crawl-style: 3dN+15 where N scales with depth (max die size)
-powerBudget: "3d12+15"
+# Item and gold budgets
 itemBudget: "3d9+3"
 goldBudget: "3d10+35"
 

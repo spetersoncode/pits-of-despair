@@ -35,7 +35,7 @@ public class SpawnStatsCommand : DebugCommand
             Godot.GD.Print(line);
 
         return DebugCommandResult.CreateSuccess(
-            $"Floor {summary.FloorDepth}: {summary.CreaturesSpawned} creatures, {summary.EncountersPlaced} encounters, {summary.PowerBudgetUtilization:F0}% budget used",
+            $"Floor {summary.FloorDepth}: {summary.CreaturesSpawned} creatures, {summary.EncountersPlaced} encounters, {summary.TotalThreatSpawned} threat",
             Palette.ToHex(Palette.Success)
         );
     }

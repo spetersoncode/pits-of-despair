@@ -72,9 +72,7 @@ public class EncounterSpawner
 
         // Process each slot in the template
         SpawnedCreature leaderCreature = null;
-        int remainingBudget = encounter.TotalThreat;
         int actualThreatSpawned = 0;
-        int allocatedBudget = encounter.TotalThreat; // Track for debug
 
         foreach (var slot in encounter.Template.Slots)
         {
@@ -83,15 +81,11 @@ public class EncounterSpawner
 
             for (int i = 0; i < count; i++)
             {
-                // Stop if budget exhausted
-                if (remainingBudget <= 0)
-                    break;
-
                 // Select a creature that matches the slot requirements
-                var creatureSelection = SelectCreatureForSlot(slot, themeCreatures, remainingBudget);
+                var creatureSelection = SelectCreatureForSlot(slot, themeCreatures, encounter);
                 if (creatureSelection == null)
                 {
-                    GD.PushWarning($"[EncounterSpawner] No creature fits slot '{slot.Role}' within budget {remainingBudget}");
+                    GD.PushWarning($"[EncounterSpawner] No creature fits slot '{slot.Role}'");
                     continue;
                 }
 
@@ -113,8 +107,6 @@ public class EncounterSpawner
                     occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
                     availableTiles.Remove(new Vector2I(position.Value.X, position.Value.Y));
 
-                    // Deduct from remaining budget
-                    remainingBudget -= spawnedCreature.Threat;
                     actualThreatSpawned += spawnedCreature.Threat;
 
                     // Track leader for AI configuration
@@ -125,20 +117,10 @@ public class EncounterSpawner
                     }
                 }
             }
-
-            // Stop processing slots if budget exhausted
-            if (remainingBudget <= 0)
-                break;
         }
 
         // Update encounter with actual threat spawned
         encounter.TotalThreat = actualThreatSpawned;
-
-        // Debug: warn if over budget
-        if (actualThreatSpawned > allocatedBudget)
-        {
-            GD.PushWarning($"EncounterSpawner: Over budget! Allocated {allocatedBudget}, spawned {actualThreatSpawned} for template '{encounter.Template?.Name}'");
-        }
 
         // Configure AI relationships (followers protect leader, etc.)
         ConfigureEncounterAI(encounter, leaderCreature);
@@ -193,17 +175,21 @@ public class EncounterSpawner
     private (string id, CreatureData data)? SelectCreatureForSlot(
         EncounterSlot slot,
         List<(string id, CreatureData data)> themeCreatures,
-        int remainingBudget)
+        SpawnedEncounter encounter)
     {
         // Score and sort creatures by fit
         var candidates = new List<((string id, CreatureData data) creature, int score)>();
 
         foreach (var creature in themeCreatures)
         {
-            // Check threat fits budget (with multiplier)
-            int effectiveThreat = Mathf.RoundToInt(creature.data.Threat * slot.ThreatMultiplier);
-            if (effectiveThreat > remainingBudget)
-                continue;
+            // Check threat fits floor's threat band
+            if (encounter.FloorConfig != null)
+            {
+                if (creature.data.Threat < encounter.FloorConfig.MinThreat)
+                    continue;
+                if (creature.data.Threat > encounter.FloorConfig.MaxThreat)
+                    continue;
+            }
 
             // Check required archetypes (strict filter)
             if (slot.RequiredArchetypes != null && slot.RequiredArchetypes.Count > 0)
@@ -226,9 +212,11 @@ public class EncounterSpawner
 
         if (candidates.Count == 0)
         {
-            // Fallback: take any creature that fits budget
+            // Fallback: take any creature that fits threat band
             var fallback = themeCreatures
-                .Where(c => Mathf.RoundToInt(c.data.Threat * slot.ThreatMultiplier) <= remainingBudget)
+                .Where(c => encounter.FloorConfig == null ||
+                    (c.data.Threat >= encounter.FloorConfig.MinThreat &&
+                     c.data.Threat <= encounter.FloorConfig.MaxThreat))
                 .OrderBy(_ => _rng.Randi())
                 .FirstOrDefault();
             return fallback.data != null ? fallback : null;

@@ -9,7 +9,7 @@ using PitsOfDespair.Systems.Spawning.Data;
 namespace PitsOfDespair.Systems.Spawning;
 
 /// <summary>
-/// Selects and places encounters within regions based on budget and templates.
+/// Selects and places encounters within regions until spacing limits are reached.
 /// </summary>
 public class EncounterPlacer
 {
@@ -21,6 +21,11 @@ public class EncounterPlacer
     /// </summary>
     private const int MinEncounterSpacingSquared = 36; // 6 tiles
 
+    /// <summary>
+    /// Maximum encounters per region. One encounter per region spreads population naturally.
+    /// </summary>
+    private const int MaxEncountersPerRegion = 1;
+
     public EncounterPlacer(DataLoader dataLoader)
     {
         _dataLoader = dataLoader;
@@ -29,7 +34,7 @@ public class EncounterPlacer
     }
 
     /// <summary>
-    /// Places encounters in a region until budget is exhausted or no valid encounters fit.
+    /// Places encounters in a region until spacing limits are reached.
     /// </summary>
     /// <param name="region">The region to place encounters in</param>
     /// <param name="spawnData">Spawn data for this region</param>
@@ -44,7 +49,14 @@ public class EncounterPlacer
     {
         var placedEncounters = new List<SpawnedEncounter>();
 
-        if (spawnData.Theme == null || spawnData.RemainingBudget <= 0)
+        if (spawnData.Theme == null)
+        {
+            spawnData.IsProcessed = true;
+            return placedEncounters;
+        }
+
+        // Roll encounter chance for this region
+        if (_rng.Randf() > config.EncounterChance)
         {
             spawnData.IsProcessed = true;
             return placedEncounters;
@@ -64,15 +76,18 @@ public class EncounterPlacer
         int maxAttempts = 10;
         int attempts = 0;
 
-        while (spawnData.RemainingBudget > 0 && attempts < maxAttempts)
+        // Calculate max encounters for this region based on size
+        int maxEncounters = GetMaxEncountersForRegion(region);
+
+        while (attempts < maxAttempts && placedEncounters.Count < maxEncounters)
         {
             attempts++;
 
-            // Select an encounter template that fits the remaining budget
+            // Select an encounter template
             var template = SelectTemplate(availableTemplates, spawnData, region);
             if (template == null)
             {
-                break; // No templates fit remaining budget
+                break; // No templates available
             }
 
             // Find a valid position for this encounter
@@ -88,20 +103,12 @@ public class EncounterPlacer
                 Template = template,
                 Theme = spawnData.Theme,
                 Region = region,
+                FloorConfig = config,
                 CenterPosition = position.Value,
                 Success = true
             };
 
-            // Calculate threat cost for this encounter
-            int threatCost = CalculateEncounterThreatCost(template, spawnData);
-
-            // Consume budget
-            if (!spawnData.ConsumeBudget(threatCost))
-            {
-                break;
-            }
-
-            encounter.TotalThreat = threatCost;
+            // TotalThreat will be set by EncounterSpawner based on actual creatures spawned
             encounterCenters.Add(position.Value);
             placedEncounters.Add(encounter);
             spawnData.SpawnedEncounters.Add(encounter);
@@ -185,10 +192,7 @@ public class EncounterPlacer
         RegionSpawnData spawnData,
         Region region)
     {
-        // Filter to templates that fit remaining budget
-        var validTemplates = templates
-            .Where(t => t.template.MinBudget <= spawnData.RemainingBudget)
-            .ToList();
+        var validTemplates = templates.ToList();
 
         if (validTemplates.Count == 0)
             return null;
@@ -212,13 +216,6 @@ public class EncounterPlacer
                         break;
                     }
                 }
-            }
-
-            // Budget efficiency bonus: 1.25x
-            float budgetRatio = (float)template.MinBudget / spawnData.RemainingBudget;
-            if (budgetRatio > 0.5f)
-            {
-                fitMultiplier *= 1.25f;
             }
 
             // Danger level bonus for ambush: 1.3x
@@ -321,25 +318,10 @@ public class EncounterPlacer
     }
 
     /// <summary>
-    /// Calculates the threat cost for an encounter based on template and danger level.
+    /// Gets the maximum number of encounters allowed in a region.
     /// </summary>
-    private int CalculateEncounterThreatCost(EncounterTemplate template, RegionSpawnData spawnData)
+    private int GetMaxEncountersForRegion(Region region)
     {
-        // Base cost from template
-        int baseCost = template.MinBudget;
-
-        // Scale by danger level
-        float scaledCost = baseCost * spawnData.DangerLevel;
-
-        // Add some variance
-        float variance = _rng.RandfRange(0.8f, 1.2f);
-        scaledCost *= variance;
-
-        // Clamp to template bounds
-        int finalCost = Mathf.RoundToInt(scaledCost);
-        finalCost = Mathf.Clamp(finalCost, template.MinBudget, template.MaxBudget);
-
-        // Don't exceed remaining budget
-        return Mathf.Min(finalCost, spawnData.RemainingBudget);
+        return MaxEncountersPerRegion;
     }
 }
