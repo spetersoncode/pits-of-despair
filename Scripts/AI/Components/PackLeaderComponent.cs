@@ -206,10 +206,7 @@ public partial class PackLeaderComponent : Node
             .ToList();
 
         if (livingFollowers.Count == 0)
-        {
-            GD.Print("[PackLeader] Leader died with no followers - pack dissolved");
             return;
-        }
 
         // Randomly select new leader
         var newLeader = livingFollowers[GD.RandRange(0, livingFollowers.Count - 1)];

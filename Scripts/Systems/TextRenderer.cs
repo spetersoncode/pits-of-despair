@@ -348,62 +348,48 @@ public partial class TextRenderer : Control
 			}
 		}
 
-		// Draw items first (between tiles and creatures)
-		// Items remain visible once discovered (memorable)
+		// Draw entities in layer order (lowest to highest priority)
+		// Only the top-layer entity at each position should be visible
+		// Player is always on top and drawn separately at viewport center
+
+		// Build a map of which entity to draw at each position (highest layer wins)
+		var entityToDraw = new System.Collections.Generic.Dictionary<GridPosition, BaseEntity>();
 		foreach (var entity in _entities)
 		{
-			// Only process items
-			if (entity.ItemData == null)
-				continue;
-
-			// Don't draw items at player position (player glyph takes precedence)
+			// Skip entities at player position - player always wins
 			if (entity.GridPosition.Equals(_player.GridPosition))
 				continue;
 
+			if (!entityToDraw.TryGetValue(entity.GridPosition, out var existing) || entity.Layer > existing.Layer)
+			{
+				entityToDraw[entity.GridPosition] = entity;
+			}
+		}
+
+		// Draw the winning entity at each position
+		foreach (var kvp in entityToDraw)
+		{
+			var entity = kvp.Value;
 			bool isVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
 			bool isExplored = _visionSystem?.IsExplored(entity.GridPosition) ?? true;
 
-			// Track discovered items
-			if (isVisible || isExplored)
+			// Track discovered items/features/decorations for memorable visibility
+			if ((isVisible || isExplored) && entity.Layer <= EntityLayer.Item)
 			{
 				_discoveredItemPositions.Add(entity.GridPosition);
 			}
 
-			// Draw items if they're on an explored tile (memorable visibility)
-			if (!isExplored && !isVisible)
+			// Creatures only visible when in FOV, items/features/decorations are memorable
+			if (entity.Layer == EntityLayer.Creature)
 			{
-				continue;
+				if (!isVisible)
+					continue;
 			}
-
-			Vector2 itemWorldPos = new Vector2(
-				entity.GridPosition.X * TileSize,
-				entity.GridPosition.Y * TileSize
-			);
-			Vector2 itemDrawPos = offset + itemWorldPos;
-
-			// Dim items that are not currently visible
-			Color itemColor = entity.GlyphColor;
-			if (isExplored && !isVisible)
+			else
 			{
-				itemColor = new Color(itemColor.R * 0.5f, itemColor.G * 0.5f, itemColor.B * 0.5f);
-			}
-
-			DrawString(_font, itemDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, itemColor);
-		}
-
-		// Draw creatures (between items and player)
-		// Only draw creatures on currently visible tiles
-		foreach (var entity in _entities)
-		{
-			// Skip items (already drawn)
-			if (entity.ItemData != null)
-				continue;
-
-			// Check if entity is on a visible tile
-			bool entityVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
-			if (!entityVisible)
-			{
-				continue;
+				// Items, features, decorations: draw if explored (memorable)
+				if (!isExplored && !isVisible)
+					continue;
 			}
 
 			Vector2 entityWorldPos = new Vector2(
@@ -412,7 +398,14 @@ public partial class TextRenderer : Control
 			);
 			Vector2 entityDrawPos = offset + entityWorldPos;
 
-			DrawString(_font, entityDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, entity.GlyphColor);
+			// Dim non-creature entities that are not currently visible (fog of war)
+			Color entityColor = entity.GlyphColor;
+			if (entity.Layer != EntityLayer.Creature && isExplored && !isVisible)
+			{
+				entityColor = new Color(entityColor.R * 0.5f, entityColor.G * 0.5f, entityColor.B * 0.5f);
+			}
+
+			DrawString(_font, entityDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, entityColor);
 		}
 
 		// Draw the player last (should be at viewport center, on top of everything)

@@ -141,6 +141,35 @@ public partial class BaseEntity : Node2D
     /// </summary>
     public string DecorationId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The fundamental type of this entity.
+    /// Override in subclasses for special entity types (Player, Gold, Stairs, etc.).
+    /// </summary>
+    public virtual EntityType Type
+    {
+        get
+        {
+            if (ItemData != null) return EntityType.Item;
+            if (!string.IsNullOrEmpty(DecorationId)) return EntityType.Decoration;
+            return EntityType.Creature;
+        }
+    }
+
+    /// <summary>
+    /// The rendering layer for this entity, derived from Type.
+    /// Determines visual priority when multiple entities occupy the same tile.
+    /// </summary>
+    public EntityLayer Layer => Type switch
+    {
+        EntityType.Player => EntityLayer.Player,
+        EntityType.Creature => EntityLayer.Creature,
+        EntityType.Item => EntityLayer.Item,
+        EntityType.Feature => EntityLayer.Feature,
+        EntityType.Gold => EntityLayer.Feature,
+        EntityType.Decoration => EntityLayer.Decoration,
+        _ => EntityLayer.Creature
+    };
+
     #region Condition System
 
     /// <summary>

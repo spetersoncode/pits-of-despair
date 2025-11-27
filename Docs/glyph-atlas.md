@@ -111,10 +111,9 @@ From YAML sheet defaults (`Data/Creatures/*.yaml`):
 |-------|------|-------|----------|--------------|
 | `∪` | Clay vase | Brick | Yes | Yes |
 | `◎` | Wooden barrel | Walnut | Yes | Yes |
-| `▫` | Wooden crate | Oak | Yes | Yes |
-| `╥` | Stone pillar | Granite | No | No |
+| `⊞` | Wooden crate | Oak | Yes | Yes |
 | `¥` | Brazier | Iron | No | No |
-| `░` | Rubble | Granite | Yes | No |
+| `∴` | Rubble | Granite | Yes | No |
 | `¤` | Bones | Bone | Yes | No |
 | `≈` | Cobwebs | FogOfWar | Yes | No |
 | `∿` | Puddle | Water | Yes | No |
@@ -125,13 +124,12 @@ From YAML sheet defaults (`Data/Creatures/*.yaml`):
 
 | Glyph | Name | Color | Walkable | Destructible |
 |-------|------|-------|----------|--------------|
-| `╬` | Crude totem | Walnut | No | Yes |
+| `&` | Crude totem | Walnut | No | Yes |
 | `☠` | Skull pile | Bone | Yes | No |
 | `π` | Meat rack | ToughLeather | Yes | Yes |
 | `≡` | Filthy bedroll | Wool | Yes | No |
 | `⚑` | Crude banner | Rust | Yes | Yes |
 | `⌂` | Scrap pile | CrudeIron | Yes | No |
-| `†` | Bone trophy | Bone | Yes | No |
 | `○` | Firepit remains | Basalt | Yes | No |
 
 ## See Also

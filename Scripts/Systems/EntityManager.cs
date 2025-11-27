@@ -29,7 +29,7 @@ public partial class EntityManager : Node
     public delegate void EntityRemovedEventHandler(BaseEntity entity);
 
     private readonly System.Collections.Generic.List<BaseEntity> _entities = new();
-    private readonly System.Collections.Generic.Dictionary<GridPosition, BaseEntity> _positionCache = new();
+    private readonly System.Collections.Generic.Dictionary<GridPosition, System.Collections.Generic.Dictionary<EntityLayer, BaseEntity>> _positionCache = new();
     private readonly System.Collections.Generic.List<(BaseEntity entity, HealthComponent health)> _healthConnections = new();
     private Player _player;
 
@@ -52,8 +52,13 @@ public partial class EntityManager : Node
         AddChild(entity);
         _entities.Add(entity);
 
-        // Add to position cache
-        _positionCache[entity.GridPosition] = entity;
+        // Add to multi-layer position cache
+        if (!_positionCache.TryGetValue(entity.GridPosition, out var layerDict))
+        {
+            layerDict = new System.Collections.Generic.Dictionary<EntityLayer, BaseEntity>();
+            _positionCache[entity.GridPosition] = layerDict;
+        }
+        layerDict[entity.Layer] = entity;
 
         // Subscribe to position changes to keep cache updated
         entity.Connect(BaseEntity.SignalName.PositionChanged, Callable.From<int, int>((x, y) => OnEntityPositionChanged(entity, new GridPosition(x, y))));
@@ -80,11 +85,12 @@ public partial class EntityManager : Node
     }
 
     /// <summary>
-    /// Get entity at a specific grid position.
+    /// Get the top-layer entity at a specific grid position.
+    /// Returns entity with highest render priority (Player > Creature > Item > Decoration).
     /// Uses position cache for O(1) lookup.
     /// </summary>
     /// <param name="position">The grid position to check.</param>
-    /// <returns>Entity at position, or null if none found.</returns>
+    /// <returns>Top-layer entity at position, or null if none found.</returns>
     public BaseEntity? GetEntityAtPosition(GridPosition position)
     {
         // Check player first (tracked separately from other entities)
@@ -93,34 +99,76 @@ public partial class EntityManager : Node
             return _player;
         }
 
-        if (_positionCache.TryGetValue(position, out BaseEntity entity))
+        if (_positionCache.TryGetValue(position, out var layerDict))
         {
-            return entity;
+            // Check layers in priority order (highest first)
+            if (layerDict.TryGetValue(EntityLayer.Creature, out var creature))
+                return creature;
+            if (layerDict.TryGetValue(EntityLayer.Item, out var item))
+                return item;
+            if (layerDict.TryGetValue(EntityLayer.Feature, out var feature))
+                return feature;
+            if (layerDict.TryGetValue(EntityLayer.Decoration, out var decoration))
+                return decoration;
         }
         return null;
     }
 
     /// <summary>
     /// Get all entities at a specific grid position.
-    /// Iterates through all entities (O(n)) to find all matches.
-    /// Use when position cache may not reflect all entities (e.g., checking for items).
+    /// Uses position cache for O(1) lookup.
     /// </summary>
     /// <param name="position">The grid position to check.</param>
     /// <returns>List of all entities at position.</returns>
     public System.Collections.Generic.List<BaseEntity> GetEntitiesAtPosition(GridPosition position)
     {
-        return _entities.Where(e => e.GridPosition == position).ToList();
+        var result = new System.Collections.Generic.List<BaseEntity>();
+
+        if (_positionCache.TryGetValue(position, out var layerDict))
+            result.AddRange(layerDict.Values);
+
+        if (_player != null && _player.GridPosition == position)
+            result.Add(_player);
+
+        return result;
     }
 
     /// <summary>
     /// Get item entity at a specific grid position.
-    /// Searches all entities (O(n)) since position cache may contain a creature instead.
+    /// Uses position cache for O(1) lookup.
     /// </summary>
     /// <param name="position">The grid position to check.</param>
     /// <returns>Item entity at position, or null if no item found.</returns>
     public BaseEntity? GetItemAtPosition(GridPosition position)
     {
-        return _entities.FirstOrDefault(e => e.GridPosition == position && e.ItemData != null);
+        if (_positionCache.TryGetValue(position, out var layerDict))
+        {
+            layerDict.TryGetValue(EntityLayer.Item, out var item);
+            return item;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Get entity at a specific position and layer.
+    /// Uses position cache for O(1) lookup.
+    /// </summary>
+    /// <param name="position">The grid position to check.</param>
+    /// <param name="layer">The entity layer to query.</param>
+    /// <returns>Entity at position and layer, or null if not found.</returns>
+    public BaseEntity? GetEntityAtLayer(GridPosition position, EntityLayer layer)
+    {
+        // Special case: Player layer
+        if (layer == EntityLayer.Player)
+            return (_player != null && _player.GridPosition == position) ? _player : null;
+
+        // Check cache
+        if (_positionCache.TryGetValue(position, out var layerDict))
+        {
+            layerDict.TryGetValue(layer, out var entity);
+            return entity;
+        }
+        return null;
     }
 
     /// <summary>
@@ -175,7 +223,7 @@ public partial class EntityManager : Node
     /// <returns>True if occupied by an entity, false otherwise.</returns>
     public bool IsPositionOccupied(GridPosition position)
     {
-        return _positionCache.ContainsKey(position);
+        return _positionCache.TryGetValue(position, out var layerDict) && layerDict.Count > 0;
     }
 
     /// <summary>
@@ -186,8 +234,13 @@ public partial class EntityManager : Node
     {
         if (_entities.Remove(entity))
         {
-            // Remove from position cache
-            _positionCache.Remove(entity.GridPosition);
+            // Remove from multi-layer position cache
+            if (_positionCache.TryGetValue(entity.GridPosition, out var layerDict))
+            {
+                layerDict.Remove(entity.Layer);
+                if (layerDict.Count == 0)
+                    _positionCache.Remove(entity.GridPosition);
+            }
 
             EmitSignal(SignalName.EntityRemoved, entity);
             entity.QueueFree();
@@ -273,13 +326,25 @@ public partial class EntityManager : Node
         if (!_entities.Contains(entity))
             return;
 
-        var oldPositionEntry = _positionCache.FirstOrDefault(kvp => kvp.Value == entity);
-        if (oldPositionEntry.Value != null)
+        // Remove from old position (search all positions for this entity)
+        foreach (var kvp in _positionCache.ToList())
         {
-            _positionCache.Remove(oldPositionEntry.Key);
+            if (kvp.Value.TryGetValue(entity.Layer, out var cached) && cached == entity)
+            {
+                kvp.Value.Remove(entity.Layer);
+                if (kvp.Value.Count == 0)
+                    _positionCache.Remove(kvp.Key);
+                break;
+            }
         }
 
-        _positionCache[newPosition] = entity;
+        // Add to new position
+        if (!_positionCache.TryGetValue(newPosition, out var layerDict))
+        {
+            layerDict = new System.Collections.Generic.Dictionary<EntityLayer, BaseEntity>();
+            _positionCache[newPosition] = layerDict;
+        }
+        layerDict[entity.Layer] = entity;
     }
 
     public override void _ExitTree()

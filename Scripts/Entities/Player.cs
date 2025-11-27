@@ -16,6 +16,7 @@ namespace PitsOfDespair.Entities;
 /// </summary>
 public partial class Player : BaseEntity
 {
+    public override EntityType Type => EntityType.Player;
     [Signal]
     public delegate void TurnCompletedEventHandler(int delayCost);
 

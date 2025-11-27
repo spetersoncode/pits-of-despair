@@ -9,6 +9,7 @@ namespace PitsOfDespair.Entities;
 /// </summary>
 public partial class Gold : BaseEntity
 {
+    public override EntityType Type => EntityType.Gold;
     /// <summary>
     /// Amount of gold in this pile.
     /// </summary>

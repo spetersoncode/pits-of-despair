@@ -9,8 +9,6 @@ decorations:
     weight: 2
 
   # Furniture (blocking)
-  - id: stone_pillar
-    weight: 2
   - id: brazier
     weight: 1
 
@@ -58,15 +56,6 @@ entries:
     health: 2
     destructionMessage: breaks into pieces
     placementHints: ["wall_adjacent", "clustered"]
-
-  stone_pillar:
-    name: stone pillar
-    description: A sturdy stone pillar supporting the ceiling.
-    glyph: "‡"
-    color: Palette.Granite
-    isWalkable: false
-    isDestructible: false
-    placementHints: ["center"]
 
   brazier:
     name: brazier

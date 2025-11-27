@@ -9,6 +9,7 @@ namespace PitsOfDespair.Entities;
 /// </summary>
 public partial class ThroneOfDespair : BaseEntity
 {
+	public override EntityType Type => EntityType.Feature;
 	public override void _Ready()
 	{
 		DisplayName = "Throne of Despair";

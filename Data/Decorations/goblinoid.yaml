@@ -13,8 +13,6 @@ decorations:
     weight: 2
   - id: scrap_pile
     weight: 3
-  - id: bone_trophy
-    weight: 2
   - id: firepit_remains
     weight: 2
 
@@ -72,14 +70,6 @@ entries:
     color: Palette.CrudeIron
     isWalkable: true
     placementHints: ["corner", "scattered"]
-
-  bone_trophy:
-    name: bone trophy
-    description: A large bone mounted as a trophy, possibly from a slain adventurer.
-    glyph: "†"
-    color: Palette.Bone
-    isWalkable: true
-    placementHints: ["wall_adjacent", "corner"]
 
   firepit_remains:
     name: firepit remains
