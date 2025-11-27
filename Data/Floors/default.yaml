@@ -1,8 +1,8 @@
 name: default
 description: "Standard BSP dungeon layout"
 seed: -1
-width: 100
-height: 100
+width: 80
+height: 70
 
 minFloor: 1
 maxFloor: 99
@@ -19,6 +19,14 @@ pipeline:
       maxRoomHeight: 12
       corridorWidth: 1
 
+  - pass: extra_connections
+    priority: 100
+    config:
+      connectionChance: 20
+      maxDistance: 25
+      corridorWidth: 1
+      lShaped: true
+
   - pass: connectivity
     priority: 300
     config:
@@ -28,17 +36,17 @@ pipeline:
   - pass: validation
     priority: 400
     config:
-      minWalkablePercent: 25
-      maxWalkablePercent: 55
+      minWalkablePercent: 20
+      maxWalkablePercent: 50
 
   - pass: metadata
     priority: 999
     config:
-      minRegionSize: 16
+      minRegionSize: 12
       maxPassageWidth: 2
 
 metadata:
-  minRegionSize: 16
+  minRegionSize: 12
   maxPassageWidth: 2
   distanceFields:
     - walls

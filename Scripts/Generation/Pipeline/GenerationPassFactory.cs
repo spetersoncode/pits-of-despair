@@ -29,6 +29,9 @@ public static class GenerationPassFactory
         Register("drunkard_walk", cfg => new DrunkardWalkPass(cfg));
         Register("simple_rooms", cfg => new SimpleRoomPlacementPass(cfg));
 
+        // Built-in modifiers
+        Register("extra_connections", cfg => new ExtraConnectionsPass(cfg));
+
         // Built-in post-processors
         Register("prefabs", cfg => new PrefabInsertionPass(cfg));
         Register("validation", cfg => new ValidationPass(cfg));
