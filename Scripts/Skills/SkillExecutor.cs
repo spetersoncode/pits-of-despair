@@ -181,6 +181,8 @@ public static class SkillExecutor
                 var capturedTarget = target;
 
                 // Spawn projectile - effect will be applied on impact via callback
+                // TODO: Sound is played in effect.Apply() for projectile effects, but in
+                // ApplyToTargets() for immediate effects. Unify this when refactoring sound timing.
                 context.VisualEffectSystem.SpawnProjectile(
                     projectileDef,
                     caster.GridPosition,

@@ -57,7 +57,7 @@ entries:
       - damage
       - ranged
     effects:
-      - type: damage
+      - type: magic_missile
         dice: 2d4
         autoHit: true
 
