@@ -11,9 +11,10 @@ import {
   getCreature,
   getItem,
 } from '../data/data-loader.js';
+import { parseInlineCreature, parseInlineCreatures } from '../data/inline-parser.js';
 import { runDuel } from '../scenarios/duel-scenario.js';
 import { runGroupBattle, parseTeamString } from '../scenarios/group-scenario.js';
-import { runVariations, printVariationResults } from '../scenarios/variation-scenario.js';
+import { runVariations, runInlineVariations, printVariationResults } from '../scenarios/variation-scenario.js';
 import { printResults, printCompactResult } from '../output/console-reporter.js';
 import { writeJsonFile, printJson } from '../output/json-reporter.js';
 import { writeCsvFile, printCsv } from '../output/csv-reporter.js';
@@ -70,12 +71,14 @@ export function createProgram(): Command {
 
   // Duel command
   program
-    .command('duel <creatureA> <creatureB>')
-    .description('Run a 1v1 duel simulation')
+    .command('duel [creatureA] [creatureB]')
+    .description('Run a 1v1 duel simulation. Use --inline-a/b for custom creatures.')
     .option('-n, --iterations <number>', 'Number of iterations', '1000')
     .option('-s, --seed <number>', 'Random seed for reproducibility')
     .option('--equip-a <items>', 'Equipment overrides for creature A (comma-separated)')
     .option('--equip-b <items>', 'Equipment overrides for creature B (comma-separated)')
+    .option('--inline-a <json>', 'Inline JSON creature definition for A')
+    .option('--inline-b <json>', 'Inline JSON creature definition for B')
     .option('-o, --output <format>', 'Output format: console, json, csv', 'console')
     .option('--outfile <path>', 'Output file path (for json/csv)')
     .option('-c, --compact', 'Compact console output')
@@ -86,16 +89,54 @@ export function createProgram(): Command {
 
       const gameData = loadGameData();
 
+      // Parse inline creatures if provided
+      let inlineCreatureA = undefined;
+      let inlineCreatureB = undefined;
+
+      if (options.inlineA) {
+        try {
+          const { creature, warnings } = parseInlineCreature(options.inlineA, gameData);
+          inlineCreatureA = creature;
+          for (const w of warnings) console.warn(`Warning: ${w}`);
+        } catch (e) {
+          console.error(`Error parsing --inline-a: ${(e as Error).message}`);
+          process.exit(1);
+        }
+      }
+
+      if (options.inlineB) {
+        try {
+          const { creature, warnings } = parseInlineCreature(options.inlineB, gameData);
+          inlineCreatureB = creature;
+          for (const w of warnings) console.warn(`Warning: ${w}`);
+        } catch (e) {
+          console.error(`Error parsing --inline-b: ${(e as Error).message}`);
+          process.exit(1);
+        }
+      }
+
+      // Validate: need either creature ID or inline for both A and B
+      if (!creatureA && !inlineCreatureA) {
+        console.error('Error: Must provide creatureA or --inline-a');
+        process.exit(1);
+      }
+      if (!creatureB && !inlineCreatureB) {
+        console.error('Error: Must provide creatureB or --inline-b');
+        process.exit(1);
+      }
+
       const equipA = options.equipA?.split(',').map((s: string) => s.trim());
       const equipB = options.equipB?.split(',').map((s: string) => s.trim());
 
       const result = runDuel(
         {
-          creatureA,
-          creatureB,
+          creatureA: creatureA ?? inlineCreatureA?.id ?? 'inline',
+          creatureB: creatureB ?? inlineCreatureB?.id ?? 'inline',
           iterations,
           equipmentOverridesA: equipA,
           equipmentOverridesB: equipB,
+          inlineCreatureA,
+          inlineCreatureB,
         },
         gameData,
         rng
@@ -157,6 +198,54 @@ export function createProgram(): Command {
       const gameData = loadGameData();
       const results = runVariations(
         { baseCreature: creature, opponent, variations, iterations },
+        gameData,
+        rng
+      );
+
+      printVariationResults(results);
+    });
+
+  // Variation-inline command - test inline creature variations
+  program
+    .command('variation-inline <opponent>')
+    .description('Test multiple inline creature variations against an opponent')
+    .option('-n, --iterations <number>', 'Number of iterations per variation', '1000')
+    .option('-s, --seed <number>', 'Random seed for reproducibility')
+    .option('--vars <json>', 'JSON array of inline creature definitions')
+    .action((opponent, options) => {
+      const iterations = parseInt(options.iterations, 10);
+      const seed = options.seed ? parseInt(options.seed, 10) : undefined;
+      const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
+
+      if (!options.vars) {
+        console.error('Error: --vars option required (JSON array of inline creatures)');
+        process.exit(1);
+      }
+
+      const gameData = loadGameData();
+
+      // Parse inline creatures array
+      let inlineCreatures;
+      try {
+        const parseResults = parseInlineCreatures(options.vars, gameData);
+        inlineCreatures = parseResults.map(({ creature, warnings }) => {
+          for (const w of warnings) console.warn(`Warning: ${w}`);
+          return creature;
+        });
+      } catch (e) {
+        console.error(`Error parsing --vars: ${(e as Error).message}`);
+        process.exit(1);
+      }
+
+      if (inlineCreatures.length === 0) {
+        console.error('Error: --vars must contain at least one inline creature');
+        process.exit(1);
+      }
+
+      const results = runInlineVariations(
+        inlineCreatures,
+        opponent,
+        iterations,
         gameData,
         rng
       );

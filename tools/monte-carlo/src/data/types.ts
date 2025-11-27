@@ -3,6 +3,9 @@
  * These types mirror the YAML schemas used by Pits of Despair.
  */
 
+// Re-export GameData for convenience (defined in data-loader.ts)
+export type { GameData } from './data-loader.js';
+
 // =============================================================================
 // Damage Types
 // =============================================================================
@@ -288,6 +291,9 @@ export interface DuelConfig {
   equipmentOverridesA?: string[];
   equipmentOverridesB?: string[];
   iterations: number;
+  // Optional inline creature definitions (takes precedence over ID lookup)
+  inlineCreatureA?: CreatureDefinition;
+  inlineCreatureB?: CreatureDefinition;
 }
 
 /**
@@ -322,6 +328,55 @@ export interface Variation {
     health: number;
     speed: number;
   }>;
+}
+
+// =============================================================================
+// Inline Creature Definition (for CLI JSON input)
+// =============================================================================
+
+/**
+ * Inline creature definition for JSON CLI input.
+ * Supports two modes:
+ * 1. Layer on base creature: { base: "goblin", strength: 4 }
+ * 2. Complete definition: { name: "custom", strength: 2, health: 10, ... }
+ */
+export interface InlineCreature {
+  // Mode 1: Inherit from existing creature
+  base?: string;
+
+  // Mode 2: Define from scratch (name required if no base)
+  name?: string;
+
+  // Stat overrides (applied on top of base, or used directly)
+  strength?: number;
+  agility?: number;
+  endurance?: number;
+  will?: number;
+  health?: number;
+  speed?: number;
+
+  // Equipment (replaces base equipment if specified)
+  equipment?: string[];
+
+  // Natural attacks (replaces base attacks if specified)
+  attacks?: InlineAttack[];
+
+  // Damage modifiers (replaces base if specified)
+  resistances?: DamageType[];
+  vulnerabilities?: DamageType[];
+  immunities?: DamageType[];
+}
+
+/**
+ * Inline attack definition for JSON input.
+ */
+export interface InlineAttack {
+  name: string;
+  type: AttackType;
+  dice: string;
+  damageType: DamageType;
+  range?: number; // Defaults to 1 for melee, 6 for ranged
+  ammoType?: string;
 }
 
 /**

@@ -343,3 +343,79 @@ If win rates deviate significantly from expectations, adjust:
 6. **Variation command is your friend** for equipment balance - always test multiple loadouts
 
 7. **Trust the math** - if the simulator says a creature is too strong, it probably is, even if it "feels" right on paper
+
+---
+
+## Testing Hypothetical Stats (Inline Creatures)
+
+Use inline JSON to test stat changes without modifying YAML files. This is especially useful when a creature fails balance checks and you need to find the right fix.
+
+### Shell Escaping
+
+JSON requires proper escaping depending on your shell:
+- **Bash/Unix**: Use single quotes around JSON: `'{"base":"goblin"}'`
+- **PowerShell/Windows**: Escape inner quotes: `"{\"base\":\"goblin\"}"`
+
+Use placeholder `_` for positional args replaced by inline definitions.
+
+### Quick A/B Testing
+
+```bash
+# Test a creature with different stat bonuses (Bash)
+npm run dev -- duel _ _ \
+  --inline-a '{"base":"goblin","name":"baseline"}' \
+  --inline-b '{"base":"goblin","name":"+2 STR","strength":2}' \
+  -s 42
+
+# Same command for PowerShell/Windows
+npm run dev -- duel _ _ --inline-a "{\"base\":\"goblin\",\"name\":\"baseline\"}" --inline-b "{\"base\":\"goblin\",\"name\":\"+2 STR\",\"strength\":2}" -s 42
+```
+
+### When a Creature Fails Balance Checks
+
+If a new creature is too weak or too strong, use inline JSON to iterate on fixes:
+
+```bash
+# Creature too weak? Try bumping STR
+npm run dev -- duel --inline-a '{"base":"new_creature","strength":2}' goblin -s 42
+
+# Still not right? Try more HP instead
+npm run dev -- duel --inline-a '{"base":"new_creature","health":12}' goblin -s 42
+
+# Test multiple tweaks at once with variation-inline
+npm run dev -- variation-inline goblin --vars '[
+  {"base":"new_creature","name":"baseline"},
+  {"base":"new_creature","name":"+2 STR","strength":2},
+  {"base":"new_creature","name":"+4 HP","health":12},
+  {"base":"new_creature","name":"+1 END","endurance":1},
+  {"base":"new_creature","name":"piercing resist","resistances":["Piercing"]}
+]' -s 42
+```
+
+### Inline Creature JSON Schema
+
+```json
+{
+  "base": "goblin",           // Inherit from existing creature (optional)
+  "name": "my-test",          // Display name (required if no base)
+  "strength": 2,              // Override stats
+  "agility": 0,
+  "endurance": 1,
+  "will": 0,
+  "health": 12,
+  "speed": 10,
+  "equipment": ["weapon_club", "armor_leather"],
+  "resistances": ["Piercing"],
+  "vulnerabilities": ["Fire"],
+  "immunities": ["Poison"]
+}
+```
+
+### Workflow: Fix an Unbalanced Creature
+
+1. **Identify the problem** via initial balance tests
+2. **Hypothesize fixes** - what stat change might help?
+3. **Test hypotheses** using `--inline-a` or `variation-inline`
+4. **Compare results** - which fix achieves target win rates?
+5. **Update YAML** with the winning configuration
+6. **Verify** by running standard balance checks again

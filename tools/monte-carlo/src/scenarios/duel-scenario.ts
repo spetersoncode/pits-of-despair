@@ -22,8 +22,9 @@ export function runDuel(
   gameData: GameData,
   rng: RandomGenerator
 ): AggregateResult {
-  const creatureA = getCreature(config.creatureA, gameData);
-  const creatureB = getCreature(config.creatureB, gameData);
+  // Use inline creature if provided, otherwise look up by ID
+  const creatureA = config.inlineCreatureA ?? getCreature(config.creatureA, gameData);
+  const creatureB = config.inlineCreatureB ?? getCreature(config.creatureB, gameData);
 
   const results: SimulationResult[] = [];
 
@@ -49,9 +50,13 @@ export function runDuel(
     results.push(result);
   }
 
+  // Use creature names for scenario label
+  const nameA = creatureA.name;
+  const nameB = creatureB.name;
+
   return aggregateResults(
     results,
-    `${config.creatureA} vs ${config.creatureB}`
+    `${nameA} vs ${nameB}`
   );
 }
 

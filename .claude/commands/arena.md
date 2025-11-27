@@ -61,6 +61,8 @@ npm run dev -- duel goblin rat -o json
 | `-s, --seed <num>` | Random seed for reproducibility |
 | `--equip-a <items>` | Equipment for creature A (comma-separated item IDs) |
 | `--equip-b <items>` | Equipment for creature B (comma-separated item IDs) |
+| `--inline-a <json>` | Inline JSON creature definition for A |
+| `--inline-b <json>` | Inline JSON creature definition for B |
 | `-o, --output <format>` | Output: console, json, csv |
 | `-c, --compact` | Compact console output |
 
@@ -114,6 +116,37 @@ npm run dev -- variation goblin skeleton --var "light:weapon_dagger,armor_leathe
 | `-s, --seed <num>` | Random seed for reproducibility |
 | `--var <spec>` | Variation spec "name:item1,item2" (repeatable) |
 
+### Command: `variation-inline` (Inline Creature Testing)
+
+```bash
+npm run dev -- variation-inline <opponent> --vars '<json-array>'
+```
+
+Test multiple inline creature definitions against a single opponent.
+
+**Examples:**
+```bash
+# Test goblin variants against skeleton
+npm run dev -- variation-inline skeleton --vars '[
+  {"base":"goblin","name":"baseline"},
+  {"base":"goblin","name":"+2 STR","strength":2},
+  {"base":"goblin","name":"+4 HP","health":12}
+]'
+
+# Test completely custom creatures
+npm run dev -- variation-inline rat --vars '[
+  {"name":"tank","health":20,"strength":2,"equipment":["weapon_club"]},
+  {"name":"glass cannon","health":6,"strength":5,"equipment":["weapon_longsword"]}
+]'
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --iterations <num>` | Iterations per variation (default: 1000) |
+| `-s, --seed <num>` | Random seed for reproducibility |
+| `--vars <json>` | JSON array of inline creature definitions |
+
 ### Command: `matrix` (All vs All)
 
 ```bash
@@ -144,6 +177,17 @@ npm run dev -- info goblin
 npm run dev -- info weapon_longsword
 ```
 
+### Shell Escaping for Inline JSON
+
+When using `--inline-a`, `--inline-b`, or `--vars`, JSON must be properly escaped:
+- **Bash/Unix**: Use single quotes: `'{"base":"goblin"}'`
+- **PowerShell/Windows**: Escape inner quotes: `"{\"base\":\"goblin\"}"`
+
+Use placeholder `_` for positional creature args replaced by inline definitions:
+```bash
+npm run dev -- duel _ skeleton --inline-a '{"base":"goblin","strength":2}'
+```
+
 ### Parsing User Requests
 
 | User Says | CLI Command |
@@ -154,6 +198,9 @@ npm run dev -- info weapon_longsword
 | "goblin with a longsword vs skeleton" | `duel goblin skeleton --equip-a "weapon_longsword"` |
 | "test different weapons on goblin" | `variation goblin <opponent> --var ...` |
 | "full tournament" | `matrix` |
+| "goblin with +2 STR vs skeleton" | `duel _ skeleton --inline-a '{"base":"goblin","strength":2}'` |
+| "test goblin variants" | `variation-inline <opponent> --vars '[...]'` |
+| "custom creature vs goblin" | `duel _ goblin --inline-a '{"name":"custom",...}'` |
 
 ## Announcement Structure
 

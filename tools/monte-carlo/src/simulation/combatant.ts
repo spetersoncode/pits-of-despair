@@ -242,7 +242,7 @@ export function hasRangedAttack(combatant: CombatantState): boolean {
  */
 const DEFAULT_PUNCH: AttackDefinition = {
   name: 'punch',
-  damage: '1d2',
+  dice: '1d2',
   damageType: 'Bludgeoning',
   type: 'Melee',
   range: 1,

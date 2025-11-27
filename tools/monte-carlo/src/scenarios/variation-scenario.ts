@@ -8,9 +8,11 @@ import type {
   Variation,
   GameData,
   AggregateResult,
+  CreatureDefinition,
 } from '../data/types.js';
 import type { RandomGenerator } from '../data/dice-notation.js';
 import { runDuel } from './duel-scenario.js';
+import { getCreature } from '../data/data-loader.js';
 
 /**
  * Result for a single variation test.
@@ -80,4 +82,42 @@ export function printVariationResults(results: VariationResult[]): void {
 
   console.log('');
   console.log('='.repeat(70));
+}
+
+/**
+ * Run inline variation scenario - test multiple inline creatures against same opponent.
+ * Each inline creature is a complete creature definition (or based on a base creature).
+ */
+export function runInlineVariations(
+  inlineCreatures: CreatureDefinition[],
+  opponent: string,
+  iterations: number,
+  gameData: GameData,
+  rng: RandomGenerator
+): VariationResult[] {
+  const results: VariationResult[] = [];
+  const opponentCreature = getCreature(opponent, gameData);
+
+  for (const inlineCreature of inlineCreatures) {
+    const duelResult = runDuel(
+      {
+        creatureA: inlineCreature.id,
+        creatureB: opponent,
+        iterations,
+        inlineCreatureA: inlineCreature,
+      },
+      gameData,
+      rng
+    );
+
+    results.push({
+      variation: inlineCreature.name,
+      result: {
+        ...duelResult,
+        scenario: `${inlineCreature.name} vs ${opponentCreature.name}`,
+      },
+    });
+  }
+
+  return results;
 }

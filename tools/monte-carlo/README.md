@@ -46,6 +46,62 @@ npm run dev -- variation goblin skeleton \
   --var "mace:weapon_mace"
 ```
 
+### Inline Creatures
+Test hypothetical creature configurations without modifying YAML files.
+
+**Note:** When using inline JSON, use a placeholder `_` for positional args that will be replaced by inline definitions:
+```bash
+# Inline A vs regular creature B
+npm run dev -- duel _ skeleton --inline-a '{"base":"goblin","strength":4}'
+
+# Regular A vs inline B
+npm run dev -- duel goblin _ --inline-b '{"base":"skeleton","health":15}'
+
+# Both inline
+npm run dev -- duel _ _ --inline-a '{"base":"goblin","strength":4}' --inline-b '{"base":"skeleton","health":15}'
+```
+
+**Shell Escaping:**
+JSON requires proper escaping depending on your shell:
+
+```bash
+# Bash/Unix - use single quotes around JSON
+npm run dev -- duel _ skeleton --inline-a '{"base":"goblin","strength":4}'
+
+# PowerShell/Windows - escape inner quotes with backslash
+npm run dev -- duel _ skeleton --inline-a "{\"base\":\"goblin\",\"strength\":4}"
+
+# CMD - escape inner quotes with backslash
+npm run dev -- duel _ skeleton --inline-a "{\"base\":\"goblin\",\"strength\":4}"
+```
+
+**Examples:**
+```bash
+# Batch variation testing
+npm run dev -- variation-inline skeleton \
+  --vars '[{"base":"goblin","name":"baseline"},{"base":"goblin","name":"+2 STR","strength":2}]'
+
+# Complete custom creature (no base)
+npm run dev -- duel _ rat --inline-a '{"name":"tank","strength":2,"health":20,"equipment":["weapon_club"]}'
+```
+
+**Inline Creature Schema:**
+```json
+{
+  "base": "goblin",           // Optional: inherit from existing creature
+  "name": "my-variant",       // Required if no base
+  "strength": 2,              // Stat overrides
+  "agility": 0,
+  "endurance": 1,
+  "health": 12,
+  "speed": 10,
+  "equipment": ["weapon_club"],
+  "resistances": ["Piercing"],
+  "vulnerabilities": ["Fire"],
+  "immunities": ["Poison"]
+}
+```
+
 ### Matrix
 Run all creatures against each other:
 ```bash
@@ -69,6 +125,9 @@ npm run dev -- info club         # Show item details
 | `-o, --output <fmt>` | Output format: console, json, csv |
 | `--outfile <path>` | Write output to file |
 | `-c, --compact` | Compact console output |
+| `--inline-a <json>` | Inline JSON creature definition for creature A (duel) |
+| `--inline-b <json>` | Inline JSON creature definition for creature B (duel) |
+| `--vars <json>` | JSON array of inline creatures (variation-inline) |
 
 ## Combat System
 
