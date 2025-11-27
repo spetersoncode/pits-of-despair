@@ -3,6 +3,15 @@ defaults:
   glyph: "/"
 
 entries:
+  rusty_knife:
+    name: rusty knife
+    color: Palette.RustedIron
+    description: A corroded blade caked with old blood. What it lacks in craftsmanship it makes up for in tetanus.
+    attack:
+      type: Melee
+      dice: "1d4"
+      damageType: Slashing
+
   short_sword:
     name: short sword
     color: Palette.Steel
@@ -19,15 +28,6 @@ entries:
     attack:
       type: Melee
       dice: "1d6+1"
-      damageType: Slashing
-
-  rusty_knife:
-    name: rusty knife
-    color: Palette.RustedIron
-    description: A corroded blade caked with old blood. What it lacks in craftsmanship it makes up for in tetanus.
-    attack:
-      type: Melee
-      dice: "1d4"
       damageType: Slashing
 
   broadsword:

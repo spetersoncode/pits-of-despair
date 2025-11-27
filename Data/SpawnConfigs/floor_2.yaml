@@ -7,8 +7,8 @@ powerBudget: "3d5+15"
 itemBudget: "3d9+3"
 goldBudget: "3d10+18"
 
-minThreat: 1
-maxThreat: 2
+minThreat: 2
+maxThreat: 3
 
 # Small chance for out-of-depth
 outOfDepthChance: 0.05

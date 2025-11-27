@@ -30,36 +30,41 @@ themeWeights:
   - id: beast
     weight: 25
 
-# Encounter types
+# Encounter types (no lairs on floor 1 - save boss encounters for deeper)
 encounterWeights:
   - id: swarm
-    weight: 20
+    weight: 25
   - id: ambush
-    weight: 20
-  - id: lair
-    weight: 15
+    weight: 25
   - id: solitary
-    weight: 15
+    weight: 20
   - id: patrol
-    weight: 10
+    weight: 15
   - id: guard
-    weight: 10
+    weight: 15
 
 # Item configuration
 items:
   commonItems:
-    - potion_strength_1
+    - ammo_arrow
     - potion_agility_1
-    - potion_endurance_1
     - potion_armor_1
+    - potion_endurance_1
   uncommonItems:
-    - potion_strength_2
-    - potion_agility_2
-  rareItems: []
+    - armor_leather
+    - potion_strength_1
+    - scroll_blink
+    - scroll_teleport
+    - weapon_short_bow
+    - weapon_short_sword
+  rareItems:
+    - scroll_charm
+    - ring_evasion
+    - weapon_spear
   epicItems: []
   unguardedItemChance: 0.5
   minGuardedRarity: uncommon
-  commonWeight: 80
-  uncommonWeight: 20
-  rareWeight: 0
+  commonWeight: 70
+  uncommonWeight: 25
+  rareWeight: 5
   epicWeight: 0
