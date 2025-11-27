@@ -28,7 +28,7 @@ public class SkillDefinition
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Skill category: active, passive, reactive, aura.
+    /// Skill category: active, passive, reactive.
     /// Parsed to SkillCategory enum.
     /// </summary>
     public string Category { get; set; } = "active";
@@ -75,16 +75,6 @@ public class SkillDefinition
     public bool AutoTrigger { get; set; } = true;
 
     /// <summary>
-    /// Radius for aura skills.
-    /// </summary>
-    public int AuraRadius { get; set; } = 0;
-
-    /// <summary>
-    /// Who auras affect: "allies", "enemies", "all".
-    /// </summary>
-    public string? AuraTarget { get; set; } = null;
-
-    /// <summary>
     /// Effect definitions for this skill (processed in later phases).
     /// </summary>
     public List<SkillEffectDefinition> Effects { get; set; } = new();
@@ -127,7 +117,6 @@ public class SkillDefinition
             "active" => SkillCategory.Active,
             "passive" => SkillCategory.Passive,
             "reactive" => SkillCategory.Reactive,
-            "aura" => SkillCategory.Aura,
             _ => SkillCategory.Active
         };
     }
@@ -205,7 +194,6 @@ public class SkillDefinition
             SkillCategory.Active => "[ACT]",
             SkillCategory.Passive => "[PAS]",
             SkillCategory.Reactive => "[REA]",
-            SkillCategory.Aura => "[AUR]",
             _ => "[???]"
         };
     }

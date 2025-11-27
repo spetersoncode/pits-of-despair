@@ -15,7 +15,7 @@ namespace PitsOfDespair.UI;
 
 /// <summary>
 /// Displays learned skills and allows activation of active skills.
-/// Groups skills by category: Active, Passive, Reactive, Aura.
+/// Groups skills by category: Active, Passive, Reactive.
 /// </summary>
 public partial class SkillsModal : PanelContainer
 {
@@ -225,7 +225,6 @@ public partial class SkillsModal : PanelContainer
         var activeSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Active).ToList();
         var passiveSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Passive).OrderBy(s => s.Name).ToList();
         var reactiveSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Reactive).OrderBy(s => s.Name).ToList();
-        var auraSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Aura).OrderBy(s => s.Name).ToList();
 
         // Build displayed skills dictionary using persistent keys
         _displayedSkills.Clear();
@@ -272,16 +271,6 @@ public partial class SkillsModal : PanelContainer
             }
         }
 
-        // Aura Skills section
-        if (auraSkills.Count > 0)
-        {
-            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Wizard)}]AURA[/color]");
-            foreach (var skill in auraSkills)
-            {
-                sb.AppendLine(FormatAuraSkill(skill));
-            }
-        }
-
         _skillsLabel.Text = sb.ToString();
     }
 
@@ -304,12 +293,6 @@ public partial class SkillsModal : PanelContainer
         string trigger = !string.IsNullOrEmpty(skill.Trigger) ? skill.Trigger.Replace("_", " ") : "auto";
         string wpCost = skill.WillpowerCost > 0 ? $"{skill.WillpowerCost} WP, " : "";
         return $"  [color={Palette.ToHex(Palette.Caution)}]![/color] [color={Palette.ToHex(Palette.Caution)}]{skill.Name}[/color] ({wpCost}{trigger}) - {skill.Description}";
-    }
-
-    private string FormatAuraSkill(SkillDefinition skill)
-    {
-        string range = skill.AuraRadius > 0 ? $"range {skill.AuraRadius}" : "";
-        return $"  [color={Palette.ToHex(Palette.Wizard)}]@[/color] [color={Palette.ToHex(Palette.Wizard)}]{skill.Name}[/color] ({range}) - {skill.Description}";
     }
 
     private void ShowEmptyMessage()

@@ -242,8 +242,7 @@ public partial class SkillComponent : Node
         {
             [SkillCategory.Active] = new(),
             [SkillCategory.Passive] = new(),
-            [SkillCategory.Reactive] = new(),
-            [SkillCategory.Aura] = new()
+            [SkillCategory.Reactive] = new()
         };
 
         foreach (var skillId in _learnedSkills)

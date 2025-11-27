@@ -22,11 +22,5 @@ public enum SkillCategory
     /// May or may not cost Willpower when triggered.
     /// Examples: Riposte (on enemy miss), Die Hard (on lethal damage)
     /// </summary>
-    Reactive,
-
-    /// <summary>
-    /// Persistent area effects centered on the caster affecting nearby entities.
-    /// Examples: Protective Aura (allies take reduced damage)
-    /// </summary>
-    Aura
+    Reactive
 }

@@ -21,7 +21,7 @@ entries:
     description: What the skill does.
 
     # Category (required)
-    category: active      # active, passive, reactive, aura
+    category: active      # active, passive, reactive
 
     # Targeting (required)
     targeting: self       # self, adjacent, tile, enemy, ally, area, line, cone
@@ -55,10 +55,6 @@ entries:
     # trigger: on_kill    # on_kill, on_hit, on_dodge, on_enemy_miss, on_damage, on_lethal
     # triggerCost: 0      # WP cost when triggered
     # autoTrigger: true   # Auto-trigger or prompt player
-
-    # === AURA SKILLS ===
-    # auraRadius: 2       # Radius in tiles
-    # auraTarget: allies  # allies, enemies, all
 
     # === PROJECTILE SKILLS ===
     # projectile: magic_missile   # Projectile type ID
