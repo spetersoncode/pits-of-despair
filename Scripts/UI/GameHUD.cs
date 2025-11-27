@@ -748,21 +748,26 @@ public partial class GameHUD : Control
             // Only display message if there's an entity at the cursor position
             if (entity != null)
             {
-                // Format: "EntityName: Description"
-                string message = string.IsNullOrEmpty(entity.Description)
-                    ? $"You see {entity.DisplayName}."
-                    : $"{entity.DisplayName}: {entity.Description}";
+                // Convert entity color to hex string for colored display name
+                string colorHex = Palette.ToHex(entity.GlyphColor);
 
-                // Append injury status and conditions if any
+                // Format: colored name, white description
+                string coloredMessage;
+                if (string.IsNullOrEmpty(entity.Description))
+                {
+                    coloredMessage = $"You see [color={colorHex}]{entity.DisplayName}[/color].";
+                }
+                else
+                {
+                    coloredMessage = $"[color={colorHex}]{entity.DisplayName}[/color]: {entity.Description}";
+                }
+
+                // Append injury status and conditions if any (in white)
                 string conditionSuffix = GetStatusSuffix(entity);
                 if (!string.IsNullOrEmpty(conditionSuffix))
                 {
-                    message += $" {conditionSuffix}";
+                    coloredMessage += $" {conditionSuffix}";
                 }
-
-                // Convert entity color to hex string for colored display name
-                string colorHex = Palette.ToHex(entity.GlyphColor);
-                string coloredMessage = $"[color={colorHex}]{message}[/color]";
 
                 _messageLog.AddMessage(coloredMessage, null);
             }
