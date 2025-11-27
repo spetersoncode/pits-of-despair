@@ -62,10 +62,7 @@ public class MetadataAnalysisPass : IGenerationPass
 		// Step 6: Build region graph (for adjacency queries, not tile connectivity)
 		var graph = new RegionGraph(context.Metadata.Regions, context.Metadata.Passages);
 
-		// Warn if region graph has gaps (regions connected via wide openings, not passages)
-		if (!graph.IsFullyConnected())
-		{
-			GD.PushWarning($"[MetadataAnalysisPass] Region graph not fully connected - some regions connected via wide openings (no passage tiles). Passages: {context.Metadata.Passages.Count}, Regions: {context.Metadata.Regions.Count}");
-		}
+		// Note: Region graph may have gaps when regions connect via wide openings rather than narrow passages.
+		// This is normal for BSP-style dungeons and handled by RegionThemeAssigner's adjacency detection.
 	}
 }

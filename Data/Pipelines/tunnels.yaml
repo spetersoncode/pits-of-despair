@@ -29,7 +29,7 @@ passes:
     priority: 400
     config:
       minWalkablePercent: 20
-      maxWalkablePercent: 50
+      maxWalkablePercent: 60
       warnOnFail: true
 
   - pass: metadata

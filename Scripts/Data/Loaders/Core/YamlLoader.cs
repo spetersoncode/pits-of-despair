@@ -42,9 +42,20 @@ public static class YamlLoader
 
             return deserializer.Deserialize<T>(yamlText);
         }
+        catch (YamlException yamlEx)
+        {
+            GD.PrintErr($"[YamlLoader] YAML parse error in {path}:");
+            GD.PrintErr($"  Line {yamlEx.Start.Line}, Col {yamlEx.Start.Column}: {yamlEx.Message}");
+            if (yamlEx.InnerException != null)
+            {
+                GD.PrintErr($"  Inner: {yamlEx.InnerException.Message}");
+            }
+            return null;
+        }
         catch (Exception ex)
         {
             GD.PrintErr($"[YamlLoader] Error loading {path}: {ex.Message}");
+            GD.PrintErr($"  Stack: {ex.StackTrace}");
             return null;
         }
     }

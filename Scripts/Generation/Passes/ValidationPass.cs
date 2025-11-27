@@ -12,145 +12,145 @@ namespace PitsOfDespair.Generation.Passes;
 /// </summary>
 public class ValidationPass : IGenerationPass
 {
-    private readonly PassConfig _passConfig;
+	private readonly PassConfig _passConfig;
 
-    // Walkable percentage constraints
-    private readonly float _minWalkablePercent;
-    private readonly float _maxWalkablePercent;
+	// Walkable percentage constraints
+	private readonly float _minWalkablePercent;
+	private readonly float _maxWalkablePercent;
 
-    // Region constraints (0 = no constraint)
-    private readonly int _minRegions;
-    private readonly int _maxRegions;
-    private readonly int _minRegionSize;
+	// Region constraints (0 = no constraint)
+	private readonly int _minRegions;
+	private readonly int _maxRegions;
+	private readonly int _minRegionSize;
 
-    // Behavior
-    private readonly bool _warnOnFail;
+	// Behavior
+	private readonly bool _warnOnFail;
 
-    public string Name => "Validation";
-    public int Priority { get; }
-    public PassRole Role => PassRole.PostProcess;
+	public string Name => "Validation";
+	public int Priority { get; }
+	public PassRole Role => PassRole.PostProcess;
 
-    public ValidationPass(PassConfig passConfig)
-    {
-        _passConfig = passConfig ?? new PassConfig { Pass = "validation", Priority = 250 };
-        Priority = _passConfig.Priority;
+	public ValidationPass(PassConfig passConfig)
+	{
+		_passConfig = passConfig ?? new PassConfig { Pass = "validation", Priority = 250 };
+		Priority = _passConfig.Priority;
 
-        // Walkable percentage bounds
-        _minWalkablePercent = _passConfig.GetConfigValue("minWalkablePercent", 20f);
-        _maxWalkablePercent = _passConfig.GetConfigValue("maxWalkablePercent", 60f);
+		// Walkable percentage bounds
+		_minWalkablePercent = _passConfig.GetConfigValue("minWalkablePercent", 20f);
+		_maxWalkablePercent = _passConfig.GetConfigValue("maxWalkablePercent", 60f);
 
-        // Region constraints (0 means no constraint)
-        _minRegions = _passConfig.GetConfigValue("minRegions", 0);
-        _maxRegions = _passConfig.GetConfigValue("maxRegions", 0);
-        _minRegionSize = _passConfig.GetConfigValue("minRegionSize", 0);
+		// Region constraints (0 means no constraint)
+		_minRegions = _passConfig.GetConfigValue("minRegions", 0);
+		_maxRegions = _passConfig.GetConfigValue("maxRegions", 0);
+		_minRegionSize = _passConfig.GetConfigValue("minRegionSize", 0);
 
-        // If false, throws exception on validation failure instead of warning
-        _warnOnFail = _passConfig.GetConfigValue("warnOnFail", true);
-    }
+		// If false, throws exception on validation failure instead of warning
+		_warnOnFail = _passConfig.GetConfigValue("warnOnFail", true);
+	}
 
-    public bool CanExecute(GenerationContext context)
-    {
-        // Always run validation
-        return true;
-    }
+	public bool CanExecute(GenerationContext context)
+	{
+		// Always run validation
+		return true;
+	}
 
-    public void Execute(GenerationContext context)
-    {
-        var failures = new List<string>();
+	public void Execute(GenerationContext context)
+	{
+		var failures = new List<string>();
 
-        // Validate walkable percentage
-        ValidateWalkablePercent(context, failures);
+		// Validate walkable percentage
+		ValidateWalkablePercent(context, failures);
 
-        // Validate regions if metadata is available
-        ValidateRegions(context, failures);
+		// Validate regions if metadata is available
+		ValidateRegions(context, failures);
 
-        // Report failures only
-        if (failures.Count > 0)
-        {
-            foreach (var failure in failures)
-            {
-                if (_warnOnFail)
-                {
-                    GD.PushWarning($"[ValidationPass] {failure}");
-                }
-                else
-                {
-                    GD.PrintErr($"[ValidationPass] {failure}");
-                }
-            }
+		// Report failures only
+		if (failures.Count > 0)
+		{
+			foreach (var failure in failures)
+			{
+				if (_warnOnFail)
+				{
+					GD.PushWarning($"[ValidationPass] {failure}");
+				}
+				else
+				{
+					GD.PrintErr($"[ValidationPass] {failure}");
+				}
+			}
 
-            if (!_warnOnFail)
-            {
-                throw new GenerationValidationException(
-                    $"Validation failed with {failures.Count} error(s): {string.Join("; ", failures)}");
-            }
-        }
-    }
+			if (!_warnOnFail)
+			{
+				throw new GenerationValidationException(
+					$"Validation failed with {failures.Count} error(s): {string.Join("; ", failures)}");
+			}
+		}
+	}
 
-    private void ValidateWalkablePercent(GenerationContext context, List<string> failures)
-    {
-        int totalTiles = context.Width * context.Height;
-        int walkableTiles = 0;
+	private void ValidateWalkablePercent(GenerationContext context, List<string> failures)
+	{
+		int totalTiles = context.Width * context.Height;
+		int walkableTiles = 0;
 
-        for (int x = 0; x < context.Width; x++)
-        {
-            for (int y = 0; y < context.Height; y++)
-            {
-                if (context.IsWalkable(x, y))
-                    walkableTiles++;
-            }
-        }
+		for (int x = 0; x < context.Width; x++)
+		{
+			for (int y = 0; y < context.Height; y++)
+			{
+				if (context.IsWalkable(x, y))
+					walkableTiles++;
+			}
+		}
 
-        float walkablePercent = (walkableTiles / (float)totalTiles) * 100f;
+		float walkablePercent = (walkableTiles / (float)totalTiles) * 100f;
 
-        if (walkablePercent < _minWalkablePercent)
-        {
-            failures.Add($"Walkable percentage {walkablePercent:F1}% is below minimum {_minWalkablePercent}%");
-        }
+		if (walkablePercent < _minWalkablePercent)
+		{
+			failures.Add($"Walkable percentage {walkablePercent:F1}% is below minimum {_minWalkablePercent}%");
+		}
 
-        if (walkablePercent > _maxWalkablePercent)
-        {
-            failures.Add($"Walkable percentage {walkablePercent:F1}% exceeds maximum {_maxWalkablePercent}%");
-        }
-    }
+		if (walkablePercent > _maxWalkablePercent)
+		{
+			failures.Add($"Walkable percentage {walkablePercent:F1}% exceeds maximum {_maxWalkablePercent}%");
+		}
+	}
 
-    private void ValidateRegions(GenerationContext context, List<string> failures)
-    {
-        // Skip region validation if no metadata or no constraints
-        if (context.Metadata?.Regions == null)
-            return;
+	private void ValidateRegions(GenerationContext context, List<string> failures)
+	{
+		// Skip region validation if no metadata or no constraints
+		if (context.Metadata?.Regions == null)
+			return;
 
-        int regionCount = context.Metadata.Regions.Count;
+		int regionCount = context.Metadata.Regions.Count;
 
-        // Validate region count
-        if (_minRegions > 0 && regionCount < _minRegions)
-        {
-            failures.Add($"Region count {regionCount} is below minimum {_minRegions}");
-        }
+		// Validate region count
+		if (_minRegions > 0 && regionCount < _minRegions)
+		{
+			failures.Add($"Region count {regionCount} is below minimum {_minRegions}");
+		}
 
-        if (_maxRegions > 0 && regionCount > _maxRegions)
-        {
-            failures.Add($"Region count {regionCount} exceeds maximum {_maxRegions}");
-        }
+		if (_maxRegions > 0 && regionCount > _maxRegions)
+		{
+			failures.Add($"Region count {regionCount} exceeds maximum {_maxRegions}");
+		}
 
-        // Validate minimum region size
-        if (_minRegionSize > 0)
-        {
-            int undersizedRegions = 0;
-            foreach (var region in context.Metadata.Regions)
-            {
-                if (region.Area < _minRegionSize)
-                {
-                    undersizedRegions++;
-                }
-            }
+		// Validate minimum region size
+		if (_minRegionSize > 0)
+		{
+			int undersizedRegions = 0;
+			foreach (var region in context.Metadata.Regions)
+			{
+				if (region.Area < _minRegionSize)
+				{
+					undersizedRegions++;
+				}
+			}
 
-            if (undersizedRegions > 0)
-            {
-                failures.Add($"{undersizedRegions} region(s) are smaller than minimum size {_minRegionSize}");
-            }
-        }
-    }
+			if (undersizedRegions > 0)
+			{
+				failures.Add($"{undersizedRegions} region(s) are smaller than minimum size {_minRegionSize}");
+			}
+		}
+	}
 }
 
 /// <summary>
@@ -158,5 +158,5 @@ public class ValidationPass : IGenerationPass
 /// </summary>
 public class GenerationValidationException : System.Exception
 {
-    public GenerationValidationException(string message) : base(message) { }
+	public GenerationValidationException(string message) : base(message) { }
 }
