@@ -1,6 +1,5 @@
 name: "Vermin Warrens"
-minFloor: 3
-maxFloor: 3
+floor: 3
 
 # Pipeline selection - mix of dense rooms and tunnels
 pipelines:

@@ -1,6 +1,5 @@
 name: "Deep Dungeon"
-minFloor: 11
-maxFloor: 99
+floor: 7
 
 # Pipeline selection - hybrid for deep floors
 pipeline: hybrid

@@ -127,11 +127,6 @@ public partial class SpawnOrchestrator : Node
         // Region spawn data tracking
         var regionSpawnData = new Dictionary<int, RegionSpawnData>();
 
-        // Note: Item/gold budgets are now density-driven, no longer rolled
-        // Keep summary fields for backwards compatibility
-        summary.TotalItemBudget = 0;
-        summary.TotalGoldBudget = 0;
-
         // Phase 2: Assign themes to regions
         _themeAssigner.AssignThemes(metadata, spawnConfig, regionSpawnData);
 
@@ -207,9 +202,10 @@ public partial class SpawnOrchestrator : Node
         }
 
         // Phase 7: Place treasures and items (density-based)
-        int itemsPlaced = PlaceItemsAndTreasure(
+        var (itemsPlaced, itemValue) = PlaceItemsAndTreasure(
             metadata, spawnConfig, regionSpawnData, occupiedPositions);
         summary.ItemsPlaced = itemsPlaced;
+        summary.TotalItemValue = itemValue;
 
         // Phase 8: Place gold (density-based with floor scaling)
         int goldPlaced = _goldPlacer.DistributeGoldByDensity(
@@ -368,13 +364,14 @@ public partial class SpawnOrchestrator : Node
     /// <summary>
     /// Places items and treasure based on region danger and density.
     /// </summary>
-    private int PlaceItemsAndTreasure(
+    private (int count, int value) PlaceItemsAndTreasure(
         DungeonMetadata metadata,
         FloorSpawnConfig floorConfig,
         Dictionary<int, RegionSpawnData> regionSpawnData,
         HashSet<Vector2I> occupiedPositions)
     {
         int totalPlaced = 0;
+        int totalValue = 0;
 
         // Place guarded treasure in dangerous regions (risk = reward)
         var dangerousRegions = metadata.Regions
@@ -389,22 +386,24 @@ public partial class SpawnOrchestrator : Node
             var spawnData = regionSpawnData[region.Id];
             int guardianThreat = spawnData.TotalThreatSpawned / 2;
 
-            int placed = _treasurePlacer.PlaceGuardedTreasure(
+            var (placed, value) = _treasurePlacer.PlaceGuardedTreasure(
                 region, floorConfig, guardianThreat, occupiedPositions);
 
             totalPlaced += placed;
+            totalValue += value;
         }
 
         // Distribute items across all regions using density-based spawning
-        int distributed = _lootDistributor.DistributeItemsByDensity(
+        var (distributed, distributedValue) = _lootDistributor.DistributeItemsByDensity(
             metadata.Regions,
             regionSpawnData,
             floorConfig,
             occupiedPositions);
 
         totalPlaced += distributed;
+        totalValue += distributedValue;
 
-        return totalPlaced;
+        return (totalPlaced, totalValue);
     }
 
     /// <summary>
@@ -427,8 +426,7 @@ public partial class SpawnOrchestrator : Node
                 // Create minimal FloorSpawnConfig with fields needed by OutOfDepthSpawner
                 deeperConfigs.Add(new FloorSpawnConfig
                 {
-                    MinFloor = deeperFloorConfig.MinFloor,
-                    MaxFloor = deeperFloorConfig.MaxFloor,
+                    Floor = deeperFloorConfig.Floor ?? (_floorDepth + i),
                     MinThreat = deeperFloorConfig.MinThreat,
                     MaxThreat = deeperFloorConfig.MaxThreat,
                     ThemeWeights = deeperFloorConfig.ThemeWeights
@@ -537,8 +535,7 @@ public partial class SpawnOrchestrator : Node
         {
             Id = $"floor_{_floorDepth}",
             Name = $"Floor {_floorDepth}",
-            MinFloor = _floorDepth,
-            MaxFloor = _floorDepth,
+            Floor = _floorDepth,
 
             // From Pipeline (layout-dependent)
             ItemDensity = context.ItemDensity,

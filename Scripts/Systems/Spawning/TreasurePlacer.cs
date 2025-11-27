@@ -40,8 +40,8 @@ public class TreasurePlacer
     /// <param name="config">Floor spawn config with value ranges</param>
     /// <param name="guardianThreat">Threat level of guardians in this region</param>
     /// <param name="occupiedPositions">Already occupied positions</param>
-    /// <returns>Number of items placed</returns>
-    public int PlaceGuardedTreasure(
+    /// <returns>Tuple of (items placed, total value)</returns>
+    public (int count, int value) PlaceGuardedTreasure(
         Region region,
         FloorSpawnConfig config,
         int guardianThreat,
@@ -50,23 +50,23 @@ public class TreasurePlacer
         // Select item based on guardian strength (stronger guardian = higher value item)
         var (itemId, itemData) = SelectItemForGuardian(config, guardianThreat);
         if (itemData == null)
-            return 0;
+            return (0, 0);
 
         // Find position for treasure (prefer center/alcove areas)
         var position = FindTreasurePosition(region, occupiedPositions);
         if (position == null)
-            return 0;
+            return (0, 0);
 
         // Create and place the item
         var itemEntity = _entityFactory.CreateItem(itemId, position.Value);
         if (itemEntity == null)
-            return 0;
+            return (0, 0);
 
         _entityManager.AddEntity(itemEntity);
         occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
 
         GD.Print($"[TreasurePlacer] Placed guarded treasure '{itemId}' (value {itemData.Value}) with guardian threat {guardianThreat}");
-        return 1;
+        return (1, itemData.Value);
     }
 
     /// <summary>

@@ -33,14 +33,4 @@ public class FactionTheme
     /// Optional description for this theme.
     /// </summary>
     public string Description { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Minimum floor depth where this theme can appear.
-    /// </summary>
-    public int MinFloor { get; set; } = 1;
-
-    /// <summary>
-    /// Maximum floor depth where this theme can appear.
-    /// </summary>
-    public int MaxFloor { get; set; } = 99;
 }

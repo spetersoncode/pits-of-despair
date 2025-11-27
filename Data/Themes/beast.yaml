@@ -1,8 +1,6 @@
 name: Beast
 description: Feral animals that hunt in packs
 color: Palette.Fur
-minFloor: 1
-maxFloor: 6
 creatures:
   - wild_dog
   - cave_lizard

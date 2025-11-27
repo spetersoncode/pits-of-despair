@@ -1,6 +1,5 @@
 name: "Deeper Halls"
-minFloor: 5
-maxFloor: 5
+floor: 5
 
 # Pipeline selection - varied layouts
 pipelines:

@@ -22,19 +22,14 @@ public class SpawnSummary
     public int TotalThreatSpawned { get; set; }
 
     /// <summary>
-    /// Total item budget allocated.
-    /// </summary>
-    public int TotalItemBudget { get; set; }
-
-    /// <summary>
     /// Items actually placed.
     /// </summary>
     public int ItemsPlaced { get; set; }
 
     /// <summary>
-    /// Total gold budget allocated.
+    /// Total value of items placed.
     /// </summary>
-    public int TotalGoldBudget { get; set; }
+    public int TotalItemValue { get; set; }
 
     /// <summary>
     /// Gold actually placed.
@@ -137,8 +132,8 @@ public class SpawnSummary
     /// </summary>
     public IEnumerable<string> GetDebugLines()
     {
-        yield return $"[SpawnSummary] Floor {FloorDepth} ({SpawnTimeMs}ms): Threat {TotalThreatSpawned}, Items {ItemsPlaced}/{TotalItemBudget}, Gold {GoldPlaced}/{TotalGoldBudget}";
-        yield return $"[SpawnSummary] {RegionsProcessed} regions, {EncountersPlaced} encounters, {CreaturesSpawned} creatures, {DecorationsPlaced} decorations, stairs {StairsPosition ?? "none"}";
+        yield return $"[SpawnSummary] Floor {FloorDepth} ({SpawnTimeMs}ms): {CreaturesSpawned} creatures ({TotalThreatSpawned} threat), {ItemsPlaced} items ({TotalItemValue} value), {GoldPlaced} gold";
+        yield return $"[SpawnSummary] {RegionsProcessed} regions, {EncountersPlaced} encounters, {DecorationsPlaced} decorations, stairs {StairsPosition ?? "none"}";
 
         if (UniqueSpawns.Count > 0)
             yield return $"[SpawnSummary] Uniques: {string.Join(", ", UniqueSpawns)}";

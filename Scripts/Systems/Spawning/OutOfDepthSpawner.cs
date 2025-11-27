@@ -64,7 +64,7 @@ public class OutOfDepthSpawner
         // Find valid deeper floor config
         int targetFloor = currentFloor + floorConfig.OutOfDepthFloors;
         var deeperConfig = deeperConfigs?
-            .FirstOrDefault(c => c.MinFloor <= targetFloor && c.MaxFloor >= targetFloor);
+            .FirstOrDefault(c => c.Floor == targetFloor);
 
         if (deeperConfig == null)
         {

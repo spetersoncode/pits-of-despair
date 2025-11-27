@@ -40,15 +40,15 @@ public class LootDistributor
     /// <param name="regionSpawnData">Spawn data per region (for danger levels)</param>
     /// <param name="config">Floor spawn configuration with density and value parameters</param>
     /// <param name="occupiedPositions">Already occupied positions</param>
-    /// <returns>Number of items placed</returns>
-    public int DistributeItemsByDensity(
+    /// <returns>Tuple of (items placed, total value)</returns>
+    public (int count, int value) DistributeItemsByDensity(
         List<Region> regions,
         Dictionary<int, RegionSpawnData> regionSpawnData,
         FloorSpawnConfig config,
         HashSet<Vector2I> occupiedPositions)
     {
         if (regions == null || regions.Count == 0)
-            return 0;
+            return (0, 0);
 
         // Calculate target item count from density
         int totalTiles = regions.Sum(r => r.Tiles?.Count ?? 0);
@@ -75,10 +75,11 @@ public class LootDistributor
         if (validItems.Count == 0)
         {
             GD.PushWarning($"[LootDistributor] No spawnable items found in value range {minValue}-{maxValue}");
-            return 0;
+            return (0, 0);
         }
 
         int itemsPlaced = 0;
+        int totalValue = 0;
 
         // Sort regions by danger (more dangerous = better loot placement preference)
         var sortedRegions = regions
@@ -112,10 +113,11 @@ public class LootDistributor
             _entityManager.AddEntity(itemEntity);
             occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
             itemsPlaced++;
+            totalValue += itemData.Value;
         }
 
         GD.Print($"[LootDistributor] Placed {itemsPlaced}/{targetItems} items (density {config.ItemDensity:P0} of {totalTiles} tiles, value range {minValue}-{maxValue})");
-        return itemsPlaced;
+        return (itemsPlaced, totalValue);
     }
 
     /// <summary>

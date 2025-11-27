@@ -1,6 +1,5 @@
 name: "Goblin Territory"
-minFloor: 4
-maxFloor: 4
+floor: 4
 
 # Pipeline selection
 pipeline: scattered_rooms

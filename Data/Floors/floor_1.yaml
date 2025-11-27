@@ -1,6 +1,5 @@
 name: "Dungeon Entrance"
-minFloor: 1
-maxFloor: 1
+floor: 1
 
 # Pipeline selection
 pipeline: bsp_standard

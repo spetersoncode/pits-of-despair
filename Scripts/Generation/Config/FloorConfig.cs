@@ -46,14 +46,9 @@ public class FloorConfig
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Minimum floor depth this config applies to.
+    /// Floor depth this config applies to. Null means this is a fallback config.
     /// </summary>
-    public int MinFloor { get; set; } = 1;
-
-    /// <summary>
-    /// Maximum floor depth this config applies to.
-    /// </summary>
-    public int MaxFloor { get; set; } = 99;
+    public int? Floor { get; set; }
 
     /// <summary>
     /// Single pipeline ID to use. If null, check Pipelines for weighted selection.

@@ -51,14 +51,9 @@ public class FloorSpawnConfig
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Minimum floor depth this config applies to.
+    /// Floor depth this config applies to.
     /// </summary>
-    public int MinFloor { get; set; } = 1;
-
-    /// <summary>
-    /// Maximum floor depth this config applies to.
-    /// </summary>
-    public int MaxFloor { get; set; } = 99;
+    public int Floor { get; set; } = 1;
 
     /// <summary>
     /// Weighted list of faction themes available on this floor.

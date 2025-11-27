@@ -56,27 +56,19 @@ public class FloorConfigLoader
 
     /// <summary>
     /// Gets floor config for a specific floor depth.
-    /// Returns the first config where MinFloor <= depth <= MaxFloor.
-    /// Falls back to "default" if no matching config found.
+    /// Throws if no config found for the depth.
     /// </summary>
     public FloorConfig GetForDepth(int depth)
     {
         foreach (var config in _data.Values)
         {
-            if (depth >= config.MinFloor && depth <= config.MaxFloor)
+            if (config.Floor == depth)
             {
                 return config;
             }
         }
 
-        // Fallback to default
-        if (_data.TryGetValue("default", out var defaultConfig))
-        {
-            return defaultConfig;
-        }
-
-        GD.PushWarning($"[FloorConfigLoader] No floor config found for depth {depth}, returning null");
-        return null;
+        throw new System.InvalidOperationException($"[FloorConfigLoader] No floor config found for depth {depth}. Create Data/Floors/floor_{depth}.yaml");
     }
 
     public IEnumerable<string> GetAllIds() => _data.Keys;

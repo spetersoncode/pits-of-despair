@@ -220,17 +220,6 @@ public class RegionThemeAssigner
             }
         }
 
-        // If no themes configured, try to get all themes valid for this floor range
-        if (themes.Count == 0)
-        {
-            foreach (var theme in _dataLoader.Spawning.GetAllFactionThemes())
-            {
-                if (config.MinFloor >= theme.MinFloor && config.MaxFloor <= theme.MaxFloor)
-                {
-                    themes.Add(theme);
-                }
-            }
-        }
 
         return themes;
     }

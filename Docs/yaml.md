@@ -79,9 +79,9 @@ Pipeline configs in `Data/Pipelines/*.yaml` define generation passes and layout-
 
 ### Floor Configs
 
-Floor configs in `Data/Floors/*.yaml` define difficulty/content for depth ranges.
+Floor configs in `Data/Floors/*.yaml` define difficulty/content for specific floors.
 
-**Required**: name, minFloor, maxFloor, pipeline
+**Required**: name, floor, pipeline
 
 **Optional**: minThreat/maxThreat (creature filtering), themeWeights (faction distribution), baseGoldPerPile, goldFloorScale, creatureOutOfDepthChance, outOfDepthFloors, uniqueCreatures, creatureSelection (scoring parameters)
 
@@ -112,11 +112,11 @@ pipelines:  # Weighted random selection
 
 ### Faction Themes
 
-**Structure**: Creature grouping with floor range and visual identity.
+**Structure**: Creature grouping with visual identity.
 
 **Required**: name, creatures (ID list)
 
-**Optional**: minFloor/maxFloor (depth filtering), color (territory display)
+**Optional**: color (territory display), description
 
 ## Field Naming Standards
 

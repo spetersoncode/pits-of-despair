@@ -1,6 +1,5 @@
 name: "Upper Dungeon"
-minFloor: 2
-maxFloor: 2
+floor: 2
 
 # Pipeline selection
 pipeline: bsp_drunkard

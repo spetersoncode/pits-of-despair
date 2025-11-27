@@ -1,6 +1,5 @@
 name: "Beast Dens"
-minFloor: 6
-maxFloor: 6
+floor: 6
 
 # Pipeline selection - caves dominate
 pipeline: caves
