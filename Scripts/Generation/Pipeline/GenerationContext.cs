@@ -38,9 +38,9 @@ public class GenerationContext
     public int Seed { get; init; }
 
     /// <summary>
-    /// Floor generation configuration from YAML.
+    /// Pipeline configuration from YAML.
     /// </summary>
-    public FloorGenerationConfig Config { get; init; }
+    public PipelineConfig PipelineConfig { get; init; }
 
     /// <summary>
     /// Accumulated metadata. Populated by metadata analysis pass.
@@ -59,13 +59,14 @@ public class GenerationContext
     public string BaseGeneratorName { get; set; }
 
     /// <summary>
-    /// Create a new generation context from configuration.
+    /// Create a new generation context from pipeline configuration.
     /// </summary>
-    public GenerationContext(FloorGenerationConfig config)
+    public GenerationContext(PipelineConfig config)
     {
-        Config = config ?? throw new ArgumentNullException(nameof(config));
-        Width = config.Width;
-        Height = config.Height;
+        PipelineConfig = config ?? throw new ArgumentNullException(nameof(config));
+        var dimensions = config.Dimensions ?? new DimensionsConfig();
+        Width = dimensions.Width;
+        Height = dimensions.Height;
         Seed = config.GetActualSeed();
         Random = new Random(Seed);
         Grid = new TileType[Width, Height];

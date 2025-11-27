@@ -1,13 +1,11 @@
-name: floor_hybrid
+name: hybrid
 description: "BSP rooms with some cave-transformed sections"
-seed: -1
-width: 100
-height: 100
 
-minFloor: 9
-maxFloor: 12
+dimensions:
+  width: 80
+  height: 70
 
-pipeline:
+passes:
   - pass: bsp
     priority: 0
     config:
@@ -46,9 +44,42 @@ pipeline:
 
   - pass: metadata
     priority: 999
+    config:
+      minRegionSize: 16
+      maxPassageWidth: 2
 
 metadata:
   minRegionSize: 16
   maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+    - exit
 
-spawnTable: floor_9
+# Layout-dependent spawn settings
+spawnSettings:
+  itemDensity: 0.006
+  goldDensity: 0.015
+  encounterChance: 0.7
+  maxEncounterRatio: 0.6
+  minEncounterSpacing: 7
+  maxEncountersPerRegion: 1
+  playerExclusionRadius: 14
+  regionMatchMultiplier: 1.5
+  dangerBonusMultiplier: 1.3
+  minCreatureCount: 3
+
+  # Mix of room and cave encounters
+  encounterWeights:
+    - id: lair
+      weight: 25
+    - id: ambush
+      weight: 20
+    - id: patrol
+      weight: 20
+    - id: guard
+      weight: 15
+    - id: treasure_guard
+      weight: 10
+    - id: swarm
+      weight: 10

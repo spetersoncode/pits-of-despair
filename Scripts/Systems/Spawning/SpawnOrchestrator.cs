@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Generation.Config;
 using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Spawning.Data;
@@ -91,12 +92,16 @@ public partial class SpawnOrchestrator : Node
         var stopwatch = Stopwatch.StartNew();
         var summary = new SpawnSummary { FloorDepth = _floorDepth };
 
-        // Phase 1: Load floor spawn config
-        var floorConfig = _dataLoader.Spawning.GetFloorSpawnConfigForDepth(_floorDepth);
-        if (floorConfig == null)
+        // Phase 1: Load spawn config from Pipeline + Floor configs
+        var spawnConfig = GetSpawnConfig();
+        if (spawnConfig == null)
         {
-            summary.AddWarning($"No spawn config found for floor {_floorDepth}, using fallback");
-            floorConfig = CreateFallbackConfig();
+            GD.PushError($"[SpawnOrchestrator] FATAL: No spawn config for floor {_floorDepth} - check Pipeline and Floor configs!");
+            summary.AddWarning($"FATAL: No spawn config found for floor {_floorDepth}");
+            stopwatch.Stop();
+            summary.SpawnTimeMs = stopwatch.ElapsedMilliseconds;
+            LastSpawnSummary = summary;
+            return summary;
         }
 
         // Get dungeon metadata
@@ -128,7 +133,7 @@ public partial class SpawnOrchestrator : Node
         summary.TotalGoldBudget = 0;
 
         // Phase 2: Assign themes to regions
-        _themeAssigner.AssignThemes(metadata, floorConfig, regionSpawnData);
+        _themeAssigner.AssignThemes(metadata, spawnConfig, regionSpawnData);
 
         // Phase 3: Calculate danger levels for regions
         _dangerCalculator.CalculateDangerLevels(metadata, regionSpawnData, playerPosition);
@@ -143,11 +148,11 @@ public partial class SpawnOrchestrator : Node
         }
 
         // Phase 4: Process prefab SpawnHints (deduct from region budgets)
-        ProcessPrefabSpawnHints(metadata, floorConfig, regionSpawnData, occupiedPositions, summary);
+        ProcessPrefabSpawnHints(metadata, spawnConfig, regionSpawnData, occupiedPositions, summary);
 
         // Phase 5: Spawn unique monsters
         var uniqueSpawns = _uniqueSpawner.SpawnUniques(
-            floorConfig,
+            spawnConfig,
             metadata.Regions,
             metadata,
             occupiedPositions,
@@ -161,7 +166,7 @@ public partial class SpawnOrchestrator : Node
 
         // Phase 6: Spawn encounters per region
         var allEncounters = new List<SpawnedEncounter>();
-        int maxEncounters = Mathf.RoundToInt(metadata.Regions.Count * floorConfig.MaxEncounterRatio);
+        int maxEncounters = Mathf.RoundToInt(metadata.Regions.Count * spawnConfig.MaxEncounterRatio);
 
         foreach (var region in metadata.Regions)
         {
@@ -173,12 +178,12 @@ public partial class SpawnOrchestrator : Node
                 continue;
 
             // Skip regions in player exclusion zone
-            if (IsRegionInExclusionZone(region, playerPosition, floorConfig))
+            if (IsRegionInExclusionZone(region, playerPosition, spawnConfig))
                 continue;
 
             // Place encounters in this region
             var encounters = _encounterPlacer.PlaceEncountersInRegion(
-                region, spawnData, floorConfig, occupiedPositions);
+                region, spawnData, spawnConfig, occupiedPositions);
 
             // Spawn creatures for each encounter
             foreach (var encounter in encounters)
@@ -203,14 +208,14 @@ public partial class SpawnOrchestrator : Node
 
         // Phase 7: Place treasures and items (density-based)
         int itemsPlaced = PlaceItemsAndTreasure(
-            metadata, floorConfig, regionSpawnData, occupiedPositions);
+            metadata, spawnConfig, regionSpawnData, occupiedPositions);
         summary.ItemsPlaced = itemsPlaced;
 
         // Phase 8: Place gold (density-based with floor scaling)
         int goldPlaced = _goldPlacer.DistributeGoldByDensity(
             metadata.Regions,
             regionSpawnData,
-            floorConfig,
+            spawnConfig,
             _floorDepth,
             occupiedPositions);
         summary.GoldPlaced = goldPlaced;
@@ -233,7 +238,7 @@ public partial class SpawnOrchestrator : Node
         }
 
         // Phase 11: Out-of-depth spawn (if triggered)
-        TrySpawnOutOfDepth(floorConfig, metadata, regionSpawnData, occupiedPositions, summary);
+        TrySpawnOutOfDepth(spawnConfig, metadata, regionSpawnData, occupiedPositions, summary);
 
         // Phase 12: Place decorations
         // IMPORTANT: This must run after AI configuration (Phase 10) because patrol routes
@@ -246,7 +251,7 @@ public partial class SpawnOrchestrator : Node
         summary.DecorationsPlaced = decorationsPlaced;
 
         // Validation
-        ValidateSpawning(summary, metadata, playerPosition, floorConfig);
+        ValidateSpawning(summary, metadata, playerPosition, spawnConfig);
 
         stopwatch.Stop();
         summary.SpawnTimeMs = stopwatch.ElapsedMilliseconds;
@@ -412,14 +417,22 @@ public partial class SpawnOrchestrator : Node
         HashSet<Vector2I> occupiedPositions,
         SpawnSummary summary)
     {
-        // Get configs for deeper floors
+        // Get configs for deeper floors from FloorConfig system
         var deeperConfigs = new List<FloorSpawnConfig>();
         for (int i = 1; i <= floorConfig.OutOfDepthFloors; i++)
         {
-            var deeper = _dataLoader.Spawning.GetFloorSpawnConfigForDepth(_floorDepth + i);
-            if (deeper != null)
+            var deeperFloorConfig = _dataLoader.FloorConfigs.GetForDepth(_floorDepth + i);
+            if (deeperFloorConfig != null)
             {
-                deeperConfigs.Add(deeper);
+                // Create minimal FloorSpawnConfig with fields needed by OutOfDepthSpawner
+                deeperConfigs.Add(new FloorSpawnConfig
+                {
+                    MinFloor = deeperFloorConfig.MinFloor,
+                    MaxFloor = deeperFloorConfig.MaxFloor,
+                    MinThreat = deeperFloorConfig.MinThreat,
+                    MaxThreat = deeperFloorConfig.MaxThreat,
+                    ThemeWeights = deeperFloorConfig.ThemeWeights
+                });
             }
         }
 
@@ -498,25 +511,65 @@ public partial class SpawnOrchestrator : Node
     }
 
     /// <summary>
-    /// Creates a minimal fallback config when no YAML config exists.
+    /// Gets spawn configuration by merging Pipeline and Floor configs.
     /// </summary>
-    private FloorSpawnConfig CreateFallbackConfig()
+    private FloorSpawnConfig GetSpawnConfig()
+    {
+        var pipelineConfig = _mapSystem.CurrentPipelineConfig;
+        var floorConfig = _mapSystem.CurrentFloorConfig;
+
+        if (pipelineConfig == null || floorConfig == null)
+        {
+            GD.PushError($"[SpawnOrchestrator] Missing pipeline or floor config for depth {_floorDepth}");
+            return null;
+        }
+
+        var context = SpawnContext.Create(pipelineConfig, floorConfig);
+        return ConvertToFloorSpawnConfig(context);
+    }
+
+    /// <summary>
+    /// Converts a SpawnContext to FloorSpawnConfig for use by spawning subsystems.
+    /// </summary>
+    private FloorSpawnConfig ConvertToFloorSpawnConfig(SpawnContext context)
     {
         return new FloorSpawnConfig
         {
-            Id = $"fallback_floor_{_floorDepth}",
-            Name = $"Fallback Floor {_floorDepth}",
+            Id = $"floor_{_floorDepth}",
+            Name = $"Floor {_floorDepth}",
             MinFloor = _floorDepth,
             MaxFloor = _floorDepth,
-            // Density-based spawning parameters
-            ItemDensity = 0.03f,
-            MinItemValue = 1,
-            MaxItemValue = Mathf.Min(_floorDepth, 5),
-            GoldDensity = 0.04f,
-            BaseGoldPerPile = 5,
-            GoldFloorScale = 1.0f,
-            MinThreat = 1,
-            MaxThreat = _floorDepth * 3 + 5
+
+            // From Pipeline (layout-dependent)
+            ItemDensity = context.ItemDensity,
+            GoldDensity = context.GoldDensity,
+            EncounterChance = context.EncounterChance,
+            MaxEncounterRatio = context.MaxEncounterRatio,
+            MinEncounterSpacing = context.MinEncounterSpacing,
+            MaxEncountersPerRegion = context.MaxEncountersPerRegion,
+            PlayerExclusionRadius = context.PlayerExclusionRadius,
+            RegionMatchMultiplier = context.RegionMatchMultiplier,
+            DangerBonusMultiplier = context.DangerBonusMultiplier,
+            MinCreatureCount = context.MinCreatureCount,
+            EncounterWeights = context.EncounterWeights,
+
+            // From Floor (difficulty/content)
+            MinThreat = context.MinThreat,
+            MaxThreat = context.MaxThreat,
+            MinItemValue = context.MinItemValue,
+            MaxItemValue = context.MaxItemValue,
+            BaseGoldPerPile = context.BaseGoldPerPile,
+            GoldFloorScale = context.GoldFloorScale,
+            CreatureOutOfDepthChance = context.CreatureOutOfDepthChance,
+            OutOfDepthFloors = context.OutOfDepthFloors,
+            ThemeWeights = context.ThemeWeights,
+            UniqueCreatures = context.UniqueCreatures,
+
+            // Creature selection
+            BaseScore = context.BaseScore,
+            NoMatchScore = context.NoMatchScore,
+            MatchScoreBonus = context.MatchScoreBonus,
+            RoleKeywordBonus = context.RoleKeywordBonus
         };
     }
 

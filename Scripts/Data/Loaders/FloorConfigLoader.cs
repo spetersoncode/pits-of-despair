@@ -6,13 +6,14 @@ using PitsOfDespair.Generation.Config;
 namespace PitsOfDespair.Data.Loaders;
 
 /// <summary>
-/// Loads and provides access to floor generation configs from YAML files.
+/// Loads and provides access to floor configs from YAML files.
+/// Floors define difficulty curve, content composition, and pipeline selection.
 /// </summary>
 public class FloorConfigLoader
 {
     private const string DataPath = "res://Data/Floors/";
 
-    private readonly Dictionary<string, FloorGenerationConfig> _data = new();
+    private readonly Dictionary<string, FloorConfig> _data = new();
 
     public void Load()
     {
@@ -24,13 +25,21 @@ public class FloorConfigLoader
             return;
         }
 
-        RecursiveLoader.LoadFiles(DataPath, _data, "floor config");
+        RecursiveLoader.LoadFiles(DataPath, _data, "floor config", (config, id) =>
+        {
+            // Ensure name is set from filename if not specified in YAML
+            if (string.IsNullOrEmpty(config.Name))
+            {
+                config.Name = id;
+            }
+        });
+
         GD.Print($"[FloorConfigLoader] Loaded {_data.Count} floor configs");
     }
 
     // === Public Accessors ===
 
-    public FloorGenerationConfig Get(string id)
+    public FloorConfig Get(string id)
     {
         if (_data.TryGetValue(id, out var config))
         {
@@ -40,17 +49,17 @@ public class FloorConfigLoader
         return null;
     }
 
-    public bool TryGet(string id, out FloorGenerationConfig config)
+    public bool TryGet(string id, out FloorConfig config)
     {
         return _data.TryGetValue(id, out config);
     }
 
     /// <summary>
-    /// Gets floor generation config for a specific floor depth.
+    /// Gets floor config for a specific floor depth.
     /// Returns the first config where MinFloor <= depth <= MaxFloor.
     /// Falls back to "default" if no matching config found.
     /// </summary>
-    public FloorGenerationConfig GetForDepth(int depth)
+    public FloorConfig GetForDepth(int depth)
     {
         foreach (var config in _data.Values)
         {
@@ -72,7 +81,7 @@ public class FloorConfigLoader
 
     public IEnumerable<string> GetAllIds() => _data.Keys;
 
-    public IEnumerable<FloorGenerationConfig> GetAll() => _data.Values;
+    public IEnumerable<FloorConfig> GetAll() => _data.Values;
 
     public int Count => _data.Count;
 }

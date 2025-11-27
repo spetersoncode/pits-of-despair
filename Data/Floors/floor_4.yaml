@@ -1,0 +1,27 @@
+name: "Goblin Territory"
+minFloor: 4
+maxFloor: 4
+
+# Pipeline selection
+pipeline: scattered_rooms
+
+# Difficulty curve
+minThreat: 1
+maxThreat: 4
+
+# Gold scaling
+baseGoldPerPile: 10
+goldFloorScale: 1.2
+
+# Increasing out-of-depth chance
+creatureOutOfDepthChance: 0.10
+outOfDepthFloors: 2
+
+# Goblinoids dominant, varied enemies
+themeWeights:
+  - id: goblinoid
+    weight: 45
+  - id: undead
+    weight: 30
+  - id: beast
+    weight: 25

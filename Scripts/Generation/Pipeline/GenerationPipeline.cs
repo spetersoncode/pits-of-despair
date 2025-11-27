@@ -34,9 +34,9 @@ public class GenerationPipeline
     /// <summary>
     /// Execute the pipeline with the given configuration.
     /// </summary>
-    /// <param name="config">Floor generation configuration.</param>
+    /// <param name="config">Pipeline configuration.</param>
     /// <returns>Generation result containing grid and metadata.</returns>
-    public GenerationResult Execute(FloorGenerationConfig config)
+    public GenerationResult Execute(PipelineConfig config)
     {
         if (config == null)
             throw new ArgumentNullException(nameof(config));
@@ -101,26 +101,27 @@ public class GenerationPipeline
     }
 
     /// <summary>
-    /// Create a pipeline from a floor configuration.
+    /// Create a pipeline from a pipeline configuration.
     /// </summary>
-    /// <param name="config">Floor generation configuration with pipeline definition.</param>
+    /// <param name="config">Pipeline configuration with pass definitions.</param>
     /// <returns>Configured pipeline ready to execute.</returns>
-    public static GenerationPipeline FromConfig(FloorGenerationConfig config)
+    public static GenerationPipeline FromConfig(PipelineConfig config)
     {
         if (config == null)
             throw new ArgumentNullException(nameof(config));
 
         var pipeline = new GenerationPipeline();
+        var passes = config.Passes ?? new List<PassConfig>();
 
         // Create passes from config
-        foreach (var passConfig in config.Pipeline)
+        foreach (var passConfig in passes)
         {
             var pass = GenerationPassFactory.Create(passConfig);
             pipeline.AddPass(pass);
         }
 
         // Auto-add metadata pass if not specified
-        bool hasMetadataPass = config.Pipeline.Any(p =>
+        bool hasMetadataPass = passes.Any(p =>
             p.Pass.Equals("metadata", StringComparison.OrdinalIgnoreCase));
 
         if (!hasMetadataPass)

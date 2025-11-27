@@ -1,0 +1,72 @@
+name: dense_rooms
+description: "Dense dungeon with smaller, tightly-packed rooms"
+
+dimensions:
+  width: 80
+  height: 70
+
+passes:
+  - pass: bsp
+    priority: 0
+    config:
+      minPartitionSize: 6
+      maxPartitionSize: 10
+      minRoomWidth: 4
+      maxRoomWidth: 8
+      minRoomHeight: 4
+      maxRoomHeight: 8
+      corridorWidth: 1
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 20
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 30
+      maxWalkablePercent: 60
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 12
+      maxPassageWidth: 2
+
+metadata:
+  minRegionSize: 12
+  maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+    - exit
+
+# Layout-dependent spawn settings
+spawnSettings:
+  itemDensity: 0.008
+  goldDensity: 0.018
+  encounterChance: 0.65
+  maxEncounterRatio: 0.55
+  minEncounterSpacing: 5
+  maxEncountersPerRegion: 1
+  playerExclusionRadius: 12
+  regionMatchMultiplier: 1.4
+  dangerBonusMultiplier: 1.3
+  minCreatureCount: 4
+
+  # Small rooms favor guards and swarms
+  encounterWeights:
+    - id: guard
+      weight: 25
+    - id: swarm
+      weight: 25
+    - id: ambush
+      weight: 20
+    - id: solitary
+      weight: 15
+    - id: patrol
+      weight: 10
+    - id: lair
+      weight: 5

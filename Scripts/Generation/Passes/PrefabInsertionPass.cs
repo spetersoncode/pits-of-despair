@@ -53,8 +53,8 @@ public class PrefabInsertionPass : IGenerationPass
             return;
         }
 
-        // Get floor depth from config
-        int floorDepth = context.Config.MinFloor;
+        // Get floor depth from pass data (set by MapSystem) or default to 1
+        int floorDepth = context.GetPassData("FloorDepth", 1);
 
         // Select prefabs to insert
         List<PrefabData> selectedPrefabs;

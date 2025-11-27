@@ -1,0 +1,25 @@
+name: "Beast Dens"
+minFloor: 6
+maxFloor: 6
+
+# Pipeline selection - caves dominate
+pipeline: caves
+
+# Difficulty curve
+minThreat: 2
+maxThreat: 6
+
+# Gold scaling
+baseGoldPerPile: 12
+goldFloorScale: 1.4
+
+# Higher out-of-depth chance
+creatureOutOfDepthChance: 0.15
+outOfDepthFloors: 2
+
+# Last beast floor, undead rising
+themeWeights:
+  - id: undead
+    weight: 50
+  - id: beast
+    weight: 50

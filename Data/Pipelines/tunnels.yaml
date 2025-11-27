@@ -1,13 +1,11 @@
-name: floor_tunnels
+name: tunnels
 description: "Winding tunnel network using drunkard's walk algorithm"
-seed: -1
-width: 100
-height: 100
 
-minFloor: 3
-maxFloor: 5
+dimensions:
+  width: 80
+  height: 70
 
-pipeline:
+passes:
   - pass: drunkard_walk
     priority: 0
     config:
@@ -46,5 +44,32 @@ metadata:
   distanceFields:
     - walls
     - entrance
+    - exit
 
-spawnTable: floor_1
+# Layout-dependent spawn settings
+spawnSettings:
+  itemDensity: 0.005
+  goldDensity: 0.012
+  encounterChance: 0.65
+  maxEncounterRatio: 0.55
+  minEncounterSpacing: 8
+  maxEncountersPerRegion: 1
+  playerExclusionRadius: 14
+  regionMatchMultiplier: 1.6
+  dangerBonusMultiplier: 1.4
+  minCreatureCount: 3
+
+  # Tunnels favor ambushes and patrols
+  encounterWeights:
+    - id: ambush
+      weight: 30
+    - id: patrol
+      weight: 25
+    - id: solitary
+      weight: 20
+    - id: swarm
+      weight: 15
+    - id: guard
+      weight: 10
+    - id: lair
+      weight: 0

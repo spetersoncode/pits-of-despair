@@ -1,0 +1,80 @@
+name: bsp_standard
+description: "Standard BSP dungeon with rectangular rooms and corridors"
+
+dimensions:
+  width: 80
+  height: 70
+
+passes:
+  - pass: bsp
+    priority: 0
+    config:
+      minPartitionSize: 8
+      maxPartitionSize: 14
+      minRoomWidth: 6
+      maxRoomWidth: 12
+      minRoomHeight: 6
+      maxRoomHeight: 12
+      corridorWidth: 1
+
+  - pass: extra_connections
+    priority: 100
+    config:
+      connectionChance: 20
+      maxDistance: 25
+      corridorWidth: 1
+      lShaped: true
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 20
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 20
+      maxWalkablePercent: 50
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 12
+      maxPassageWidth: 2
+
+metadata:
+  minRegionSize: 12
+  maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+    - exit
+
+# Layout-dependent spawn settings
+spawnSettings:
+  itemDensity: 0.006
+  goldDensity: 0.015
+  encounterChance: 0.7
+  maxEncounterRatio: 0.6
+  minEncounterSpacing: 6
+  maxEncountersPerRegion: 1
+  playerExclusionRadius: 13
+  regionMatchMultiplier: 1.5
+  dangerBonusMultiplier: 1.3
+  minCreatureCount: 3
+
+  # Encounter types suited to structured rooms and corridors
+  encounterWeights:
+    - id: patrol
+      weight: 20
+    - id: guard
+      weight: 20
+    - id: ambush
+      weight: 20
+    - id: swarm
+      weight: 15
+    - id: lair
+      weight: 15
+    - id: solitary
+      weight: 10

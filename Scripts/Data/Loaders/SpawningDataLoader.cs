@@ -9,23 +9,20 @@ namespace PitsOfDespair.Data.Loaders;
 /// Loads and provides access to spawning-related data:
 /// - Faction themes
 /// - Encounter templates
-/// - Floor spawn configs
+/// Note: Floor spawn configs are now handled via Pipeline + Floor configs.
 /// </summary>
 public class SpawningDataLoader
 {
     private const string ThemesPath = "res://Data/Themes/";
     private const string EncountersPath = "res://Data/Encounters/";
-    private const string SpawnConfigsPath = "res://Data/SpawnConfigs/";
 
     private readonly Dictionary<string, FactionTheme> _factionThemes = new();
     private readonly Dictionary<string, EncounterTemplate> _encounterTemplates = new();
-    private readonly Dictionary<string, FloorSpawnConfig> _floorSpawnConfigs = new();
 
     public void Load()
     {
         LoadFactionThemes();
         LoadEncounterTemplates();
-        LoadFloorSpawnConfigs();
     }
 
     private void LoadFactionThemes()
@@ -78,30 +75,6 @@ public class SpawningDataLoader
         GD.Print($"[SpawningDataLoader] Loaded {_encounterTemplates.Count} encounter templates");
     }
 
-    private void LoadFloorSpawnConfigs()
-    {
-        _floorSpawnConfigs.Clear();
-
-        if (!DirAccess.DirExistsAbsolute(SpawnConfigsPath))
-        {
-            GD.Print("[SpawningDataLoader] No SpawnConfigs directory found, floor spawn configs not loaded");
-            return;
-        }
-
-        RecursiveLoader.LoadFiles(SpawnConfigsPath, _floorSpawnConfigs, "floor spawn config", (config, id) =>
-        {
-            if (string.IsNullOrEmpty(config.Id))
-            {
-                config.Id = id;
-            }
-            if (string.IsNullOrEmpty(config.Name))
-            {
-                config.Name = id;
-            }
-        });
-
-        GD.Print($"[SpawningDataLoader] Loaded {_floorSpawnConfigs.Count} floor spawn configs");
-    }
 
     /// <summary>
     /// Validates that all creature IDs in faction themes reference existing creatures.
@@ -178,44 +151,4 @@ public class SpawningDataLoader
     public IEnumerable<EncounterTemplate> GetAllEncounterTemplates() => _encounterTemplates.Values;
 
     public int EncounterTemplateCount => _encounterTemplates.Count;
-
-    // === Floor Spawn Config Accessors ===
-
-    public FloorSpawnConfig GetFloorSpawnConfig(string id)
-    {
-        if (_floorSpawnConfigs.TryGetValue(id, out var config))
-        {
-            return config;
-        }
-        GD.PrintErr($"[SpawningDataLoader] Floor spawn config '{id}' not found!");
-        return null;
-    }
-
-    public bool TryGetFloorSpawnConfig(string id, out FloorSpawnConfig config)
-    {
-        return _floorSpawnConfigs.TryGetValue(id, out config);
-    }
-
-    /// <summary>
-    /// Gets floor spawn config for a specific floor depth.
-    /// Returns the first config where MinFloor <= depth <= MaxFloor.
-    /// </summary>
-    public FloorSpawnConfig GetFloorSpawnConfigForDepth(int depth)
-    {
-        foreach (var config in _floorSpawnConfigs.Values)
-        {
-            if (depth >= config.MinFloor && depth <= config.MaxFloor)
-            {
-                return config;
-            }
-        }
-        GD.PushWarning($"[SpawningDataLoader] No floor spawn config found for depth {depth}");
-        return null;
-    }
-
-    public IEnumerable<string> GetAllFloorSpawnConfigIds() => _floorSpawnConfigs.Keys;
-
-    public IEnumerable<FloorSpawnConfig> GetAllFloorSpawnConfigs() => _floorSpawnConfigs.Values;
-
-    public int FloorSpawnConfigCount => _floorSpawnConfigs.Count;
 }

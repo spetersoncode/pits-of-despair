@@ -2,15 +2,22 @@ name: "Vermin Warrens"
 minFloor: 3
 maxFloor: 3
 
+# Pipeline selection - mix of dense rooms and tunnels
+pipelines:
+  - id: dense_rooms
+    weight: 50
+  - id: tunnels
+    weight: 50
+
+# Difficulty curve
 minThreat: 1
 maxThreat: 3
 
-# Density-based spawning
-itemDensity: 0.006
-goldDensity: 0.015
+# Gold scaling
 baseGoldPerPile: 8
 goldFloorScale: 1.0
 
+# Increasing out-of-depth chance
 creatureOutOfDepthChance: 0.08
 outOfDepthFloors: 2
 
@@ -24,17 +31,3 @@ themeWeights:
     weight: 25
   - id: beast
     weight: 10
-
-encounterWeights:
-  - id: swarm
-    weight: 25
-  - id: patrol
-    weight: 25
-  - id: lair
-    weight: 20
-  - id: guard
-    weight: 15
-  - id: ambush
-    weight: 10
-  - id: solitary
-    weight: 5

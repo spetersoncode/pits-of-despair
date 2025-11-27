@@ -1,0 +1,71 @@
+name: caves
+description: "Natural cavern system using cellular automata"
+
+dimensions:
+  width: 80
+  height: 70
+
+passes:
+  - pass: cellular_automata
+    priority: 0
+    config:
+      role: base
+      fillPercent: 45
+      iterations: 5
+      birthLimit: 4
+      deathLimit: 3
+      smoothingIterations: 2
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 25
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 30
+      maxWalkablePercent: 55
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 20
+      maxPassageWidth: 3
+
+metadata:
+  minRegionSize: 20
+  maxPassageWidth: 3
+  distanceFields:
+    - walls
+    - entrance
+    - exit
+
+# Layout-dependent spawn settings
+spawnSettings:
+  itemDensity: 0.006
+  goldDensity: 0.015
+  encounterChance: 0.75
+  maxEncounterRatio: 0.65
+  minEncounterSpacing: 8
+  maxEncountersPerRegion: 1
+  playerExclusionRadius: 15
+  regionMatchMultiplier: 1.5
+  dangerBonusMultiplier: 1.4
+  minCreatureCount: 3
+
+  # Open caves favor lairs and ambushes
+  encounterWeights:
+    - id: lair
+      weight: 30
+    - id: ambush
+      weight: 25
+    - id: patrol
+      weight: 15
+    - id: swarm
+      weight: 15
+    - id: treasure_guard
+      weight: 10
+    - id: solitary
+      weight: 5

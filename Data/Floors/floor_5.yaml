@@ -1,0 +1,33 @@
+name: "Deeper Halls"
+minFloor: 5
+maxFloor: 5
+
+# Pipeline selection - varied layouts
+pipelines:
+  - id: dense_rooms
+    weight: 40
+  - id: scattered_rooms
+    weight: 30
+  - id: tunnels
+    weight: 30
+
+# Difficulty curve
+minThreat: 1
+maxThreat: 5
+
+# Gold scaling
+baseGoldPerPile: 12
+goldFloorScale: 1.3
+
+# Higher out-of-depth chance
+creatureOutOfDepthChance: 0.12
+outOfDepthFloors: 2
+
+# Last goblinoid floor, balanced themes
+themeWeights:
+  - id: goblinoid
+    weight: 35
+  - id: undead
+    weight: 35
+  - id: beast
+    weight: 30

@@ -13,6 +13,7 @@ public partial class DataLoader : Node
     public CreatureLoader Creatures { get; private set; }
     public ItemLoader Items { get; private set; }
     public SkillLoader Skills { get; private set; }
+    public PipelineConfigLoader Pipelines { get; private set; }
     public FloorConfigLoader FloorConfigs { get; private set; }
     public PrefabDataLoader Prefabs { get; private set; }
     public SpawningDataLoader Spawning { get; private set; }
@@ -24,6 +25,7 @@ public partial class DataLoader : Node
         Creatures = new CreatureLoader();
         Items = new ItemLoader();
         Skills = new SkillLoader();
+        Pipelines = new PipelineConfigLoader();
         FloorConfigs = new FloorConfigLoader();
         Prefabs = new PrefabDataLoader();
         Spawning = new SpawningDataLoader();
@@ -33,6 +35,7 @@ public partial class DataLoader : Node
         Creatures.Load();
         Items.Load();
         Skills.Load();
+        Pipelines.Load();  // Pipelines before FloorConfigs (floors reference pipelines)
         FloorConfigs.Load();
         Prefabs.Load();
         Spawning.Load();

@@ -1,13 +1,11 @@
-name: floor_scattered
+name: scattered_rooms
 description: "Chaotic room layout using simple room placement"
-seed: -1
-width: 100
-height: 100
 
-minFloor: 4
-maxFloor: 6
+dimensions:
+  width: 80
+  height: 70
 
-pipeline:
+passes:
   - pass: simple_rooms
     priority: 0
     config:
@@ -51,4 +49,30 @@ metadata:
     - entrance
     - exit
 
-spawnTable: floor_1
+# Layout-dependent spawn settings
+spawnSettings:
+  itemDensity: 0.006
+  goldDensity: 0.015
+  encounterChance: 0.7
+  maxEncounterRatio: 0.6
+  minEncounterSpacing: 7
+  maxEncountersPerRegion: 1
+  playerExclusionRadius: 13
+  regionMatchMultiplier: 1.5
+  dangerBonusMultiplier: 1.3
+  minCreatureCount: 3
+
+  # Scattered rooms with varied sizes
+  encounterWeights:
+    - id: patrol
+      weight: 20
+    - id: lair
+      weight: 20
+    - id: guard
+      weight: 20
+    - id: ambush
+      weight: 15
+    - id: swarm
+      weight: 15
+    - id: solitary
+      weight: 10

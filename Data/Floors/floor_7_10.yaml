@@ -1,0 +1,27 @@
+name: "Deep Crypts"
+minFloor: 7
+maxFloor: 10
+
+# Pipeline selection - caves and hybrid
+pipelines:
+  - id: caves
+    weight: 60
+  - id: hybrid
+    weight: 40
+
+# Difficulty curve
+minThreat: 2
+maxThreat: 8
+
+# Gold scaling
+baseGoldPerPile: 15
+goldFloorScale: 1.5
+
+# High out-of-depth chance
+creatureOutOfDepthChance: 0.18
+outOfDepthFloors: 3
+
+# Undead domain
+themeWeights:
+  - id: undead
+    weight: 100

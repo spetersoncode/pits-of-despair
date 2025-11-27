@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Generation;
+using PitsOfDespair.Generation.Config;
 using PitsOfDespair.Generation.Generators;
 using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Generation.Pipeline;
@@ -31,11 +32,25 @@ public partial class MapSystem : Node
     private TileType[,] _grid;
     private DungeonMetadata _metadata;
     private DataLoader _dataLoader;
+    private PipelineConfig _currentPipelineConfig;
+    private FloorConfig _currentFloorConfig;
 
     /// <summary>
     /// Metadata from the last generation (regions, passages, chokepoints, etc.)
     /// </summary>
     public DungeonMetadata Metadata => _metadata;
+
+    /// <summary>
+    /// The pipeline config used for the current map generation.
+    /// Used by spawning system to access layout-dependent spawn settings.
+    /// </summary>
+    public PipelineConfig CurrentPipelineConfig => _currentPipelineConfig;
+
+    /// <summary>
+    /// The floor config used for the current map generation.
+    /// Used by spawning system to access difficulty/content settings.
+    /// </summary>
+    public FloorConfig CurrentFloorConfig => _currentFloorConfig;
 
     public override void _Ready()
     {
@@ -48,12 +63,12 @@ public partial class MapSystem : Node
         }
 
         // Use new pipeline-based generation
-        GenerateFromConfig("default");
+        GenerateForFloor(1);
     }
 
     /// <summary>
-    /// Generates a new map using the legacy BSP dungeon generator.
-    /// For new code, prefer GenerateFromConfig() or GenerateForFloor().
+    /// Generates a new map using the BSP dungeon generator directly.
+    /// Prefer GenerateFromPipeline() or GenerateForFloor() for data-driven generation.
     /// </summary>
     public void GenerateMap()
     {
@@ -63,36 +78,43 @@ public partial class MapSystem : Node
         // Generate the map
         _grid = generator.Generate(MapWidth, MapHeight);
         _metadata = null; // Legacy generation doesn't produce metadata
+        _currentPipelineConfig = null;
+        _currentFloorConfig = null;
 
         EmitSignal(SignalName.MapChanged);
     }
 
     /// <summary>
-    /// Generate dungeon from a YAML floor configuration by ID.
+    /// Generate dungeon from a pipeline configuration by ID.
     /// </summary>
-    /// <param name="floorConfigId">ID of the floor config (filename without extension).</param>
-    public void GenerateFromConfig(string floorConfigId)
+    /// <param name="pipelineId">ID of the pipeline config (filename without extension).</param>
+    public void GenerateFromPipeline(string pipelineId)
     {
-        var config = _dataLoader.FloorConfigs.Get(floorConfigId);
-        if (config == null)
+        var pipelineConfig = _dataLoader.Pipelines.Get(pipelineId);
+        if (pipelineConfig == null)
         {
-            GD.PushError($"MapSystem: Floor config '{floorConfigId}' not found, falling back to legacy generation");
+            GD.PushError($"MapSystem: Pipeline config '{pipelineId}' not found, falling back to BSP generation");
             GenerateMap();
             return;
         }
 
-        GenerateFromConfig(config);
+        GenerateFromPipeline(pipelineConfig, null);
     }
 
     /// <summary>
-    /// Generate dungeon from a FloorGenerationConfig object.
+    /// Generate dungeon from a PipelineConfig object.
     /// </summary>
-    public void GenerateFromConfig(Generation.Config.FloorGenerationConfig config)
+    /// <param name="pipelineConfig">Pipeline configuration.</param>
+    /// <param name="floorConfig">Optional floor configuration for spawning context.</param>
+    public void GenerateFromPipeline(PipelineConfig pipelineConfig, FloorConfig floorConfig = null)
     {
-        GD.Print($"[MapSystem] Generating from config: {config.Name}");
+        GD.Print($"[MapSystem] Generating from pipeline: {pipelineConfig.Name}");
 
-        var pipeline = GenerationPipeline.FromConfig(config);
-        var result = pipeline.Execute(config);
+        _currentPipelineConfig = pipelineConfig;
+        _currentFloorConfig = floorConfig;
+
+        var pipeline = GenerationPipeline.FromConfig(pipelineConfig);
+        var result = pipeline.Execute(pipelineConfig);
 
         _grid = result.Grid;
         _metadata = result.Metadata;
@@ -107,20 +129,32 @@ public partial class MapSystem : Node
 
     /// <summary>
     /// Generate dungeon for a specific floor depth.
-    /// Automatically selects the appropriate floor config.
+    /// Automatically selects the appropriate floor and pipeline configs.
     /// </summary>
     /// <param name="floorDepth">The floor depth (1-based).</param>
     public void GenerateForFloor(int floorDepth)
     {
-        var config = _dataLoader.FloorConfigs.GetForDepth(floorDepth);
-        if (config == null)
+        var floorConfig = _dataLoader.FloorConfigs.GetForDepth(floorDepth);
+        if (floorConfig == null)
         {
-            GD.PushWarning($"MapSystem: No floor config for depth {floorDepth}, falling back to legacy generation");
+            GD.PushWarning($"MapSystem: No floor config for depth {floorDepth}, falling back to BSP generation");
             GenerateMap();
             return;
         }
 
-        GenerateFromConfig(config);
+        // Select pipeline from floor config
+        var rng = new System.Random();
+        var pipelineId = floorConfig.SelectPipeline(rng);
+
+        var pipelineConfig = _dataLoader.Pipelines.Get(pipelineId);
+        if (pipelineConfig == null)
+        {
+            GD.PushWarning($"MapSystem: Pipeline '{pipelineId}' not found for floor {floorDepth}, falling back to BSP generation");
+            GenerateMap();
+            return;
+        }
+
+        GenerateFromPipeline(pipelineConfig, floorConfig);
     }
 
     // Metadata query methods
