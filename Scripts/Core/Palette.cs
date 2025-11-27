@@ -167,6 +167,15 @@ public static class Palette
     /// <summary>Gold material (rich yellow-gold)</summary>
     public static readonly Color Gold = new("#CCAA66");
 
+    /// <summary>Mithril, legendary silvery metal (bright silver-blue)</summary>
+    public static readonly Color Mithril = new("#C0D0E0");
+
+    /// <summary>Ivory, pale cream-white (elven craftsmanship)</summary>
+    public static readonly Color Ivory = new("#F0EAD6");
+
+    /// <summary>Shadow, dark purple-gray (readable on black)</summary>
+    public static readonly Color Shadow = new("#6A5A7A");
+
     #endregion
 
     #region Materials - Stone
