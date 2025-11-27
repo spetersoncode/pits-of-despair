@@ -6,3 +6,4 @@ maxFloor: 3
 creatures:
   - rat
   - elder_rat
+  - dire_rat

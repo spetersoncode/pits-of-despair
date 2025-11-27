@@ -45,6 +45,11 @@ public class ActionContext
     /// </summary>
     public TileHazardManager? TileHazardManager { get; }
 
+    /// <summary>
+    /// The player vision system for fog of war and map revelation.
+    /// </summary>
+    public PlayerVisionSystem? PlayerVisionSystem { get; }
+
     public ActionContext(
         MapSystem mapSystem,
         EntityManager entityManager,
@@ -52,7 +57,8 @@ public class ActionContext
         CombatSystem combatSystem,
         EntityFactory entityFactory,
         VisualEffectSystem visualEffectSystem,
-        TileHazardManager? tileHazardManager = null)
+        TileHazardManager? tileHazardManager = null,
+        PlayerVisionSystem? playerVisionSystem = null)
     {
         MapSystem = mapSystem;
         EntityManager = entityManager;
@@ -61,5 +67,6 @@ public class ActionContext
         EntityFactory = entityFactory;
         VisualEffectSystem = visualEffectSystem;
         TileHazardManager = tileHazardManager;
+        PlayerVisionSystem = playerVisionSystem;
     }
 }

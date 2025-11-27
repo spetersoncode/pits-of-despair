@@ -73,6 +73,10 @@ public abstract class Effect
             "melee_attack" => new MeleeAttackEffect(definition),
             "lightning_bolt" => new LightningBoltEffect(definition),
             "chain_lightning" => new ChainLightningEffect(definition),
+            "fear" => new FearEffect(definition),
+            "sleep" => new SleepEffect(definition),
+            "magic_mapping" => new MagicMappingEffect(definition),
+            "acid" => new AcidEffect(definition),
             _ => null
         };
     }

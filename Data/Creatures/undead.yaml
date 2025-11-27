@@ -45,3 +45,20 @@ entries:
       - Piercing
     vulnerabilities:
       - Bludgeoning
+
+  skeleton_warrior:
+    name: skeleton warrior
+    description: These bones once belonged to a trained soldier. Even in death, it maintains a fighter's stance and wields its weapon with grim purpose.
+    threat: 3
+    strength: 1
+    agility: 1
+    endurance: 1
+    health: 12
+    equipment:
+      - weapon_broadsword
+    immunities:
+      - Poison
+    resistances:
+      - Piercing
+    vulnerabilities:
+      - Bludgeoning

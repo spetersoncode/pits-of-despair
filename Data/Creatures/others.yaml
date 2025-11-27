@@ -3,29 +3,6 @@ defaults:
   color: Palette.Minion
 
 entries:
-  wild_dog:
-    name: wild dog
-    description: A feral hound with matted fur and hungry eyes. It travels in packs, patrolling the dungeon corridors in search of prey.
-    glyph: d
-    threat: 1
-    strength: 0
-    agility: 1
-    endurance: 0
-    health: 6
-    ai:
-      - type: Patrol
-        mode: LeaderPack
-        scope: Roaming
-        waitTurns: 4
-        followDistance: 2
-        minDistance: 10
-        maxDistance: 50
-    attacks:
-      - name: bite
-        type: Melee
-        dice: "1d3"
-        damageType: Piercing
-
   cave_lizard:
     name: cave lizard
     description: A pale reptile with unblinking eyes, adapted to the eternal darkness below. It lies motionless until prey draws near, then strikes with surprising speed.

@@ -6,3 +6,4 @@ maxFloor: 10
 creatures:
   - skeleton
   - zombie
+  - skeleton_warrior

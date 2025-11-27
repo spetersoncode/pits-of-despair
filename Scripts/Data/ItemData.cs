@@ -548,6 +548,11 @@ public class EffectDefinition
     /// Modifier to the caster's save roll. Positive = harder to resist, negative = easier.
     /// </summary>
     public int SaveModifier { get; set; } = 0;
+
+    /// <summary>
+    /// Dice notation for damage-over-time effects (e.g., "1d3" for acid DoT).
+    /// </summary>
+    public string? DotDamage { get; set; } = null;
 }
 
 /// <summary>

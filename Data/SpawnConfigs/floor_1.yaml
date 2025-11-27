@@ -59,6 +59,8 @@ items:
     - weapon_short_sword
   rareItems:
     - scroll_charm
+    - scroll_fear
+    - scroll_sleep
     - ring_evasion
     - weapon_spear
   epicItems: []

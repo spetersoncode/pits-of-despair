@@ -1,0 +1,68 @@
+name: floor_2
+description: "Upper dungeon with winding passages"
+seed: -1
+width: 80
+height: 70
+
+minFloor: 2
+maxFloor: 2
+
+pipeline:
+  - pass: bsp
+    priority: 0
+    config:
+      minPartitionSize: 8
+      maxPartitionSize: 14
+      minRoomWidth: 6
+      maxRoomWidth: 12
+      minRoomHeight: 6
+      maxRoomHeight: 12
+      corridorWidth: 1
+
+  # Drunkard walk modifier adds organic tunnels between rooms
+  - pass: drunkard_walk
+    priority: 50
+    config:
+      targetFloorPercent: 12
+      walkerCount: 3
+      maxStepsPerWalker: 800
+      tunnelWidth: 1
+      turnChance: 40
+      startFromCenter: false
+      roomChance: 5
+
+  - pass: extra_connections
+    priority: 100
+    config:
+      connectionChance: 15
+      maxDistance: 25
+      corridorWidth: 1
+      lShaped: true
+
+  - pass: connectivity
+    priority: 300
+    config:
+      repairStrategy: mst
+      maxCorridorLength: 20
+
+  - pass: validation
+    priority: 400
+    config:
+      minWalkablePercent: 20
+      maxWalkablePercent: 50
+
+  - pass: metadata
+    priority: 999
+    config:
+      minRegionSize: 12
+      maxPassageWidth: 2
+
+metadata:
+  minRegionSize: 12
+  maxPassageWidth: 2
+  distanceFields:
+    - walls
+    - entrance
+    - exit
+
+spawnTable: floor_2

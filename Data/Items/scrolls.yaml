@@ -24,3 +24,38 @@ entries:
     description: Soothing whispers emanate from the parchment, promising friendship and loyalty to any creature that hears them read aloud.
     effects:
       - type: charm
+
+  fear:
+    name: fear
+    color: Palette.StatusDebuff
+    description: Dark whispers emanate from this parchment, promising terror to any who hear them spoken.
+    effects:
+      - type: fear
+        durationDice: 3d4
+    targeting:
+      type: enemy
+      range: 6
+      requiresLos: true
+
+  sleep:
+    name: sleep
+    color: Palette.Arcane
+    description: Drowsy sigils drift across yellowed vellum. Even looking at them brings heavy eyelids.
+    effects:
+      - type: sleep
+        durationDice: 2d6
+        saveStat: wil
+        saveModifier: 4
+    targeting:
+      type: area
+      range: 5
+      radius: 2
+      requiresLos: true
+
+  magic_mapping:
+    name: magic mapping
+    color: Palette.Arcane
+    description: Arcane cartography fills this scroll. Reading it imprints the dungeon's layout upon your mind.
+    effects:
+      - type: magic_mapping
+        radius: 10

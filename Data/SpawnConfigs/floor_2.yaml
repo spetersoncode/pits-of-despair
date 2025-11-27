@@ -3,11 +3,11 @@ minFloor: 2
 maxFloor: 2
 
 # Crawl-style: 3dN+15 where N scales with depth
-powerBudget: "3d5+15"
+powerBudget: "3d6+18"
 itemBudget: "3d9+3"
 goldBudget: "3d10+18"
 
-minThreat: 2
+minThreat: 1
 maxThreat: 3
 
 # Small chance for out-of-depth
@@ -51,8 +51,13 @@ items:
     - potion_strength_2
     - potion_agility_2
     - potion_endurance_2
+    - scroll_fear
+    - scroll_sleep
+    - wand_fatigue
   rareItems:
     - potion_haste
+    - scroll_magic_mapping
+    - wand_acid_arrow
   epicItems: []
   unguardedItemChance: 0.4
   minGuardedRarity: uncommon

@@ -74,3 +74,15 @@ entries:
     health: 5
     equipment:
       - weapon_rusty_knife
+
+  goblin_slasher:
+    name: goblin slasher
+    description: A wiry goblin with a notched blade and a cruel grin. It strikes fast and without mercy.
+    color: Palette.Warrior
+    threat: 2
+    strength: 1
+    agility: 1
+    endurance: -1
+    health: 12
+    equipment:
+      - weapon_short_sword

@@ -221,7 +221,7 @@ public partial class GameLevel : Node
         // Initialize tile hazard manager
         _tileHazardManager.SetDependencies(_entityManager, _turnManager, _renderer);
 
-        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _visualEffectSystem, _tileHazardManager);
+        var actionContext = new ActionContext(_mapSystem, _entityManager, _player, _combatSystem, _entityFactory, _visualEffectSystem, _tileHazardManager, _visionSystem);
 
         _inputHandler.SetPlayer(_player);
         _inputHandler.SetTurnManager(_turnManager);

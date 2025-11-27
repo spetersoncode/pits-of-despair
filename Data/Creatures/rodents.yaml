@@ -36,3 +36,20 @@ entries:
         type: Melee
         dice: "1d4"
         damageType: Piercing
+
+  dire_rat:
+    name: dire rat
+    description: A monstrous rat swollen to the size of a small dog. Its diseased fangs drip with filth, and madness gleams in its beady eyes.
+    threat: 3
+    color: Palette.Brute
+    strength: 1
+    agility: 1
+    endurance: 0
+    health: 14
+    ai:
+      - type: Wandering
+    attacks:
+      - name: diseased bite
+        type: Melee
+        dice: "1d6"
+        damageType: Piercing

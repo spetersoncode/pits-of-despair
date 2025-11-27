@@ -47,6 +47,9 @@ public static class ConditionFactory
 
             // Debuffs / Status effects
             "confusion" => new ConfusionCondition(duration),
+            "fear" => new FearCondition(duration),
+            "sleep" => new SleepCondition(duration),
+            "acid" => new AcidCondition(duration),
 
             // Speed modifier
             "speed_modifier" => new SpeedModifierCondition(amount, duration, durationMode, sourceId),
@@ -91,6 +94,9 @@ public static class ConditionFactory
             "max_willpower_modifier" => true,
             "regen_modifier" => true,
             "confusion" => true,
+            "fear" => true,
+            "sleep" => true,
+            "acid" => true,
             "speed_modifier" => true,
             _ => false
         };

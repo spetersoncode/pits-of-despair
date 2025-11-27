@@ -286,6 +286,40 @@ public partial class PlayerVisionSystem : Node
         EmitSignal(SignalName.VisionChanged);
     }
 
+    /// <summary>
+    /// Reveals tiles within a radius of a center position as explored.
+    /// Used by magic mapping scrolls to reveal part of the dungeon layout.
+    /// Does not affect visibility (visible tiles are only updated via normal FOV).
+    /// </summary>
+    /// <param name="center">The center position to reveal around.</param>
+    /// <param name="radius">The radius in tiles to reveal.</param>
+    public void RevealAreaAsExplored(GridPosition center, int radius)
+    {
+        int radiusSq = radius * radius;
+
+        for (int x = center.X - radius; x <= center.X + radius; x++)
+        {
+            for (int y = center.Y - radius; y <= center.Y + radius; y++)
+            {
+                // Skip out-of-bounds tiles
+                if (x < 0 || x >= _mapWidth || y < 0 || y >= _mapHeight)
+                {
+                    continue;
+                }
+
+                // Check distance (Euclidean) to create circular reveal
+                var pos = new GridPosition(x, y);
+                if (DistanceHelper.EuclideanDistance(center, pos) <= radiusSq)
+                {
+                    _exploredTiles[x, y] = true;
+                }
+            }
+        }
+
+        // Notify renderer to redraw
+        EmitSignal(SignalName.VisionChanged);
+    }
+
     public override void _ExitTree()
     {
         // Cleanup signal connections

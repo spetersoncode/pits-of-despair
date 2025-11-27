@@ -86,3 +86,37 @@ entries:
       type: enemy
       range: 5
       requiresLos: true
+
+  fatigue:
+    name: fatigue
+    color: Palette.StatusDebuff
+    description: A leaden wand that seems to drain warmth from the air. Pointing it at a foe saps their vitality.
+    charges: 2d4
+    effects:
+      - type: apply_condition
+        conditionType: speed_modifier
+        amount: -3
+        durationDice: 3d4
+        saveStat: end
+        saveModifier: 2
+    targeting:
+      type: enemy
+      range: 5
+      requiresLos: true
+
+  acid_arrow:
+    name: acid arrow
+    color: Palette.Acid
+    description: A glass wand filled with bubbling green liquid. Viscous acid drips from its tip, hissing where it touches stone.
+    charges: 2d4
+    effects:
+      - type: acid
+        dice: 1d6
+        dotDamage: 1d3
+        durationDice: 2d3
+        saveStat: end
+        saveModifier: 2
+    targeting:
+      type: enemy
+      range: 6
+      requiresLos: true

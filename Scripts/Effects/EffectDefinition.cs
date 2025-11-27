@@ -117,6 +117,11 @@ public class EffectDefinition
     public float DamageFalloff { get; set; } = 1.0f;
 
     /// <summary>
+    /// Dice notation for damage-over-time effects (e.g., "1d3" for acid DoT).
+    /// </summary>
+    public string? DotDamage { get; set; } = null;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -173,7 +178,8 @@ public class EffectDefinition
             HazardType = itemEffect.HazardType,
             SaveStat = itemEffect.SaveStat,
             AttackStat = itemEffect.AttackStat,
-            SaveModifier = itemEffect.SaveModifier
+            SaveModifier = itemEffect.SaveModifier,
+            DotDamage = itemEffect.DotDamage
         };
     }
 }

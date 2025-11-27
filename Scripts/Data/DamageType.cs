@@ -45,5 +45,10 @@ public enum DamageType
     /// <summary>
     /// Lightning damage from electrical and storm magic.
     /// </summary>
-    Lightning
+    Lightning,
+
+    /// <summary>
+    /// Acid damage from corrosive substances that eat through flesh and armor.
+    /// </summary>
+    Acid
 }
