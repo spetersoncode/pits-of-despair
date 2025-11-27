@@ -11,6 +11,7 @@ entries:
     strength: 0
     agility: 1
     endurance: 0
+    wil: -1
     health: 5
     ai:
       - type: Patrol
@@ -33,6 +34,7 @@ entries:
     strength: 1
     agility: -1
     endurance: 1
+    wil: 1
     health: 6
     attacks:
       - name: headbutt

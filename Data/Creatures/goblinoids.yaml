@@ -12,6 +12,7 @@ entries:
     strength: 0
     agility: 0
     endurance: -1
+    wil: -1
     health: 6
     equipment:
       - weapon_club
@@ -71,6 +72,7 @@ entries:
     strength: 0
     agility: 1
     endurance: -1
+    wil: -1
     health: 5
     equipment:
       - weapon_rusty_knife

@@ -12,6 +12,7 @@ entries:
     strength: 0
     agility: 1
     endurance: 0
+    wil: -1
     health: 6
     ai:
       - type: Patrol
@@ -58,6 +59,7 @@ entries:
     strength: 2
     agility: 1
     endurance: 1
+    wil: 1
     health: 16
     speed: 12
     ai:

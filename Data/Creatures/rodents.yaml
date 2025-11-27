@@ -11,6 +11,7 @@ entries:
     strength: -2
     agility: 1
     endurance: -2
+    wil: -2
     health: 4
     ai:
       - type: Wandering
@@ -28,6 +29,7 @@ entries:
     strength: 0
     agility: 1
     endurance: -1
+    wil: -1
     health: 8
     ai:
       - type: Wandering
