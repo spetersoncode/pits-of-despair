@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Systems.Audio;
@@ -13,6 +14,8 @@ public partial class SystemAudioHandler : Node
     {
         public const string LevelUp = "Player/level_up.wav";
         public const string MeleeAttack = "Player/melee_attack.wav";
+        public const string RangedAttack = "Player/ranged_attack.wav";
+        public const string AttackMiss = "Player/attack_miss.wav";
     }
 
     private LevelUpSystem? _levelUpSystem;
@@ -30,7 +33,17 @@ public partial class SystemAudioHandler : Node
 
         _combatSystem.Connect(
             CombatSystem.SignalName.AttackHit,
-            Callable.From<BaseEntity, BaseEntity, int, string>(OnAttackHit)
+            Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit)
+        );
+
+        _combatSystem.Connect(
+            CombatSystem.SignalName.AttackMissed,
+            Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed)
+        );
+
+        _combatSystem.Connect(
+            CombatSystem.SignalName.AttackBlocked,
+            Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked)
         );
     }
 
@@ -48,7 +61,17 @@ public partial class SystemAudioHandler : Node
         {
             _combatSystem.Disconnect(
                 CombatSystem.SignalName.AttackHit,
-                Callable.From<BaseEntity, BaseEntity, int, string>(OnAttackHit)
+                Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit)
+            );
+
+            _combatSystem.Disconnect(
+                CombatSystem.SignalName.AttackMissed,
+                Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed)
+            );
+
+            _combatSystem.Disconnect(
+                CombatSystem.SignalName.AttackBlocked,
+                Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked)
             );
         }
     }
@@ -58,12 +81,31 @@ public partial class SystemAudioHandler : Node
         AudioManager.PlaySystemSound(SystemSounds.LevelUp);
     }
 
-    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName)
+    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
     {
         // Only play sound for player attacks
         if (attacker is Player)
         {
-            AudioManager.PlaySystemSound(SystemSounds.MeleeAttack);
+            var sound = attackType == AttackType.Ranged
+                ? SystemSounds.RangedAttack
+                : SystemSounds.MeleeAttack;
+            AudioManager.PlaySystemSound(sound);
+        }
+    }
+
+    private void OnAttackMissed(BaseEntity attacker, BaseEntity target, string attackName)
+    {
+        if (attacker is Player)
+        {
+            AudioManager.PlaySystemSound(SystemSounds.AttackMiss);
+        }
+    }
+
+    private void OnAttackBlocked(BaseEntity attacker, BaseEntity target, string attackName)
+    {
+        if (attacker is Player)
+        {
+            AudioManager.PlaySystemSound(SystemSounds.AttackMiss);
         }
     }
 }

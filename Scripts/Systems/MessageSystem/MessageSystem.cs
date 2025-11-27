@@ -126,7 +126,7 @@ public partial class MessageSystem : Node
     {
         _combatSystem = combatSystem;
 
-        _combatSystem.Connect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string>(OnAttackHit));
+        _combatSystem.Connect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
         _combatSystem.Connect(CombatSystem.SignalName.AttackBlocked, Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked));
         _combatSystem.Connect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         _combatSystem.Connect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
@@ -201,7 +201,7 @@ public partial class MessageSystem : Node
 
     #region Signal Handlers
 
-    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName)
+    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
     {
         // Track for death message attribution
         _lastAttacker[target] = attacker;
@@ -909,7 +909,7 @@ public partial class MessageSystem : Node
         // Disconnect from combat system
         if (_combatSystem != null)
         {
-            _combatSystem.Disconnect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string>(OnAttackHit));
+            _combatSystem.Disconnect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackBlocked, Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
             _combatSystem.Disconnect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));

@@ -141,7 +141,7 @@ public class MeleeAttackEffect : Effect
             // Emit hit signal BEFORE applying damage
             context.ActionContext.CombatSystem?.EmitSignal(
                 Systems.CombatSystem.SignalName.AttackHit,
-                caster, target, actualDamage, skillName);
+                caster, target, actualDamage, skillName, (int)Data.AttackType.Melee);
 
             // Apply the damage
             targetHealth.TakeDamage(finalDamage, attackData.DamageType, caster);

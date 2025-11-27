@@ -96,7 +96,7 @@ public partial class ReactiveSkillProcessor : Node
         if (_combatSystem != null)
         {
             _combatSystem.Connect(CombatSystem.SignalName.AttackHit,
-                Callable.From<BaseEntity, BaseEntity, int, string>(OnAttackHit));
+                Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
             _combatSystem.Connect(CombatSystem.SignalName.AttackMissed,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         }
@@ -112,7 +112,7 @@ public partial class ReactiveSkillProcessor : Node
         if (_combatSystem != null && IsInstanceValid(_combatSystem))
         {
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackHit,
-                Callable.From<BaseEntity, BaseEntity, int, string>(OnAttackHit));
+                Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         }
@@ -133,7 +133,7 @@ public partial class ReactiveSkillProcessor : Node
     /// Called when an attack hits and deals damage.
     /// Checks for on_kill and on_hit triggers.
     /// </summary>
-    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName)
+    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
     {
         if (_entity == null || _dataLoader == null) return;
 
