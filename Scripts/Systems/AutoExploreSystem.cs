@@ -150,6 +150,14 @@ public partial class AutoExploreSystem : Node
             return;
         }
 
+        // Check for heard creatures (Keen Hearing)
+        if (HasHeardCreature())
+        {
+            _actionContext.CombatSystem.EmitActionMessage(_player, "You hear something in the distance.", Palette.ToHex(Palette.Caution));
+            Stop();
+            return;
+        }
+
         // Add delay for watchable pacing
         _waitingForDelay = true;
         GetTree().CreateTimer(StepDelay).Connect("timeout", Callable.From(OnDelayComplete), (uint)ConnectFlags.OneShot);
@@ -170,6 +178,14 @@ public partial class AutoExploreSystem : Node
         if (visibleEnemy != null)
         {
             _actionContext.CombatSystem.EmitActionMessage(_player, $"You spotted a {visibleEnemy.DisplayName}.", Palette.ToHex(Palette.Caution));
+            Stop();
+            return;
+        }
+
+        // Re-check for heard creatures (Keen Hearing)
+        if (HasHeardCreature())
+        {
+            _actionContext.CombatSystem.EmitActionMessage(_player, "You hear something in the distance.", Palette.ToHex(Palette.Caution));
             Stop();
             return;
         }
@@ -398,6 +414,30 @@ public partial class AutoExploreSystem : Node
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Checks if any creature is detected via Keen Hearing.
+    /// </summary>
+    private bool HasHeardCreature()
+    {
+        if (_visionSystem == null)
+            return false;
+
+        foreach (var entity in _entityManager.GetAllEntities())
+        {
+            // Only check creatures
+            if (entity.Layer != EntityLayer.Creature)
+                continue;
+
+            // Check if heard via Keen Hearing
+            if (_visionSystem.IsHeard(entity))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

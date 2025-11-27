@@ -20,6 +20,8 @@ public partial class PlayerVisionSystem : Node
     private MapSystem _mapSystem;
     private Player _player;
     private VisionComponent _playerVision;
+    private EntityManager _entityManager;
+    private SkillComponent _playerSkillComponent;
 
     // Fog-of-war state
     private bool[,] _visibleTiles;   // Currently visible tiles (recalculated each turn)
@@ -31,15 +33,21 @@ public partial class PlayerVisionSystem : Node
     // Debug state
     private bool _revealModeEnabled = false;
 
+    // Keen Hearing detection state
+    private readonly HashSet<BaseEntity> _heardCreatures = new();
+    private const float HearingChance = 0.5f;  // 50% chance to hear each creature
+
     /// <summary>
     /// Initializes the vision system with required references.
     /// Called by GameLevel after scene setup.
     /// </summary>
-    public void Initialize(MapSystem mapSystem, Player player)
+    public void Initialize(MapSystem mapSystem, Player player, EntityManager entityManager)
     {
         _mapSystem = mapSystem;
         _player = player;
+        _entityManager = entityManager;
         _playerVision = player.GetNode<VisionComponent>("VisionComponent");
+        _playerSkillComponent = player.GetNodeOrNull<SkillComponent>("SkillComponent");
 
         if (_playerVision == null)
         {
@@ -104,8 +112,84 @@ public partial class PlayerVisionSystem : Node
             }
         }
 
+        // Calculate heard creatures (Keen Hearing skill)
+        CalculateHeardCreatures(playerPos, visiblePositions);
+
         // Notify renderer to redraw
         EmitSignal(SignalName.VisionChanged);
+    }
+
+    /// <summary>
+    /// Calculates creatures detected via Keen Hearing skill.
+    /// Uses two-step detection: (1) direct distance in hearing zone, (2) walking distance is reasonable.
+    /// This allows hearing through thin walls but not thick dungeon sections.
+    /// Uses Dijkstra (single flood-fill) instead of A* per creature for efficiency.
+    /// </summary>
+    private void CalculateHeardCreatures(GridPosition playerPos, HashSet<GridPosition> visiblePositions)
+    {
+        _heardCreatures.Clear();
+
+        // Check if player has Keen Hearing skill
+        if (_playerSkillComponent == null || !_playerSkillComponent.HasSkill("keen_hearing"))
+        {
+            return;
+        }
+
+        if (_entityManager == null)
+        {
+            return;
+        }
+
+        int hearingRange = _playerVision.VisionRange;
+        int hearingRangeSq = hearingRange * hearingRange;
+
+        // Build distance map once from player position (Dijkstra flood-fill)
+        // Pass null for entityManager/player to skip occupancy checks - we want
+        // distances to tiles regardless of what's standing on them
+        var distanceMap = DijkstraMapBuilder.BuildDistanceMap(
+            new List<GridPosition> { playerPos },
+            _mapSystem
+        );
+
+        // Check all creatures
+        foreach (var entity in _entityManager.GetAllEntities())
+        {
+            // Only creatures can be heard
+            if (entity.Layer != EntityLayer.Creature)
+            {
+                continue;
+            }
+
+            // Skip if already visible (no need to "hear" what you can see)
+            if (visiblePositions.Contains(entity.GridPosition))
+            {
+                continue;
+            }
+
+            // Step 1: Direct distance check (ignoring walls) - must be within hearing range
+            int distSq = DistanceHelper.EuclideanDistance(playerPos, entity.GridPosition);
+            if (distSq > hearingRangeSq)
+            {
+                continue;
+            }
+
+            float directDist = Mathf.Sqrt(distSq);
+
+            // Step 2: Walking distance check via pre-computed Dijkstra map
+            float walkingDist = distanceMap[entity.GridPosition.X, entity.GridPosition.Y];
+
+            // Skip if unreachable or walking distance too long (> 1.5x direct distance)
+            if (walkingDist == float.MaxValue || walkingDist > directDist * 1.5f)
+            {
+                continue;
+            }
+
+            // 50% chance to hear each creature
+            if (GD.Randf() < HearingChance)
+            {
+                _heardCreatures.Add(entity);
+            }
+        }
     }
 
     /// <summary>
@@ -127,6 +211,11 @@ public partial class PlayerVisionSystem : Node
 
         return _visibleTiles[position.X, position.Y];
     }
+
+    /// <summary>
+    /// Checks if an entity is detected via Keen Hearing (heard but not visible).
+    /// </summary>
+    public bool IsHeard(BaseEntity entity) => _heardCreatures.Contains(entity);
 
     /// <summary>
     /// Checks if a tile has been explored (seen at least once).

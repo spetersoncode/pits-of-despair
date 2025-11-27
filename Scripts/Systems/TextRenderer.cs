@@ -353,7 +353,9 @@ public partial class TextRenderer : Control
 		// Player is always on top and drawn separately at viewport center
 
 		// Build a map of which entity to draw at each position (highest layer wins)
+		// Also track fallback entities for when creature isn't visible (to avoid info leak)
 		var entityToDraw = new System.Collections.Generic.Dictionary<GridPosition, BaseEntity>();
+		var fallbackEntity = new System.Collections.Generic.Dictionary<GridPosition, BaseEntity>();
 		foreach (var entity in _entities)
 		{
 			// Skip entities at player position - player always wins
@@ -362,7 +364,21 @@ public partial class TextRenderer : Control
 
 			if (!entityToDraw.TryGetValue(entity.GridPosition, out var existing) || entity.Layer > existing.Layer)
 			{
+				// Store previous winner as fallback before replacing
+				if (existing != null)
+				{
+					fallbackEntity[entity.GridPosition] = existing;
+				}
 				entityToDraw[entity.GridPosition] = entity;
+			}
+			else if (entity.Layer < existing.Layer)
+			{
+				// Track as potential fallback if higher than current fallback
+				if (!fallbackEntity.TryGetValue(entity.GridPosition, out var existingFallback) ||
+					entity.Layer > existingFallback.Layer)
+				{
+					fallbackEntity[entity.GridPosition] = entity;
+				}
 			}
 		}
 
@@ -370,20 +386,47 @@ public partial class TextRenderer : Control
 		foreach (var kvp in entityToDraw)
 		{
 			var entity = kvp.Value;
-			bool isVisible = _visionSystem?.IsVisible(entity.GridPosition) ?? true;
-			bool isExplored = _visionSystem?.IsExplored(entity.GridPosition) ?? true;
+			var pos = kvp.Key;
+			bool isVisible = _visionSystem?.IsVisible(pos) ?? true;
+			bool isExplored = _visionSystem?.IsExplored(pos) ?? true;
 
 			// Track discovered items/features/decorations for memorable visibility
 			if ((isVisible || isExplored) && entity.Layer <= EntityLayer.Item)
 			{
-				_discoveredItemPositions.Add(entity.GridPosition);
+				_discoveredItemPositions.Add(pos);
 			}
 
-			// Creatures only visible when in FOV, items/features/decorations are memorable
+			// Creatures only visible when in FOV or heard, items/features/decorations are memorable
+			bool isHeard = false;
 			if (entity.Layer == EntityLayer.Creature)
 			{
-				if (!isVisible)
-					continue;
+				isHeard = !isVisible && _visionSystem != null && _visionSystem.IsHeard(entity);
+				if (!isVisible && !isHeard)
+				{
+					// Creature not visible - try to draw fallback entity instead (e.g., gold underneath)
+					if (fallbackEntity.TryGetValue(pos, out var fallback))
+					{
+						// Track fallback for discovered items
+						if ((isVisible || isExplored) && fallback.Layer <= EntityLayer.Item)
+						{
+							_discoveredItemPositions.Add(pos);
+						}
+						// Only draw fallback if it would be visible (explored for items)
+						if (isExplored || isVisible)
+						{
+							entity = fallback;
+							isHeard = false;
+						}
+						else
+						{
+							continue;
+						}
+					}
+					else
+					{
+						continue;
+					}
+				}
 			}
 			else
 			{
@@ -398,14 +441,23 @@ public partial class TextRenderer : Control
 			);
 			Vector2 entityDrawPos = offset + entityWorldPos;
 
-			// Dim non-creature entities that are not currently visible (fog of war)
+			// Determine glyph and color for rendering
+			string glyphToRender = entity.Glyph;
 			Color entityColor = entity.GlyphColor;
-			if (entity.Layer != EntityLayer.Creature && isExplored && !isVisible)
+
+			if (isHeard)
 			{
+				// Heard creatures render as "?" in fog-of-war color
+				glyphToRender = "?";
+				entityColor = Palette.FogOfWar;
+			}
+			else if (entity.Layer != EntityLayer.Creature && isExplored && !isVisible)
+			{
+				// Dim non-creature entities that are not currently visible (fog of war)
 				entityColor = new Color(entityColor.R * 0.5f, entityColor.G * 0.5f, entityColor.B * 0.5f);
 			}
 
-			DrawString(_font, entityDrawPos, entity.Glyph, HorizontalAlignment.Left, -1, FontSize, entityColor);
+			DrawString(_font, entityDrawPos, glyphToRender, HorizontalAlignment.Left, -1, FontSize, entityColor);
 		}
 
 		// Draw the player last (should be at viewport center, on top of everything)
@@ -469,7 +521,7 @@ public partial class TextRenderer : Control
 				// Draw trace line from origin to cursor (skip for Line/Cone modes where template is the focus)
 				var targetingType = _cursorSystem.TargetingDefinition?.Type;
 				bool skipTraceLine = targetingType == Targeting.TargetingType.Line ||
-				                     targetingType == Targeting.TargetingType.Cone;
+									 targetingType == Targeting.TargetingType.Cone;
 				if (!skipTraceLine)
 				{
 					DrawTraceLine(_cursorSystem.OriginPosition, cursorPos, offset);

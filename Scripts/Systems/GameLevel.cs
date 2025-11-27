@@ -197,7 +197,7 @@ public partial class GameLevel : Node
         _renderer.SetPlayer(_player);
         _renderer.SetEntityManager(_entityManager);
 
-        _visionSystem.Initialize(_mapSystem, _player);
+        _visionSystem.Initialize(_mapSystem, _player, _entityManager);
         _renderer.SetPlayerVisionSystem(_visionSystem);
 
         _cursorSystem.Initialize(_visionSystem, _mapSystem, _entityManager);

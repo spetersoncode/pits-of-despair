@@ -14,3 +14,13 @@ entries:
     effects:
       - type: heal_percent
         amount: 20
+
+  keen_hearing:
+    name: Keen Hearing
+    description: Detect creatures around corners within vision range.
+    category: passive
+    willpowerCost: 0
+    tier: 1
+    tags:
+      - detection
+      - utility
