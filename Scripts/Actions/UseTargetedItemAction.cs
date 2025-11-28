@@ -126,13 +126,7 @@ public class UseTargetedItemAction : Action
 			}
 		}
 
-		// Check for tunneling effect (special case: terrain modification)
-		if (targetingType == TargetingType.Line && HasTunnelingEffect(effects))
-		{
-			return ExecuteTunnelingEffect(actor, effects, definition, context, inventory, itemTemplate, itemName);
-		}
-
-		// Standard flow: get targets, spawn visual, apply effects
+		// Standard flow: get targets and apply effects (effects handle their own visuals)
 		var messages = new StringBuilder();
 		bool anyEffectSucceeded = false;
 
@@ -187,60 +181,6 @@ public class UseTargetedItemAction : Action
 	}
 
 	/// <summary>
-	/// Handles tunneling effect which modifies terrain.
-	/// </summary>
-	private ActionResult ExecuteTunnelingEffect(
-		BaseEntity actor,
-		List<Effect> effects,
-		TargetingDefinition definition,
-		ActionContext context,
-		InventoryComponent inventory,
-		ItemData itemTemplate,
-		string itemName)
-	{
-		var messages = new StringBuilder();
-		bool anySucceeded = false;
-		int range = definition.Range > 0 ? definition.Range : 8;
-
-		foreach (var effect in effects)
-		{
-			if (effect is TunnelingEffect tunnelingEffect)
-			{
-				var result = tunnelingEffect.ApplyToLine(actor, _targetPosition, range, context);
-				if (result.Success)
-				{
-					anySucceeded = true;
-				}
-				if (!string.IsNullOrEmpty(result.Message))
-				{
-					messages.AppendLine(result.Message);
-				}
-
-				// Spawn beam visual
-				if (context.VisualEffectSystem != null)
-				{
-					var endPos = tunnelingEffect.GetBeamEndPosition(actor, _targetPosition, range, context);
-					context.VisualEffectSystem.SpawnBeam(actor.GridPosition, endPos, Palette.Ochre, 0.5f);
-				}
-			}
-		}
-
-		if (!anySucceeded)
-		{
-			return ActionResult.CreateFailure(messages.ToString().TrimEnd());
-		}
-
-		HandleItemConsumption(inventory, inventory.GetSlot(_itemKey)!, itemTemplate, messages);
-
-		if (actor is Player player)
-		{
-			player.EmitItemUsed(itemName, true, messages.ToString().TrimEnd());
-		}
-
-		return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
-	}
-
-	/// <summary>
 	/// Handles item consumption and charge depletion.
 	/// </summary>
 	private void HandleItemConsumption(InventoryComponent inventory, InventorySlot slot, ItemData itemTemplate, StringBuilder messages)
@@ -268,15 +208,5 @@ public class UseTargetedItemAction : Action
 	private static bool IsPositionalTargeting(TargetingType type)
 	{
 		return type == TargetingType.Line || type == TargetingType.Area || type == TargetingType.Cone || type == TargetingType.Tile;
-	}
-
-	private static bool HasTunnelingEffect(List<Effect> effects)
-	{
-		foreach (var effect in effects)
-		{
-			if (effect is TunnelingEffect)
-				return true;
-		}
-		return false;
 	}
 }

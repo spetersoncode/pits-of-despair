@@ -12,6 +12,8 @@ entries:
     rechargeTurns: 50
     effects:
       - type: tunneling
+        visual:
+          beam: tunneling
     targeting:
       type: line
       range: 8

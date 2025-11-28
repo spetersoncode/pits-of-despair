@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Systems.Audio;
+using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.Targeting;
 
 namespace PitsOfDespair.Effects;
@@ -14,6 +16,10 @@ namespace PitsOfDespair.Effects;
 /// </summary>
 public class TunnelingEffect : Effect
 {
+    private readonly int _range;
+    private readonly VisualConfig? _visual;
+    private readonly string? _sound;
+
     public override string Type => "tunneling";
     public override string Name => "Tunneling";
 
@@ -24,26 +30,57 @@ public class TunnelingEffect : Effect
     /// </summary>
     public TunnelingEffect(EffectDefinition definition)
     {
-        // Range comes from targeting definition, not effect
+        _range = definition.Range;
+        _visual = definition.Visual;
+        _sound = definition.Sound;
     }
 
     public override EffectResult Apply(EffectContext context)
     {
-        // TunnelingEffect should be applied via ApplyToLine instead
+        // TunnelingEffect should be applied via ApplyToTargets instead
         // Single-target apply is not meaningful for terrain effects
         return EffectResult.CreateFailure("Tunneling requires a line target.");
     }
 
     /// <summary>
     /// Applies the tunneling effect along a line from caster to target.
+    /// Handles terrain modification, visuals, and sound through the standard effect flow.
+    /// </summary>
+    public override List<EffectResult> ApplyToTargets(
+        BaseEntity caster,
+        List<BaseEntity> targets,
+        ActionContext context,
+        GridPosition? targetPosition = null)
+    {
+        var results = new List<EffectResult>();
+
+        if (!targetPosition.HasValue)
+        {
+            results.Add(EffectResult.CreateFailure("Tunneling requires a target position."));
+            return results;
+        }
+
+        // Play sound
+        if (!string.IsNullOrEmpty(_sound))
+        {
+            AudioManager.PlayEffectSound(_sound);
+        }
+
+        int range = _range > 0 ? _range : 8;
+        var tunnelingResult = ExecuteTunneling(caster, targetPosition.Value, range, context);
+
+        // Spawn beam visual
+        SpawnBeamVisual(caster, targetPosition.Value, range, context);
+
+        results.Add(new EffectResult(tunnelingResult.Success, tunnelingResult.Message));
+        return results;
+    }
+
+    /// <summary>
+    /// Executes the tunneling logic along a line from caster to target.
     /// Converts wall tiles to floors, respecting boundary safety.
     /// </summary>
-    /// <param name="caster">The entity using the staff.</param>
-    /// <param name="targetPosition">The target position (end of the line).</param>
-    /// <param name="range">Maximum range from targeting definition.</param>
-    /// <param name="context">The action context.</param>
-    /// <returns>Result containing count of tiles transformed and message.</returns>
-    public TunnelingResult ApplyToLine(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
+    private TunnelingResult ExecuteTunneling(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
     {
         var casterPos = caster.GridPosition;
         var mapSystem = context.MapSystem;
@@ -112,9 +149,35 @@ public class TunnelingEffect : Effect
     }
 
     /// <summary>
+    /// Spawns the beam visual effect from caster to end position.
+    /// </summary>
+    private void SpawnBeamVisual(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
+    {
+        if (context.VisualEffectSystem == null)
+            return;
+
+        var endPos = GetBeamEndPosition(caster, targetPosition, range, context);
+
+        // Use visual config if available, otherwise use default tunneling beam
+        if (_visual?.Beam != null)
+        {
+            var beamDef = VisualEffectDefinitions.GetById(_visual.Beam);
+            if (beamDef != null)
+            {
+                context.VisualEffectSystem.SpawnEffect(beamDef, caster.GridPosition, 1.0f, endPos);
+                return;
+            }
+        }
+
+        // Fallback to default tunneling visual
+        var defaultBeam = VisualEffectDefinitions.Tunneling;
+        context.VisualEffectSystem.SpawnEffect(defaultBeam, caster.GridPosition, 1.0f, endPos);
+    }
+
+    /// <summary>
     /// Gets the last position in the line (for visual effect targeting).
     /// </summary>
-    public GridPosition GetBeamEndPosition(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
+    private GridPosition GetBeamEndPosition(BaseEntity caster, GridPosition targetPosition, int range, ActionContext context)
     {
         var casterPos = caster.GridPosition;
         var mapSystem = context.MapSystem;
