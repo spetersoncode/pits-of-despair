@@ -524,8 +524,25 @@ public class EffectDefinition
 {
     /// <summary>
     /// The type of effect (e.g., "heal", "damage", "teleport", "apply_condition").
+    /// For composite effects, this is the identifier for the composed effect.
     /// </summary>
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Display name for the effect. Used in messages and UI.
+    /// </summary>
+    public string? Name { get; set; } = null;
+
+    /// <summary>
+    /// Sound effect ID to play when the effect is applied.
+    /// Maps to effect_sounds.yaml registry.
+    /// </summary>
+    public string? Sound { get; set; } = null;
+
+    /// <summary>
+    /// Steps for composite effects. If populated, effect is built as CompositeEffect.
+    /// </summary>
+    public List<PitsOfDespair.Effects.Composition.StepDefinition>? Steps { get; set; } = null;
 
     /// <summary>
     /// Numeric parameter for the effect (e.g., heal amount, damage amount).
@@ -594,6 +611,21 @@ public class EffectDefinition
     /// Dice notation for damage-over-time effects (e.g., "1d3" for acid DoT).
     /// </summary>
     public string? DotDamage { get; set; } = null;
+
+    /// <summary>
+    /// Amount of armor to ignore when dealing damage.
+    /// </summary>
+    public int ArmorPiercing { get; set; } = 0;
+
+    /// <summary>
+    /// Stat to scale effect amount with (e.g., "str", "wil").
+    /// </summary>
+    public string? ScalingStat { get; set; } = null;
+
+    /// <summary>
+    /// Multiplier for stat scaling.
+    /// </summary>
+    public float ScalingMultiplier { get; set; } = 1.0f;
 }
 
 /// <summary>

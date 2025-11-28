@@ -25,8 +25,13 @@ entries:
     description: A pale wand carved from bone, cold to the touch. Dark veins pulse beneath its surface, hungry for life essence.
     charges: 2d4
     effects:
-      - type: vampiric_touch
-        dice: 2d6
+      - name: Vampiric Touch
+        steps:
+          - type: damage
+            dice: 2d6
+            damageType: Necrotic
+          - type: heal_caster
+            fraction: 0.5
     targeting:
       type: adjacent
       requiresLos: false

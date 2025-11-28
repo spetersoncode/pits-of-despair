@@ -8,3 +8,4 @@ effects:
   cone_of_cold: Magic/cone_of_cold.wav
   chain_lightning: Magic/lightning_bolt.wav
   magic_missile: Magic/magic_missile.wav
+  acid_blast: Magic/acid_blast.wav

@@ -267,6 +267,21 @@ public class SkillEffectDefinition
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
+    /// Display name for the effect. Used in messages and UI.
+    /// </summary>
+    public string? Name { get; set; } = null;
+
+    /// <summary>
+    /// Sound effect ID to play when the effect is applied.
+    /// </summary>
+    public string? Sound { get; set; } = null;
+
+    /// <summary>
+    /// Steps for composite effects. If populated, effect is built as CompositeEffect.
+    /// </summary>
+    public System.Collections.Generic.List<PitsOfDespair.Effects.Composition.StepDefinition>? Steps { get; set; } = null;
+
+    /// <summary>
     /// Numeric amount for the effect.
     /// </summary>
     public int Amount { get; set; } = 0;

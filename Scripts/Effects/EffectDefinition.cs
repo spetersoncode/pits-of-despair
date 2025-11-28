@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using PitsOfDespair.Data;
+using PitsOfDespair.Effects.Composition;
 
 namespace PitsOfDespair.Effects;
 
@@ -11,8 +13,25 @@ public class EffectDefinition
 {
     /// <summary>
     /// The type of effect (e.g., "heal", "damage", "teleport", "apply_condition").
+    /// For composite effects, this is the identifier for the composed effect.
     /// </summary>
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Display name for the effect. Used in messages and UI.
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Sound effect ID to play when the effect is applied.
+    /// Maps to effect_sounds.yaml registry.
+    /// </summary>
+    public string? Sound { get; set; }
+
+    /// <summary>
+    /// Steps for composite effects. If populated, effect is built as CompositeEffect.
+    /// </summary>
+    public List<StepDefinition>? Steps { get; set; }
 
     /// <summary>
     /// Numeric parameter for the effect (e.g., heal amount, damage amount, knockback distance).
@@ -145,6 +164,9 @@ public class EffectDefinition
         return new EffectDefinition
         {
             Type = skillEffect.Type,
+            Name = skillEffect.Name,
+            Sound = skillEffect.Sound,
+            Steps = skillEffect.Steps,
             Amount = skillEffect.Amount,
             Dice = skillEffect.Dice,
             Duration = skillEffect.Duration,
@@ -176,6 +198,9 @@ public class EffectDefinition
         return new EffectDefinition
         {
             Type = itemEffect.Type,
+            Name = itemEffect.Name,
+            Sound = itemEffect.Sound,
+            Steps = itemEffect.Steps,
             Amount = itemEffect.Amount,
             Range = itemEffect.Range,
             Duration = itemEffect.Duration,
@@ -188,7 +213,10 @@ public class EffectDefinition
             SaveStat = itemEffect.SaveStat,
             AttackStat = itemEffect.AttackStat,
             SaveModifier = itemEffect.SaveModifier,
-            DotDamage = itemEffect.DotDamage
+            DotDamage = itemEffect.DotDamage,
+            ArmorPiercing = itemEffect.ArmorPiercing,
+            ScalingStat = itemEffect.ScalingStat,
+            ScalingMultiplier = itemEffect.ScalingMultiplier
         };
     }
 }

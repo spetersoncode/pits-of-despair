@@ -2,9 +2,9 @@ using Godot;
 using PitsOfDespair.Actions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Effects.Composition;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Systems.Audio;
 using System.Collections.Generic;
 
 namespace PitsOfDespair.Effects;
@@ -37,15 +37,23 @@ public abstract class Effect
 
     /// <summary>
     /// Creates an effect from a unified effect definition.
+    /// If the definition has Steps, builds a CompositeEffect.
+    /// Otherwise, falls back to the legacy type-based factory.
     /// </summary>
     public static Effect? CreateFromDefinition(EffectDefinition definition)
     {
+        // If Steps are defined, build a CompositeEffect
+        if (definition.Steps != null && definition.Steps.Count > 0)
+        {
+            return CompositeEffectBuilder.Build(definition);
+        }
+
+        // Legacy factory for existing effect types
         return definition.Type?.ToLower() switch
         {
             "heal" or "modify_health" => new ModifyHealthEffect(definition),
             "heal_percent" => new ModifyHealthEffect(definition) { Percent = true },
             "damage" => new DamageEffect(definition),
-            "magic_missile" => new MagicMissileEffect(definition),
             "apply_condition" => new ApplyConditionEffect(definition),
             "teleport" => new TeleportEffect(definition),
             "blink" => new BlinkEffect(definition),
@@ -54,7 +62,6 @@ public abstract class Effect
             "charm" => new CharmEffect(),
             "fireball" => new FireballEffect(definition),
             "tunneling" => new TunnelingEffect(definition),
-            "vampiric_touch" => new VampiricTouchEffect(definition),
             "create_hazard" => new CreateHazardEffect(definition),
             "clone" => new CloneEffect(definition),
             "cone_of_cold" => new ConeOfColdEffect(definition),
@@ -65,8 +72,6 @@ public abstract class Effect
             "fear" => new FearEffect(definition),
             "sleep" => new SleepEffect(definition),
             "magic_mapping" => new MagicMappingEffect(definition),
-            "acid" => new AcidEffect(definition),
-            "acid_blast" => new AcidBlastEffect(definition),
             _ => null
         };
     }
@@ -107,16 +112,9 @@ public abstract class Effect
     }
 
     /// <summary>
-    /// Plays the sound associated with this effect type (if one is registered).
-    /// </summary>
-    protected void PlayEffectSound()
-    {
-        AudioManager.PlayEffectSound(Type);
-    }
-
-    /// <summary>
     /// Applies this effect to multiple targets.
-    /// Handles audio playback centrally and iterates through all targets.
+    /// Sound playback is handled by CompositeEffect via the Sound field in YAML definitions.
+    /// Legacy effects that need sounds should be migrated to composed effects.
     /// </summary>
     /// <param name="caster">The entity applying the effect.</param>
     /// <param name="targets">List of target entities.</param>
@@ -124,8 +122,6 @@ public abstract class Effect
     /// <returns>List of results for each target.</returns>
     public virtual List<EffectResult> ApplyToTargets(BaseEntity caster, List<BaseEntity> targets, ActionContext context)
     {
-        PlayEffectSound();
-
         var results = new List<EffectResult>();
         foreach (var target in targets)
         {

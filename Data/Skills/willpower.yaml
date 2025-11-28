@@ -59,11 +59,13 @@ entries:
       - damage
       - ranged
     effects:
-      - type: magic_missile
-        dice: 1d6
-        autoHit: true
-        scalingStat: wil
-        scalingMultiplier: 1.0
+      - name: Magic Missile
+        sound: magic_missile
+        steps:
+          - type: damage
+            dice: 1d6
+            scalingStat: wil
+            scalingMultiplier: 1.0
 
   attunement:
     name: Attunement
@@ -110,13 +112,21 @@ entries:
       - acid
       - ranged
     effects:
-      - type: acid_blast
-        dice: 2d6
-        damageType: Acid
-        armorPiercing: 3
-        dotDamage: 1d3
-        durationDice: 2d3
-        attackStat: wil
+      - name: Acid Blast
+        sound: acid_blast
+        steps:
+          - type: attack_roll
+            attackStat: wil
+          - type: damage
+            dice: 2d6
+            damageType: Acid
+            armorPiercing: 3
+          - type: apply_condition
+            conditionType: acid
+            durationDice: 2d3
+            dotDamage: 1d3
+            armorPiercing: 3
+            requireDamageDealt: true
 
   mana_shield:
     name: Mana Shield
