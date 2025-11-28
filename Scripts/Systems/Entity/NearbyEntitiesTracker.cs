@@ -77,7 +77,7 @@ public partial class NearbyEntitiesTracker : Node
 		// Listen to player position changes
 		_player.Connect(
 			Player.SignalName.PositionChanged,
-			Callable.From<Vector2I>(OnPlayerPositionChanged)
+			Callable.From<int, int>(OnPlayerPositionChanged)
 		);
 
 		// Listen to entity additions (new entities appearing)
@@ -225,7 +225,7 @@ public partial class NearbyEntitiesTracker : Node
 	/// <summary>
 	/// Called when the player's position changes.
 	/// </summary>
-	private void OnPlayerPositionChanged(Vector2I newPosition)
+	private void OnPlayerPositionChanged(int x, int y)
 	{
 		UpdateNearbyEntities();
 	}
@@ -268,7 +268,7 @@ public partial class NearbyEntitiesTracker : Node
 		{
 			_player.Disconnect(
 				Player.SignalName.PositionChanged,
-				Callable.From<Vector2I>(OnPlayerPositionChanged)
+				Callable.From<int, int>(OnPlayerPositionChanged)
 			);
 		}
 
