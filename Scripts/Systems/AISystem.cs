@@ -124,6 +124,10 @@ public partial class AISystem : Node
         // Process the goal stack and get the action result
         var result = ProcessGoalStack(aiComponent, context);
 
+        // Clear swap cooldown after turn completes - allows re-swapping next turn
+        // This prevents permanent swap deadlock while still stopping ping-pong within a turn
+        entity.LastSwappedWith = null;
+
         // Calculate the actual delay based on the creature's speed
         int actualDelay = speedComponent.CalculateDelay(result.DelayCost);
 

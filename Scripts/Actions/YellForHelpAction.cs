@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PitsOfDespair.AI.Components;
 using PitsOfDespair.AI.Goals;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
@@ -62,9 +63,21 @@ public class YellForHelpAction : Action
             // Check if entity is visible (FOV check - sound doesn't travel through walls)
             if (visiblePositions.Contains(entity.GridPosition))
             {
-                // Push a KillTargetGoal to make them attack the player
-                var killGoal = new KillTargetGoal(player);
-                aiComponent.GoalStack.Push(killGoal);
+                // Check if this creature is cowardly - they should flee, not attack
+                var cowardlyComponent = entity.GetNodeOrNull<CowardlyComponent>("CowardlyComponent");
+                if (cowardlyComponent != null)
+                {
+                    // Cowardly creatures flee toward the yeller instead of attacking
+                    // They'll naturally flee when they see the player on their own turn
+                    var fleeGoal = new FleeGoal(player, cowardlyComponent.FleeTurns, cowardlyComponent.SafeDistance);
+                    aiComponent.GoalStack.Push(fleeGoal);
+                }
+                else
+                {
+                    // Push a KillTargetGoal to make them attack the player
+                    var killGoal = new KillTargetGoal(player);
+                    aiComponent.GoalStack.Push(killGoal);
+                }
                 alertedCount++;
             }
         }

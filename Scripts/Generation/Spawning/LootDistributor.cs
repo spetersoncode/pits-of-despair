@@ -157,7 +157,7 @@ public class LootDistributor
     /// Selects an item using combined weighting:
     /// 1. Inverse value weighting (lower value = more common)
     /// 2. Type-based spawn weight multiplier (consumables more common than equipment)
-    /// Items with Value <= 0 are treated as having minValue for weighting.
+    /// Items with Value <= 0 are treated as having maxValue for weighting (rare).
     /// </summary>
     private (string id, ItemData data) SelectItemWeighted(List<(string id, ItemData data)> items, int minValue, int maxValue)
     {
@@ -166,8 +166,8 @@ public class LootDistributor
 
         // Calculate weights with type multiplier
         var weighted = items.Select(i => {
-            // Valueless items use minValue (most common tier for this floor)
-            int effectiveValue = i.data.Value > 0 ? i.data.Value : minValue;
+            // Valueless items use maxValue (rarest tier - they bypass floor filtering so should be rare)
+            int effectiveValue = i.data.Value > 0 ? i.data.Value : maxValue;
 
             // Base weight from inverse value (lower value = higher weight)
             int baseWeight = Mathf.Max(1, maxValue - effectiveValue + 1);

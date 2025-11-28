@@ -6,6 +6,7 @@ using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Systems.Vision;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -85,6 +86,7 @@ public partial class MessageSystem : Node
     private CombatSystem _combatSystem;
     private DataLoader _dataLoader;
     private LevelUpSystem _levelUpSystem;
+    private PlayerVisionSystem _visionSystem;
 
     #region Setup Methods
 
@@ -110,6 +112,15 @@ public partial class MessageSystem : Node
     public void SetEntityManager(EntityManager entityManager)
     {
         _entityManager = entityManager;
+    }
+
+    /// <summary>
+    /// Sets the PlayerVisionSystem reference for visibility filtering.
+    /// Combat messages are only shown if at least one participant is visible to the player.
+    /// </summary>
+    public void SetVisionSystem(PlayerVisionSystem visionSystem)
+    {
+        _visionSystem = visionSystem;
     }
 
     /// <summary>
@@ -204,29 +215,45 @@ public partial class MessageSystem : Node
 
     private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
     {
-        // Track for death message attribution
+        // Track for death message attribution (always track, even if not visible)
         _lastAttacker[target] = attacker;
         _lastDamageSourceName[target] = attackName;
+
+        // Only show message if combat is visible to the player
+        if (!IsCombatVisible(attacker, target))
+            return;
 
         RecordDamage(attacker, target, damage, attackName, isSkill: false);
     }
 
     private void OnSkillDamageDealt(BaseEntity caster, BaseEntity target, int damage, string skillName)
     {
-        // Track for death message attribution
+        // Track for death message attribution (always track, even if not visible)
         _lastAttacker[target] = caster;
         _lastDamageSourceName[target] = skillName;
+
+        // Only show message if combat is visible to the player
+        if (!IsCombatVisible(caster, target))
+            return;
 
         RecordDamage(caster, target, damage, skillName, isSkill: true);
     }
 
     private void OnAttackBlocked(BaseEntity attacker, BaseEntity target, string attackName)
     {
+        // Only show message if combat is visible to the player
+        if (!IsCombatVisible(attacker, target))
+            return;
+
         RecordBlocked(attacker, target, attackName);
     }
 
     private void OnAttackMissed(BaseEntity attacker, BaseEntity target, string attackName)
     {
+        // Only show message if combat is visible to the player
+        if (!IsCombatVisible(attacker, target))
+            return;
+
         RecordMiss(attacker, target, attackName);
     }
 
@@ -250,11 +277,19 @@ public partial class MessageSystem : Node
             _lastDamageSourceName.Remove(victim);
         }
 
+        // Only show death message if either victim or killer is visible
+        if (!IsCombatVisible(killer, victim))
+            return;
+
         RecordDeath(victim, killer, sourceName);
     }
 
     private void OnDamageModifierApplied(BaseEntity target, int damageTypeInt, string modifierType)
     {
+        // Only show modifier message if target is visible
+        if (!IsEntityVisible(target))
+            return;
+
         DamageType damageType = (DamageType)damageTypeInt;
 
         // Try to find who attacked this target for better message combining
@@ -266,8 +301,12 @@ public partial class MessageSystem : Node
 
     private void OnHazardDamageDealt(BaseEntity entity, int damage, string hazardType)
     {
-        // Track for death message attribution
+        // Track for death message attribution (always track, even if not visible)
         _lastDamageSourceName[entity] = hazardType;
+
+        // Only show hazard message if entity is visible
+        if (!IsEntityVisible(entity))
+            return;
 
         if (!IsSequencing)
         {
@@ -658,6 +697,47 @@ public partial class MessageSystem : Node
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Checks if a combat event is visible to the player.
+    /// Returns true if the player is involved, or if at least one participant is in line of sight.
+    /// </summary>
+    private bool IsCombatVisible(BaseEntity attacker, BaseEntity target)
+    {
+        // Always show messages involving the player
+        if (attacker == _player || target == _player)
+            return true;
+
+        // If no vision system, show all messages (fallback)
+        if (_visionSystem == null)
+            return true;
+
+        // Show if attacker is visible
+        if (attacker != null && _visionSystem.IsVisible(attacker.GridPosition))
+            return true;
+
+        // Show if target is visible
+        if (target != null && _visionSystem.IsVisible(target.GridPosition))
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if an entity is visible to the player.
+    /// </summary>
+    private bool IsEntityVisible(BaseEntity entity)
+    {
+        // Always show messages involving the player
+        if (entity == _player)
+            return true;
+
+        // If no vision system, show all messages (fallback)
+        if (_visionSystem == null)
+            return true;
+
+        return entity != null && _visionSystem.IsVisible(entity.GridPosition);
+    }
 
     private string GetCombatKey(BaseEntity attacker, BaseEntity target, string sourceName)
     {

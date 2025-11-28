@@ -120,6 +120,7 @@ public partial class GameHUD : Control
         _messageSystem.SetPlayer(player);
         _messageSystem.SetEntityManager(entityManager);
         _messageSystem.SetDataLoader(GetNode<Data.DataLoader>("/root/DataLoader"));
+        _messageSystem.SetVisionSystem(visionSystem);
         _messageSystem.ConnectToCombatSystem(combatSystem);
         _messageSystem.ConnectToLevelUpSystem(levelUpSystem);
 

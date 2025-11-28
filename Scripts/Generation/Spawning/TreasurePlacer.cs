@@ -132,7 +132,7 @@ public class TreasurePlacer
     /// <summary>
     /// Selects an item within the given value range.
     /// Uses combined weighting: inverse value (lower = more common) + type multiplier.
-    /// Items with Value <= 0 bypass floor filtering and are treated as minValue for weighting.
+    /// Items with Value <= 0 bypass floor filtering and are treated as maxValue for weighting (rare).
     /// </summary>
     private (string id, ItemData data) SelectItemByValueRange(int minValue, int maxValue)
     {
@@ -150,8 +150,8 @@ public class TreasurePlacer
 
             if (isValueless || inValueRange)
             {
-                // Valueless items use minValue for weighting
-                int effectiveValue = isValueless ? minValue : itemData.Value;
+                // Valueless items use maxValue for weighting (rarest tier)
+                int effectiveValue = isValueless ? maxValue : itemData.Value;
 
                 // Inverse value weighting: lower value = higher base weight
                 int baseWeight = Mathf.Max(1, maxValue - effectiveValue + 1);

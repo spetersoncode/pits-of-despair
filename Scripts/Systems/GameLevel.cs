@@ -178,14 +178,20 @@ public partial class GameLevel : Node
         else if (FloorDepth == 1)
         {
             // Spawn initial cat companion on floor 1 only
-            var catSpawn = new GridPosition(playerSpawn.X + 1, playerSpawn.Y);
-            if (!_mapSystem.IsWalkable(catSpawn))
-                catSpawn = new GridPosition(playerSpawn.X - 1, playerSpawn.Y);
-            var cat = _entityFactory.CreateCreature("cat", catSpawn);
-            if (cat != null)
+            // Use FindNearbyValidPosition to avoid spawning in walls
+            var catSpawn = FindNearbyValidPosition(playerSpawn, 2);
+            if (catSpawn != null)
             {
-                _entityFactory.SetupAsFriendlyCompanion(cat, _player);
-                _entityManager.AddEntity(cat);
+                var cat = _entityFactory.CreateCreature("cat", catSpawn.Value);
+                if (cat != null)
+                {
+                    _entityFactory.SetupAsFriendlyCompanion(cat, _player);
+                    _entityManager.AddEntity(cat);
+                }
+            }
+            else
+            {
+                GD.PushWarning("GameLevel: Could not find valid spawn position for cat companion");
             }
         }
 

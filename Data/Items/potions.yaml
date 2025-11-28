@@ -5,7 +5,7 @@ defaults:
 entries:
   strength_1:
     name: minor strength
-    value: 2
+    value: 1
     color: Palette.PotionStrengthMinor
     description: Burnt orange liquid swirls sluggishly. It smells of iron and exertion.
     effects:
@@ -38,7 +38,7 @@ entries:
 
   agility_1:
     name: minor agility
-    value: 2
+    value: 1
     color: Palette.PotionAgilityMinor
     description: Deep teal liquid shifts like restless water. Light bends strangely around it.
     effects:
@@ -71,7 +71,7 @@ entries:
 
   armor_1:
     name: barkskin
-    value: 2
+    value: 1
     color: Palette.PotionBarkskin
     description: Dark olive sludge, thick as sap. The scent of deep forest fills your nose.
     effects:
@@ -104,7 +104,7 @@ entries:
 
   endurance_1:
     name: minor endurance
-    value: 2
+    value: 1
     color: Palette.PotionEnduranceMinor
     description: Dusty rose fluid, thick and warm. It pulses faintly like a sleeping heart.
     effects:

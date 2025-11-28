@@ -53,8 +53,11 @@ entries:
     agility: 2
     endurance: -1
     health: 6
+    visionRange: 8
     ai:
       - type: JoinPlayerOnSight
+      - type: FollowLeader
+        followDistance: 3
     attacks:
       - name: claws
         type: Melee
