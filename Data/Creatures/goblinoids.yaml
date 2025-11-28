@@ -20,7 +20,7 @@ entries:
   goblin_archer:
     name: goblin archer
     description: A goblin armed with a crude bow. It keeps its distance, raining arrows on intruders from afar.
-    color: Palette.Archer
+    color: Palette.Hunter
     threat: 2
     strength: -1
     agility: 2
