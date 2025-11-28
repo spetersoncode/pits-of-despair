@@ -84,10 +84,6 @@ public class SkillDefinition
     /// </summary>
     public List<string> Tags { get; set; } = new();
 
-    /// <summary>
-    /// Tier for UI sorting (1-5, higher = more powerful).
-    /// </summary>
-    public int Tier { get; set; } = 1;
 
     /// <summary>
     /// Projectile type ID for ranged skills (e.g., "magic_missile", "fireball").

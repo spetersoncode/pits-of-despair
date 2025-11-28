@@ -383,8 +383,7 @@ public partial class LevelUpModal : PanelContainer
     {
         // Get available skills with simulated stat increase (stat hasn't been applied yet)
         _availableSkills = GetAvailableSkillsWithSimulatedStat(statIndex)
-            .OrderBy(s => s.Tier)
-            .ThenBy(s => s.GetCategory())
+            .OrderBy(s => s.GetCategory())
             .ThenBy(s => s.GetTotalPrerequisites())
             .ThenBy(s => s.Name)
             .ToList();

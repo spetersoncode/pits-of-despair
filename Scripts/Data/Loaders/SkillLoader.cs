@@ -59,9 +59,6 @@ public class SkillLoader
         if (skill.Targeting == "self" && defaults.Targeting != null)
             skill.Targeting = defaults.Targeting;
 
-        if (skill.Tier == 1 && defaults.Tier.HasValue)
-            skill.Tier = defaults.Tier.Value;
-
         if (skill.WillpowerCost == 0 && defaults.WillpowerCost.HasValue)
             skill.WillpowerCost = defaults.WillpowerCost.Value;
 

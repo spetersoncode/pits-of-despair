@@ -220,7 +220,7 @@ public class SkillCommand : DebugCommand
         }
 
         var lines = new List<string> { $"Available skills ({available.Count}):" };
-        foreach (var skill in available.OrderBy(s => s.Tier).ThenBy(s => s.Name))
+        foreach (var skill in available.OrderBy(s => s.GetTotalPrerequisites()).ThenBy(s => s.Name))
         {
             string prereqs = skill.Prerequisites.IsUniversal() ? "" : $" ({skill.GetPrerequisiteString()})";
             lines.Add($"  {skill.Id}: {skill.Name}{prereqs}");

@@ -9,7 +9,6 @@ entries:
     willpowerCost: 3
     consumesTurn: false
     delayCost: 0
-    tier: 1
     prerequisites:
       str: 1
     tags:
@@ -30,7 +29,6 @@ entries:
     category: passive
     targeting: self
     willpowerCost: 0
-    tier: 1
     prerequisites:
       str: 2
     tags:
@@ -48,7 +46,6 @@ entries:
     targeting: self
     willpowerCost: 6
     consumesTurn: false
-    tier: 2
     prerequisites:
       str: 3
     tags:
@@ -73,7 +70,6 @@ entries:
     triggerCost: 0
     trigger: on_kill
     autoTrigger: true
-    tier: 2
     prerequisites:
       str: 3
     tags:
