@@ -76,4 +76,4 @@ entries:
     effects:
       - steps:
           - type: magic_mapping
-            radius: 10
+            radius: 35
