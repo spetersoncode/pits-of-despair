@@ -15,8 +15,9 @@ entries:
       - movement
       - utility
     effects:
-      - type: move_tiles
-        amount: 2
+      - steps:
+          - type: move_tiles
+            amount: 2
 
   fleet_of_foot:
     name: Fleet of Foot

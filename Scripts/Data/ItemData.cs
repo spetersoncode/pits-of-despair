@@ -501,7 +501,8 @@ public class ItemData
         foreach (var effectDef in Effects)
         {
             // Convert item EffectDefinition to unified Effects.EffectDefinition
-            var unifiedDef = PitsOfDespair.Effects.EffectDefinition.FromItemEffect(effectDef);
+            // Pass raw item name as fallback if effect doesn't specify its own name
+            var unifiedDef = PitsOfDespair.Effects.EffectDefinition.FromItemEffect(effectDef, Name);
             var effect = Effect.CreateFromDefinition(unifiedDef);
             if (effect != null)
             {

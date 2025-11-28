@@ -67,9 +67,13 @@ public class EffectContext
     /// Creates an effect context for item usage.
     /// Caster is the entity using the item.
     /// </summary>
-    public static EffectContext ForItem(BaseEntity target, BaseEntity user, ActionContext actionContext)
+    public static EffectContext ForItem(
+        BaseEntity target,
+        BaseEntity user,
+        ActionContext actionContext,
+        GridPosition? targetPosition = null)
     {
-        return new EffectContext(target, user, actionContext);
+        return new EffectContext(target, user, actionContext, null, targetPosition);
     }
 
     /// <summary>

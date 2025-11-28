@@ -17,8 +17,7 @@ entries:
       - damage
       - line
     effects:
-      - name: Lightning Bolt
-        sound: lightning_bolt
+      - sound: lightning_bolt
         steps:
           - type: damage
             dice: 2d6
@@ -39,12 +38,13 @@ entries:
       - lightning
       - damage
     effects:
-      - type: chain_lightning
-        dice: 2d4
-        damageType: Lightning
-        maxBounces: 3
-        bounceRange: 4
-        damageFalloff: 0.75
+      - steps:
+          - type: chain_damage
+            dice: 2d4
+            damageType: Lightning
+            maxBounces: 3
+            bounceRange: 4
+            damageFalloff: 0.75
 
   magic_missile:
     name: Magic Missile
@@ -62,8 +62,7 @@ entries:
       - damage
       - ranged
     effects:
-      - name: Magic Missile
-        sound: magic_missile
+      - sound: magic_missile
         steps:
           - type: damage
             dice: 1d6
@@ -95,8 +94,9 @@ entries:
       - spell
       - heal
     effects:
-      - type: heal
-        dice: 2d6
+      - steps:
+          - type: heal
+            dice: 2d6
 
   acid_blast:
     name: Acid Blast
@@ -115,8 +115,7 @@ entries:
       - acid
       - ranged
     effects:
-      - name: Acid Blast
-        sound: acid_blast
+      - sound: acid_blast
         steps:
           - type: attack_roll
             attackStat: wil

@@ -88,6 +88,11 @@ public class StepDefinition
     /// </summary>
     public bool StopOnMiss { get; set; } = true;
 
+    /// <summary>
+    /// Whether to use melee attack modifier (STR + AGI) instead of a stat.
+    /// </summary>
+    public bool UseMeleeModifier { get; set; } = false;
+
     #endregion
 
     #region Condition Properties
@@ -144,6 +149,50 @@ public class StepDefinition
     /// Distance in tiles for knockback effects.
     /// </summary>
     public int Distance { get; set; } = 1;
+
+    /// <summary>
+    /// Range in tiles for teleport/blink effects.
+    /// 0 = unlimited range (full map).
+    /// </summary>
+    public int Range { get; set; } = 0;
+
+    /// <summary>
+    /// Radius in tiles for area effects (magic mapping).
+    /// </summary>
+    public int Radius { get; set; } = 0;
+
+    /// <summary>
+    /// Whether to teleport companions when the target is the player.
+    /// </summary>
+    public bool TeleportCompanions { get; set; } = true;
+
+    #endregion
+
+    #region Hazard Properties
+
+    /// <summary>
+    /// Type of hazard to create (e.g., "poison_cloud", "fire").
+    /// </summary>
+    public string? HazardType { get; set; }
+
+    #endregion
+
+    #region Chain Damage Properties
+
+    /// <summary>
+    /// Maximum number of bounces for chain effects.
+    /// </summary>
+    public int MaxBounces { get; set; } = 3;
+
+    /// <summary>
+    /// Range in tiles to search for bounce targets.
+    /// </summary>
+    public int BounceRange { get; set; } = 4;
+
+    /// <summary>
+    /// Damage multiplier per bounce (e.g., 0.75 = 75% of previous).
+    /// </summary>
+    public float DamageFalloff { get; set; } = 1.0f;
 
     #endregion
 

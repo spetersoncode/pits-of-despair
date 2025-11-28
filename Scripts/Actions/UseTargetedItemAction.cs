@@ -153,26 +153,8 @@ public class UseTargetedItemAction : Action
 		// Apply all effects to targets
 		foreach (var effect in effects)
 		{
-			// For tile effects (hazards), we need to pass position differently
-			if (effect is CreateHazardEffect hazardEffect)
-			{
-				hazardEffect.TargetPosition = _targetPosition;
-				hazardEffect.Radius = definition.Radius > 0 ? definition.Radius : hazardEffect.Radius;
-				var effectContext = EffectContext.ForItem(actor, actor, context);
-				var effectResult = hazardEffect.Apply(effectContext);
-				if (effectResult.Success)
-				{
-					anyEffectSucceeded = true;
-				}
-				if (!string.IsNullOrEmpty(effectResult.Message))
-				{
-					messages.AppendLine(effectResult.Message);
-				}
-				continue;
-			}
-
-			// Standard effect application via ApplyToTargets
-			var effectResults = effect.ApplyToTargets(actor, targets, context);
+			// Apply effect to targets, passing target position for tile-based effects
+			var effectResults = effect.ApplyToTargets(actor, targets, context, _targetPosition);
 
 			foreach (var effectResult in effectResults)
 			{
@@ -400,7 +382,7 @@ public class UseTargetedItemAction : Action
 	{
 		foreach (var effect in effects)
 		{
-			if (effect.Name == "Fireball")
+			if (effect.Name.Equals("fireball", System.StringComparison.OrdinalIgnoreCase))
 				return true;
 		}
 		return false;
@@ -410,7 +392,7 @@ public class UseTargetedItemAction : Action
 	{
 		foreach (var effect in effects)
 		{
-			if (effect.Name == "Fireball")
+			if (effect.Name.Equals("fireball", System.StringComparison.OrdinalIgnoreCase))
 				return effect;
 		}
 		return null;

@@ -10,8 +10,7 @@ entries:
     description: A charred wooden wand that crackles with destructive energy. Flames lick at its tip, eager to be unleashed.
     charges: 2d3
     effects:
-      - name: Fireball
-        sound: fireball
+      - sound: fireball
         steps:
           - type: damage
             dice: 3d6
@@ -29,8 +28,7 @@ entries:
     description: A pale wand carved from bone, cold to the touch. Dark veins pulse beneath its surface, hungry for life essence.
     charges: 2d4
     effects:
-      - name: Vampiric Touch
-        steps:
+      - steps:
           - type: damage
             dice: 2d6
             damageType: Necrotic
@@ -47,11 +45,12 @@ entries:
     description: A gnarled wand that weeps a sickly green vapor. The air around it smells of decay and bitter almonds.
     charges: 2d3
     effects:
-      - type: create_hazard
-        hazardType: poison_cloud
-        amount: 2
-        duration: 5
-        damageType: poison
+      - steps:
+          - type: spawn_hazard
+            hazardType: poison_cloud
+            amount: 2
+            duration: 5
+            damageType: poison
     targeting:
       type: tile
       range: 5
@@ -64,7 +63,8 @@ entries:
     description: A crystalline wand that refracts light into impossible angles. Looking through it reveals doubled images.
     charges: 1d3
     effects:
-      - type: clone
+      - steps:
+          - type: clone
     targeting:
       type: creature
       range: 4
@@ -77,8 +77,7 @@ entries:
     description: A wand of frozen crystal that numbs the hand. Frost perpetually rimes its surface, crackling with each movement.
     charges: 2d3
     effects:
-      - name: Cone of Cold
-        sound: cone_of_cold
+      - sound: cone_of_cold
         steps:
           - type: damage
             dice: 2d8
@@ -96,11 +95,15 @@ entries:
     description: Twisted symbols that hurt to look at dance across this wand. Even a glance makes your thoughts scatter like frightened birds.
     charges: 2d4
     effects:
-      - type: apply_condition
-        conditionType: confusion
-        durationDice: 3d4
-        saveStat: wil
-        saveModifier: 4
+      - steps:
+          - type: save_check
+            saveStat: wil
+            attackStat: wil
+            saveModifier: 4
+            stopOnSuccess: true
+          - type: apply_condition
+            conditionType: confusion
+            durationDice: 3d4
     targeting:
       type: enemy
       range: 5
@@ -113,12 +116,16 @@ entries:
     description: A leaden wand that seems to drain warmth from the air. Pointing it at a foe saps their vitality.
     charges: 2d4
     effects:
-      - type: apply_condition
-        conditionType: speed_modifier
-        amount: -3
-        durationDice: 3d4
-        saveStat: end
-        saveModifier: 2
+      - steps:
+          - type: save_check
+            saveStat: end
+            attackStat: wil
+            saveModifier: 2
+            stopOnSuccess: true
+          - type: apply_condition
+            conditionType: speed_modifier
+            amount: -3
+            durationDice: 3d4
     targeting:
       type: enemy
       range: 5

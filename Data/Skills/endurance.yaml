@@ -28,9 +28,10 @@ entries:
     tags:
       - heal
     effects:
-      - type: heal
-        scalingStat: end
-        scalingMultiplier: 3
+      - steps:
+          - type: heal
+            scalingStat: end
+            scalingMultiplier: 3
 
   die_hard:
     name: Die Hard

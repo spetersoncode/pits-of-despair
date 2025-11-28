@@ -45,11 +45,13 @@ entries:
       - melee
       - damage
 
-    # Effects
+    # Effects (use step-based composable effects)
     effects:
-      - type: apply_condition
-        conditionType: power_attack
-        duration: 1
+      - steps:
+          - type: apply_condition
+            conditionType: strength_modifier
+            amount: 3
+            duration: 1
 
     # === REACTIVE SKILLS ===
     # trigger: on_kill    # on_kill, on_hit, on_dodge, on_enemy_miss, on_damage, on_lethal
@@ -59,39 +61,47 @@ entries:
     # === PROJECTILE SKILLS ===
     # projectile: magic_missile   # Projectile type ID
 
-# Effect types reference:
+# Step types reference (use within steps: array):
 #   apply_condition - Apply a status condition
 #     conditionType: string
 #     amount: int
 #     duration: int
-#
-#   stat_bonus - Permanent stat bonus (passive)
-#     stat: str, agi, end, wil, max_hp, max_wp, evasion
-#     amount: int
+#     durationDice: "2d3"
 #
 #   damage - Deal damage
-#     dice: "2d4"
-#     autoHit: bool
+#     dice: "2d6"
+#     damageType: Fire, Cold, Acid, Lightning, etc.
+#     scalingStat: str, agi, end, wil
+#     scalingMultiplier: float
+#     armorPiercing: int
+#     halfOnSave: bool
 #
 #   heal - Restore HP
 #     amount: int
 #     dice: "2d6"
+#     percent: bool (if true, amount is % of max HP)
 #     scalingStat: str, agi, end, wil
 #     scalingMultiplier: float
 #
-#   heal_percent - Heal percentage of max HP
-#     amount: int (percentage)
+#   save_check - Saving throw check
+#     saveStat: end, wil
+#     attackStat: wil
+#     saveModifier: int
+#     stopOnSuccess: bool
+#     halfOnSuccess: bool
 #
-#   melee_attack / ranged_attack - Perform attacks
-#     targets: int
-#     count: int
+#   attack_roll - Attack roll check
+#     attackStat: wil (or useMeleeModifier: true)
+#     stopOnMiss: bool
 #
-#   bonus_movement - Extra movement this turn
-#     amount: int
+#   weapon_damage - Use equipped weapon damage
+#     amount: int (bonus damage)
 #
+#   knockback - Push target away
+#     distance: int
+#
+# Legacy effect types (passive/reactive, no steps needed):
+#   stat_bonus - Permanent stat bonus (passive)
 #   counter_attack - Attack back on trigger
-#
 #   survive_lethal - Survive at 1 HP
-#
 #   reduce_damage - Reduce incoming damage
-#     amount: int

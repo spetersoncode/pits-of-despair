@@ -1,10 +1,12 @@
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
+using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
@@ -278,12 +280,21 @@ public partial class ReactiveSkillProcessor : Node
 
     /// <summary>
     /// Executes a single reactive effect.
+    /// Supports both step-based composable effects and legacy type-based effects.
     /// </summary>
     private void ExecuteReactiveEffect(SkillEffectDefinition effect, SkillDefinition skill,
         BaseEntity? triggerSource, int damageAmount)
     {
         if (_entity == null) return;
 
+        // Handle step-based composable effects
+        if (effect.Steps != null && effect.Steps.Count > 0)
+        {
+            ExecuteStepBasedEffect(effect, skill);
+            return;
+        }
+
+        // Legacy type-based effects
         switch (effect.Type?.ToLower())
         {
             case "apply_condition":
@@ -313,6 +324,74 @@ public partial class ReactiveSkillProcessor : Node
                 GD.Print($"ReactiveSkillProcessor: Unknown effect type '{effect.Type}'");
                 break;
         }
+    }
+
+    /// <summary>
+    /// Executes a step-based composable effect on self.
+    /// </summary>
+    private void ExecuteStepBasedEffect(SkillEffectDefinition effectDef, SkillDefinition skill)
+    {
+        if (_entity == null) return;
+
+        var effect = Effect.CreateFromSkillDefinition(effectDef, skill.Name);
+        if (effect == null)
+        {
+            GD.PrintErr($"ReactiveSkillProcessor: Failed to create effect from steps for '{skill.Name}'");
+            return;
+        }
+
+        // Create a minimal action context for self-targeting effects
+        var actionContext = CreateActionContext();
+        if (actionContext == null)
+        {
+            GD.PrintErr($"ReactiveSkillProcessor: Could not create action context");
+            return;
+        }
+
+        var effectContext = EffectContext.ForSkill(_entity, _entity, actionContext, skill, null);
+        effect.Apply(effectContext);
+    }
+
+    /// <summary>
+    /// Creates an ActionContext for executing reactive effects.
+    /// </summary>
+    private ActionContext? CreateActionContext()
+    {
+        // Find GameLevel to get system references
+        Node? current = this;
+        while (current != null)
+        {
+            if (current.Name == "GameLevel")
+            {
+                var mapSystem = current.GetNodeOrNull<MapSystem>("MapSystem");
+                var entityManager = current.GetNodeOrNull<Systems.Entity.EntityManager>("EntityManager");
+                var entityFactory = current.GetNodeOrNull<Systems.Entity.EntityFactory>("EntityFactory");
+                var visualEffectSystem = current.GetNodeOrNull<Systems.VisualEffects.VisualEffectSystem>("VisualEffectSystem");
+                var tileHazardManager = current.GetNodeOrNull<TileHazardManager>("TileHazardManager");
+                var playerVisionSystem = current.GetNodeOrNull<Systems.Vision.PlayerVisionSystem>("PlayerVisionSystem");
+
+                // Find player - could be the entity itself or we need to find it
+                var player = _entity as Player ?? current.GetNodeOrNull<Player>("Player");
+
+                if (mapSystem != null && entityManager != null && player != null &&
+                    _combatSystem != null && entityFactory != null && visualEffectSystem != null)
+                {
+                    return new ActionContext(
+                        mapSystem,
+                        entityManager,
+                        player,
+                        _combatSystem,
+                        entityFactory,
+                        visualEffectSystem,
+                        tileHazardManager,
+                        playerVisionSystem
+                    );
+                }
+                break;
+            }
+            current = current.GetParent();
+        }
+        return null;
     }
 
     /// <summary>

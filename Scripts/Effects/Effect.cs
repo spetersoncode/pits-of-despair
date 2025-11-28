@@ -38,7 +38,7 @@ public abstract class Effect
     /// <summary>
     /// Creates an effect from a unified effect definition.
     /// If the definition has Steps, builds a CompositeEffect.
-    /// Otherwise, falls back to the legacy type-based factory.
+    /// Otherwise, falls back to the legacy type-based factory for special effects.
     /// </summary>
     public static Effect? CreateFromDefinition(EffectDefinition definition)
     {
@@ -48,27 +48,11 @@ public abstract class Effect
             return CompositeEffectBuilder.Build(definition);
         }
 
-        // Legacy factory for existing effect types
+        // Terrain effects - these modify the map rather than targeting entities
+        // They have specialized application methods (e.g., ApplyToLine) instead of standard Apply()
         return definition.Type?.ToLower() switch
         {
-            "heal" or "modify_health" => new ModifyHealthEffect(definition),
-            "heal_percent" => new ModifyHealthEffect(definition) { Percent = true },
-            "damage" => new DamageEffect(definition),
-            "apply_condition" => new ApplyConditionEffect(definition),
-            "teleport" => new TeleportEffect(definition),
-            "blink" => new BlinkEffect(definition),
-            "knockback" => new KnockbackEffect(definition),
-            "restore_willpower" or "modify_willpower" => new ModifyWillpowerEffect(definition),
-            "charm" => new CharmEffect(),
             "tunneling" => new TunnelingEffect(definition),
-            "create_hazard" => new CreateHazardEffect(definition),
-            "clone" => new CloneEffect(definition),
-            "move_tiles" => new MoveTilesEffect(definition),
-            "melee_attack" => new MeleeAttackEffect(definition),
-            "chain_lightning" => new ChainLightningEffect(definition),
-            "fear" => new FearEffect(definition),
-            "sleep" => new SleepEffect(definition),
-            "magic_mapping" => new MagicMappingEffect(definition),
             _ => null
         };
     }
@@ -77,10 +61,12 @@ public abstract class Effect
     /// Creates an effect from a skill effect definition.
     /// Maps skill effect definitions to unified effects.
     /// </summary>
-    public static Effect? CreateFromSkillDefinition(SkillEffectDefinition definition)
+    /// <param name="definition">The skill effect definition.</param>
+    /// <param name="skillName">Optional skill name to use if effect has no name.</param>
+    public static Effect? CreateFromSkillDefinition(SkillEffectDefinition definition, string? skillName = null)
     {
         // Convert SkillEffectDefinition to unified EffectDefinition
-        var effectDef = EffectDefinition.FromSkillEffect(definition);
+        var effectDef = EffectDefinition.FromSkillEffect(definition, skillName);
         return CreateFromDefinition(effectDef);
     }
 
@@ -116,13 +102,18 @@ public abstract class Effect
     /// <param name="caster">The entity applying the effect.</param>
     /// <param name="targets">List of target entities.</param>
     /// <param name="context">The action context.</param>
+    /// <param name="targetPosition">Optional target position for tile-based effects.</param>
     /// <returns>List of results for each target.</returns>
-    public virtual List<EffectResult> ApplyToTargets(BaseEntity caster, List<BaseEntity> targets, ActionContext context)
+    public virtual List<EffectResult> ApplyToTargets(
+        BaseEntity caster,
+        List<BaseEntity> targets,
+        ActionContext context,
+        GridPosition? targetPosition = null)
     {
         var results = new List<EffectResult>();
         foreach (var target in targets)
         {
-            var effectContext = EffectContext.ForItem(target, caster, context);
+            var effectContext = EffectContext.ForItem(target, caster, context, targetPosition);
             results.Add(Apply(effectContext));
         }
         return results;

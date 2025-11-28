@@ -73,6 +73,12 @@ public class ApplyConditionStep : IEffectStep
             }
         }
 
+        // Special handling for FearCondition - set the fear source to caster
+        if (condition is FearCondition fearCondition)
+        {
+            fearCondition.FearSource = context.Caster;
+        }
+
         // Apply condition to target
         var conditionMessage = condition.OnApplied(context.Target);
         context.Target.AddConditionWithoutMessage(condition);

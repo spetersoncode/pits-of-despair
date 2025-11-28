@@ -1,52 +1,36 @@
 using Godot;
-using PitsOfDespair.Components;
 using PitsOfDespair.Core;
-using PitsOfDespair.Entities;
+using PitsOfDespair.Effects.Composition;
 
-namespace PitsOfDespair.Effects;
+namespace PitsOfDespair.Effects.Steps;
 
 /// <summary>
-/// Effect that moves the caster a specified number of tiles in a direction.
+/// Step that moves the caster a specified number of tiles in a direction.
 /// Direction is derived from caster position to target position.
-/// Used by movement skills like Quick Step.
 /// </summary>
-public class MoveTilesEffect : Effect
+public class MoveTilesStep : IEffectStep
 {
-    public override string Type => "move_tiles";
-    public override string Name => "Move Tiles";
+    private readonly int _amount;
 
-    /// <summary>
-    /// Number of tiles to move.
-    /// </summary>
-    public int Amount { get; set; }
-
-    public MoveTilesEffect()
+    public MoveTilesStep(StepDefinition definition)
     {
-        Amount = 1;
+        _amount = definition.Amount > 0 ? definition.Amount : 1;
     }
 
-    public MoveTilesEffect(int amount)
-    {
-        Amount = amount > 0 ? amount : 1;
-    }
-
-    public MoveTilesEffect(EffectDefinition definition)
-    {
-        Amount = definition.Amount > 0 ? definition.Amount : 1;
-    }
-
-    public override EffectResult Apply(EffectContext context)
+    public void Execute(EffectContext context, EffectState state, MessageCollector messages)
     {
         var caster = context.Caster;
         if (caster == null)
         {
-            return EffectResult.CreateFailure("No caster for movement effect.");
+            messages.Add("No caster for movement effect.", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Need target position to determine direction
         if (context.TargetPosition == null)
         {
-            return EffectResult.CreateFailure("No direction specified.");
+            messages.Add("No direction specified.", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         var casterPos = caster.GridPosition;
@@ -58,7 +42,8 @@ public class MoveTilesEffect : Effect
 
         if (dx == 0 && dy == 0)
         {
-            return EffectResult.CreateFailure("Invalid direction.");
+            messages.Add("Invalid direction.", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         var direction = new Vector2I(dx, dy);
@@ -69,21 +54,17 @@ public class MoveTilesEffect : Effect
         int tilesMoved = 0;
         var currentPos = casterPos;
 
-        for (int i = 0; i < Amount; i++)
+        for (int i = 0; i < _amount; i++)
         {
             var nextPos = new GridPosition(currentPos.X + direction.X, currentPos.Y + direction.Y);
 
             // Check if tile is in bounds
             if (!mapSystem.IsInBounds(nextPos))
-            {
                 break;
-            }
 
             // Check if tile is walkable
             if (!mapSystem.IsWalkable(nextPos))
-            {
                 break;
-            }
 
             // Check for entity at next position
             var entityAtNext = entityManager.GetEntityAtPosition(nextPos);
@@ -129,30 +110,19 @@ public class MoveTilesEffect : Effect
         // First tile must be passable for skill to succeed
         if (tilesMoved == 0)
         {
-            return EffectResult.CreateFailure(
-                $"{caster.DisplayName} can't move in that direction!",
-                Palette.ToHex(Palette.Disabled)
-            );
+            messages.Add($"{caster.DisplayName} can't move in that direction!", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Actually move the caster
         caster.SetGridPosition(currentPos);
 
         // Generate appropriate message
-        string message;
-        if (tilesMoved == Amount)
-        {
-            message = $"{caster.DisplayName} dashes forward!";
-        }
-        else
-        {
-            message = $"{caster.DisplayName} moves {tilesMoved} tile{(tilesMoved > 1 ? "s" : "")}.";
-        }
+        string message = tilesMoved == _amount
+            ? $"{caster.DisplayName} dashes forward!"
+            : $"{caster.DisplayName} moves {tilesMoved} tile{(tilesMoved > 1 ? "s" : "")}.";
 
-        return EffectResult.CreateSuccess(
-            message,
-            Palette.ToHex(Palette.Default),
-            caster
-        );
+        messages.Add(message, Palette.ToHex(Palette.Default));
+        state.Success = true;
     }
 }

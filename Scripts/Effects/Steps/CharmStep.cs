@@ -1,32 +1,30 @@
 using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Effects.Composition;
 
-namespace PitsOfDespair.Effects;
+namespace PitsOfDespair.Effects.Steps;
 
 /// <summary>
-/// Effect that permanently charms a target, converting it to the player's faction.
+/// Step that permanently charms a target, converting it to the player's faction.
 /// The charmed creature will follow and protect the player.
 /// </summary>
-public class CharmEffect : Effect
+public class CharmStep : IEffectStep
 {
-    public override string Type => "charm";
-    public override string Name => "Charm";
+    public CharmStep(StepDefinition definition)
+    {
+        // No properties needed currently
+    }
 
-    public CharmEffect() { }
-
-    public override EffectResult Apply(EffectContext context)
+    public void Execute(EffectContext context, EffectState state, MessageCollector messages)
     {
         var target = context.Target;
-        var targetName = target.DisplayName;
 
         // Can't charm entities already in player faction
         if (target.Faction == Faction.Player)
         {
-            return EffectResult.CreateFailure(
-                $"{targetName} is already friendly!",
-                Palette.ToHex(Palette.Disabled)
-            );
+            messages.Add($"{target.DisplayName} is already friendly!", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Convert to player faction
@@ -40,10 +38,7 @@ public class CharmEffect : Effect
             aiComponent.ProtectionTarget = context.ActionContext.Player;
         }
 
-        return EffectResult.CreateSuccess(
-            $"{targetName} is charmed and joins your side!",
-            Palette.ToHex(Palette.ScrollCharm),
-            target
-        );
+        messages.Add($"{target.DisplayName} is charmed and joins your side!", Palette.ToHex(Palette.ScrollCharm));
+        state.Success = true;
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PitsOfDespair.Actions;
+using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.Audio;
 
@@ -56,7 +57,11 @@ public class CompositeEffect : Effect
     /// Applies this effect to multiple targets.
     /// Plays sound once at start, then executes pipeline for each target.
     /// </summary>
-    public override List<EffectResult> ApplyToTargets(BaseEntity caster, List<BaseEntity> targets, ActionContext context)
+    public override List<EffectResult> ApplyToTargets(
+        BaseEntity caster,
+        List<BaseEntity> targets,
+        ActionContext context,
+        GridPosition? targetPosition = null)
     {
         // Play sound once at the start
         if (!string.IsNullOrEmpty(_sound))
@@ -67,7 +72,7 @@ public class CompositeEffect : Effect
         var results = new List<EffectResult>();
         foreach (var target in targets)
         {
-            var effectContext = EffectContext.ForItem(target, caster, context);
+            var effectContext = EffectContext.ForItem(target, caster, context, targetPosition);
             results.Add(Apply(effectContext));
         }
         return results;

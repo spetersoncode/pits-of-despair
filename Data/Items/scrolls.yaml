@@ -9,8 +9,9 @@ entries:
     color: Palette.ScrollBlink
     description: Ancient words of translocation writhe across yellowed parchment. Reading them tears reality asunder for the briefest moment.
     effects:
-      - type: blink
-        range: 5
+      - steps:
+          - type: blink
+            range: 5
 
   teleport:
     name: teleport
@@ -18,7 +19,9 @@ entries:
     color: Palette.ScrollTeleport
     description: Glowing runes pulse with unstable energy, their power barely contained by arcane bindings. Speaking them unmakes you and remakes you elsewhere.
     effects:
-      - type: teleport
+      - steps:
+          - type: teleport
+            teleportCompanions: true
 
   charm:
     name: charm
@@ -26,7 +29,8 @@ entries:
     color: Palette.ScrollCharm
     description: Soothing whispers emanate from the parchment, promising friendship and loyalty to any creature that hears them read aloud.
     effects:
-      - type: charm
+      - steps:
+          - type: charm
 
   fear:
     name: fear
@@ -34,8 +38,10 @@ entries:
     color: Palette.StatusDebuff
     description: Dark whispers emanate from this parchment, promising terror to any who hear them spoken.
     effects:
-      - type: fear
-        durationDice: 3d4
+      - steps:
+          - type: apply_condition
+            conditionType: fear
+            durationDice: 3d4
     targeting:
       type: enemy
       range: 6
@@ -47,10 +53,15 @@ entries:
     color: Palette.Arcane
     description: Drowsy sigils drift across yellowed vellum. Even looking at them brings heavy eyelids.
     effects:
-      - type: sleep
-        durationDice: 2d6
-        saveStat: wil
-        saveModifier: 4
+      - steps:
+          - type: save_check
+            saveStat: wil
+            attackStat: wil
+            saveModifier: 4
+            stopOnSuccess: true
+          - type: apply_condition
+            conditionType: sleep
+            durationDice: 2d6
     targeting:
       type: area
       range: 5
@@ -63,5 +74,6 @@ entries:
     color: Palette.Arcane
     description: Arcane cartography fills this scroll. Reading it imprints the dungeon's layout upon your mind.
     effects:
-      - type: magic_mapping
-        radius: 10
+      - steps:
+          - type: magic_mapping
+            radius: 10

@@ -170,7 +170,7 @@ public static class SkillExecutor
             // Create effect chain for this target
             foreach (var effectDef in skillDef.Effects)
             {
-                var effect = Effect.CreateFromSkillDefinition(effectDef);
+                var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name);
                 if (effect == null)
                 {
                     GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
@@ -233,7 +233,7 @@ public static class SkillExecutor
 
         foreach (var effectDef in skillDef.Effects)
         {
-            var effect = Effect.CreateFromSkillDefinition(effectDef);
+            var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name);
             if (effect == null)
             {
                 GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");

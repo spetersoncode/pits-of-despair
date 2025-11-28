@@ -1,29 +1,22 @@
 using System.Collections.Generic;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
-using PitsOfDespair.Entities;
-using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.Effects.Composition;
 
-namespace PitsOfDespair.Effects;
+namespace PitsOfDespair.Effects.Steps;
 
 /// <summary>
-/// Effect that creates a clone of the target creature.
+/// Step that creates a clone of the target creature.
 /// The clone spawns adjacent to the target with the same faction.
-/// Cannot clone players (they have no CreatureId).
 /// </summary>
-public class CloneEffect : Effect
+public class CloneStep : IEffectStep
 {
-    public override string Type => "clone";
-    public override string Name => "Clone";
-
-    public CloneEffect() { }
-
-    public CloneEffect(EffectDefinition definition)
+    public CloneStep(StepDefinition definition)
     {
         // No special parameters needed
     }
 
-    public override EffectResult Apply(EffectContext context)
+    public void Execute(EffectContext context, EffectState state, MessageCollector messages)
     {
         var target = context.Target;
         var entityFactory = context.ActionContext.EntityFactory;
@@ -32,39 +25,31 @@ public class CloneEffect : Effect
 
         if (target == null)
         {
-            return EffectResult.CreateFailure(
-                "No target to clone.",
-                Palette.ToHex(Palette.Disabled)
-            );
+            messages.Add("No target to clone.", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Check if target has a CreatureId (can't clone player)
         if (string.IsNullOrEmpty(target.CreatureId))
         {
-            return EffectResult.CreateFailure(
-                $"{target.DisplayName} cannot be cloned.",
-                Palette.ToHex(Palette.Disabled)
-            );
+            messages.Add($"{target.DisplayName} cannot be cloned.", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Find an adjacent walkable position for the clone
         var clonePosition = FindAdjacentWalkablePosition(target.GridPosition, mapSystem, entityManager);
         if (clonePosition == null)
         {
-            return EffectResult.CreateFailure(
-                "No space to create a clone!",
-                Palette.ToHex(Palette.Disabled)
-            );
+            messages.Add("No space to create a clone!", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Create the clone
         var clone = entityFactory.CreateCreature(target.CreatureId, clonePosition.Value);
         if (clone == null)
         {
-            return EffectResult.CreateFailure(
-                "Failed to create clone.",
-                Palette.ToHex(Palette.Disabled)
-            );
+            messages.Add("Failed to create clone.", Palette.ToHex(Palette.Disabled));
+            return;
         }
 
         // Clone inherits the original's faction and appearance
@@ -82,17 +67,14 @@ public class CloneEffect : Effect
         // Register with entity manager
         entityManager.AddEntity(clone);
 
-        return EffectResult.CreateSuccess(
-            $"A clone of {target.DisplayName} appears!",
-            Palette.ToHex(Palette.Cyan),
-            clone
-        );
+        messages.Add($"A clone of {target.DisplayName} appears!", Palette.ToHex(Palette.Cyan));
+        state.Success = true;
     }
 
-    /// <summary>
-    /// Finds an adjacent walkable position that doesn't have an entity.
-    /// </summary>
-    private GridPosition? FindAdjacentWalkablePosition(GridPosition center, Systems.MapSystem mapSystem, EntityManager entityManager)
+    private GridPosition? FindAdjacentWalkablePosition(
+        GridPosition center,
+        Systems.MapSystem mapSystem,
+        Systems.Entity.EntityManager entityManager)
     {
         // Check all 8 adjacent positions
         var directions = new List<(int dx, int dy)>

@@ -17,10 +17,11 @@ entries:
       - damage
       - buff
     effects:
-      - type: apply_condition
-        conditionType: strength_modifier
-        amount: 3
-        duration: 1
+      - steps:
+          - type: apply_condition
+            conditionType: strength_modifier
+            amount: 3
+            duration: 1
 
   mighty_thews:
     name: Mighty Thews
@@ -53,7 +54,10 @@ entries:
       - damage
       - multi-target
     effects:
-      - type: melee_attack
+      - steps:
+          - type: attack_roll
+            useMeleeModifier: true
+          - type: weapon_damage
 
   rampage:
     name: Rampage
@@ -72,7 +76,8 @@ entries:
       - damage
       - combat
     effects:
-      - type: apply_condition
-        conditionType: strength_modifier
-        amount: 3
-        duration: 1
+      - steps:
+          - type: apply_condition
+            conditionType: strength_modifier
+            amount: 3
+            duration: 1

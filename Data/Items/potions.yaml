@@ -9,10 +9,11 @@ entries:
     color: Palette.PotionStrengthMinor
     description: Burnt orange liquid swirls sluggishly. It smells of iron and exertion.
     effects:
-      - type: apply_condition
-        conditionType: strength_modifier
-        amount: 1
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: strength_modifier
+            amount: 1
+            duration: 10
 
   strength_2:
     name: strength
@@ -20,10 +21,11 @@ entries:
     color: Palette.PotionStrength
     description: Amber fluid pulses with warmth. The taste of forge-fire lingers on sealed lips.
     effects:
-      - type: apply_condition
-        conditionType: strength_modifier
-        amount: 2
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: strength_modifier
+            amount: 2
+            duration: 10
 
   strength_3:
     name: major strength
@@ -31,10 +33,11 @@ entries:
     color: Palette.PotionStrengthMajor
     description: Blazing orange radiance strains against the glass. Raw power made liquid.
     effects:
-      - type: apply_condition
-        conditionType: strength_modifier
-        amount: 3
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: strength_modifier
+            amount: 3
+            duration: 10
 
   agility_1:
     name: minor agility
@@ -42,10 +45,11 @@ entries:
     color: Palette.PotionAgilityMinor
     description: Deep teal liquid shifts like restless water. Light bends strangely around it.
     effects:
-      - type: apply_condition
-        conditionType: agility_modifier
-        amount: 1
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: agility_modifier
+            amount: 1
+            duration: 10
 
   agility_2:
     name: agility
@@ -53,10 +57,11 @@ entries:
     color: Palette.PotionAgility
     description: Bright teal flows endlessly within itself. Holding it makes your fingers twitch.
     effects:
-      - type: apply_condition
-        conditionType: agility_modifier
-        amount: 2
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: agility_modifier
+            amount: 2
+            duration: 10
 
   agility_3:
     name: major agility
@@ -64,10 +69,11 @@ entries:
     color: Palette.PotionAgilityMajor
     description: Brilliant cyan dances without stillness. Time itself seems to hesitate nearby.
     effects:
-      - type: apply_condition
-        conditionType: agility_modifier
-        amount: 3
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: agility_modifier
+            amount: 3
+            duration: 10
 
   armor_1:
     name: barkskin
@@ -75,10 +81,11 @@ entries:
     color: Palette.PotionBarkskin
     description: Dark olive sludge, thick as sap. The scent of deep forest fills your nose.
     effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 1
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: armor_modifier
+            amount: 1
+            duration: 10
 
   armor_2:
     name: stoneskin
@@ -86,10 +93,11 @@ entries:
     color: Palette.PotionStoneskin
     description: Cool gray liquid with grit suspended within. It settles heavy in the stomach.
     effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 2
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: armor_modifier
+            amount: 2
+            duration: 10
 
   armor_3:
     name: ironskin
@@ -97,10 +105,11 @@ entries:
     color: Palette.PotionIronskin
     description: Metallic blue-gray fluid, cold to the touch. Your reflection warps in its surface.
     effects:
-      - type: apply_condition
-        conditionType: armor_modifier
-        amount: 3
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: armor_modifier
+            amount: 3
+            duration: 10
 
   endurance_1:
     name: minor endurance
@@ -108,10 +117,11 @@ entries:
     color: Palette.PotionEnduranceMinor
     description: Dusty rose fluid, thick and warm. It pulses faintly like a sleeping heart.
     effects:
-      - type: apply_condition
-        conditionType: endurance_modifier
-        amount: 1
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: endurance_modifier
+            amount: 1
+            duration: 10
 
   endurance_2:
     name: endurance
@@ -119,10 +129,11 @@ entries:
     color: Palette.PotionEndurance
     description: Vibrant rose essence swirls with vitality. The glass feels alive in your grip.
     effects:
-      - type: apply_condition
-        conditionType: endurance_modifier
-        amount: 2
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: endurance_modifier
+            amount: 2
+            duration: 10
 
   endurance_3:
     name: major endurance
@@ -130,10 +141,11 @@ entries:
     color: Palette.PotionEnduranceMajor
     description: Brilliant pink life force churns within. Merely holding it quickens your heartbeat.
     effects:
-      - type: apply_condition
-        conditionType: endurance_modifier
-        amount: 3
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: endurance_modifier
+            amount: 3
+            duration: 10
 
   will_1:
     name: minor will
@@ -141,10 +153,11 @@ entries:
     color: Palette.PotionWillMinor
     description: Deep violet liquid rests perfectly still. Staring into it clears unwanted thoughts.
     effects:
-      - type: apply_condition
-        conditionType: will_modifier
-        amount: 1
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: will_modifier
+            amount: 1
+            duration: 10
 
   will_2:
     name: will
@@ -152,10 +165,11 @@ entries:
     color: Palette.PotionWill
     description: Rich purple clarity shimmers with purpose. Your mind sharpens just holding it.
     effects:
-      - type: apply_condition
-        conditionType: will_modifier
-        amount: 2
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: will_modifier
+            amount: 2
+            duration: 10
 
   will_3:
     name: major will
@@ -163,10 +177,11 @@ entries:
     color: Palette.PotionWillMajor
     description: Radiant lavender hums with focus. Reality feels more defined in its presence.
     effects:
-      - type: apply_condition
-        conditionType: will_modifier
-        amount: 3
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: will_modifier
+            amount: 3
+            duration: 10
 
   haste:
     name: haste
@@ -174,7 +189,8 @@ entries:
     color: Palette.PotionHaste
     description: Shimmering chartreuse liquid vibrates with restless energy. Time seems to slow around it.
     effects:
-      - type: apply_condition
-        conditionType: speed_modifier
-        amount: 5
-        duration: 10
+      - steps:
+          - type: apply_condition
+            conditionType: speed_modifier
+            amount: 5
+            duration: 10

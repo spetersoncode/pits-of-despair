@@ -64,6 +64,16 @@ public static class CompositeEffectBuilder
             "heal_caster" => new HealCasterStep(stepDef),
             "apply_condition" => new ApplyConditionStep(stepDef),
             "knockback" => new KnockbackStep(stepDef),
+            "modify_willpower" => new ModifyWillpowerStep(stepDef),
+            "teleport" => new TeleportStep(stepDef),
+            "blink" => new BlinkStep(stepDef),
+            "magic_mapping" => new MagicMappingStep(stepDef),
+            "move_tiles" => new MoveTilesStep(stepDef),
+            "charm" => new CharmStep(stepDef),
+            "spawn_hazard" => new SpawnHazardStep(stepDef),
+            "chain_damage" => new ChainDamageStep(stepDef),
+            "clone" => new CloneStep(stepDef),
+            "weapon_damage" => new WeaponDamageStep(stepDef),
             _ => null
         };
     }

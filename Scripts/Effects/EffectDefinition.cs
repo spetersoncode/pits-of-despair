@@ -159,12 +159,14 @@ public class EffectDefinition
     /// Creates an EffectDefinition from a SkillEffectDefinition.
     /// Maps skill-specific fields to the unified definition.
     /// </summary>
-    public static EffectDefinition FromSkillEffect(SkillEffectDefinition skillEffect)
+    /// <param name="skillEffect">The skill effect definition.</param>
+    /// <param name="parentName">Optional parent name (skill name) to use if effect has no name.</param>
+    public static EffectDefinition FromSkillEffect(SkillEffectDefinition skillEffect, string? parentName = null)
     {
         return new EffectDefinition
         {
             Type = skillEffect.Type,
-            Name = skillEffect.Name,
+            Name = skillEffect.Name ?? parentName,
             Sound = skillEffect.Sound,
             Steps = skillEffect.Steps,
             Amount = skillEffect.Amount,
@@ -193,12 +195,14 @@ public class EffectDefinition
     /// Creates an EffectDefinition from item YAML effect data.
     /// This is for use when ItemData's own EffectDefinition needs to be converted.
     /// </summary>
-    public static EffectDefinition FromItemEffect(Data.EffectDefinition itemEffect)
+    /// <param name="itemEffect">The item effect definition.</param>
+    /// <param name="parentName">Optional parent name (item name) to use if effect has no name.</param>
+    public static EffectDefinition FromItemEffect(Data.EffectDefinition itemEffect, string? parentName = null)
     {
         return new EffectDefinition
         {
             Type = itemEffect.Type,
-            Name = itemEffect.Name,
+            Name = itemEffect.Name ?? parentName,
             Sound = itemEffect.Sound,
             Steps = itemEffect.Steps,
             Amount = itemEffect.Amount,

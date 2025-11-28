@@ -12,8 +12,10 @@ entries:
       - heal
       - utility
     effects:
-      - type: heal_percent
-        amount: 20
+      - steps:
+          - type: heal
+            amount: 20
+            percent: true
 
   keen_hearing:
     name: Keen Hearing
