@@ -142,7 +142,15 @@ public partial class EntityDetailModal : CenterContainer
     private (string text, Color color) GetHealthStatusParts(BaseEntity entity)
     {
         var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
-        if (health == null) return ("Unknown", Palette.AshGray);
+
+        // Items don't have health - return empty string
+        if (health == null)
+        {
+            // Only show "Unknown" for creatures without health components (shouldn't happen)
+            if (entity.ItemData != null)
+                return ("", Palette.Default);
+            return ("Unknown", Palette.AshGray);
+        }
 
         if (entity.IsDead) return ("Dead", Palette.Crimson);
 
