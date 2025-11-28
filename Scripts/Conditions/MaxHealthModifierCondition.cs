@@ -69,10 +69,15 @@ public class MaxHealthModifierCondition : Condition
         // Apply max Health modifier
         health.AddMaxHealthModifier(_internalSourceId, Amount);
 
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
+        {
+            return ConditionMessage.Empty;
+        }
+
         // Generate appropriate message based on duration mode and amount sign
         string message = DurationMode switch
         {
-            ConditionDuration.WhileEquipped => Amount >= 0 ? $"Max Health +{Amount}" : $"Max Health {Amount}",
             ConditionDuration.Permanent => Amount >= 0
                 ? $"Max Health permanently increased by {Amount}!"
                 : $"Max Health permanently decreased by {Math.Abs(Amount)}!",
@@ -101,16 +106,16 @@ public class MaxHealthModifierCondition : Condition
         // Remove max Health modifier
         health.RemoveMaxHealthModifier(_internalSourceId);
 
-        // Generate appropriate message based on duration mode
-        string message = DurationMode switch
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
         {
-            ConditionDuration.WhileEquipped => Amount >= 0
-                ? "Max Health bonus removed"
-                : "Max Health penalty removed",
-            _ => Amount >= 0
-                ? "Max Health buff has worn off."
-                : "Max Health debuff has worn off."
-        };
+            return ConditionMessage.Empty;
+        }
+
+        // Generate appropriate message based on duration mode
+        string message = Amount >= 0
+            ? "Max Health buff has worn off."
+            : "Max Health debuff has worn off.";
 
         return new ConditionMessage(message, Palette.ToHex(Palette.Default));
     }

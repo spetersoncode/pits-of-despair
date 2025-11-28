@@ -70,10 +70,15 @@ public class MaxWillpowerModifierCondition : Condition
         // Apply max Willpower modifier
         willpower.AddMaxWillpowerModifier(_internalSourceId, Amount);
 
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
+        {
+            return ConditionMessage.Empty;
+        }
+
         // Generate appropriate message based on duration mode and amount sign
         string message = DurationMode switch
         {
-            ConditionDuration.WhileEquipped => Amount >= 0 ? $"Max Willpower +{Amount}" : $"Max Willpower {Amount}",
             ConditionDuration.Permanent => Amount >= 0
                 ? $"Max Willpower permanently increased by {Amount}!"
                 : $"Max Willpower permanently decreased by {Math.Abs(Amount)}!",
@@ -102,16 +107,16 @@ public class MaxWillpowerModifierCondition : Condition
         // Remove max Willpower modifier
         willpower.RemoveMaxWillpowerModifier(_internalSourceId);
 
-        // Generate appropriate message based on duration mode
-        string message = DurationMode switch
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
         {
-            ConditionDuration.WhileEquipped => Amount >= 0
-                ? "Max Willpower bonus removed"
-                : "Max Willpower penalty removed",
-            _ => Amount >= 0
-                ? "Max Willpower buff has worn off."
-                : "Max Willpower debuff has worn off."
-        };
+            return ConditionMessage.Empty;
+        }
+
+        // Generate appropriate message based on duration mode
+        string message = Amount >= 0
+            ? "Max Willpower buff has worn off."
+            : "Max Willpower debuff has worn off.";
 
         return new ConditionMessage(message, Palette.ToHex(Palette.Default));
     }

@@ -71,10 +71,15 @@ public class SpeedModifierCondition : Condition
         // Apply modifier
         speed.AddSpeedModifier(_internalSourceId, Amount);
 
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
+        {
+            return ConditionMessage.Empty;
+        }
+
         // Generate appropriate message based on duration mode and amount sign
         string message = DurationMode switch
         {
-            ConditionDuration.WhileEquipped => Amount >= 0 ? $"Speed +{Amount}" : $"Speed {Amount}",
             ConditionDuration.Permanent => Amount >= 0
                 ? $"Speed permanently increased by {Amount}!"
                 : $"Speed permanently decreased by {Math.Abs(Amount)}!",
@@ -103,16 +108,16 @@ public class SpeedModifierCondition : Condition
         // Remove modifier
         speed.RemoveSpeedModifier(_internalSourceId);
 
-        // Generate appropriate message based on duration mode
-        string message = DurationMode switch
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
         {
-            ConditionDuration.WhileEquipped => Amount >= 0
-                ? "Speed bonus removed"
-                : "Speed penalty removed",
-            _ => Amount >= 0
-                ? "Your haste wears off."
-                : "You no longer feel slowed."
-        };
+            return ConditionMessage.Empty;
+        }
+
+        // Generate appropriate message based on duration mode
+        string message = Amount >= 0
+            ? "Your haste wears off."
+            : "You no longer feel slowed.";
 
         return new ConditionMessage(message, Palette.ToHex(Palette.Default));
     }

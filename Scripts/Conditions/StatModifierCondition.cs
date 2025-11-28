@@ -77,11 +77,16 @@ public class StatModifierCondition : Condition
         // Apply modifier using unified API
         stats.AddStatModifier(Stat, _internalSourceId, Amount);
 
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
+        {
+            return ConditionMessage.Empty;
+        }
+
         // Generate appropriate message based on duration mode and amount sign
         string statName = Stat.ToString();
         string message = DurationMode switch
         {
-            ConditionDuration.WhileEquipped => Amount >= 0 ? $"{statName} +{Amount}" : $"{statName} {Amount}",
             ConditionDuration.Permanent => Amount >= 0
                 ? $"{statName} permanently increased by {Amount}!"
                 : $"{statName} permanently decreased by {Math.Abs(Amount)}!",
@@ -110,17 +115,17 @@ public class StatModifierCondition : Condition
         // Remove modifier using unified API
         stats.RemoveStatModifier(Stat, _internalSourceId);
 
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
+        {
+            return ConditionMessage.Empty;
+        }
+
         // Generate appropriate message based on duration mode
         string statName = Stat.ToString();
-        string message = DurationMode switch
-        {
-            ConditionDuration.WhileEquipped => Amount >= 0
-                ? $"{statName} bonus removed"
-                : $"{statName} penalty removed",
-            _ => Amount >= 0
-                ? $"{statName} buff has worn off."
-                : $"{statName} debuff has worn off."
-        };
+        string message = Amount >= 0
+            ? $"{statName} buff has worn off."
+            : $"{statName} debuff has worn off.";
 
         return new ConditionMessage(message, Palette.ToHex(Palette.Default));
     }

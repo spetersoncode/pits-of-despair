@@ -70,12 +70,17 @@ public class RegenModifierCondition : Condition
         // Apply regen modifier
         health.AddRegenModifier(_internalSourceId, Amount);
 
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
+        {
+            return ConditionMessage.Empty;
+        }
+
         // Generate appropriate message based on duration mode
         string message = DurationMode switch
         {
-            ConditionDuration.WhileEquipped => $"Regen +{Amount}",
-            ConditionDuration.Permanent => $"Regeneration permanently increased!",
-            _ => $"Regeneration increased!"
+            ConditionDuration.Permanent => "Regeneration permanently increased!",
+            _ => "Regeneration increased!"
         };
 
         return new ConditionMessage(message, Palette.ToHex(Palette.StatusBuff));
@@ -97,13 +102,12 @@ public class RegenModifierCondition : Condition
         // Remove regen modifier
         health.RemoveRegenModifier(_internalSourceId);
 
-        // Generate appropriate message based on duration mode
-        string message = DurationMode switch
+        // Equipment bonuses don't need messages - they're shown in UI
+        if (DurationMode == ConditionDuration.WhileEquipped)
         {
-            ConditionDuration.WhileEquipped => "Regen bonus removed",
-            _ => "Regeneration buff has worn off."
-        };
+            return ConditionMessage.Empty;
+        }
 
-        return new ConditionMessage(message, Palette.ToHex(Palette.Default));
+        return new ConditionMessage("Regeneration buff has worn off.", Palette.ToHex(Palette.Default));
     }
 }
