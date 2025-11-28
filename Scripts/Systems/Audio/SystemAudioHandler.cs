@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 
@@ -16,15 +17,18 @@ public partial class SystemAudioHandler : Node
         public const string MeleeAttack = "Player/melee_attack.wav";
         public const string RangedAttack = "Player/ranged_attack.wav";
         public const string AttackMiss = "Player/attack_miss.wav";
+        public const string PlayerDeath = "Player/player_death.wav";
     }
 
     private LevelUpSystem? _levelUpSystem;
     private CombatSystem? _combatSystem;
+    private HealthComponent? _playerHealth;
 
-    public void Initialize(LevelUpSystem levelUpSystem, CombatSystem combatSystem)
+    public void Initialize(LevelUpSystem levelUpSystem, CombatSystem combatSystem, Player player)
     {
         _levelUpSystem = levelUpSystem;
         _combatSystem = combatSystem;
+        _playerHealth = player.GetNodeOrNull<HealthComponent>("HealthComponent");
 
         _levelUpSystem.Connect(
             LevelUpSystem.SignalName.LevelUpMessage,
@@ -44,6 +48,11 @@ public partial class SystemAudioHandler : Node
         _combatSystem.Connect(
             CombatSystem.SignalName.AttackBlocked,
             Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked)
+        );
+
+        _playerHealth?.Connect(
+            HealthComponent.SignalName.Died,
+            Callable.From(OnPlayerDied)
         );
     }
 
@@ -72,6 +81,14 @@ public partial class SystemAudioHandler : Node
             _combatSystem.Disconnect(
                 CombatSystem.SignalName.AttackBlocked,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked)
+            );
+        }
+
+        if (_playerHealth != null && IsInstanceValid(_playerHealth))
+        {
+            _playerHealth.Disconnect(
+                HealthComponent.SignalName.Died,
+                Callable.From(OnPlayerDied)
             );
         }
     }
@@ -107,5 +124,10 @@ public partial class SystemAudioHandler : Node
         {
             AudioManager.PlaySystemSound(SystemSounds.AttackMiss);
         }
+    }
+
+    private void OnPlayerDied()
+    {
+        AudioManager.PlaySystemSound(SystemSounds.PlayerDeath);
     }
 }

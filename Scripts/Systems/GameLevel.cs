@@ -312,7 +312,7 @@ public partial class GameLevel : Node
 
         // Initialize new systems for decoupling
         _levelUpSystem.Initialize(_player);
-        _systemAudioHandler.Initialize(_levelUpSystem, _combatSystem);
+        _systemAudioHandler.Initialize(_levelUpSystem, _combatSystem, _player);
         _actionHandler.Initialize(_player, actionContext);
         _playerStatsViewModel.Initialize(_player, _goldManager, FloorDepth);
         _equipmentViewModel.Initialize(_player);
