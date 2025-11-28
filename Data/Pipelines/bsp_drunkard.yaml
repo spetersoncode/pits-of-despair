@@ -21,6 +21,7 @@ passes:
   - pass: drunkard_walk
     priority: 50
     config:
+      role: modifier
       targetFloorPercent: 12
       walkerCount: 3
       maxStepsPerWalker: 800

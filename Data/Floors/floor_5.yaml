@@ -1,14 +1,16 @@
 name: "Deeper Halls"
 floor: 5
 
-# Pipeline selection - varied layouts
+# Pipeline selection - varied layouts, dungeons start breaking apart
 pipelines:
   - id: dense_rooms
-    weight: 40
+    weight: 30
   - id: scattered_rooms
-    weight: 30
+    weight: 25
   - id: tunnels
-    weight: 30
+    weight: 25
+  - id: bsp_drunkard
+    weight: 20
 
 # Difficulty curve
 minThreat: 1

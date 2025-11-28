@@ -63,17 +63,28 @@ public class DrunkardWalkPass : IGenerationPass
 
     public void Execute(GenerationContext context)
     {
-        GD.Print($"[DrunkardWalkPass] Starting with {_dwConfig.WalkerCount} walker(s), target {_dwConfig.TargetFloorPercent}%");
-
         var walkerPaths = new List<List<GridPosition>>();
         var rooms = new List<DrunkardRoom>();
 
         // Calculate target floor count
         int totalTiles = (context.Width - 2) * (context.Height - 2); // Exclude borders
-        int targetFloors = (int)(totalTiles * _dwConfig.TargetFloorPercent / 100.0);
-
-        // Track current floor count
         int currentFloors = CountFloorTiles(context);
+        int targetFloors;
+
+        if (Role == PassRole.Modifier)
+        {
+            // As modifier: add additional floor percentage on top of existing
+            int additionalFloors = (int)(totalTiles * _dwConfig.TargetFloorPercent / 100.0);
+            targetFloors = currentFloors + additionalFloors;
+            GD.Print($"[DrunkardWalkPass] Modifier mode: {_dwConfig.WalkerCount} walker(s), adding {_dwConfig.TargetFloorPercent}% (~{additionalFloors} tiles)");
+        }
+        else
+        {
+            // As base generator: target absolute percentage
+            targetFloors = (int)(totalTiles * _dwConfig.TargetFloorPercent / 100.0);
+            GD.Print($"[DrunkardWalkPass] Base mode: {_dwConfig.WalkerCount} walker(s), target {_dwConfig.TargetFloorPercent}%");
+        }
+
         int totalSteps = 0;
 
         // Spawn walkers
