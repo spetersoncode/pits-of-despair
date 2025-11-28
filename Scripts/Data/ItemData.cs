@@ -27,6 +27,12 @@ public class ItemTypeInfo
     /// Values > 1.0 spawn more frequently, values < 1.0 spawn less frequently.
     /// </summary>
     public float SpawnWeightMultiplier { get; set; } = 1.0f;
+
+    /// <summary>
+    /// Default spawn quantity as dice notation (e.g., "2d6+8" for 10-20).
+    /// If null, items spawn with quantity 1.
+    /// </summary>
+    public string? DefaultQuantity { get; set; } = null;
 }
 
 /// <summary>
@@ -52,7 +58,7 @@ public class ItemData
         {
             IsConsumable = true,
             UsesOfPattern = true,
-            SpawnWeightMultiplier = 1.4f
+            SpawnWeightMultiplier = 1.0f // Less common than potions (1.4f)
         },
         ["weapon"] = new ItemTypeInfo
         {
@@ -72,7 +78,8 @@ public class ItemData
             IsConsumable = true,
             EquipSlot = "Ammo",
             AutoPickup = true,
-            SpawnWeightMultiplier = 1.2f
+            SpawnWeightMultiplier = 1.2f,
+            DefaultQuantity = "2d6+8" // 10-20 arrows
         },
         ["ring"] = new ItemTypeInfo
         {
@@ -304,6 +311,23 @@ public class ItemData
             return info.SpawnWeightMultiplier;
 
         return 1.0f;
+    }
+
+    /// <summary>
+    /// Gets the default spawn quantity for this item, rolling dice if specified.
+    /// Returns 1 if no default quantity is set.
+    /// </summary>
+    public int GetDefaultQuantity()
+    {
+        if (!string.IsNullOrEmpty(Type) && TypeInfo.TryGetValue(Type.ToLower(), out var info))
+        {
+            if (!string.IsNullOrEmpty(info.DefaultQuantity))
+            {
+                return Helpers.DiceRoller.Roll(info.DefaultQuantity);
+            }
+        }
+
+        return 1;
     }
 
     /// <summary>

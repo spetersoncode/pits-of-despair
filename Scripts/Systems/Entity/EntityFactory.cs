@@ -47,9 +47,9 @@ public partial class EntityFactory : Node
 	/// </summary>
 	/// <param name="itemId">The item ID (YAML filename without extension).</param>
 	/// <param name="position">The grid position to place the item.</param>
-	/// <param name="quantity">Optional quantity for stackable items. Defaults to 1.</param>
+	/// <param name="quantity">Optional quantity for stackable items. If 0 or negative, uses type default (e.g., ammo rolls 2d6+8).</param>
 	/// <returns>The created and configured BaseEntity with ItemData, or null if item not found.</returns>
-	public BaseEntity CreateItem(string itemId, GridPosition position, int quantity = 1)
+	public BaseEntity CreateItem(string itemId, GridPosition position, int quantity = 0)
 	{
 		var data = _dataLoader.Items.Get(itemId);
 		if (data == null)
@@ -58,10 +58,13 @@ public partial class EntityFactory : Node
 			return null;
 		}
 
+		// Use type default quantity if not specified (e.g., ammo gets 2d6+8)
+		int actualQuantity = quantity > 0 ? quantity : data.GetDefaultQuantity();
+
 		// Create ItemInstance with randomized/specified charges and quantity
 		var itemInstance = new ItemInstance(data)
 		{
-			Quantity = quantity
+			Quantity = actualQuantity
 		};
 
 		// Set autopickup for consumables and ammo (default for new items)
