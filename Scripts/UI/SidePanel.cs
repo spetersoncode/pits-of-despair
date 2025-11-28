@@ -25,6 +25,7 @@ public partial class SidePanel : PanelContainer
     private static readonly Color ExperienceBarColor = Palette.Gold;
     private static readonly Color WillpowerBarColor = new Color(0.4f, 0.4f, 0.8f); // Blue-purple for willpower
 
+    private Label _playerNameLabel;
     private ProgressBar _healthBar;
     private Label _healthLabel;
     private ProgressBar _willpowerBar;
@@ -49,6 +50,7 @@ public partial class SidePanel : PanelContainer
 
     public override void _Ready()
     {
+        _playerNameLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/PlayerNameLabel");
         _healthBar = GetNode<ProgressBar>("MarginContainer/VBoxContainer/HealthBar");
         _healthLabel = GetNode<Label>("MarginContainer/VBoxContainer/HealthLabel");
         _willpowerBar = GetNodeOrNull<ProgressBar>("MarginContainer/VBoxContainer/WillpowerBar");
@@ -126,6 +128,7 @@ public partial class SidePanel : PanelContainer
     /// </summary>
     private void UpdateAllDisplays()
     {
+        UpdatePlayerNameDisplay();
         UpdateHealthDisplay();
         UpdateWillpowerDisplay();
         UpdateXPGoldDisplay();
@@ -135,12 +138,24 @@ public partial class SidePanel : PanelContainer
         UpdateVisibleEntitiesDisplay();
     }
 
+    private void UpdatePlayerNameDisplay()
+    {
+        if (_playerNameLabel == null || _statsViewModel == null)
+            return;
+
+        string playerName = _statsViewModel.PlayerName;
+        string colorHex = Palette.ToHex(Palette.Player);
+        _playerNameLabel.Text = playerName;
+        _playerNameLabel.AddThemeColorOverride("font_color", Palette.Player);
+    }
+
     /// <summary>
     /// Called when PlayerStatsViewModel updates.
     /// Refreshes all stat-related displays.
     /// </summary>
     private void OnStatsUpdated()
     {
+        UpdatePlayerNameDisplay();
         UpdateHealthDisplay();
         UpdateWillpowerDisplay();
         UpdateXPGoldDisplay();

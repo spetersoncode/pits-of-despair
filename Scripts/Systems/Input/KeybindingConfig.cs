@@ -80,6 +80,9 @@ public static class KeybindingConfig
 
         // Level-Up Menu (opens when level-up is available)
         { InputAction.OpenLevelUp, new() { Key.L } },
+
+        // Title Screen / Menu
+        { InputAction.NewGame, new() { Key.N } },
     };
 
     /// <summary>

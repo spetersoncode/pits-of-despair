@@ -155,10 +155,18 @@ public partial class GameLevel : Node
         var playerSpawn = _mapSystem.GetValidSpawnPosition();
         _player.Initialize(playerSpawn);
 
+        // Get GameManager for player name and companion state
+        var gameManager = GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager");
+
+        // Set player name from GameManager (if available) before ViewModel initialization
+        if (gameManager != null)
+        {
+            _player.DisplayName = gameManager.CurrentPlayerName;
+        }
+
         _entityFactory.InitializePlayerInventory(_player);
 
         // Spawn companions based on floor depth
-        var gameManager = GetTree()?.Root.GetNodeOrNull<GameManager>("GameManager");
         var savedCompanions = gameManager?.GetSavedCompanionStates();
 
         if (savedCompanions != null && savedCompanions.Count > 0)

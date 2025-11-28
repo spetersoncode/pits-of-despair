@@ -87,6 +87,7 @@ public partial class PlayerStatsViewModel : Node
 
     public int Gold => _goldManager?.Gold ?? 0;
 	public int FloorDepth { get; private set; }
+	public string PlayerName => _player?.DisplayName ?? "Player";
 
 	#endregion
 

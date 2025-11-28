@@ -77,6 +77,9 @@ public enum InputAction
     // Level-Up Menu
     OpenLevelUp,
 
+    // Title Screen / Menu
+    NewGame,
+
     // Item Selection (A-Z)
     // Handled separately via letter key range checking
 }

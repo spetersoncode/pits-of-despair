@@ -16,6 +16,15 @@ namespace PitsOfDespair.Data;
 /// </summary>
 public class PlayerState
 {
+	#region Identity State
+
+	/// <summary>
+	/// Player's display name.
+	/// </summary>
+	public string PlayerName { get; set; } = "Player";
+
+	#endregion
+
 	#region Stats State
 
 	public int BaseStrength { get; set; }
@@ -87,6 +96,9 @@ public class PlayerState
 	public static PlayerState ExtractFromPlayer(Player player)
 	{
 		var state = new PlayerState();
+
+		// Extract Player Name
+		state.PlayerName = player.DisplayName;
 
 		// Extract Stats
 		var statsComponent = player.GetNodeOrNull<StatsComponent>("StatsComponent");
@@ -166,6 +178,9 @@ public class PlayerState
 	/// <param name="player">The player entity to apply state to.</param>
 	public void ApplyToPlayer(Player player)
 	{
+		// Apply Player Name
+		player.DisplayName = PlayerName;
+
 		// Apply Stats
 		var statsComponent = player.GetNodeOrNull<StatsComponent>("StatsComponent");
 		if (statsComponent != null)

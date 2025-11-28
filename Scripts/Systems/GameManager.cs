@@ -3,10 +3,21 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.Entity;
+using PitsOfDespair.UI;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace PitsOfDespair.Systems;
+
+/// <summary>
+/// Game states for the main game flow.
+/// </summary>
+public enum GameState
+{
+	Title,
+	Playing,
+	GameOver
+}
 
 /// <summary>
 /// Root game coordinator that manages multi-floor dungeon progression.
@@ -18,6 +29,9 @@ public partial class GameManager : Node
 
 	private const int MaxFloorDepth = 10;
 	private const string GameLevelScenePath = "res://Scenes/Main/GameLevel.tscn";
+	private const string TitleModalScenePath = "res://Scenes/UI/Modals/TitleModal.tscn";
+	private const string CharacterNameModalScenePath = "res://Scenes/UI/Modals/CharacterNameModal.tscn";
+	private const string GameOverModalScenePath = "res://Scenes/UI/Modals/GameOverModal.tscn";
 
 	#endregion
 
@@ -46,6 +60,16 @@ public partial class GameManager : Node
 	#endregion
 
 	#region Properties
+
+	/// <summary>
+	/// Current game state (Title, Playing, GameOver).
+	/// </summary>
+	public GameState CurrentState { get; private set; } = GameState.Title;
+
+	/// <summary>
+	/// Current player name for this game session.
+	/// </summary>
+	public string CurrentPlayerName { get; private set; } = "Player";
 
 	/// <summary>
 	/// Current floor depth (1-10).
@@ -77,6 +101,26 @@ public partial class GameManager : Node
 	/// </summary>
 	private GameLevel? _currentGameLevel = null;
 
+	/// <summary>
+	/// CanvasLayer for menu UI (title, game over modals).
+	/// </summary>
+	private CanvasLayer _menuLayer;
+
+	/// <summary>
+	/// Title screen modal.
+	/// </summary>
+	private TitleModal _titleModal;
+
+	/// <summary>
+	/// Character name entry modal.
+	/// </summary>
+	private CharacterNameModal _characterNameModal;
+
+	/// <summary>
+	/// Game over modal.
+	/// </summary>
+	private GameOverModal _gameOverModal;
+
 	#endregion
 
 	#region Initialization
@@ -87,8 +131,148 @@ public partial class GameManager : Node
 		_goldManager = new GoldManager { Name = "GoldManager" };
 		AddChild(_goldManager);
 
+		// Create menu layer for title/game over modals (renders on top)
+		_menuLayer = new CanvasLayer { Name = "MenuLayer" };
+		_menuLayer.Layer = 100; // High layer to render above game
+		AddChild(_menuLayer);
+
+		// Load and instantiate modals
+		LoadMenuModals();
+
+		// Start in Title state
+		CurrentState = GameState.Title;
+		_titleModal.ShowTitle();
+	}
+
+	/// <summary>
+	/// Loads and sets up the menu modals (title, character name, game over).
+	/// </summary>
+	private void LoadMenuModals()
+	{
+		// Load Title Modal
+		var titleScene = GD.Load<PackedScene>(TitleModalScenePath);
+		if (titleScene != null)
+		{
+			_titleModal = titleScene.Instantiate<TitleModal>();
+			_menuLayer.AddChild(_titleModal);
+			_titleModal.Connect(TitleModal.SignalName.NewGameRequested, Callable.From(OnNewGameRequested));
+		}
+		else
+		{
+			GD.PrintErr($"GameManager: Failed to load TitleModal at {TitleModalScenePath}");
+		}
+
+		// Load Character Name Modal
+		var nameScene = GD.Load<PackedScene>(CharacterNameModalScenePath);
+		if (nameScene != null)
+		{
+			_characterNameModal = nameScene.Instantiate<CharacterNameModal>();
+			_menuLayer.AddChild(_characterNameModal);
+			_characterNameModal.Connect(CharacterNameModal.SignalName.NameEntered, Callable.From<string>(OnNameEntered));
+			_characterNameModal.Connect(CharacterNameModal.SignalName.Cancelled, Callable.From(OnNameEntryCancelled));
+		}
+		else
+		{
+			GD.PrintErr($"GameManager: Failed to load CharacterNameModal at {CharacterNameModalScenePath}");
+		}
+
+		// Load Game Over Modal
+		var gameOverScene = GD.Load<PackedScene>(GameOverModalScenePath);
+		if (gameOverScene != null)
+		{
+			_gameOverModal = gameOverScene.Instantiate<GameOverModal>();
+			_menuLayer.AddChild(_gameOverModal);
+			_gameOverModal.Connect(GameOverModal.SignalName.RestartRequested, Callable.From(OnRestartRequested));
+		}
+		else
+		{
+			GD.PrintErr($"GameManager: Failed to load GameOverModal at {GameOverModalScenePath}");
+		}
+	}
+
+	#endregion
+
+	#region Menu Flow Handlers
+
+	/// <summary>
+	/// Called when player presses N on title screen.
+	/// Shows the character name entry modal.
+	/// </summary>
+	private void OnNewGameRequested()
+	{
+		_titleModal.HideTitle();
+		_characterNameModal.ShowNameEntry();
+	}
+
+	/// <summary>
+	/// Called when player enters their character name.
+	/// Starts a new game with the given name.
+	/// </summary>
+	private void OnNameEntered(string name)
+	{
+		CurrentPlayerName = name;
+		_characterNameModal.HideNameEntry();
+		StartNewGame();
+	}
+
+	/// <summary>
+	/// Called when player cancels name entry.
+	/// Returns to title screen.
+	/// </summary>
+	private void OnNameEntryCancelled()
+	{
+		_characterNameModal.HideNameEntry();
+		_titleModal.ShowTitle();
+	}
+
+	/// <summary>
+	/// Called when player requests restart from game over screen.
+	/// Returns to title screen.
+	/// </summary>
+	private void OnRestartRequested()
+	{
+		_gameOverModal.HideGameOver();
+		ReturnToTitle();
+	}
+
+	/// <summary>
+	/// Starts a new game with the current player name.
+	/// </summary>
+	private void StartNewGame()
+	{
+		// Reset game state
+		ResetGameState();
+
+		// Transition to playing
+		CurrentState = GameState.Playing;
+
 		// Start first floor
 		StartFloor(1, null);
+	}
+
+	/// <summary>
+	/// Resets all game state for a new game.
+	/// </summary>
+	private void ResetGameState()
+	{
+		_goldManager.ResetGold();
+		_savedPlayerState = null;
+		_savedCompanionStates = null;
+		CurrentFloorDepth = 1;
+		_debugModeActive = false;
+	}
+
+	/// <summary>
+	/// Returns to the title screen, cleaning up the current game.
+	/// </summary>
+	private void ReturnToTitle()
+	{
+		// Destroy current floor if exists
+		DestroyCurrentFloor();
+
+		// Transition to title state
+		CurrentState = GameState.Title;
+		_titleModal.ShowTitle();
 	}
 
 	#endregion
@@ -151,6 +335,7 @@ public partial class GameManager : Node
 			_savedPlayerState.ApplyToPlayer(_currentGameLevel.Player);
 			_savedPlayerState = null; // Clear after applying
 		}
+		// Note: Player name is set in GameLevel._Ready() from GameManager.CurrentPlayerName
 
 		// Give player reference to GoldManager
 		_currentGameLevel.Player.SetGoldManager(_goldManager);
@@ -271,7 +456,9 @@ public partial class GameManager : Node
 	{
 		EmitSignal(SignalName.GameLost, CurrentFloorDepth);
 
-		// TODO: Show death screen, score, restart option, etc.
+		// Transition to game over state
+		CurrentState = GameState.GameOver;
+		_gameOverModal.ShowGameOver(CurrentPlayerName, CurrentFloorDepth);
 	}
 
 	#endregion
