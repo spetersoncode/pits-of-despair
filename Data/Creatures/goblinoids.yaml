@@ -92,7 +92,7 @@ entries:
   goblin_adept:
     name: goblin adept
     description: A goblin with glowing eyes who mutters arcane syllables. Dark magic crackles at its fingertips.
-    color: Palette.Caster
+    color: Palette.Wizard
     threat: 3
     strength: -1
     agility: 0

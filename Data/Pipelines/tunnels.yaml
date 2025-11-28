@@ -48,9 +48,9 @@ metadata:
 
 # Layout-dependent spawn settings
 spawnSettings:
-  itemDensity: 0.005
-  encounterChance: 0.65
-  maxEncounterRatio: 0.55
+  itemDensity: 0.008
+  encounterChance: 0.45
+  maxEncounterRatio: 0.38
   minEncounterSpacing: 8
   maxEncountersPerRegion: 1
   playerExclusionRadius: 14
