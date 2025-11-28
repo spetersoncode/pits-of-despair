@@ -5,7 +5,7 @@ defaults:
 entries:
   cave_lizard:
     name: cave lizard
-    description: A pale reptile with unblinking eyes, adapted to the eternal darkness below. It lies motionless until prey draws near, then strikes with surprising speed.
+    description: A pale reptile with unblinking eyes, adapted to the eternal darkness below. It prowls silently through the tunnels, hunting for warmth and movement.
     glyph: l
     threat: 1
     strength: 0
