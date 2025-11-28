@@ -4,7 +4,6 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Systems.VisualEffects;
 using PitsOfDespair.Targeting;
 using System.Collections.Generic;
 using System.Text;
@@ -127,12 +126,6 @@ public class UseTargetedItemAction : Action
 			}
 		}
 
-		// Check for fireball projectile (special case: deferred application)
-		if (targetingType == TargetingType.Area && HasFireballEffect(effects) && context.VisualEffectSystem != null)
-		{
-			return ExecuteFireballProjectile(actor, effects, definition, context, inventory, itemTemplate, itemName);
-		}
-
 		// Check for tunneling effect (special case: terrain modification)
 		if (targetingType == TargetingType.Line && HasTunnelingEffect(effects))
 		{
@@ -147,10 +140,7 @@ public class UseTargetedItemAction : Action
 		var handler = TargetingHandler.CreateForDefinition(definition);
 		var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
 
-		// Spawn visual based on targeting type
-		SpawnTargetingVisual(actor, _targetPosition, definition, context);
-
-		// Apply all effects to targets
+		// Apply all effects to targets (effects handle their own visuals via VisualConfig)
 		foreach (var effect in effects)
 		{
 			// Apply effect to targets, passing target position for tile-based effects
@@ -194,104 +184,6 @@ public class UseTargetedItemAction : Action
 		}
 
 		return ActionResult.CreateSuccess(resultMessage);
-	}
-
-	/// <summary>
-	/// Spawns visual effects based on targeting type.
-	/// </summary>
-	private void SpawnTargetingVisual(BaseEntity actor, GridPosition targetPosition, TargetingDefinition definition, ActionContext context)
-	{
-		if (context.VisualEffectSystem == null)
-			return;
-
-		int range = definition.Range > 0 ? definition.Range : 8;
-		int radius = definition.Radius > 0 ? definition.Radius : 2;
-
-		switch (definition.Type)
-		{
-			case TargetingType.Line:
-				var linePositions = LineTargetingHandler.GetLinePositions(
-					actor.GridPosition,
-					targetPosition,
-					range,
-					context.MapSystem,
-					stopAtWalls: true
-				);
-				var endPos = linePositions.Count > 0 ? linePositions[^1] : targetPosition;
-				context.VisualEffectSystem.SpawnLightningBeam(actor.GridPosition, endPos);
-				break;
-
-			case TargetingType.Cone:
-				context.VisualEffectSystem.SpawnConeOfCold(actor.GridPosition, targetPosition, range, radius);
-				break;
-
-			case TargetingType.Area:
-				context.VisualEffectSystem.SpawnExplosion(targetPosition, radius, Palette.Fire);
-				break;
-		}
-	}
-
-	/// <summary>
-	/// Handles fireball projectile with deferred damage application.
-	/// </summary>
-	private ActionResult ExecuteFireballProjectile(
-		BaseEntity actor,
-		List<Effect> effects,
-		TargetingDefinition definition,
-		ActionContext context,
-		InventoryComponent inventory,
-		ItemData itemTemplate,
-		string itemName)
-	{
-		var fireballEffect = GetFireballEffect(effects);
-		if (fireballEffect == null)
-			return ActionResult.CreateFailure("No fireball effect found.");
-
-		int radius = definition.Radius > 0 ? definition.Radius : 2;
-
-		// Get targets at time of casting (for deferred application)
-		var handler = TargetingHandler.CreateForDefinition(definition);
-		var targets = handler.GetAffectedEntities(actor, _targetPosition, definition, context);
-
-		System.Action onImpact = () =>
-		{
-			// Apply effects using ApplyToTargets
-			var results = fireballEffect.ApplyToTargets(actor, targets, context);
-
-			// Log messages via combat system
-			foreach (var result in results)
-			{
-				if (!string.IsNullOrEmpty(result.Message))
-				{
-					context.CombatSystem?.EmitActionMessage(actor, result.Message, Palette.ToHex(Palette.Fire));
-				}
-			}
-			if (results.Count == 0)
-			{
-				context.CombatSystem?.EmitActionMessage(actor, "The flames dissipate harmlessly.", Palette.ToHex(Palette.Fire));
-			}
-
-			// Spawn explosion visual
-			context.VisualEffectSystem?.SpawnExplosion(_targetPosition, radius, Palette.Fire);
-		};
-
-		// Spawn the fireball projectile
-		context.VisualEffectSystem!.SpawnProjectile(
-			VisualEffectDefinitions.FireballProjectile,
-			actor.GridPosition,
-			_targetPosition,
-			onImpact);
-
-		// Handle consumption
-		var messages = new StringBuilder();
-		HandleItemConsumption(inventory, inventory.GetSlot(_itemKey)!, itemTemplate, messages);
-
-		if (actor is Player player)
-		{
-			player.EmitItemUsed(itemName, true, "");
-		}
-
-		return ActionResult.CreateSuccess(messages.ToString().TrimEnd());
 	}
 
 	/// <summary>
@@ -376,26 +268,6 @@ public class UseTargetedItemAction : Action
 	private static bool IsPositionalTargeting(TargetingType type)
 	{
 		return type == TargetingType.Line || type == TargetingType.Area || type == TargetingType.Cone || type == TargetingType.Tile;
-	}
-
-	private static bool HasFireballEffect(List<Effect> effects)
-	{
-		foreach (var effect in effects)
-		{
-			if (effect.Name.Equals("fireball", System.StringComparison.OrdinalIgnoreCase))
-				return true;
-		}
-		return false;
-	}
-
-	private static Effect? GetFireballEffect(List<Effect> effects)
-	{
-		foreach (var effect in effects)
-		{
-			if (effect.Name.Equals("fireball", System.StringComparison.OrdinalIgnoreCase))
-				return effect;
-		}
-		return null;
 	}
 
 	private static bool HasTunnelingEffect(List<Effect> effects)

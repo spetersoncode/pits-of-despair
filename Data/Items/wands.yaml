@@ -11,6 +11,9 @@ entries:
     charges: 2d3
     effects:
       - sound: fireball
+        visual:
+          projectile: fireball
+          impact: fireball_impact
         steps:
           - type: damage
             dice: 3d6
@@ -78,6 +81,8 @@ entries:
     charges: 2d3
     effects:
       - sound: cone_of_cold
+        visual:
+          cone: cone_of_cold
         steps:
           - type: damage
             dice: 2d8

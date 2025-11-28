@@ -5,6 +5,50 @@ using PitsOfDespair.Effects.Composition;
 namespace PitsOfDespair.Effects;
 
 /// <summary>
+/// Visual effect configuration for effects.
+/// Specifies projectile, impact, beam, or cone visuals to spawn.
+/// </summary>
+public class VisualConfig
+{
+    /// <summary>
+    /// Projectile visual ID (from VisualEffectDefinitions).
+    /// If set, spawns projectile that travels to target before effect applies.
+    /// </summary>
+    public string? Projectile { get; set; }
+
+    /// <summary>
+    /// Impact/area visual ID (from VisualEffectDefinitions).
+    /// Spawns at target position when effect applies (or when projectile arrives).
+    /// </summary>
+    public string? Impact { get; set; }
+
+    /// <summary>
+    /// Beam visual ID for line effects.
+    /// </summary>
+    public string? Beam { get; set; }
+
+    /// <summary>
+    /// Cone visual ID for cone effects.
+    /// </summary>
+    public string? Cone { get; set; }
+
+    /// <summary>
+    /// Creates a VisualConfig from item data VisualConfig.
+    /// </summary>
+    public static VisualConfig? FromItemVisual(Data.VisualConfig? itemVisual)
+    {
+        if (itemVisual == null) return null;
+        return new VisualConfig
+        {
+            Projectile = itemVisual.Projectile,
+            Impact = itemVisual.Impact,
+            Beam = itemVisual.Beam,
+            Cone = itemVisual.Cone
+        };
+    }
+}
+
+/// <summary>
 /// Unified effect definition that can be created from item YAML or skill YAML.
 /// Contains all parameters needed to instantiate any effect type.
 /// This is the adapter layer between different data sources (items, skills) and the unified Effect system.
@@ -146,6 +190,12 @@ public class EffectDefinition
     public int ArmorPiercing { get; set; } = 0;
 
     /// <summary>
+    /// Visual effect configuration for this effect.
+    /// Specifies projectile, impact, beam, or cone visuals to spawn.
+    /// </summary>
+    public VisualConfig? Visual { get; set; }
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -187,7 +237,8 @@ public class EffectDefinition
             DamageFalloff = skillEffect.DamageFalloff,
             DotDamage = skillEffect.DotDamage,
             DamageType = skillEffect.DamageType,
-            ArmorPiercing = skillEffect.ArmorPiercing
+            ArmorPiercing = skillEffect.ArmorPiercing,
+            Visual = VisualConfig.FromItemVisual(skillEffect.Visual)
         };
     }
 
@@ -220,7 +271,8 @@ public class EffectDefinition
             DotDamage = itemEffect.DotDamage,
             ArmorPiercing = itemEffect.ArmorPiercing,
             ScalingStat = itemEffect.ScalingStat,
-            ScalingMultiplier = itemEffect.ScalingMultiplier
+            ScalingMultiplier = itemEffect.ScalingMultiplier,
+            Visual = VisualConfig.FromItemVisual(itemEffect.Visual)
         };
     }
 }

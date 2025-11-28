@@ -8,7 +8,6 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems.VisualEffects;
-using PitsOfDespair.Targeting;
 using TargetingType = PitsOfDespair.Targeting.TargetingType;
 
 namespace PitsOfDespair.Skills;
@@ -170,7 +169,7 @@ public static class SkillExecutor
             // Create effect chain for this target
             foreach (var effectDef in skillDef.Effects)
             {
-                var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name);
+                var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name, skillDef.Range, skillDef.Radius);
                 if (effect == null)
                 {
                     GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
@@ -225,15 +224,10 @@ public static class SkillExecutor
         bool anyEffectSucceeded = false;
         var targetingType = skillDef.GetTargetingType();
 
-        // Spawn visual effects based on targeting type (before applying effects)
-        if (targetPosition.HasValue)
-        {
-            SpawnTargetingVisual(caster, targetPosition.Value, skillDef, context);
-        }
-
+        // Effects handle their own visuals via VisualConfig
         foreach (var effectDef in skillDef.Effects)
         {
-            var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name);
+            var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name, skillDef.Range, skillDef.Radius);
             if (effect == null)
             {
                 GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
@@ -283,48 +277,6 @@ public static class SkillExecutor
 
         result.Success = anyEffectSucceeded || skillDef.Effects.Count == 0;
         return result;
-    }
-
-    /// <summary>
-    /// Spawns visual effects based on skill targeting type.
-    /// </summary>
-    private static void SpawnTargetingVisual(
-        BaseEntity caster,
-        GridPosition targetPosition,
-        SkillDefinition skillDef,
-        ActionContext context)
-    {
-        if (context.VisualEffectSystem == null)
-            return;
-
-        var targetingType = skillDef.GetTargetingType();
-        int range = skillDef.Range > 0 ? skillDef.Range : 8;
-
-        switch (targetingType)
-        {
-            case TargetingType.Line:
-                // Calculate line end position for beam visual
-                var linePositions = LineTargetingHandler.GetLinePositions(
-                    caster.GridPosition,
-                    targetPosition,
-                    range,
-                    context.MapSystem,
-                    stopAtWalls: true
-                );
-                var endPos = linePositions.Count > 0 ? linePositions[^1] : targetPosition;
-                context.VisualEffectSystem.SpawnLightningBeam(caster.GridPosition, endPos);
-                break;
-
-            case TargetingType.Cone:
-                int coneRadius = skillDef.Radius > 0 ? skillDef.Radius : 3;
-                context.VisualEffectSystem.SpawnConeOfCold(caster.GridPosition, targetPosition, range, coneRadius);
-                break;
-
-            case TargetingType.Area:
-                int areaRadius = skillDef.Radius > 0 ? skillDef.Radius : 2;
-                context.VisualEffectSystem.SpawnExplosion(targetPosition, areaRadius, Palette.Fire);
-                break;
-        }
     }
 
     /// <summary>

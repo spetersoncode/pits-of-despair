@@ -333,7 +333,7 @@ public partial class ReactiveSkillProcessor : Node
     {
         if (_entity == null) return;
 
-        var effect = Effect.CreateFromSkillDefinition(effectDef, skill.Name);
+        var effect = Effect.CreateFromSkillDefinition(effectDef, skill.Name, skill.Range, skill.Radius);
         if (effect == null)
         {
             GD.PrintErr($"ReactiveSkillProcessor: Failed to create effect from steps for '{skill.Name}'");

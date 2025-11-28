@@ -627,6 +627,41 @@ public class EffectDefinition
     /// Multiplier for stat scaling.
     /// </summary>
     public float ScalingMultiplier { get; set; } = 1.0f;
+
+    /// <summary>
+    /// Visual effect configuration for this effect.
+    /// Specifies projectile, impact, beam, or cone visuals to spawn.
+    /// </summary>
+    public VisualConfig? Visual { get; set; } = null;
+}
+
+/// <summary>
+/// Visual effect configuration for effects.
+/// Allows YAML to specify which visual effects to spawn for different targeting types.
+/// </summary>
+public class VisualConfig
+{
+    /// <summary>
+    /// Projectile visual ID (from VisualEffectDefinitions).
+    /// If set, spawns projectile that travels to target before effect applies.
+    /// </summary>
+    public string? Projectile { get; set; } = null;
+
+    /// <summary>
+    /// Impact/area visual ID (from VisualEffectDefinitions).
+    /// Spawns at target position when effect applies (or when projectile arrives).
+    /// </summary>
+    public string? Impact { get; set; } = null;
+
+    /// <summary>
+    /// Beam visual ID for line effects.
+    /// </summary>
+    public string? Beam { get; set; } = null;
+
+    /// <summary>
+    /// Cone visual ID for cone effects.
+    /// </summary>
+    public string? Cone { get; set; } = null;
 }
 
 /// <summary>

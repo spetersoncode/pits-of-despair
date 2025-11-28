@@ -377,4 +377,10 @@ public class SkillEffectDefinition
     /// Damage type for damage effects (used for resistance/vulnerability checks).
     /// </summary>
     public string? DamageType { get; set; } = null;
+
+    /// <summary>
+    /// Visual effect configuration for this effect.
+    /// Specifies projectile, impact, beam, or cone visuals to spawn.
+    /// </summary>
+    public VisualConfig? Visual { get; set; } = null;
 }

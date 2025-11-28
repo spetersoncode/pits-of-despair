@@ -18,6 +18,8 @@ entries:
       - line
     effects:
       - sound: lightning_bolt
+        visual:
+          beam: lightning_beam
         steps:
           - type: damage
             dice: 2d6

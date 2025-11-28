@@ -46,7 +46,10 @@ public static class CompositeEffectBuilder
             definition.Type ?? "composite",
             definition.Name ?? "Effect",
             definition.Sound,
-            steps
+            steps,
+            definition.Visual,
+            definition.Range,
+            definition.Radius
         );
     }
 

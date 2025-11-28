@@ -63,10 +63,19 @@ public abstract class Effect
     /// </summary>
     /// <param name="definition">The skill effect definition.</param>
     /// <param name="skillName">Optional skill name to use if effect has no name.</param>
-    public static Effect? CreateFromSkillDefinition(SkillEffectDefinition definition, string? skillName = null)
+    /// <param name="range">Optional range from the parent skill definition.</param>
+    /// <param name="radius">Optional radius from the parent skill definition.</param>
+    public static Effect? CreateFromSkillDefinition(
+        SkillEffectDefinition definition,
+        string? skillName = null,
+        int range = 0,
+        int radius = 0)
     {
         // Convert SkillEffectDefinition to unified EffectDefinition
         var effectDef = EffectDefinition.FromSkillEffect(definition, skillName);
+        // Apply parent skill's range/radius for visual effects
+        if (range > 0) effectDef.Range = range;
+        if (radius > 0) effectDef.Radius = radius;
         return CreateFromDefinition(effectDef);
     }
 
