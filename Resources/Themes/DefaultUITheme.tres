@@ -1,6 +1,13 @@
-[gd_resource type="Theme" load_steps=2 format=3 uid="uid://ci6jrw6qhe3je"]
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://ci6jrw6qhe3je"]
 
 [ext_resource type="FontFile" path="res://Resources/Fonts/FiraMono-Medium.ttf" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.102, 0.102, 0.102, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [resource]
 default_font = ExtResource("1")
@@ -9,3 +16,4 @@ Label/font_sizes/font_size = 16
 Label/fonts/font = ExtResource("1")
 RichTextLabel/font_sizes/normal_font_size = 16
 RichTextLabel/fonts/normal_font = ExtResource("1")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_panel")

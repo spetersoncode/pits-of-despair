@@ -14,6 +14,9 @@ public static class Palette
     /// <summary>Empty/unexplored space, pure black</summary>
     public static readonly Color Empty = new("#000000");
 
+    /// <summary>Solid background for UI panels</summary>
+    public static readonly Color UIBackground = new("#1a1a1a");
+
     /// <summary>Tiles that have been seen but are currently out of view (fog of war)</summary>
     public static readonly Color FogOfWar = new("#404040");
 
