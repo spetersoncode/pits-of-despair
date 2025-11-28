@@ -46,6 +46,12 @@ public partial class SkillComponent : Node
     private readonly Dictionary<char, string> _skillSlots = new();
 
     /// <summary>
+    /// Tracks which once_per_floor skills have been used on the current floor.
+    /// Reset when descending to a new floor.
+    /// </summary>
+    private readonly HashSet<string> _usedThisFloor = new();
+
+    /// <summary>
     /// Number of skill points used (for tracking progression).
     /// </summary>
     public int SkillPointsUsed { get; private set; } = 0;
@@ -332,6 +338,38 @@ public partial class SkillComponent : Node
         return GetLearnedActiveSkills(dataLoader)
             .Where(s => s.WillpowerCost <= currentWP)
             .ToList();
+    }
+
+    #endregion
+
+    #region Floor Cooldown Management
+
+    /// <summary>
+    /// Checks if a once_per_floor skill has been used on the current floor.
+    /// </summary>
+    /// <param name="skillId">The skill ID to check</param>
+    /// <returns>True if the skill has been used this floor</returns>
+    public bool IsSkillUsedThisFloor(string skillId)
+    {
+        return _usedThisFloor.Contains(skillId);
+    }
+
+    /// <summary>
+    /// Marks a skill as used for the current floor.
+    /// </summary>
+    /// <param name="skillId">The skill ID to mark as used</param>
+    public void MarkSkillUsedThisFloor(string skillId)
+    {
+        _usedThisFloor.Add(skillId);
+    }
+
+    /// <summary>
+    /// Resets per-floor skill cooldowns. Call when descending to a new floor.
+    /// </summary>
+    public void ResetFloorCooldowns()
+    {
+        _usedThisFloor.Clear();
+        GD.Print("SkillComponent: Floor cooldowns reset");
     }
 
     #endregion

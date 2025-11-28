@@ -7,10 +7,10 @@ entries:
     category: active
     targeting: self
     willpowerCost: 5
-    tier: 1
     tags:
       - heal
       - utility
+      - once_per_floor
     effects:
       - steps:
           - type: heal
@@ -22,7 +22,6 @@ entries:
     description: Detect creatures around corners within vision range.
     category: passive
     willpowerCost: 0
-    tier: 1
     tags:
       - detection
       - utility

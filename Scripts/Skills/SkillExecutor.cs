@@ -64,6 +64,16 @@ public static class SkillExecutor
             return false;
         }
 
+        // Check once_per_floor restriction
+        if (skillDef.Tags.Contains("once_per_floor"))
+        {
+            if (skillComponent.IsSkillUsedThisFloor(skillDef.Id))
+            {
+                failureReason = $"{skillDef.Name} can only be used once per floor.";
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -123,6 +133,13 @@ public static class SkillExecutor
             {
                 return SkillResult.CreateFailure($"Not enough Willpower.");
             }
+        }
+
+        // Mark once_per_floor skills as used
+        if (skillDef.Tags.Contains("once_per_floor"))
+        {
+            var skillComponent = caster.GetNodeOrNull<SkillComponent>("SkillComponent");
+            skillComponent?.MarkSkillUsedThisFloor(skillDef.Id);
         }
 
         var result = SkillResult.CreateSuccess();

@@ -340,6 +340,13 @@ public partial class GameManager : Node
 		// Give player reference to GoldManager
 		_currentGameLevel.Player.SetGoldManager(_goldManager);
 
+		// Reset per-floor skill cooldowns
+		var skillComponent = _currentGameLevel.Player.GetNodeOrNull<Components.SkillComponent>("SkillComponent");
+		skillComponent?.ResetFloorCooldowns();
+
+		var reactiveProcessor = _currentGameLevel.Player.GetNodeOrNull<Skills.ReactiveSkillProcessor>("ReactiveSkillProcessor");
+		reactiveProcessor?.ResetFloorCooldowns();
+
 		// Connect to player death
 		var healthComponent = _currentGameLevel.Player.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
 		if (healthComponent != null)
