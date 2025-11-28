@@ -43,8 +43,6 @@ entries:
       - Poison
     resistances:
       - Piercing
-    vulnerabilities:
-      - Bludgeoning
 
   skeleton_warrior:
     name: skeleton warrior
