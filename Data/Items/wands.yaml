@@ -111,20 +111,3 @@ entries:
       range: 5
       requiresLos: true
 
-  acid_arrow:
-    name: acid arrow
-    value: 4
-    color: Palette.Acid
-    description: A glass wand filled with bubbling green liquid. Viscous acid drips from its tip, hissing where it touches stone.
-    charges: 2d4
-    effects:
-      - type: acid
-        dice: 1d6
-        dotDamage: 1d3
-        durationDice: 2d3
-        saveStat: end
-        saveModifier: 2
-    targeting:
-      type: enemy
-      range: 6
-      requiresLos: true

@@ -342,4 +342,24 @@ public class SkillEffectDefinition
     /// Damage multiplier applied to each subsequent bounce (e.g., 0.75 = 75% damage per bounce).
     /// </summary>
     public float DamageFalloff { get; set; } = 1.0f;
+
+    /// <summary>
+    /// Amount of armor to ignore when dealing damage.
+    /// </summary>
+    public int ArmorPiercing { get; set; } = 0;
+
+    /// <summary>
+    /// Dice notation for duration (e.g., "2d3", "1d4+2"). Overrides Duration if specified.
+    /// </summary>
+    public string? DurationDice { get; set; } = null;
+
+    /// <summary>
+    /// Dice notation for damage-over-time effects (e.g., "1d3" for acid DoT).
+    /// </summary>
+    public string? DotDamage { get; set; } = null;
+
+    /// <summary>
+    /// Damage type for damage effects (used for resistance/vulnerability checks).
+    /// </summary>
+    public string? DamageType { get; set; } = null;
 }

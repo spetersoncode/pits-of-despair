@@ -122,6 +122,11 @@ public class EffectDefinition
     public string? DotDamage { get; set; } = null;
 
     /// <summary>
+    /// Amount of armor to ignore when dealing damage.
+    /// </summary>
+    public int ArmorPiercing { get; set; } = 0;
+
+    /// <summary>
     /// Gets the resolved duration string (prefers DurationDice over Duration).
     /// </summary>
     public string GetDurationString()
@@ -143,6 +148,7 @@ public class EffectDefinition
             Amount = skillEffect.Amount,
             Dice = skillEffect.Dice,
             Duration = skillEffect.Duration,
+            DurationDice = skillEffect.DurationDice,
             ConditionType = skillEffect.ConditionType,
             Stat = skillEffect.Stat,
             ScalingStat = skillEffect.ScalingStat,
@@ -154,7 +160,10 @@ public class EffectDefinition
             SaveModifier = skillEffect.SaveModifier,
             MaxBounces = skillEffect.MaxBounces,
             BounceRange = skillEffect.BounceRange,
-            DamageFalloff = skillEffect.DamageFalloff
+            DamageFalloff = skillEffect.DamageFalloff,
+            DotDamage = skillEffect.DotDamage,
+            DamageType = skillEffect.DamageType,
+            ArmorPiercing = skillEffect.ArmorPiercing
         };
     }
 

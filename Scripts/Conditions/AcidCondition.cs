@@ -26,6 +26,11 @@ public class AcidCondition : Condition
 	public BaseEntity? Source { get; set; }
 
 	/// <summary>
+	/// Amount of armor to ignore when dealing DoT damage.
+	/// </summary>
+	public int ArmorPiercing { get; set; } = 0;
+
+	/// <summary>
 	/// Parameterless constructor with default values.
 	/// </summary>
 	public AcidCondition()
@@ -68,8 +73,14 @@ public class AcidCondition : Condition
 			return ConditionMessage.Empty;
 		}
 
-		// Apply acid damage with source for kill attribution
-		int actualDamage = healthComponent.TakeDamage(damage, DamageType.Acid, Source);
+		// Apply acid damage with source for kill attribution and armor piercing
+		int actualDamage = healthComponent.TakeDamage(
+			damage,
+			DamageType.Acid,
+			Source,
+			applyArmor: ArmorPiercing > 0,
+			armorPiercing: ArmorPiercing
+		);
 
 		if (actualDamage > 0)
 		{

@@ -316,8 +316,11 @@ public partial class HealthComponent : Node, IAIEventHandler
     /// <param name="amount">Base amount of damage to take</param>
     /// <param name="damageType">Type of damage being dealt</param>
     /// <param name="source">The entity that dealt the damage (for kill attribution)</param>
+    /// <param name="applyArmor">Whether to apply armor reduction (default false for melee compatibility)</param>
+    /// <param name="armorPiercing">Amount of armor to ignore (only used when applyArmor is true)</param>
     /// <returns>The actual amount of damage dealt after modifiers</returns>
-    public int TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning, BaseEntity? source = null)
+    public int TakeDamage(int amount, DamageType damageType = DamageType.Bludgeoning,
+                         BaseEntity? source = null, bool applyArmor = false, int armorPiercing = 0)
     {
         if (amount <= 0)
             return 0;
@@ -333,6 +336,20 @@ public partial class HealthComponent : Node, IAIEventHandler
         {
             EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "immune");
             return 0;
+        }
+
+        // Apply armor reduction if requested (for spell effects)
+        // Note: Melee attacks handle armor in CombatSystem, so applyArmor defaults to false
+        if (applyArmor)
+        {
+            var stats = _entity?.GetNodeOrNull<StatsComponent>("StatsComponent");
+            if (stats != null)
+            {
+                int effectiveArmor = Mathf.Max(0, stats.TotalArmor - armorPiercing);
+                amount = Mathf.Max(0, amount - effectiveArmor);
+                if (amount <= 0)
+                    return 0;
+            }
         }
 
         // Apply vulnerability - double damage

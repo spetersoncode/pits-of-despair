@@ -66,6 +66,7 @@ public abstract class Effect
             "sleep" => new SleepEffect(definition),
             "magic_mapping" => new MagicMappingEffect(definition),
             "acid" => new AcidEffect(definition),
+            "acid_blast" => new AcidBlastEffect(definition),
             _ => null
         };
     }

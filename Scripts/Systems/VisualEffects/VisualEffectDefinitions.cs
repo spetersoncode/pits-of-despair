@@ -28,6 +28,7 @@ public static class VisualEffectDefinitions
     private const string IceShardShader = "res://Resources/Shaders/Projectiles/ice_shard.gdshader";
     private const string ChainLightningShader = "res://Resources/Shaders/Projectiles/chain_lightning.gdshader";
     private const string PoisonBoltShader = "res://Resources/Shaders/Projectiles/poison_bolt.gdshader";
+    private const string AcidBlastShader = "res://Resources/Shaders/Projectiles/acid_blast.gdshader";
 
     /// <summary>
     /// Creates a trail color from a Palette color with the specified alpha.
@@ -243,17 +244,17 @@ public static class VisualEffectDefinitions
     );
 
     /// <summary>
-    /// Acid splash - corrosive bright green projectile.
-    /// Uses poison shader with acid coloring.
+    /// Acid blast - volatile corrosive projectile with custom shader.
+    /// Used by the Acid Blast skill.
     /// </summary>
-    public static readonly VisualEffectDefinition AcidSplash = new(
-        id: "acid_splash",
-        shaderPath: PoisonBoltShader,
+    public static readonly VisualEffectDefinition AcidBlast = new(
+        id: "acid_blast",
+        shaderPath: AcidBlastShader,
         headColor: Palette.Acid,
-        trailColor: WithAlpha(Palette.Acid, 0.4f),
-        speed: 20.0f,
-        trailLength: 3,
-        size: 1.1f
+        trailColor: WithAlpha(Palette.Acid, 0.5f),
+        speed: 22.0f,
+        trailLength: 4,
+        size: 1.2f
     );
 
     #endregion
@@ -318,7 +319,7 @@ public static class VisualEffectDefinitions
             "spark" => Spark,
             // Projectiles - Poison/Acid
             "poison_bolt" => PoisonBolt,
-            "acid_splash" => AcidSplash,
+            "acid_blast" => AcidBlast,
             // Projectiles - Arcane
             "magic_missile" => MagicMissile,
             "dark_bolt" => DarkBolt,
@@ -348,7 +349,7 @@ public static class VisualEffectDefinitions
         yield return ChainLightningArc;
         yield return Spark;
         yield return PoisonBolt;
-        yield return AcidSplash;
+        yield return AcidBlast;
         yield return MagicMissile;
         yield return DarkBolt;
     }

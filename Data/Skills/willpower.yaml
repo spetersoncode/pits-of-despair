@@ -45,7 +45,7 @@ entries:
 
   magic_missile:
     name: Magic Missile
-    description: 1d6 damage, never misses, 6 range.
+    description: 1d6+WIL damage, never misses, 6 range.
     category: active
     targeting: enemy
     range: 6
@@ -62,6 +62,8 @@ entries:
       - type: magic_missile
         dice: 1d6
         autoHit: true
+        scalingStat: wil
+        scalingMultiplier: 1.0
 
   attunement:
     name: Attunement
@@ -90,6 +92,31 @@ entries:
     effects:
       - type: heal
         dice: 2d6
+
+  acid_blast:
+    name: Acid Blast
+    description: 2d6 acid damage, +WIL to hit, ignores 3 armor. Applies acid DoT on hit.
+    category: active
+    targeting: enemy
+    range: 6
+    willpowerCost: 4
+    tier: 2
+    projectile: acid_blast
+    prerequisites:
+      wil: 2
+    tags:
+      - spell
+      - damage
+      - acid
+      - ranged
+    effects:
+      - type: acid_blast
+        dice: 2d6
+        damageType: Acid
+        armorPiercing: 3
+        dotDamage: 1d3
+        durationDice: 2d3
+        attackStat: wil
 
   mana_shield:
     name: Mana Shield
