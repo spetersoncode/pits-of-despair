@@ -63,6 +63,8 @@ public class CreatureData
     public int Strength { get; set; } = 0;
     public int Agility { get; set; } = 0;
     public int Endurance { get; set; } = 0;
+
+    [YamlDotNet.Serialization.YamlMember(Alias = "wil")]
     public int Will { get; set; } = 0;
 
     /// <summary>
@@ -129,6 +131,16 @@ public class CreatureData
     ///       quantity: 20                   # Override quantity
     /// </summary>
     public List<object> Equipment { get; set; } = new();
+
+    /// <summary>
+    /// List of skill IDs this creature knows innately.
+    /// Skills are loaded from Data/Skills/*.yaml.
+    /// Example:
+    ///   skills:
+    ///     - magic_missile
+    ///     - minor_heal
+    /// </summary>
+    public List<string> Skills { get; set; } = new();
 
     /// <summary>
     /// Damage types this creature is immune to (takes 0 damage).

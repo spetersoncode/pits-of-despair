@@ -88,3 +88,19 @@ entries:
     health: 12
     equipment:
       - weapon_short_sword
+
+  goblin_adept:
+    name: goblin adept
+    description: A goblin with glowing eyes who mutters arcane syllables. Dark magic crackles at its fingertips.
+    color: Palette.Caster
+    threat: 3
+    strength: -1
+    agility: 0
+    endurance: 0
+    wil: 2
+    health: 10
+    visionRange: 10
+    skills:
+      - magic_missile
+    ai:
+      - type: ShootAndScoot

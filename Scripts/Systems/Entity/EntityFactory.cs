@@ -194,6 +194,38 @@ public partial class EntityFactory : Node
 			entity.AddChild(healthComponent);
 		}
 
+		// Add skill components if creature has skills defined
+		// Skills imply WillpowerComponent, SkillComponent, and SkillAIComponent
+		if (data.Skills != null && data.Skills.Count > 0)
+		{
+			// Add WillpowerComponent (required for skill costs)
+			var willpowerComponent = new WillpowerComponent
+			{
+				Name = "WillpowerComponent"
+			};
+			entity.AddChild(willpowerComponent);
+
+			// Add SkillComponent and learn skills
+			var skillComponent = new SkillComponent
+			{
+				Name = "SkillComponent"
+			};
+			entity.AddChild(skillComponent);
+
+			// Learn each skill
+			foreach (var skillId in data.Skills)
+			{
+				skillComponent.LearnSkill(skillId);
+			}
+
+			// Add SkillAIComponent to enable AI skill usage
+			var skillAIComponent = new AI.Components.SkillAIComponent
+			{
+				Name = "SkillAIComponent"
+			};
+			entity.AddChild(skillAIComponent);
+		}
+
 		// Add AttackComponent if entity has attacks OR can equip weapons
 		if (data.Attacks.Count > 0 || data.GetCanEquip())
 		{

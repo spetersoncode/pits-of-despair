@@ -45,7 +45,7 @@ entries:
 
   magic_missile:
     name: Magic Missile
-    description: 2d4 damage, never misses, 6 range.
+    description: 1d6 damage, never misses, 6 range.
     category: active
     targeting: enemy
     range: 6
@@ -60,7 +60,7 @@ entries:
       - ranged
     effects:
       - type: magic_missile
-        dice: 2d4
+        dice: 1d6
         autoHit: true
 
   attunement:
