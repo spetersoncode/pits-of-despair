@@ -20,11 +20,15 @@ public partial class CharacterNameModal : Control
     private RichTextLabel _promptLabel;
 
     private const string DefaultPlayerName = "Player";
+    private const int MaxNameLength = 11;
 
     public override void _Ready()
     {
         _nameInput = GetNode<LineEdit>("%NameInput");
         _promptLabel = GetNode<RichTextLabel>("%PromptLabel");
+
+        // Enforce max name length to fit side panel with longest epithet
+        _nameInput.MaxLength = MaxNameLength;
 
         // Start hidden
         Hide();
