@@ -8,6 +8,7 @@ entries:
     value: 1
     color: Palette.RustedIron
     description: A corroded blade caked with old blood. What it lacks in craftsmanship it makes up for in tetanus.
+    noAutoSpawn: true
     attack:
       type: Melee
       dice: "1d4"

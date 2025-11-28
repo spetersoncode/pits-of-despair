@@ -6,7 +6,7 @@ pipeline: bsp_standard
 
 # Difficulty curve
 minThreat: 1
-maxThreat: 2
+maxThreat: 1
 
 # No out-of-depth on first floor
 creatureOutOfDepthChance: 0.0

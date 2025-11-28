@@ -488,8 +488,8 @@ public partial class EntityFactory : Node
 		// Define starting equipment
 		string[] startingItems = new string[]
 		{
-			"weapon_club",
-			"armor_padded"
+			"weapon_rusty_knife",
+			"armor_tattered_rags"
 		};
 
 		// Add and equip each item

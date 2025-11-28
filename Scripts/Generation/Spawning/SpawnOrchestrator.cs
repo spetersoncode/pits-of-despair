@@ -293,6 +293,7 @@ public partial class SpawnOrchestrator : Node
                             Template = template,
                             Theme = spawnData.Theme,
                             Region = region,
+                            FloorConfig = floorConfig,
                             CenterPosition = hint.Position ?? region.Centroid,
                             TotalThreat = template.MinBudget
                         };

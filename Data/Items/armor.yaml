@@ -3,6 +3,15 @@ defaults:
   glyph: "["
 
 entries:
+  tattered_rags:
+    name: tattered rags
+    value: 0
+    color: Palette.Wool
+    description: Little more than scraps of cloth barely held together. Provides no protection, but at least preserves some dignity.
+    armor: 0
+    evasion: 1
+    noAutoSpawn: true
+
   padded:
     name: padded armor
     value: 1

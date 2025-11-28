@@ -2,7 +2,7 @@ name: "Upper Dungeon"
 floor: 2
 
 # Pipeline selection
-pipeline: bsp_drunkard
+pipeline: bsp_standard
 
 # Difficulty curve
 minThreat: 2

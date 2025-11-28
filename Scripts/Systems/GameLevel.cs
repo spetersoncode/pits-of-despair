@@ -147,6 +147,9 @@ public partial class GameLevel : Node
         _movementSystem.SetMapSystem(_mapSystem);
         _movementSystem.SetEntityManager(_entityManager);
 
+        // Generate map for current floor depth (must happen before spawn orchestrator)
+        _mapSystem.GenerateForFloor(FloorDepth);
+
         _spawnOrchestrator.SetDependencies(_entityFactory, _entityManager, _mapSystem, FloorDepth);
 
         var playerSpawn = _mapSystem.GetValidSpawnPosition();

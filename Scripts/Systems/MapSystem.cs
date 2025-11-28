@@ -62,8 +62,8 @@ public partial class MapSystem : Node
             BSPConfig = new BSPConfig();
         }
 
-        // Use new pipeline-based generation
-        GenerateForFloor(1);
+        // Note: Map generation is triggered by GameLevel.InitializeMap() with the correct floor depth
+        // Do NOT auto-generate here - that would always use floor 1
     }
 
     /// <summary>
