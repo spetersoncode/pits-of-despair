@@ -1,5 +1,7 @@
+using System.Linq;
 using Godot;
 using PitsOfDespair.Components;
+using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -134,6 +136,11 @@ public partial class CombatSystem : Node
         // Determine if this is a melee or ranged attack
         bool isMelee = attackData.Type == AttackType.Melee;
 
+        // Check for primed attack bonuses (melee only)
+        var primedAttack = isMelee ? GetPrimedAttack(attacker) : null;
+        int primeHitBonus = primedAttack?.GetHitBonus() ?? 0;
+        int primeDamageBonus = primedAttack?.GetDamageBonus() ?? 0;
+
         int baseDamage;
         int finalDamage;
 
@@ -142,13 +149,13 @@ public partial class CombatSystem : Node
         if (targetStats == null)
         {
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-            int damageBonus = attackerStats.GetDamageBonus(isMelee);
+            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus;
             finalDamage = Mathf.Max(0, baseDamage + damageBonus);
         }
         else
         {
             // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
-            int attackModifier = attackerStats.GetAttackModifier(isMelee);
+            int attackModifier = attackerStats.GetAttackModifier(isMelee) + primeHitBonus;
             int defenseModifier = targetStats.GetDefenseModifier();
 
             int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
@@ -159,15 +166,15 @@ public partial class CombatSystem : Node
 
             if (!hit)
             {
-                // Attack missed
+                // Attack missed - prime persists (not consumed)
                 EmitSignal(SignalName.AttackMissed, attacker, target, attackData.Name);
                 EmitSignal(SignalName.AttackExecuted, attacker, target, 0, attackData.Name); // Legacy support
                 return;
             }
 
-            // PHASE 2: Damage Calculation (weapon damage + STR [if melee] - armor)
+            // PHASE 2: Damage Calculation (weapon damage + STR [if melee] + prime bonus - armor)
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-            int damageBonus = attackerStats.GetDamageBonus(isMelee);
+            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus;
             int armor = targetStats.TotalArmor;
             finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
         }
@@ -219,6 +226,15 @@ public partial class CombatSystem : Node
     public void EmitSkillDamageDealt(BaseEntity caster, BaseEntity target, int damage, string skillName)
     {
         EmitSignal(SignalName.SkillDamageDealt, caster, target, damage, skillName);
+    }
+
+    /// <summary>
+    /// Gets the active primed attack condition on an entity, if any.
+    /// </summary>
+    private static PrimedAttackCondition? GetPrimedAttack(BaseEntity entity)
+    {
+        return entity.GetActiveConditions()
+            .FirstOrDefault(c => c.TypeId == "primed_attack") as PrimedAttackCondition;
     }
 
     public override void _ExitTree()

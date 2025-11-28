@@ -3,7 +3,7 @@ type: strength
 entries:
   power_attack:
     name: Power Attack
-    description: Gain +3 STR for this turn.
+    description: Prime your next melee attack with +3 hit and damage.
     category: active
     targeting: self
     willpowerCost: 3
@@ -15,13 +15,14 @@ entries:
     tags:
       - melee
       - damage
-      - buff
+      - prime
     effects:
       - steps:
-          - type: apply_condition
-            conditionType: strength_modifier
-            amount: 3
-            duration: 1
+          - type: apply_prime
+            primeName: Power Attack
+            hitBonus: 3
+            damageBonus: 3
+            duration: 5
 
   mighty_thews:
     name: Mighty Thews
@@ -42,26 +43,30 @@ entries:
 
   cleave:
     name: Cleave
-    description: Attack enemies in a 3-tile arc.
+    description: Prime your next melee attack to hit a 3-tile arc.
     category: active
-    targeting: cleave
+    targeting: self
     willpowerCost: 6
+    consumesTurn: false
     tier: 2
     prerequisites:
       str: 3
     tags:
       - melee
       - damage
-      - multi-target
+      - prime
     effects:
       - steps:
-          - type: attack_roll
-            useMeleeModifier: true
-          - type: weapon_damage
+          - type: apply_prime
+            primeName: Cleave
+            hitBonus: 0
+            damageBonus: 0
+            targetingMode: arc
+            duration: 5
 
   rampage:
     name: Rampage
-    description: On kill, gain +3 damage for next attack.
+    description: On kill, prime next melee attack with +3 damage.
     category: reactive
     targeting: self
     willpowerCost: 0
@@ -74,10 +79,11 @@ entries:
     tags:
       - melee
       - damage
-      - combat
+      - prime
     effects:
       - steps:
-          - type: apply_condition
-            conditionType: strength_modifier
-            amount: 3
-            duration: 1
+          - type: apply_prime
+            primeName: Rampage
+            hitBonus: 0
+            damageBonus: 3
+            duration: 5

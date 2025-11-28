@@ -177,6 +177,30 @@ public class StepDefinition
 
     #endregion
 
+    #region Prime Attack Properties
+
+    /// <summary>
+    /// Name of the primed attack (e.g., "Power Attack").
+    /// </summary>
+    public string? PrimeName { get; set; }
+
+    /// <summary>
+    /// Bonus to attack roll when prime triggers.
+    /// </summary>
+    public int HitBonus { get; set; } = 0;
+
+    /// <summary>
+    /// Bonus to damage when prime triggers.
+    /// </summary>
+    public int DamageBonus { get; set; } = 0;
+
+    /// <summary>
+    /// Targeting mode for primed attacks: "single" (default) or "arc" (cleave-style 3-tile arc).
+    /// </summary>
+    public string? TargetingMode { get; set; }
+
+    #endregion
+
     #region Chain Damage Properties
 
     /// <summary>
