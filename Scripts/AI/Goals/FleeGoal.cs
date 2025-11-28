@@ -29,6 +29,10 @@ public class FleeGoal : Goal
 
     public override bool IsFinished(AIContext context)
     {
+        // Finished if threat is gone or dead - no reason to keep fleeing
+        if (FleeFrom == null || !GodotObject.IsInstanceValid(FleeFrom) || FleeFrom.IsDead)
+            return true;
+
         // Done when: turns expired AND (can't see threat OR far enough away)
         if (TurnsRemaining <= 0)
         {
