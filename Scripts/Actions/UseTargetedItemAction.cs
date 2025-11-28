@@ -265,7 +265,7 @@ public class UseTargetedItemAction : Action
 		if (fireballEffect == null)
 			return ActionResult.CreateFailure("No fireball effect found.");
 
-		int radius = definition.Radius > 0 ? definition.Radius : fireballEffect.Radius;
+		int radius = definition.Radius > 0 ? definition.Radius : 2;
 
 		// Get targets at time of casting (for deferred application)
 		var handler = TargetingHandler.CreateForDefinition(definition);
@@ -400,18 +400,18 @@ public class UseTargetedItemAction : Action
 	{
 		foreach (var effect in effects)
 		{
-			if (effect is FireballEffect)
+			if (effect.Name == "Fireball")
 				return true;
 		}
 		return false;
 	}
 
-	private static FireballEffect? GetFireballEffect(List<Effect> effects)
+	private static Effect? GetFireballEffect(List<Effect> effects)
 	{
 		foreach (var effect in effects)
 		{
-			if (effect is FireballEffect fb)
-				return fb;
+			if (effect.Name == "Fireball")
+				return effect;
 		}
 		return null;
 	}

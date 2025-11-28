@@ -17,9 +17,12 @@ entries:
       - damage
       - line
     effects:
-      - type: lightning_bolt
-        dice: 2d6
-        damageType: Lightning
+      - name: Lightning Bolt
+        sound: lightning_bolt
+        steps:
+          - type: damage
+            dice: 2d6
+            damageType: Lightning
 
   chain_lightning:
     name: Chain Lightning

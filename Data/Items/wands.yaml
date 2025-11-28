@@ -10,8 +10,12 @@ entries:
     description: A charred wooden wand that crackles with destructive energy. Flames lick at its tip, eager to be unleashed.
     charges: 2d3
     effects:
-      - type: fireball
-        dice: 3d6
+      - name: Fireball
+        sound: fireball
+        steps:
+          - type: damage
+            dice: 3d6
+            damageType: Fire
     targeting:
       type: area
       range: 6
@@ -73,8 +77,12 @@ entries:
     description: A wand of frozen crystal that numbs the hand. Frost perpetually rimes its surface, crackling with each movement.
     charges: 2d3
     effects:
-      - type: cone_of_cold
-        dice: 2d8
+      - name: Cone of Cold
+        sound: cone_of_cold
+        steps:
+          - type: damage
+            dice: 2d8
+            damageType: Cold
     targeting:
       type: cone
       range: 4
