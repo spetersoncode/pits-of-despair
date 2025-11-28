@@ -98,11 +98,16 @@ public class EquipAction : Action
             return ActionResult.CreateFailure($"{itemTemplate.Name} has no valid equipment slot.");
         }
 
-        // Check if already equipped
+        // Check if already equipped - if so, unequip it instead
         if (equipComponent.IsEquipped(_itemKey))
         {
             var currentSlot = equipComponent.GetEquippedSlotForItem(_itemKey);
-            return ActionResult.CreateFailure($"{itemTemplate.Name} is already equipped in {currentSlot} slot.");
+            if (currentSlot != EquipmentSlot.None && equipComponent.Unequip(currentSlot))
+            {
+                player.EmitSignal(Player.SignalName.ItemUnequipped, itemTemplate.GetDisplayName(1), itemTemplate.GetGlyph(), itemTemplate.Color);
+                return ActionResult.CreateSuccess($"Unequipped {itemTemplate.GetDisplayName(1)}.");
+            }
+            return ActionResult.CreateFailure($"Failed to unequip {itemTemplate.Name}.");
         }
 
         // Attempt to equip the item
