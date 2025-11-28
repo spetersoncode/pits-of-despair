@@ -1,4 +1,3 @@
-using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
@@ -74,11 +73,13 @@ public class AttackAction : Action
         }
 
         var attackComponent = actor.GetNodeOrNull<AttackComponent>("AttackComponent");
+        var attackData = attackComponent!.GetAttack(_attackIndex);
 
         // Use the proper combat system with opposed rolls
         // This will emit signals that CombatSystem.OnAttackRequested handles
-        attackComponent!.RequestAttack(_target, _attackIndex);
+        attackComponent.RequestAttack(_target, _attackIndex);
 
-        return ActionResult.CreateSuccess();
+        int delayCost = attackData!.GetDelayCost();
+        return ActionResult.CreateSuccess(delayCost: delayCost);
     }
 }

@@ -32,9 +32,12 @@ Complete catalog of glyphs used in Pits of Despair. For design philosophy and ex
 
 | Glyph | Type | Default Color | Notes |
 |-------|------|---------------|-------|
-| `/` | Slashing weapon | Default | Swords, axes |
-| `†` | Piercing weapon | Default | Spears, daggers |
-| `¶` | Bludgeoning weapon | Default | Clubs, maces |
+| `-` | Short blade | Default | Daggers, knives (fast, 0.7 delay) |
+| `/` | Long blade | Default | Swords (average, 1.0 delay) |
+| `\` | Axe | Default | Axes (slow, 1.3 delay) |
+| `†` | Polearm | Default | Spears, halberds (reach, 1.2 delay) |
+| `¶` | Mace | Default | Clubs, maces, hammers (average, 1.0 delay) |
+| `%` | Flail | Default | Flails, morning stars (slow, 1.3 delay) |
 | `}` | Ranged weapon | Default | Bows, crossbows |
 | `[` | Armor | Default | All body armor |
 | `=` | Ring | Default | Uses "X of Y" naming |

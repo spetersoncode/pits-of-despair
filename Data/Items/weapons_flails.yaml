@@ -1,0 +1,25 @@
+type: weapon
+defaults:
+  glyph: "%"
+  attack:
+    damageType: Bludgeoning
+    delay: 1.3
+
+entries:
+  flail:
+    name: flail
+    value: 4
+    color: Palette.DarkIron
+    description: A spiked ball on a chain, unwieldy but devastating. Its unpredictable arc makes it difficult to parry.
+    attack:
+      type: Melee
+      dice: "1d8+1"
+
+  morning_star:
+    name: morning star
+    value: 5
+    color: Palette.BrutalIron
+    description: Iron spikes radiate from a heavy chain-mounted head. It crushes and punctures in equal measure.
+    attack:
+      type: Melee
+      dice: "1d10"

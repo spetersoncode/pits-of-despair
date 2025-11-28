@@ -1,0 +1,25 @@
+type: weapon
+defaults:
+  glyph: "/"
+  attack:
+    damageType: Slashing
+    delay: 1.0
+
+entries:
+  short_sword:
+    name: short sword
+    value: 2
+    color: Palette.Steel
+    description: A serviceable blade of cold steel, nicked from use but still keen. The leather-wrapped grip shows the marks of desperate combat.
+    attack:
+      type: Melee
+      dice: "1d6"
+
+  broadsword:
+    name: broadsword
+    value: 4
+    color: Palette.Bronze
+    description: A wide bronze blade, heavier than it looks. It hacks and cleaves where finer swords would thrust.
+    attack:
+      type: Melee
+      dice: "1d8"

@@ -138,7 +138,8 @@ public class RangedAttackAction : Action
             projectileTarget,
             onImpact);
 
-        return ActionResult.CreateSuccess();
+        int delayCost = attackData!.GetDelayCost();
+        return ActionResult.CreateSuccess(delayCost: delayCost);
     }
 
     /// <summary>

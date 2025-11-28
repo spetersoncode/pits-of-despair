@@ -1,6 +1,9 @@
 type: weapon
 defaults:
-  glyph: "¶"
+  glyph: "\u00B6"
+  attack:
+    damageType: Bludgeoning
+    delay: 1.0
 
 entries:
   club:
@@ -11,7 +14,6 @@ entries:
     attack:
       type: Melee
       dice: "1d3+1"
-      damageType: Bludgeoning
 
   knobbed_club:
     name: knobbed club
@@ -21,7 +23,6 @@ entries:
     attack:
       type: Melee
       dice: "1d3+2"
-      damageType: Bludgeoning
 
   mace:
     name: mace
@@ -31,4 +32,3 @@ entries:
     attack:
       type: Melee
       dice: "1d6+1"
-      damageType: Bludgeoning

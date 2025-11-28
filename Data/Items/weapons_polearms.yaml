@@ -1,6 +1,10 @@
 type: weapon
 defaults:
-  glyph: "†"
+  glyph: "\u2020"
+  attack:
+    damageType: Piercing
+    delay: 1.2
+    range: 2
 
 entries:
   spear:
@@ -11,5 +15,4 @@ entries:
     attack:
       type: Melee
       dice: "1d6"
-      range: 2
-      damageType: Piercing
+      delay: 1.1

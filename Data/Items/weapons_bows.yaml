@@ -2,6 +2,9 @@ type: weapon
 defaults:
   glyph: "}"
   equipSlot: RangedWeapon
+  attack:
+    damageType: Piercing
+    delay: 1.0
 
 entries:
   short_bow:
@@ -13,5 +16,4 @@ entries:
       type: Ranged
       dice: "1d6"
       range: 8
-      damageType: Piercing
       ammoType: arrow

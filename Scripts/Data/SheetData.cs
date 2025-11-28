@@ -88,6 +88,16 @@ public class ItemSheetData
 }
 
 /// <summary>
+/// Default values for attack properties in a sheet.
+/// Used to set category-wide defaults for damage type and delay.
+/// </summary>
+public class AttackDefaults
+{
+    public string? DamageType { get; set; }
+    public float? Delay { get; set; }
+}
+
+/// <summary>
 /// Default values for items in a sheet.
 /// These values are applied to entries that don't specify them.
 /// </summary>
@@ -100,6 +110,7 @@ public class ItemDefaults
     public string? EquipSlot { get; set; }
     public bool? AutoPickup { get; set; }
     public float? SpawnWeight { get; set; }
+    public AttackDefaults? Attack { get; set; }
 }
 
 /// <summary>

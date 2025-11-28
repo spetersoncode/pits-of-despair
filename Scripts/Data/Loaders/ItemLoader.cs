@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 using PitsOfDespair.Data.Loaders.Core;
 
@@ -104,6 +105,21 @@ public class ItemLoader
 
         if (!item.SpawnWeight.HasValue && defaults.SpawnWeight.HasValue)
             item.SpawnWeight = defaults.SpawnWeight.Value;
+
+        // Apply attack defaults if item has an attack
+        if (item.Attack != null && defaults.Attack != null)
+        {
+            // Apply damage type if not explicitly set (check against Bludgeoning default)
+            if (item.Attack.DamageType == DamageType.Bludgeoning && defaults.Attack.DamageType != null)
+            {
+                if (Enum.TryParse<DamageType>(defaults.Attack.DamageType, out var dt))
+                    item.Attack.DamageType = dt;
+            }
+
+            // Apply delay if using default (1.0)
+            if (item.Attack.Delay == 1.0f && defaults.Attack.Delay.HasValue)
+                item.Attack.Delay = defaults.Attack.Delay.Value;
+        }
     }
 
     // === Public Accessors ===

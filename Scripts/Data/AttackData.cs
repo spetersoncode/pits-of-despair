@@ -54,4 +54,19 @@ public partial class AttackData : Resource
 	/// </summary>
 	[YamlMember(Alias = "ammoType")]
 	public string? AmmoType { get; set; } = null;
+
+	/// <summary>
+	/// Delay multiplier for this attack. 1.0 = standard (10 aut).
+	/// Lower values = faster attacks, higher values = slower.
+	/// </summary>
+	[YamlMember(Alias = "delay")]
+	public float Delay { get; set; } = 1.0f;
+
+	/// <summary>
+	/// Gets the delay cost in aut for this attack.
+	/// </summary>
+	public int GetDelayCost()
+	{
+		return Mathf.RoundToInt(PitsOfDespair.Actions.ActionDelay.Standard * Delay);
+	}
 }

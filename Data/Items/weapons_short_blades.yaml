@@ -1,0 +1,28 @@
+type: weapon
+defaults:
+  glyph: "-"
+  attack:
+    damageType: Slashing
+    delay: 0.8
+
+entries:
+  rusty_knife:
+    name: rusty knife
+    value: 1
+    color: Palette.RustedIron
+    description: A corroded blade caked with old blood. What it lacks in craftsmanship it makes up for in tetanus.
+    noAutoSpawn: true
+    attack:
+      type: Melee
+      dice: "1d3"
+      delay: 0.7
+
+  dagger:
+    name: dagger
+    value: 2
+    color: Palette.Steel
+    description: A slender blade made for close work. It finds the gaps in armor and the spaces between ribs with equal ease.
+    attack:
+      type: Melee
+      dice: "1d4"
+      delay: 0.7
