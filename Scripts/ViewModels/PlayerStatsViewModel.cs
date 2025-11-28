@@ -31,6 +31,7 @@ public partial class PlayerStatsViewModel : Node
 	private WillpowerComponent _willpowerComponent;
 	private StatsComponent _statsComponent;
 	private GoldManager _goldManager;
+	private string _currentEpithet = "Wanderer";
 
 	#endregion
 
@@ -91,6 +92,20 @@ public partial class PlayerStatsViewModel : Node
 
 	#endregion
 
+	#region Properties - Epithet
+
+	/// <summary>
+	/// Current epithet based on base stat distribution.
+	/// </summary>
+	public string Epithet => _currentEpithet;
+
+	/// <summary>
+	/// Formatted display name including epithet (e.g., "Hero the Titan").
+	/// </summary>
+	public string FormattedName => $"{PlayerName} the {_currentEpithet}";
+
+	#endregion
+
 	#region Initialization
 
 	/// <summary>
@@ -141,6 +156,9 @@ public partial class PlayerStatsViewModel : Node
 
 		// Connect to component signals
 		ConnectToSignals();
+
+		// Initial epithet calculation
+		UpdateEpithet();
 
 		// Initial update
 		EmitSignal(SignalName.StatsUpdated);
@@ -206,12 +224,37 @@ public partial class PlayerStatsViewModel : Node
 
 	#region Event Handlers
 
-	private void OnStatsChanged() => EmitSignal(SignalName.StatsUpdated);
+	private void OnStatsChanged()
+	{
+		UpdateEpithet();
+		EmitSignal(SignalName.StatsUpdated);
+	}
+
 	private void OnHealthChanged(int current, int max) => EmitSignal(SignalName.StatsUpdated);
 	private void OnWillpowerChanged(int current, int max) => EmitSignal(SignalName.StatsUpdated);
 	private void OnExperienceGained(int amount, int current, int toNext) => EmitSignal(SignalName.StatsUpdated);
 	private void OnLevelUp(int newLevel) => EmitSignal(SignalName.StatsUpdated);
 	private void OnGoldChanged(int amount, int total) => EmitSignal(SignalName.StatsUpdated);
+
+	#endregion
+
+	#region Epithet
+
+	/// <summary>
+	/// Updates the current epithet based on base stats.
+	/// </summary>
+	private void UpdateEpithet()
+	{
+		if (_statsComponent == null)
+			return;
+
+		_currentEpithet = EpithetResolver.Resolve(
+			_statsComponent.BaseStrength,
+			_statsComponent.BaseAgility,
+			_statsComponent.BaseEndurance,
+			_statsComponent.BaseWill
+		);
+	}
 
 	#endregion
 

@@ -143,9 +143,7 @@ public partial class SidePanel : PanelContainer
         if (_playerNameLabel == null || _statsViewModel == null)
             return;
 
-        string playerName = _statsViewModel.PlayerName;
-        string colorHex = Palette.ToHex(Palette.Player);
-        _playerNameLabel.Text = playerName;
+        _playerNameLabel.Text = _statsViewModel.FormattedName;
         _playerNameLabel.AddThemeColorOverride("font_color", Palette.Player);
     }
 
