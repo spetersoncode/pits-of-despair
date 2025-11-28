@@ -46,13 +46,13 @@ public partial class HealthComponent : Node, IAIEventHandler
 
     /// <summary>
     /// Base maximum health (before Endurance modifiers).
-    /// Actual MaxHealth is: BaseMaxHealth + (Endurance × 2)
+    /// Actual MaxHealth is: BaseMaxHealth + (Endurance × 5)
     /// </summary>
     [Export] public int BaseMaxHealth { get; set; } = 10;
 
     /// <summary>
     /// Maximum health including Endurance bonus.
-    /// Calculated as: BaseMaxHealth + (Endurance × 2)
+    /// Calculated as: BaseMaxHealth + (Endurance × 5)
     /// </summary>
     public int MaxHealth { get; private set; }
 

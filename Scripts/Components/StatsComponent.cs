@@ -288,11 +288,17 @@ public partial class StatsComponent : Node
 	}
 
 	/// <summary>
-	/// Gets the Health bonus from Endurance using quadratic scaling.
-	/// Formula: (END² + 9×END) / 2
-	/// This provides marginal gains of (4 + END value) per point.
+	/// Gets the Health bonus from Endurance using flat scaling.
+	/// Formula: END × 5
 	/// Negative END returns 0 (Health floors at base in HealthComponent).
 	/// </summary>
+	/// <remarks>
+	/// Previous quadratic formula (preserved in case we revert):
+	/// Formula: (END² + 9×END) / 2
+	/// This provided marginal gains of (4 + END value) per point.
+	/// END 1: +5, END 2: +11, END 3: +18, END 4: +26, END 5: +35, etc.
+	/// return (endurance * endurance + 9 * endurance) / 2;
+	/// </remarks>
 	/// <returns>Health bonus from Endurance stat</returns>
 	public int GetHealthBonus()
 	{
@@ -302,10 +308,8 @@ public partial class StatsComponent : Node
 		if (endurance <= 0)
 			return 0;
 
-		// Quadratic scaling: (END² + 9×END) / 2
-		// This gives marginal gains of (4 + new END value) per point
-		// END 1: +5, END 2: +6, END 3: +7, etc.
-		return (endurance * endurance + 9 * endurance) / 2;
+		// Flat scaling: END × 5
+		return endurance * 5;
 	}
 
 	#endregion
