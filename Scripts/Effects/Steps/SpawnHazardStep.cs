@@ -11,8 +11,7 @@ namespace PitsOfDespair.Effects.Steps;
 public class SpawnHazardStep : IEffectStep
 {
     private readonly string _hazardType;
-    private readonly int _duration;
-    private readonly string? _durationDice;
+    private readonly string _duration;
     private readonly int _damagePerTurn;
     private readonly string? _damageDice;
     private readonly int _radius;
@@ -21,8 +20,8 @@ public class SpawnHazardStep : IEffectStep
     public SpawnHazardStep(StepDefinition definition)
     {
         _hazardType = definition.HazardType ?? "poison_cloud";
-        _duration = definition.Duration > 0 ? definition.Duration : 5;
-        _durationDice = definition.DurationDice;
+        _duration = definition.GetDurationString();
+        if (_duration == "1") _duration = "5"; // Default hazard duration
         _damagePerTurn = definition.Amount > 0 ? definition.Amount : 2;
         _damageDice = definition.Dice;
         _radius = definition.Radius;
@@ -54,13 +53,8 @@ public class SpawnHazardStep : IEffectStep
             return;
         }
 
-        // Calculate duration
-        int duration = _duration;
-        if (!string.IsNullOrEmpty(_durationDice))
-        {
-            duration = DiceRoller.Roll(_durationDice);
-        }
-        duration = System.Math.Max(1, duration);
+        // Calculate duration (supports dice notation like "2d4" or fixed like "5")
+        int duration = System.Math.Max(1, DiceRoller.Roll(_duration));
 
         // Calculate damage per turn
         int damage = _damagePerTurn;

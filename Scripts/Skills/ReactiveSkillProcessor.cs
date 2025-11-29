@@ -403,7 +403,7 @@ public partial class ReactiveSkillProcessor : Node
         if (_entity == null || string.IsNullOrEmpty(effect.ConditionType))
             return;
 
-        string duration = effect.Duration > 0 ? effect.Duration.ToString() : "1";
+        string duration = !string.IsNullOrEmpty(effect.Duration) ? effect.Duration : "1";
 
         // Handle special reactive condition types that map to standard conditions
         string conditionType = effect.ConditionType.ToLower() switch

@@ -41,7 +41,7 @@ entries:
       - steps:
           - type: apply_condition
             conditionType: fear
-            durationDice: 3d4
+            duration: 3d4
     targeting:
       type: enemy
       range: 6
@@ -61,7 +61,7 @@ entries:
             stopOnSuccess: true
           - type: apply_condition
             conditionType: sleep
-            durationDice: 2d6
+            duration: 2d6
     targeting:
       type: area
       range: 5

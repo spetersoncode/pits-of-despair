@@ -580,14 +580,9 @@ public class EffectDefinition
     public int Range { get; set; } = 0;
 
     /// <summary>
-    /// Duration parameter for condition effects (in turns).
+    /// Duration in turns. Accepts fixed values ("10") or dice notation ("1d4", "2d3+1").
     /// </summary>
-    public int Duration { get; set; } = 0;
-
-    /// <summary>
-    /// Dice notation for duration (e.g., "2d3", "1d4"). Overrides Duration if specified.
-    /// </summary>
-    public string? DurationDice { get; set; } = null;
+    public string? Duration { get; set; } = null;
 
     /// <summary>
     /// Condition type for apply_condition effects (e.g., "confusion", "armor_buff").

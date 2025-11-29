@@ -65,8 +65,7 @@ entries:
 #   apply_condition - Apply a status condition
 #     conditionType: string
 #     amount: int
-#     duration: int
-#     durationDice: "2d3"
+#     duration: "10" or "2d3" (fixed number or dice notation - see yaml.md)
 #
 #   damage - Deal damage
 #     dice: "2d6"

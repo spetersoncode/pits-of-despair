@@ -93,14 +93,9 @@ public class EffectDefinition
     public string? Dice { get; set; } = null;
 
     /// <summary>
-    /// Duration in turns for condition effects. Used if DurationDice is not set.
+    /// Duration in turns. Accepts fixed values ("10") or dice notation ("1d4", "2d3+1").
     /// </summary>
-    public int Duration { get; set; } = 0;
-
-    /// <summary>
-    /// Dice notation for duration (e.g., "2d3", "1d4+2"). Overrides Duration if specified.
-    /// </summary>
-    public string? DurationDice { get; set; } = null;
+    public string? Duration { get; set; } = null;
 
     /// <summary>
     /// Condition type for apply_condition effects (e.g., "confusion", "armor_buff").
@@ -196,13 +191,11 @@ public class EffectDefinition
     public VisualConfig? Visual { get; set; }
 
     /// <summary>
-    /// Gets the resolved duration string (prefers DurationDice over Duration).
+    /// Gets the duration string, defaulting to "1" if not specified.
     /// </summary>
     public string GetDurationString()
     {
-        if (!string.IsNullOrEmpty(DurationDice))
-            return DurationDice;
-        return Duration.ToString();
+        return !string.IsNullOrEmpty(Duration) ? Duration : "1";
     }
 
     /// <summary>
@@ -222,7 +215,6 @@ public class EffectDefinition
             Amount = skillEffect.Amount,
             Dice = skillEffect.Dice,
             Duration = skillEffect.Duration,
-            DurationDice = skillEffect.DurationDice,
             ConditionType = skillEffect.ConditionType,
             Stat = skillEffect.Stat,
             ScalingStat = skillEffect.ScalingStat,
@@ -259,7 +251,6 @@ public class EffectDefinition
             Amount = itemEffect.Amount,
             Range = itemEffect.Range,
             Duration = itemEffect.Duration,
-            DurationDice = itemEffect.DurationDice,
             ConditionType = itemEffect.ConditionType,
             Dice = itemEffect.Dice,
             Radius = itemEffect.Radius,

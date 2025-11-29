@@ -363,12 +363,7 @@ public partial class ItemDetailModal : CenterContainer
 	private static string DescribeConditionStep(StepDefinition step)
 	{
 		string condition = FormatConditionName(step.ConditionType ?? "effect");
-		string duration = "";
-
-		if (!string.IsNullOrEmpty(step.DurationDice))
-			duration = $" for {step.DurationDice} turns";
-		else if (step.Duration > 0)
-			duration = $" for {step.Duration} turns";
+		string duration = !string.IsNullOrEmpty(step.Duration) ? $" for {step.Duration} turns" : "";
 
 		// Include amount for stat modifiers
 		if (step.Amount != 0 && IsStatModifierCondition(step.ConditionType))
@@ -404,7 +399,7 @@ public partial class ItemDetailModal : CenterContainer
 	private static string DescribeHazardStep(StepDefinition step)
 	{
 		string hazard = step.HazardType ?? "hazard";
-		string duration = step.Duration > 0 ? $" for {step.Duration} turns" : "";
+		string duration = !string.IsNullOrEmpty(step.Duration) ? $" for {step.Duration} turns" : "";
 		return $"Creates {hazard}{duration}";
 	}
 

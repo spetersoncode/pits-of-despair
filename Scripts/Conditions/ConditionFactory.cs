@@ -49,6 +49,7 @@ public static class ConditionFactory
             "confusion" => new ConfusionCondition(duration),
             "fear" => new FearCondition(duration),
             "sleep" => new SleepCondition(duration),
+            "stun" => new StunCondition(duration),
             "acid" => new AcidCondition(duration),
 
             // Speed modifier
@@ -96,6 +97,7 @@ public static class ConditionFactory
             "confusion" => true,
             "fear" => true,
             "sleep" => true,
+            "stun" => true,
             "acid" => true,
             "speed_modifier" => true,
             _ => false

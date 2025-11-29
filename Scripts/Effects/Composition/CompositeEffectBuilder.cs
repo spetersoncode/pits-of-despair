@@ -54,6 +54,33 @@ public static class CompositeEffectBuilder
     }
 
     /// <summary>
+    /// Builds a list of steps from step definitions.
+    /// Used by effects that need to run sub-pipelines (e.g., knockback collision effects).
+    /// </summary>
+    /// <param name="definitions">List of step definitions to build.</param>
+    /// <returns>List of built steps, excluding any that failed to build.</returns>
+    public static List<IEffectStep> BuildSteps(List<StepDefinition>? definitions)
+    {
+        var steps = new List<IEffectStep>();
+        if (definitions == null || definitions.Count == 0)
+            return steps;
+
+        foreach (var stepDef in definitions)
+        {
+            var step = CreateStep(stepDef);
+            if (step != null)
+            {
+                steps.Add(step);
+            }
+            else
+            {
+                GD.PrintErr($"CompositeEffectBuilder: Unknown step type '{stepDef.Type}' in sub-pipeline");
+            }
+        }
+        return steps;
+    }
+
+    /// <summary>
     /// Creates a step instance from a step definition.
     /// </summary>
     private static IEffectStep? CreateStep(StepDefinition stepDef)

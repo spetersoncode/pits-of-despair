@@ -108,7 +108,7 @@ entries:
             stopOnSuccess: true
           - type: apply_condition
             conditionType: confusion
-            durationDice: 3d4
+            duration: 3d4
     targeting:
       type: enemy
       range: 5
@@ -130,7 +130,7 @@ entries:
           - type: apply_condition
             conditionType: speed_modifier
             amount: -3
-            durationDice: 3d4
+            duration: 3d4
     targeting:
       type: enemy
       range: 5

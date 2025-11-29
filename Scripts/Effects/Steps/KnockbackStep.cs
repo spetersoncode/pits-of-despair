@@ -1,25 +1,38 @@
-using System;
+using System.Collections.Generic;
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Effects.Composition;
-using PitsOfDespair.Helpers;
+using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Effects.Steps;
 
 /// <summary>
+/// Collision type for knockback effects.
+/// </summary>
+public enum CollisionType
+{
+    None,
+    Wall,
+    Entity
+}
+
+/// <summary>
 /// Step that pushes the target away from the caster.
+/// Supports optional OnCollision sub-pipeline that runs when knockback is blocked.
 /// </summary>
 public class KnockbackStep : IEffectStep
 {
     private readonly int _distance;
     private readonly string? _scalingStat;
     private readonly float _scalingMultiplier;
+    private readonly List<StepDefinition>? _onCollisionDefinitions;
 
     public KnockbackStep(StepDefinition definition)
     {
         _distance = definition.Distance > 0 ? definition.Distance : 1;
         _scalingStat = definition.ScalingStat;
         _scalingMultiplier = definition.ScalingMultiplier;
+        _onCollisionDefinitions = definition.OnCollision;
     }
 
     public void Execute(EffectContext context, EffectState state, MessageCollector messages)
@@ -67,17 +80,29 @@ public class KnockbackStep : IEffectStep
             return;
         }
 
-        // Try to push the target as far as possible
+        // Try to push the target as far as possible, tracking collision info
         var currentPos = targetPos;
         int tilesKnocked = 0;
+        CollisionType collisionType = CollisionType.None;
+        BaseEntity? collidedEntity = null;
 
         for (int i = 0; i < finalDistance; i++)
         {
             var nextPos = new GridPosition(currentPos.X + dirX, currentPos.Y + dirY);
 
-            // Check if next position is valid
-            if (!mapSystem.IsWalkable(nextPos) || entityManager.IsPositionOccupied(nextPos))
+            // Check if next position is walkable
+            if (!mapSystem.IsWalkable(nextPos))
             {
+                collisionType = CollisionType.Wall;
+                break;
+            }
+
+            // Check if next position is occupied by an entity
+            var entityAtPos = entityManager.GetEntityAtPosition(nextPos);
+            if (entityAtPos != null)
+            {
+                collisionType = CollisionType.Entity;
+                collidedEntity = entityAtPos;
                 break;
             }
 
@@ -85,20 +110,88 @@ public class KnockbackStep : IEffectStep
             tilesKnocked++;
         }
 
-        if (tilesKnocked == 0)
+        // Handle case where target couldn't move at all
+        if (tilesKnocked == 0 && collisionType == CollisionType.None)
         {
             messages.Add($"{target.DisplayName} cannot be pushed!", Palette.ToHex(Palette.Disabled));
             return;
         }
 
-        // Move the target to the final position
-        target.SetGridPosition(currentPos);
+        // Move the target to the final position (if they moved at all)
+        if (tilesKnocked > 0)
+        {
+            target.SetGridPosition(currentPos);
 
-        string message = tilesKnocked == 1
-            ? $"{target.DisplayName} is knocked back!"
-            : $"{target.DisplayName} is knocked back {tilesKnocked} tiles!";
+            string message = tilesKnocked == 1
+                ? $"{target.DisplayName} is knocked back!"
+                : $"{target.DisplayName} is knocked back {tilesKnocked} tiles!";
 
-        messages.Add(message, Palette.ToHex(Palette.CombatDamage));
+            messages.Add(message, Palette.ToHex(Palette.CombatDamage));
+        }
+
         state.Success = true;
+
+        // Run collision sub-effects if collision occurred and OnCollision is defined
+        if (collisionType != CollisionType.None && _onCollisionDefinitions != null && _onCollisionDefinitions.Count > 0)
+        {
+            RunCollisionEffects(context, collisionType, collidedEntity, messages);
+        }
+    }
+
+    /// <summary>
+    /// Runs the OnCollision sub-pipeline for each collision target.
+    /// Wall collision: runs once for knocked target.
+    /// Entity collision: runs twice (knocked target + collided entity), each with independent state.
+    /// </summary>
+    private void RunCollisionEffects(
+        EffectContext context,
+        CollisionType collisionType,
+        BaseEntity? collidedEntity,
+        MessageCollector messages)
+    {
+        // Build the collision steps
+        var collisionSteps = CompositeEffectBuilder.BuildSteps(_onCollisionDefinitions);
+        if (collisionSteps.Count == 0)
+            return;
+
+        // Always run for the knocked target
+        RunSubPipeline(collisionSteps, context.Target, context, messages);
+
+        // For entity collision, also run for the collided entity
+        if (collisionType == CollisionType.Entity && collidedEntity != null)
+        {
+            RunSubPipeline(collisionSteps, collidedEntity, context, messages);
+        }
+    }
+
+    /// <summary>
+    /// Runs a sub-pipeline of steps for a specific target.
+    /// Creates fresh EffectContext and EffectState for independent execution.
+    /// </summary>
+    private void RunSubPipeline(
+        List<IEffectStep> steps,
+        BaseEntity target,
+        EffectContext originalContext,
+        MessageCollector messages)
+    {
+        // Create new context with the sub-target but same caster and action context
+        var subContext = EffectContext.ForItem(
+            target,
+            originalContext.Caster,
+            originalContext.ActionContext,
+            originalContext.TargetPosition
+        );
+
+        // Fresh state for independent save rolls
+        var subState = new EffectState();
+
+        // Execute each step
+        foreach (var step in steps)
+        {
+            if (!subState.Continue)
+                break;
+
+            step.Execute(subContext, subState, messages);
+        }
     }
 }

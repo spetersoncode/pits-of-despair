@@ -119,7 +119,7 @@ pipelines:  # Weighted random selection
 
 ## Field Naming Standards
 
-**YAML Fields**: camelCase (`creatureId`, `maxHP`, `armorValue`, `durationDice`)
+**YAML Fields**: camelCase (`creatureId`, `maxHP`, `armorValue`, `duration`)
 
 **C# Properties**: PascalCase (auto-mapped)
 
@@ -129,9 +129,19 @@ pipelines:  # Weighted random selection
 
 ## Dice Notation
 
+**Design Principle**: Support dice notation throughout YAML anywhere a numeric value is needed. Dice notation is inherently optional—fixed numbers work as valid input alongside dice expressions.
+
 String format for random values: `"XdY+Z"` where X = number of dice, Y = die size, Z = modifier.
 
-**Examples**: `"1d6"` (1-6), `"2d4+1"` (3-9), `"1d2"` (1-2)
+**Examples**: `"1d6"` (1-6), `"2d4+1"` (3-9), `"1d2"` (1-2), `"10"` (fixed value)
+
+**Unified Fields**: Numeric fields that support dice notation use string type and accept both formats:
+- `duration: "3"` - fixed 3 turns
+- `duration: "2d4"` - random 2-8 turns
+- `charges: "2d3"` - random 2-6 charges
+- `dice: "1d6"` - damage dice
+
+**Implementation**: `DiceRoller.Roll(string)` handles both formats. Fixed numbers like `"10"` return 10; dice notation like `"2d6"` rolls and returns the result.
 
 **Always Quote**: Dice strings must be quoted in YAML to prevent parsing as mathematical expressions.
 

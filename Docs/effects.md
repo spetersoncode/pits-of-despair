@@ -90,7 +90,7 @@ effects:
         armorPiercing: 3
       - type: apply_condition
         conditionType: acid
-        durationDice: 2d3
+        duration: 2d3
         dotDamage: 1d3
         armorPiercing: 3
         requireDamageDealt: true

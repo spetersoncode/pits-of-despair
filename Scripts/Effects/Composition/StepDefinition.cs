@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Effects.Composition;
@@ -103,14 +104,9 @@ public class StepDefinition
     public string? ConditionType { get; set; }
 
     /// <summary>
-    /// Fixed duration in turns.
+    /// Duration in turns. Accepts fixed values ("10") or dice notation ("1d4", "2d3+1").
     /// </summary>
-    public int Duration { get; set; } = 0;
-
-    /// <summary>
-    /// Dice notation for duration (e.g., "2d3").
-    /// </summary>
-    public string? DurationDice { get; set; }
+    public string? Duration { get; set; }
 
     /// <summary>
     /// Dice notation for DoT damage (e.g., "1d3").
@@ -220,13 +216,22 @@ public class StepDefinition
 
     #endregion
 
+    #region Collision Sub-Effects
+
     /// <summary>
-    /// Gets the duration string, preferring DurationDice over Duration.
+    /// Sub-pipeline to run when knockback results in a collision (wall or entity).
+    /// For wall collision: runs once with target = knocked entity.
+    /// For entity collision: runs twice (knocked entity + collided entity), each with independent state.
+    /// </summary>
+    public List<StepDefinition>? OnCollision { get; set; }
+
+    #endregion
+
+    /// <summary>
+    /// Gets the duration string, defaulting to "1" if not specified.
     /// </summary>
     public string GetDurationString()
     {
-        if (!string.IsNullOrEmpty(DurationDice))
-            return DurationDice;
-        return Duration > 0 ? Duration.ToString() : "1";
+        return !string.IsNullOrEmpty(Duration) ? Duration : "1";
     }
 }

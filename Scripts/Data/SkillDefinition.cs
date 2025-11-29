@@ -288,9 +288,9 @@ public class SkillEffectDefinition
     public string? Dice { get; set; } = null;
 
     /// <summary>
-    /// Duration in turns for timed effects.
+    /// Duration in turns. Accepts fixed values ("10") or dice notation ("1d4", "2d3+1").
     /// </summary>
-    public int Duration { get; set; } = 0;
+    public string? Duration { get; set; } = null;
 
     /// <summary>
     /// Condition type for status effects.
@@ -358,11 +358,6 @@ public class SkillEffectDefinition
     /// Amount of armor to ignore when dealing damage.
     /// </summary>
     public int ArmorPiercing { get; set; } = 0;
-
-    /// <summary>
-    /// Dice notation for duration (e.g., "2d3", "1d4+2"). Overrides Duration if specified.
-    /// </summary>
-    public string? DurationDice { get; set; } = null;
 
     /// <summary>
     /// Dice notation for damage-over-time effects (e.g., "1d3" for acid DoT).
