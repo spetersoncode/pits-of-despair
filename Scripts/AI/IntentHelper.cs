@@ -25,6 +25,7 @@ public static class IntentHelper
             Intent.Following => Palette.IntentFollowing,
             Intent.Scavenging => Palette.IntentScavenging,
             Intent.Wandering => Palette.IntentWandering,
+            Intent.Confused => Palette.IntentConfused,
             _ => Palette.IntentIdle
         };
     }
@@ -45,6 +46,7 @@ public static class IntentHelper
             Intent.Following => "Follow",
             Intent.Scavenging => "Loot",
             Intent.Wandering => "Wander",
+            Intent.Confused => "Confused",
             _ => ""
         };
     }

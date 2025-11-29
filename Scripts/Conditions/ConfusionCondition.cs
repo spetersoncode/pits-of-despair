@@ -86,7 +86,7 @@ public class ConfusionCondition : Condition
 /// Special goal used during confusion condition.
 /// Never finishes, just wanders randomly each turn.
 /// </summary>
-internal class ConfusedWanderGoal : Goal
+public class ConfusedWanderGoal : Goal
 {
 	public override bool IsFinished(AIContext context)
 	{

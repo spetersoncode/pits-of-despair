@@ -58,5 +58,11 @@ public enum Intent
     /// Wandering aimlessly.
     /// Display: Gray-blue, wandering.
     /// </summary>
-    Wandering
+    Wandering,
+
+    /// <summary>
+    /// Confused and moving randomly.
+    /// Display: Purple, disoriented.
+    /// </summary>
+    Confused
 }

@@ -609,6 +609,9 @@ public static class Palette
     /// <summary>Wandering intent - aimlessly moving</summary>
     public static readonly Color IntentWandering = new("#7799AA");
 
+    /// <summary>Confused intent - disoriented, moving randomly</summary>
+    public static readonly Color IntentConfused = new("#9966DD");
+
     #endregion
 
     #region Gems and Jewelry

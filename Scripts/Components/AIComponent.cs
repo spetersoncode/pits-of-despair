@@ -1,6 +1,7 @@
 using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.AI.Goals;
+using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
@@ -181,6 +182,9 @@ public partial class AIComponent : Node
             KillTargetGoal => Intent.Attacking,
             PatrolGoal => Intent.Patrolling,
             PatrolRouteGoal => Intent.Patrolling,
+            ConfusedWanderGoal => Intent.Confused,
+            // WanderGoal with OriginalIntent delegates to parent (e.g., confusion)
+            WanderGoal wg when wg.OriginalIntent != null => null,
             WanderGoal => Intent.Wandering,
             FollowEntityGoal => Intent.Following,
             SeekItemGoal => Intent.Scavenging,
