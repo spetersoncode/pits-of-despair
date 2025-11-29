@@ -82,6 +82,10 @@ public partial class PlayerStatsViewModel : Node
     public int RangedAttack => _statsComponent?.RangedAttack ?? 0;
     public int TotalArmor => _statsComponent?.TotalArmor ?? 0;
     public int TotalEvasion => _statsComponent?.TotalEvasion ?? 0;
+    /// <summary>
+    /// Total melee damage bonus (STR + melee damage modifiers from skills/equipment).
+    /// </summary>
+    public int MeleeDamageBonus => _statsComponent?.GetDamageBonus(true) ?? 0;
 
 	#endregion
 

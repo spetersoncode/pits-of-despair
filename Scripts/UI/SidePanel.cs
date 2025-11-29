@@ -386,7 +386,7 @@ public partial class SidePanel : PanelContainer
             {
                 if (attack.Type == Data.AttackType.Melee)
                 {
-                    int damageBonus = _statsViewModel.TotalStrength;
+                    int damageBonus = _statsViewModel.MeleeDamageBonus;
                     meleeDamage = Helpers.DiceRoller.AddBonus(attack.DiceNotation, damageBonus);
                 }
                 else if (attack.Type == Data.AttackType.Ranged)
@@ -418,7 +418,8 @@ public partial class SidePanel : PanelContainer
         sb.AppendLine($"Melee Damage: {meleeDamage}");
         sb.AppendLine($"Ranged Attack: {rangedAttack}");
         sb.AppendLine($"Ranged Damage: {rangedDamage}");
-
+        sb.AppendLine($"Armor: {armor}");
+        sb.AppendLine($"Evasion: {evasion}");
 
         _statsLabel.Text = sb.ToString();
     }
