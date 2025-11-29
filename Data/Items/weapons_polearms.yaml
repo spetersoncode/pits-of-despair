@@ -4,7 +4,7 @@ defaults:
   glyph: "\u2020"
   attack:
     damageType: Piercing
-    delay: 1.2
+    delay: 1.1
     range: 2
 
 entries:
@@ -15,5 +15,4 @@ entries:
     description: An iron-tipped shaft of ash wood, balanced for both thrust and throw. Its reach keeps the dangers of the deep at arm's length.
     attack:
       type: Melee
-      dice: "1d6+1"
-      delay: 1.1
+      dice: "1d6"

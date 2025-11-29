@@ -4,7 +4,7 @@ defaults:
   glyph: "%"
   attack:
     damageType: Bludgeoning
-    delay: 1.3
+    delay: 1.2
 
 entries:
   nunchaku:
@@ -24,7 +24,7 @@ entries:
     description: A spiked ball on a chain, unwieldy but devastating. Its unpredictable arc makes it difficult to parry.
     attack:
       type: Melee
-      dice: "1d8+1"
+      dice: "1d9"
 
   morning_star:
     name: morning star
@@ -33,4 +33,4 @@ entries:
     description: Iron spikes radiate from a heavy chain-mounted head. It crushes and punctures in equal measure.
     attack:
       type: Melee
-      dice: "1d10+1"
+      dice: "1d11"

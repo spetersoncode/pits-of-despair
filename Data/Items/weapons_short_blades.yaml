@@ -16,7 +16,6 @@ entries:
     attack:
       type: Melee
       dice: "1d3"
-      delay: 0.7
 
   dagger:
     name: dagger
@@ -26,4 +25,3 @@ entries:
     attack:
       type: Melee
       dice: "1d4"
-      delay: 0.7

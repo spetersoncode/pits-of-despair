@@ -14,7 +14,7 @@ entries:
     description: Worn smooth by countless hands, this crude bludgeon has seen its share of violence. Simple, but effective against skulls and bones alike.
     attack:
       type: Melee
-      dice: "1d3+1"
+      dice: "1d4"
 
   knobbed_club:
     name: knobbed club
@@ -23,7 +23,7 @@ entries:
     description: Heavy oak topped with iron studs that leave wicked indentations. The wood itself bears dark stains that speak to its brutal history.
     attack:
       type: Melee
-      dice: "1d3+2"
+      dice: "1d6"
 
   mace:
     name: mace
