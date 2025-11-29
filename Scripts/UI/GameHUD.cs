@@ -1,9 +1,11 @@
 using Godot;
 using PitsOfDespair.Actions;
+using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Debug;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems;
 using PitsOfDespair.Systems.AutoPathing;
 using PitsOfDespair.Systems.Entity;
@@ -789,7 +791,7 @@ public partial class GameHUD : Control
         var parts = new System.Collections.Generic.List<string>();
 
         // Add injury status if injured
-        var health = entity.GetNodeOrNull<Components.HealthComponent>("HealthComponent");
+        var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
         if (health != null && !entity.IsDead)
         {
             float hpPercent = (float)health.CurrentHealth / health.MaxHealth;
@@ -803,6 +805,15 @@ public partial class GameHUD : Control
             };
             if (injury != null)
                 parts.Add(injury);
+        }
+
+        // Add speed status for non-average creatures
+        var speed = entity.GetNodeOrNull<SpeedComponent>("SpeedComponent");
+        if (speed != null)
+        {
+            var (speedText, _) = SpeedStatus.GetCreatureSpeedDisplay(speed.EffectiveSpeed);
+            if (speedText != "Average")
+                parts.Add(speedText);
         }
 
         // Add conditions

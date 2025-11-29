@@ -5,6 +5,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Components;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Skills;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;
@@ -423,6 +424,15 @@ public partial class EntityDetailModal : CenterContainer
             string intentName = intent.ToString();
             sb.Append($"\n\n[color={Palette.ToHex(Palette.Disabled)}]Intent:[/color] ");
             sb.Append($"[color={Palette.ToHex(intentColor)}]{intentName}[/color]");
+        }
+
+        // Speed status
+        var speed = entity.GetNodeOrNull<SpeedComponent>("SpeedComponent");
+        if (speed != null)
+        {
+            var (speedText, speedColor) = SpeedStatus.GetCreatureSpeedDisplay(speed.EffectiveSpeed);
+            sb.Append($"\n[color={Palette.ToHex(Palette.Disabled)}]Speed:[/color] ");
+            sb.Append($"[color={Palette.ToHex(speedColor)}]{speedText}[/color]");
         }
 
         // Attacks with name and damage type

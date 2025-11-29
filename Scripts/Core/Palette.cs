@@ -113,6 +113,25 @@ public static class Palette
 
     #endregion
 
+    #region UI - Speed Status
+
+    /// <summary>Very Fast speed indicator (bright cyan - energetic)</summary>
+    public static readonly Color SpeedVeryFast = new("#66DDEE");
+
+    /// <summary>Fast speed indicator (bright green - quick)</summary>
+    public static readonly Color SpeedFast = new("#66DD88");
+
+    /// <summary>Average speed indicator (neutral gray)</summary>
+    public static readonly Color SpeedAverage = new("#CCCCCC");
+
+    /// <summary>Slow speed indicator (orange - caution)</summary>
+    public static readonly Color SpeedSlow = new("#DDAA66");
+
+    /// <summary>Very Slow speed indicator (dull red - sluggish)</summary>
+    public static readonly Color SpeedVerySlow = new("#DD8866");
+
+    #endregion
+
     #region UI - Examine System
 
     /// <summary>Examine mode visible tiles overlay background</summary>

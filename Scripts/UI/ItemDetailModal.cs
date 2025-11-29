@@ -4,6 +4,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects.Composition;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;
@@ -193,8 +194,14 @@ public partial class ItemDetailModal : CenterContainer
 		string damageType = attack.DamageType.ToString().ToLower();
 		string strNote = attack.Type == AttackType.Melee ? " (+STR)" : "";
 
+		// Attack speed
+		var (speedText, speedColor) = SpeedStatus.GetWeaponSpeedDisplay(attack.Delay);
+		string speedLine = $"\n[color={Palette.ToHex(Palette.Disabled)}]Speed:[/color] " +
+		                   $"[color={Palette.ToHex(speedColor)}]{speedText}[/color]";
+
 		return $"\n[color={Palette.ToHex(Palette.Disabled)}]Damage:[/color] " +
-		       $"[color={Palette.ToHex(Palette.Default)}]{attack.DiceNotation} {damageType}{strNote}[/color]";
+		       $"[color={Palette.ToHex(Palette.Default)}]{attack.DiceNotation} {damageType}{strNote}[/color]" +
+		       speedLine;
 	}
 
 	/// <summary>

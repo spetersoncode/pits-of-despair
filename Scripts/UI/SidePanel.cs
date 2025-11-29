@@ -2,6 +2,8 @@ using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
+using PitsOfDespair.Data;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Systems.Entity;
@@ -163,11 +165,12 @@ public partial class SidePanel : PanelContainer
 
     /// <summary>
     /// Called when EquipmentViewModel updates.
-    /// Refreshes equipment display.
+    /// Refreshes equipment display and stats (attack speed depends on weapon).
     /// </summary>
     private void OnEquipmentUpdated()
     {
         UpdateEquipmentDisplay();
+        UpdateStatsDisplay();
     }
 
     /// <summary>
@@ -358,11 +361,10 @@ public partial class SidePanel : PanelContainer
 
         var sb = new StringBuilder();
 
-        // Base stats - full names, one per line (from ViewModel)
-        sb.AppendLine($"Strength: {_statsViewModel.TotalStrength}");
-        sb.AppendLine($"Agility: {_statsViewModel.TotalAgility}");
-        sb.AppendLine($"Endurance: {_statsViewModel.TotalEndurance}");
-        sb.AppendLine($"Will: {_statsViewModel.TotalWill}");
+        // Base stats - 2 column layout
+        int statLabelWidth = 18;
+        sb.AppendLine(PadBetween($"STR: {_statsViewModel.TotalStrength}", $"END: {_statsViewModel.TotalEndurance}", statLabelWidth));
+        sb.AppendLine(PadBetween($"AGI: {_statsViewModel.TotalAgility}", $"WIL: {_statsViewModel.TotalWill}", statLabelWidth));
 
         sb.AppendLine(); // Blank line for spacing
 
@@ -394,12 +396,29 @@ public partial class SidePanel : PanelContainer
             }
         }
 
+        // Combined attack speed (player speed + weapon delay)
+        var speedComponent = _player.GetNodeOrNull<SpeedComponent>("SpeedComponent");
+        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (speedComponent != null && equipComponent != null)
+        {
+            var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
+            if (meleeKey.HasValue)
+            {
+                var slot = _player.GetInventorySlot(meleeKey.Value);
+                if (slot?.Item?.Template?.Attack != null)
+                {
+                    int weaponDelayCost = slot.Item.Template.Attack.GetDelayCost();
+                    var (attackText, attackColor) = SpeedStatus.GetCombinedAttackSpeedDisplay(speedComponent.EffectiveSpeed, weaponDelayCost);
+                    sb.AppendLine($"Attack Speed: [color={ColorToHex(attackColor)}]{attackText}[/color]");
+                }
+            }
+        }
+
         sb.AppendLine($"Melee Attack: {meleeAttack}");
         sb.AppendLine($"Melee Damage: {meleeDamage}");
         sb.AppendLine($"Ranged Attack: {rangedAttack}");
         sb.AppendLine($"Ranged Damage: {rangedDamage}");
-        sb.AppendLine($"Armor: {armor}");
-        sb.AppendLine($"Evasion: {evasion}");
+
 
         _statsLabel.Text = sb.ToString();
     }
