@@ -300,6 +300,7 @@ const DEFAULT_PUNCH: AttackDefinition = {
   damageType: 'Bludgeoning',
   type: 'Melee',
   range: 1,
+  delay: 1.0,
 };
 
 /**

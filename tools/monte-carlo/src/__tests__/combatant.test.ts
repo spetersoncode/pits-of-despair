@@ -248,14 +248,14 @@ describe('isAlive', () => {
 describe('hasMeleeAttack', () => {
   it('returns true when combatant has melee attack', () => {
     const combatant = createMockCombatant({
-      attacks: [{ name: 'sword', type: 'Melee', dice: '1d6', damageType: 'Slashing', range: 1 }],
+      attacks: [{ name: 'sword', type: 'Melee', dice: '1d6', damageType: 'Slashing', range: 1, delay: 1.0 }],
     });
     expect(hasMeleeAttack(combatant)).toBe(true);
   });
 
   it('returns false when combatant has only ranged attacks', () => {
     const combatant = createMockCombatant({
-      attacks: [{ name: 'bow', type: 'Ranged', dice: '1d6', damageType: 'Piercing', range: 6 }],
+      attacks: [{ name: 'bow', type: 'Ranged', dice: '1d6', damageType: 'Piercing', range: 6, delay: 1.0 }],
     });
     expect(hasMeleeAttack(combatant)).toBe(false);
   });
@@ -269,14 +269,14 @@ describe('hasMeleeAttack', () => {
 describe('hasRangedAttack', () => {
   it('returns true when combatant has ranged attack', () => {
     const combatant = createMockCombatant({
-      attacks: [{ name: 'bow', type: 'Ranged', dice: '1d6', damageType: 'Piercing', range: 6 }],
+      attacks: [{ name: 'bow', type: 'Ranged', dice: '1d6', damageType: 'Piercing', range: 6, delay: 1.0 }],
     });
     expect(hasRangedAttack(combatant)).toBe(true);
   });
 
   it('returns false when combatant has only melee attacks', () => {
     const combatant = createMockCombatant({
-      attacks: [{ name: 'sword', type: 'Melee', dice: '1d6', damageType: 'Slashing', range: 1 }],
+      attacks: [{ name: 'sword', type: 'Melee', dice: '1d6', damageType: 'Slashing', range: 1, delay: 1.0 }],
     });
     expect(hasRangedAttack(combatant)).toBe(false);
   });
@@ -284,7 +284,7 @@ describe('hasRangedAttack', () => {
 
 describe('getMeleeAttack', () => {
   it('returns melee attack when present', () => {
-    const meleeAttack = { name: 'sword', type: 'Melee' as const, dice: '1d6', damageType: 'Slashing' as const, range: 1 };
+    const meleeAttack = { name: 'sword', type: 'Melee' as const, dice: '1d6', damageType: 'Slashing' as const, range: 1, delay: 1.0 };
     const combatant = createMockCombatant({ attacks: [meleeAttack] });
 
     const attack = getMeleeAttack(combatant);
@@ -304,7 +304,7 @@ describe('getMeleeAttack', () => {
 
 describe('getRangedAttack', () => {
   it('returns ranged attack when present', () => {
-    const rangedAttack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6 };
+    const rangedAttack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, delay: 1.0 };
     const combatant = createMockCombatant({ attacks: [rangedAttack] });
 
     const attack = getRangedAttack(combatant);
@@ -323,6 +323,7 @@ describe('getRangedAttack', () => {
       dice: '1d6',
       damageType: 'Piercing' as const,
       range: 6,
+      delay: 1.0,
       ammoType: 'arrow',
     };
     const combatant = createMockCombatant({
@@ -340,6 +341,7 @@ describe('getRangedAttack', () => {
       dice: '1d6',
       damageType: 'Piercing' as const,
       range: 6,
+      delay: 1.0,
       ammoType: 'arrow',
     };
     const combatant = createMockCombatant({
@@ -353,7 +355,7 @@ describe('getRangedAttack', () => {
 
 describe('consumeAmmo', () => {
   it('decrements ammo count for attacks requiring ammo', () => {
-    const attack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, ammoType: 'arrow' };
+    const attack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, delay: 1.0, ammoType: 'arrow' };
     const combatant = createMockCombatant({
       ammo: new Map([['arrow', 10]]),
     });
@@ -366,7 +368,7 @@ describe('consumeAmmo', () => {
   });
 
   it('does nothing for attacks not requiring ammo', () => {
-    const attack = { name: 'magic', type: 'Ranged' as const, dice: '1d6', damageType: 'Fire' as const, range: 6 };
+    const attack = { name: 'magic', type: 'Ranged' as const, dice: '1d6', damageType: 'Fire' as const, range: 6, delay: 1.0 };
     const combatant = createMockCombatant({
       ammo: new Map([['arrow', 10]]),
     });
@@ -376,7 +378,7 @@ describe('consumeAmmo', () => {
   });
 
   it('does not go below 0 ammo', () => {
-    const attack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, ammoType: 'arrow' };
+    const attack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, delay: 1.0, ammoType: 'arrow' };
     const combatant = createMockCombatant({
       ammo: new Map([['arrow', 0]]),
     });
@@ -416,7 +418,7 @@ describe('canAttack', () => {
   it('allows melee attack at range 1', () => {
     const attacker = createMockCombatant({ position: { x: 0, y: 0 } });
     const target = createMockCombatant({ position: { x: 1, y: 0 } });
-    const meleeAttack = { name: 'sword', type: 'Melee' as const, dice: '1d6', damageType: 'Slashing' as const, range: 1 };
+    const meleeAttack = { name: 'sword', type: 'Melee' as const, dice: '1d6', damageType: 'Slashing' as const, range: 1, delay: 1.0 };
 
     expect(canAttack(attacker, target, meleeAttack)).toBe(true);
   });
@@ -424,7 +426,7 @@ describe('canAttack', () => {
   it('disallows melee attack beyond range', () => {
     const attacker = createMockCombatant({ position: { x: 0, y: 0 } });
     const target = createMockCombatant({ position: { x: 2, y: 0 } });
-    const meleeAttack = { name: 'sword', type: 'Melee' as const, dice: '1d6', damageType: 'Slashing' as const, range: 1 };
+    const meleeAttack = { name: 'sword', type: 'Melee' as const, dice: '1d6', damageType: 'Slashing' as const, range: 1, delay: 1.0 };
 
     expect(canAttack(attacker, target, meleeAttack)).toBe(false);
   });
@@ -432,7 +434,7 @@ describe('canAttack', () => {
   it('allows ranged attack within range', () => {
     const attacker = createMockCombatant({ position: { x: 0, y: 0 } });
     const target = createMockCombatant({ position: { x: 5, y: 0 } });
-    const rangedAttack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6 };
+    const rangedAttack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, delay: 1.0 };
 
     expect(canAttack(attacker, target, rangedAttack)).toBe(true);
   });
@@ -440,7 +442,7 @@ describe('canAttack', () => {
   it('disallows ranged attack beyond range', () => {
     const attacker = createMockCombatant({ position: { x: 0, y: 0 } });
     const target = createMockCombatant({ position: { x: 7, y: 0 } });
-    const rangedAttack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6 };
+    const rangedAttack = { name: 'bow', type: 'Ranged' as const, dice: '1d6', damageType: 'Piercing' as const, range: 6, delay: 1.0 };
 
     expect(canAttack(attacker, target, rangedAttack)).toBe(false);
   });
@@ -457,6 +459,7 @@ describe('canAttack', () => {
       dice: '1d6',
       damageType: 'Piercing' as const,
       range: 6,
+      delay: 1.0,
       ammoType: 'arrow',
     };
 
@@ -475,6 +478,7 @@ describe('canAttack', () => {
       dice: '1d6',
       damageType: 'Piercing' as const,
       range: 6,
+      delay: 1.0,
       ammoType: 'arrow',
     };
 

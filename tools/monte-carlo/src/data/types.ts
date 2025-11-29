@@ -74,6 +74,7 @@ export interface AttackDefinition {
   dice: string; // Dice notation, e.g., "1d6", "2d4+2"
   damageType: DamageType;
   range: number; // 1 for standard melee, 2 for reach, higher for ranged
+  delay: number; // Action delay multiplier (0.7 = fast, 1.0 = normal, 1.3 = slow)
   ammoType?: string; // Required ammo type for ranged weapons
 }
 
@@ -431,6 +432,7 @@ export interface InlineAttack {
   dice: string;
   damageType: DamageType;
   range?: number; // Defaults to 1 for melee, 6 for ranged
+  delay?: number; // Defaults to 1.0
   ammoType?: string;
 }
 

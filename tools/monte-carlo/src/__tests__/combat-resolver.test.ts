@@ -182,6 +182,7 @@ describe('calculateRawDamage', () => {
       dice: '1d6',
       damageType: 'Slashing',
       range: 1,
+      delay: 1.0,
     };
 
     // Damage = 4 (dice) + 2 (STR) - 1 (armor) = 5
@@ -200,6 +201,7 @@ describe('calculateRawDamage', () => {
       dice: '1d6',
       damageType: 'Piercing',
       range: 6,
+      delay: 1.0,
     };
 
     // Damage = 4 (dice) + 0 (no STR for ranged) - 0 (armor) = 4
@@ -218,6 +220,7 @@ describe('calculateRawDamage', () => {
       dice: '1d4',
       damageType: 'Piercing',
       range: 1,
+      delay: 1.0,
     };
 
     // Damage = 1 (dice) + 0 (STR) - 10 (armor) = -9, floored to 0
@@ -236,6 +239,7 @@ describe('calculateRawDamage', () => {
       dice: '1d6',
       damageType: 'Bludgeoning',
       range: 1,
+      delay: 1.0,
     };
 
     // Damage = 4 (dice) + (-2) (STR) - 0 (armor) = 2
@@ -364,6 +368,7 @@ describe('resolveAttack', () => {
       dice: '1d6',
       damageType: 'Slashing',
       range: 1,
+      delay: 1.0,
     };
 
     const rng = new SeededRng(42);
@@ -384,6 +389,7 @@ describe('resolveAttack', () => {
       dice: '1d6',
       damageType: 'Slashing',
       range: 1,
+      delay: 1.0,
     };
 
     const rng = new SeededRng(42);
@@ -408,6 +414,7 @@ describe('resolveAttack', () => {
       dice: '1d6',
       damageType: 'Slashing',
       range: 1,
+      delay: 1.0,
     };
 
     const rng = new SeededRng(42);
@@ -427,6 +434,7 @@ describe('resolveAttack', () => {
       dice: '2d6',
       damageType: 'Fire',
       range: 6,
+      delay: 1.0,
     };
 
     const rng = new SeededRng(42);

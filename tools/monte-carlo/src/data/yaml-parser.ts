@@ -66,6 +66,7 @@ function parseAttack(
     dice: (data.dice as string) ?? '1d4',
     damageType: (data.damageType as DamageType) ?? 'Bludgeoning',
     range: (data.range as number) ?? 1,
+    delay: (data.delay as number) ?? 1.0,
     ammoType: data.ammoType as string | undefined,
   };
 }
@@ -88,6 +89,7 @@ function parseAttacks(data: unknown): AttackDefinition[] {
       dice: '1d4',
       damageType: 'Bludgeoning' as DamageType,
       range: 1,
+      delay: 1.0,
     };
   });
 }

@@ -156,17 +156,21 @@ export function getWinner(state: CombatState): 'A' | 'B' | 'draw' {
 
 /**
  * Execute a single combatant's turn.
+ * @returns The action cost (delay multiplier for deductTime)
  */
 export function executeTurn(
   actor: CombatantState,
   state: CombatState,
   rng: RandomGenerator,
   verbose: boolean
-): void {
+): number {
   const action = decideAction(actor, state.combatants, rng);
+  let actionCost = STANDARD_ACTION_DELAY; // Default cost for move/wait
 
   switch (action.type) {
     case 'attack': {
+      // Weapon delay affects action cost
+      actionCost = Math.round(STANDARD_ACTION_DELAY * action.attack.delay);
       const result = resolveAttack(actor, action.target, action.attack, rng);
 
       if (result.hit) {
@@ -299,6 +303,8 @@ export function executeTurn(
       details: `${actor.name} restores ${restored} WP`,
     });
   }
+
+  return actionCost;
 }
 
 // =============================================================================
@@ -325,8 +331,8 @@ export function runCombat(
     // Process all ready combatants this tick
     let ready = getNextReady(state.combatants, STANDARD_ACTION_DELAY, rng);
     while (ready && !isCombatOver(state, config.maxTurns)) {
-      executeTurn(ready, state, rng, config.verbose);
-      deductTime(ready, STANDARD_ACTION_DELAY, rng);
+      const actionCost = executeTurn(ready, state, rng, config.verbose);
+      deductTime(ready, actionCost, rng);
       ready = getNextReady(state.combatants, STANDARD_ACTION_DELAY, rng);
     }
   }

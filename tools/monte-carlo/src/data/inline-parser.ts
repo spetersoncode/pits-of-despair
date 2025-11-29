@@ -96,6 +96,7 @@ function parseInlineAttack(attack: InlineAttack): AttackDefinition {
     dice: attack.dice,
     damageType: attack.damageType,
     range: attack.range ?? (attack.type === 'Ranged' ? 6 : 1),
+    delay: attack.delay ?? 1.0,
     ammoType: attack.ammoType,
   };
 }
