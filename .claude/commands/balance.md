@@ -13,6 +13,9 @@ npm run dev -- duel goblin skeleton
 # Seeded for reproducibility
 npm run dev -- duel goblin skeleton -s 42
 
+# Debug mode (verbose output, limited to 3 iterations)
+npm run dev -- duel goblin skeleton -v
+
 # Compare equipment loadouts
 npm run dev -- variation goblin skeleton \
   --var "club:weapon_club" \
@@ -266,6 +269,22 @@ regenRate = 20 + (maxHP / 6) + regenBonus
 Ring of Regeneration adds +80 to regenRate
 ```
 
+### Willpower System
+Creatures with skills use willpower (WP) to cast:
+```
+maxWP = 10 + (WIL × 5)
+WP regenerates like HP (same accumulator system)
+```
+
+### Weapon Delay
+Weapons affect action timing via delay multiplier:
+```
+Fast weapons (delay: 0.7) = 7 action cost
+Normal weapons (delay: 1.0) = 10 action cost
+Slow weapons (delay: 1.3) = 13 action cost
+Movement and skills use standard delay (10)
+```
+
 ---
 
 ## Damage Types
@@ -343,6 +362,8 @@ If win rates deviate significantly from expectations, adjust:
 6. **Variation command is your friend** for equipment balance - always test multiple loadouts
 
 7. **Trust the math** - if the simulator says a creature is too strong, it probably is, even if it "feels" right on paper
+
+8. **Use verbose mode** (`-v`) to debug unexpected results - see AI decisions, dice rolls, and damage breakdowns
 
 ---
 

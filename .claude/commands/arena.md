@@ -29,12 +29,8 @@ All commands run from `tools/monte-carlo` using `npm run dev -- <command>`.
 
 ### Available Creatures
 
-```
-cat, elder_rat, goblin, goblin_archer, goblin_ruffian, goblin_scout, rat, skeleton, wild_dog, zombie
-```
-
 Use `npm run dev -- list creatures` to see all creatures with threat levels.
-Use `npm run dev -- info <creature_id>` to see stats for a specific creature.
+Use `npm run dev -- info <creature_id>` to see stats for a specific creature (STR, AGI, END, WIL, HP, WP, attacks, skills).
 
 ### Command: `duel` (1v1 Combat)
 
@@ -65,6 +61,7 @@ npm run dev -- duel goblin rat -o json
 | `--inline-b <json>` | Inline JSON creature definition for B |
 | `-o, --output <format>` | Output: console, json, csv |
 | `-c, --compact` | Compact console output |
+| `-v, --verbose` | Debug mode: full combat logging (limits to 3 iterations) |
 
 ### Command: `group` (Team Battles)
 
@@ -93,6 +90,7 @@ npm run dev -- group "goblin_ruffian:1" "rat:5" -n 1000
 | `-s, --seed <num>` | Random seed for reproducibility |
 | `-o, --output <format>` | Output: console, json, csv |
 | `-c, --compact` | Compact console output |
+| `-v, --verbose` | Debug mode: full combat logging (limits to 3 iterations) |
 
 ### Command: `variation` (Equipment Testing)
 
@@ -115,6 +113,7 @@ npm run dev -- variation goblin skeleton --var "light:weapon_dagger,armor_leathe
 | `-n, --iterations <num>` | Iterations per variation (default: 1000) |
 | `-s, --seed <num>` | Random seed for reproducibility |
 | `--var <spec>` | Variation spec "name:item1,item2" (repeatable) |
+| `-v, --verbose` | Debug mode: full combat logging (limits to 3 iterations) |
 
 ### Command: `variation-inline` (Inline Creature Testing)
 
@@ -146,6 +145,7 @@ npm run dev -- variation-inline rat --vars '[
 | `-n, --iterations <num>` | Iterations per variation (default: 1000) |
 | `-s, --seed <num>` | Random seed for reproducibility |
 | `--vars <json>` | JSON array of inline creature definitions |
+| `-v, --verbose` | Debug mode: full combat logging (limits to 3 iterations) |
 
 ### Command: `matrix` (All vs All)
 
@@ -155,6 +155,8 @@ npm run dev -- matrix [options]
 
 Runs every creature against every other creature.
 
+Note: Creatures with non-combat AI behaviors (e.g., cowardly) are automatically excluded.
+
 **Options:**
 | Option | Description |
 |--------|-------------|
@@ -162,6 +164,7 @@ Runs every creature against every other creature.
 | `-s, --seed <num>` | Random seed |
 | `-o, --output <format>` | Output: console, csv |
 | `--outfile <path>` | Save to file |
+| `-v, --verbose` | Debug mode: full combat logging (limits to 3 iterations) |
 
 ### Command: `list` and `info`
 

@@ -107,6 +107,7 @@ Run all creatures against each other:
 ```bash
 npm run dev -- matrix -n 500 -o csv --outfile results
 ```
+Note: Creatures with non-combat AI behaviors (e.g., cowardly) are excluded from the matrix.
 
 ### List & Info
 ```bash
@@ -125,6 +126,7 @@ npm run dev -- info club         # Show item details
 | `-o, --output <fmt>` | Output format: console, json, csv |
 | `--outfile <path>` | Write output to file |
 | `-c, --compact` | Compact console output |
+| `-v, --verbose` | Debug mode: full combat logging (limits to 3 iterations) |
 | `--inline-a <json>` | Inline JSON creature definition for creature A (duel) |
 | `--inline-b <json>` | Inline JSON creature definition for creature B (duel) |
 | `--vars <json>` | JSON array of inline creatures (variation-inline) |
@@ -163,6 +165,22 @@ regenRate = 20 + (maxHP / 6) + regenBonus
 100 points = 1 HP healed
 ```
 
+### Willpower System
+Creatures with skills use willpower (WP) to cast them:
+```
+maxWP = 10 + (WIL × 5)
+```
+WP regenerates like HP using the same DCSS-style accumulator system.
+
+### Weapon Delay
+Weapons affect action timing via their delay multiplier:
+```
+Fast weapons (delay: 0.7) = 7 action cost
+Normal weapons (delay: 1.0) = 10 action cost
+Slow weapons (delay: 1.3) = 13 action cost
+```
+Movement and skills use standard delay (10).
+
 ## Output Formats
 
 ### Console (default)
@@ -191,6 +209,43 @@ regenRate = 20 + (maxHP / 6) + regenBonus
 
 ### CSV
 Includes all statistics for spreadsheet analysis.
+
+## Verbose Debug Mode
+
+Use `-v` or `--verbose` for detailed combat logging when debugging or troubleshooting:
+
+```bash
+npm run dev -- duel goblin skeleton -v
+npm run dev -- group "goblin:2" "rat:3" -v
+```
+
+Verbose mode automatically limits iterations to 3 to prevent runaway output. It displays:
+
+- **Combat initialization**: All combatant stats, equipment, skills, and positions
+- **AI decision reasoning**: Why each creature chose its action
+- **Dice roll breakdowns**: Attack/defense rolls with modifiers, damage calculations
+- **Turn-by-turn state**: HP/WP changes, regeneration, movement, deaths
+- **Combat summary**: Winner, survivors, and remaining HP
+
+Example output:
+```
+=== FIGHT 1 ===
+-- Combat Start --
+Team A:
+  Goblin
+    HP: 10/10, WP: 10/10
+    STR: 0, AGI: 1, END: 0, WIL: 0
+    Speed: 10, Armor: 0, Evasion: 0
+    Position: (0, 0)
+    Attacks: Club (1d6 Bludgeoning)
+
+-- Turn 1 --
+[Goblin] Ready (accTime: 0, delay: 10)
+  AI: Moving toward enemy (distance: 10 > attack range: 1)
+  → Moves from (0, 0) to (1, 0)
+  Action cost: 10 (speed 10)
+...
+```
 
 ## Development
 
