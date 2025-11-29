@@ -260,9 +260,50 @@ function getOptionName(option: CombatOption): string {
   return option.kind === 'attack' ? option.attack.name : option.skill.name;
 }
 
+// =============================================================================
+// Shoot-and-Scoot Constants
+// =============================================================================
+
+const FLEE_TURNS_AFTER_SHOT = 3;
+const FLEE_TARGET_DISTANCE = 4;
+const FLEE_TRIGGER_DISTANCE = 3; // Only trigger flee if enemy is this close
+const FINISH_THRESHOLD = 8; // If target HP <= this, try to finish them off
+
+/**
+ * Estimate average damage for an option (rough heuristic for "can I kill?").
+ */
+function estimateOptionDamage(option: CombatOption, combatant: CombatantState): number {
+  // Rough estimate: assume average dice roll + STR for melee
+  // This is a heuristic, not exact
+  if (option.kind === 'skill') {
+    // Magic missile: 1d6 + WIL, average ~5.5 + WIL
+    return 3.5 + Math.max(0, combatant.will);
+  }
+  // Weapon: assume average of 4 + STR for melee
+  const strBonus = option.attack.type === 'Melee' ? combatant.strength : 0;
+  return 4 + strBonus;
+}
+
+/**
+ * Try to move away from a position. Returns null if cornered.
+ */
+function tryGetFleeDirection(
+  combatant: CombatantState,
+  fleeFrom: Position
+): Position | null {
+  const direction = getMoveAway(combatant.position, fleeFrom);
+  // In this simple sim, movement is always valid (no walls)
+  // But check if we'd actually move (not already at edge in a bounded arena)
+  if (direction.x === 0 && direction.y === 0) {
+    return null; // Can't flee (same position as threat)
+  }
+  return direction;
+}
+
 /**
  * Decide action for a ranged combatant (has ranged options).
- * Priority: kite if adjacent > attack if in range > move toward
+ * Uses shoot-and-scoot behavior: shoot, then flee for several turns.
+ * Priority: flee if fleeing > finish low HP target > kite if adjacent > shoot > move toward
  */
 function decideRangedBehavior(
   combatant: CombatantState,
@@ -276,28 +317,83 @@ function decideRangedBehavior(
   }
 
   const dist = distance(combatant.position, nearest.position);
+  const lowestHP = getLowestHPEnemy(combatant, enemies);
 
-  // If enemy is adjacent (dist <= 1), kite away
-  if (dist <= 1) {
-    const direction = getMoveAway(combatant.position, nearest.position);
-    return {
-      action: { type: 'move', direction },
-      reasoning: `Kite away from ${nearest.name} (distance ${dist})`,
-    };
+  // === PHASE 1: Handle active flee state ===
+  if (combatant.fleeTurnsRemaining > 0) {
+    combatant.fleeTurnsRemaining--;
+
+    // Check if we've reached safe distance
+    if (dist >= combatant.fleeTargetDistance) {
+      // Safe distance reached, can stop fleeing early
+      combatant.fleeTurnsRemaining = 0;
+    } else {
+      // Try to flee
+      const fleeDir = tryGetFleeDirection(combatant, nearest.position);
+      if (fleeDir) {
+        return {
+          action: { type: 'move', direction: fleeDir },
+          reasoning: `Flee from ${nearest.name} (${combatant.fleeTurnsRemaining + 1} turns left, distance ${dist})`,
+        };
+      }
+      // Cornered! Fall through to shoot instead
+    }
   }
 
-  // Find the lowest HP enemy we can hit with any ranged option
-  const lowestHP = getLowestHPEnemy(combatant, enemies);
-  if (lowestHP) {
-    // Filter options that can reach this target
+  // === PHASE 2: Check for finishing blow opportunity ===
+  if (lowestHP && lowestHP.currentHealth <= FINISH_THRESHOLD) {
     const viableOptions = rangedOptions.filter((opt) =>
       canReachTarget(combatant, lowestHP, opt)
     );
 
     if (viableOptions.length > 0) {
-      // Randomly pick from viable options
+      const chosen = pickRandomOption(viableOptions, rng);
+      const estDamage = estimateOptionDamage(chosen, combatant);
+
+      // If we can likely kill them, take the shot even at close range
+      if (lowestHP.currentHealth <= estDamage * 1.5) {
+        const action = createActionFromOption(chosen, lowestHP);
+        // Don't trigger flee after finishing blow - target should be dead
+        return {
+          action,
+          reasoning: `${getOptionName(chosen)} to finish ${lowestHP.name} (${lowestHP.currentHealth} HP)`,
+        };
+      }
+    }
+  }
+
+  // === PHASE 3: If enemy is adjacent, kite away ===
+  if (dist <= 1) {
+    const fleeDir = tryGetFleeDirection(combatant, nearest.position);
+    if (fleeDir) {
+      return {
+        action: { type: 'move', direction: fleeDir },
+        reasoning: `Kite away from ${nearest.name} (distance ${dist})`,
+      };
+    }
+    // Cornered at melee range - fall through to shoot
+  }
+
+  // === PHASE 4: Shoot if in range ===
+  if (lowestHP) {
+    const viableOptions = rangedOptions.filter((opt) =>
+      canReachTarget(combatant, lowestHP, opt)
+    );
+
+    if (viableOptions.length > 0) {
       const chosen = pickRandomOption(viableOptions, rng);
       const action = createActionFromOption(chosen, lowestHP);
+
+      // Trigger flee mode after shooting only if enemy is close (shoot-and-scoot)
+      if (dist <= FLEE_TRIGGER_DISTANCE) {
+        combatant.fleeTurnsRemaining = FLEE_TURNS_AFTER_SHOT;
+        combatant.fleeTargetDistance = FLEE_TARGET_DISTANCE;
+        return {
+          action,
+          reasoning: `${getOptionName(chosen)} ${lowestHP.name} (${lowestHP.currentHealth} HP), then scoot`,
+        };
+      }
+
       return {
         action,
         reasoning: `${getOptionName(chosen)} lowest HP target ${lowestHP.name} (${lowestHP.currentHealth} HP)`,
@@ -314,6 +410,18 @@ function decideRangedBehavior(
     if (viableOptions.length > 0) {
       const chosen = pickRandomOption(viableOptions, rng);
       const action = createActionFromOption(chosen, enemy);
+      const enemyDist = distance(combatant.position, enemy.position);
+
+      // Trigger flee mode only if enemy is close
+      if (enemyDist <= FLEE_TRIGGER_DISTANCE) {
+        combatant.fleeTurnsRemaining = FLEE_TURNS_AFTER_SHOT;
+        combatant.fleeTargetDistance = FLEE_TARGET_DISTANCE;
+        return {
+          action,
+          reasoning: `${getOptionName(chosen)} ${enemy.name} (in range), then scoot`,
+        };
+      }
+
       return {
         action,
         reasoning: `${getOptionName(chosen)} ${enemy.name} (in range)`,

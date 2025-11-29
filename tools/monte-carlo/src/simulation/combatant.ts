@@ -257,6 +257,10 @@ export function createCombatant(
 
     // Ammo
     ammo,
+
+    // Shoot-and-scoot state
+    fleeTurnsRemaining: 0,
+    fleeTargetDistance: 4,
   };
 }
 

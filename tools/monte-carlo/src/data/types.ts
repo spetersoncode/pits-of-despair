@@ -293,6 +293,10 @@ export interface Combatant {
 
   // Equipment reference (for ammo tracking)
   ammo: Map<string, number>; // ammoType -> count
+
+  // Shoot-and-scoot state (for ranged AI)
+  fleeTurnsRemaining: number;
+  fleeTargetDistance: number;
 }
 
 // =============================================================================

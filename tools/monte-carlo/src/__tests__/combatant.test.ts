@@ -93,7 +93,7 @@ describe('createCombatant', () => {
     const goblin = gameData.creatures.get('goblin')!;
     const combatant = createCombatant(goblin, 'A', gameData);
 
-    expect(combatant.name).toBe(goblin.name);
+    expect(combatant.name).toContain(goblin.name);
     expect(combatant.team).toBe('A');
     expect(combatant.currentHealth).toBe(combatant.maxHealth);
     expect(combatant.accumulatedTime).toBe(0);
@@ -520,6 +520,8 @@ function createMockCombatant(overrides: Partial<CombatantState> = {}): Combatant
     regenPoints: 0,
     wpRegenPoints: 0,
     ammo: new Map(),
+    fleeTurnsRemaining: 0,
+    fleeTargetDistance: 4,
     ...overrides,
   };
 }

@@ -417,6 +417,8 @@ function createMockCombatant(overrides: Partial<CombatantState> = {}): Combatant
     regenPoints: 0,
     wpRegenPoints: 0,
     ammo: new Map(),
+    fleeTurnsRemaining: 0,
+    fleeTargetDistance: 4,
     ...overrides,
   };
 }

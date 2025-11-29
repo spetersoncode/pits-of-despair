@@ -19,18 +19,29 @@ public class FleeGoal : Goal
     public int TurnsRemaining { get; private set; }
     public int SafeDistance { get; private set; }
 
+    /// <summary>
+    /// Set to true when cornered (no valid flee direction).
+    /// Causes the goal to end so the AI can fight instead of waiting.
+    /// </summary>
+    private bool _cornered;
+
     public FleeGoal(BaseEntity fleeFrom, int turns, int safeDistance, Goal originalIntent = null)
     {
         FleeFrom = fleeFrom;
         TurnsRemaining = turns;
         SafeDistance = safeDistance;
         OriginalIntent = originalIntent;
+        _cornered = false;
     }
 
     public override bool IsFinished(AIContext context)
     {
         // Finished if threat is gone or dead - no reason to keep fleeing
         if (FleeFrom == null || !GodotObject.IsInstanceValid(FleeFrom) || FleeFrom.IsDead)
+            return true;
+
+        // Cornered - can't flee, so fight instead
+        if (_cornered)
             return true;
 
         // Done when: turns expired AND (can't see threat OR far enough away)
@@ -104,7 +115,11 @@ public class FleeGoal : Goal
             var moveGoal = new MoveDirectionGoal(fleeDir, originalIntent: this);
             context.AIComponent.GoalStack.Push(moveGoal);
         }
-        // If no valid flee direction, we're cornered - just wait
+        else
+        {
+            // Cornered - no valid flee direction, end goal so AI can fight
+            _cornered = true;
+        }
     }
 
     private List<GridPosition> FindNearbyAllies(AIContext context)
