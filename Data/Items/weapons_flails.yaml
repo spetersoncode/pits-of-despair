@@ -9,7 +9,7 @@ defaults:
 entries:
   nunchaku:
     name: nunchaku
-    value: 2
+    introFloor: 2
     color: Palette.AshWood
     description: Twin rods bound by chain, demanding discipline to wield. Finding a fellow chucker in these depths is rare—most perish before mastering its art.
     attack:
@@ -19,7 +19,7 @@ entries:
 
   flail:
     name: flail
-    value: 4
+    introFloor: 4
     color: Palette.HeavyIron
     description: A spiked ball on a chain, unwieldy but devastating. Its unpredictable arc makes it difficult to parry.
     attack:
@@ -28,7 +28,7 @@ entries:
 
   morning_star:
     name: morning star
-    value: 5
+    introFloor: 5
     color: Palette.BrutalIron
     description: Iron spikes radiate from a heavy chain-mounted head. It crushes and punctures in equal measure.
     attack:

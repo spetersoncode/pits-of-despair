@@ -9,7 +9,7 @@ defaults:
 entries:
   axe:
     name: hand axe
-    value: 3
+    introFloor: 3
     color: Palette.BrutalIron
     description: A brutal wedge of iron on a wooden haft. It bites deep and leaves ragged wounds that weep.
     attack:

@@ -30,9 +30,9 @@ The spawning system populates dungeon floors through a region-based, encounter-d
 
 **Phase 6 - Out-of-Depth**: Attempt to spawn creature from deeper floor's pools based on configured chance. Creates memorable danger moments.
 
-**Phase 7 - Place Treasures**: Distribute valuable items with guardians. Higher-value items placed in more dangerous regions.
+**Phase 7 - Place Treasures**: Distribute valuable items with guardians. Higher intro_floor items placed with tougher guardians.
 
-**Phase 8 - Place Items**: Scatter items across floor based on itemDensity (% of walkable tiles). Item values filtered by Floor's min/max item value.
+**Phase 8 - Place Items**: Scatter items across floor based on itemDensity (% of walkable tiles). Items filtered by intro_floor eligibility (items spawn when floor >= their intro_floor). Out-of-depth chance can allow items from future floors.
 
 **Phase 9 - Place Gold**: Distribute 7-12 gold piles with amounts calculated from floor depth using exponential formula (1.2x growth per floor).
 
@@ -43,6 +43,13 @@ The spawning system populates dungeon floors through a region-based, encounter-d
 ## Density-Based Distribution
 
 **Item Density**: Pipeline configs specify `itemDensity` as percentage of walkable tiles (e.g., 0.006 = 0.6%). System calculates target count from total walkable tiles and distributes items across floor.
+
+**Item Spawning - Intro Floor + Relevance Decay**: Items use `intro_floor` (first floor they can spawn) and `relevance_decay` (how quickly they become less common). The floor number itself gates what items appear—no separate min/max value configuration needed.
+
+- **Eligibility**: Items spawn when `currentFloor >= item.IntroFloor`. Out-of-depth chance can temporarily raise the max allowed intro_floor.
+- **Decay Formula**: `weight = decayFactor × spawnRarity` where `decayFactor = 1.0 / (1.0 + floorsAboveIntro × relevanceDecay)`
+- **Out-of-Depth Bonus**: Items from future floors (negative floorsAboveIntro) get `decayFactor > 1.0`, making rare finds more exciting.
+- **Type Defaults**: Consumables (potions, scrolls) have slow decay (0.05), equipment (weapons, armor) has moderate decay (0.15), ammo has no decay (0.0).
 
 **Gold Formula**: Gold is calculated automatically from floor depth using `GoldFormula`. Total budget = 50 × 1.2^(depth-1). Spawns 7-12 piles with ~25% size variance. No configuration needed.
 
@@ -62,7 +69,7 @@ Templates define structured creature groups with roles, positions, and behaviors
 
 **Guard Post**: 1-2 creatures at strategic position, configured to hold ground. May call for reinforcements. Good for chokepoints and entrances.
 
-**Treasure Guard**: Valuable item placed first, guardian scaled to match value. Risk-reward principle—better loot has tougher guardians.
+**Treasure Guard**: Valuable item placed first, guardian scaled to match intro_floor. Risk-reward principle—higher intro_floor loot has tougher guardians.
 
 **Infestation**: Many weak creatures spread throughout region. No leader, chaotic behavior. Good for caves and large open areas.
 

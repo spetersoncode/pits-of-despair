@@ -5,7 +5,7 @@ defaults:
 entries:
   strength_1:
     name: minor strength
-    value: 1
+    introFloor: 1
     color: Palette.PotionStrengthMinor
     description: Burnt orange liquid swirls sluggishly. It smells of iron and exertion.
     effects:
@@ -17,7 +17,7 @@ entries:
 
   strength_2:
     name: strength
-    value: 3
+    introFloor: 3
     color: Palette.PotionStrength
     description: Amber fluid pulses with warmth. The taste of forge-fire lingers on sealed lips.
     effects:
@@ -29,7 +29,7 @@ entries:
 
   strength_3:
     name: major strength
-    value: 4
+    introFloor: 4
     color: Palette.PotionStrengthMajor
     description: Blazing orange radiance strains against the glass. Raw power made liquid.
     effects:
@@ -41,7 +41,7 @@ entries:
 
   agility_1:
     name: minor agility
-    value: 1
+    introFloor: 1
     color: Palette.PotionAgilityMinor
     description: Deep teal liquid shifts like restless water. Light bends strangely around it.
     effects:
@@ -53,7 +53,7 @@ entries:
 
   agility_2:
     name: agility
-    value: 3
+    introFloor: 3
     color: Palette.PotionAgility
     description: Bright teal flows endlessly within itself. Holding it makes your fingers twitch.
     effects:
@@ -65,7 +65,7 @@ entries:
 
   agility_3:
     name: major agility
-    value: 4
+    introFloor: 4
     color: Palette.PotionAgilityMajor
     description: Brilliant cyan dances without stillness. Time itself seems to hesitate nearby.
     effects:
@@ -77,7 +77,7 @@ entries:
 
   armor_1:
     name: barkskin
-    value: 1
+    introFloor: 1
     color: Palette.PotionBarkskin
     description: Dark olive sludge, thick as sap. The scent of deep forest fills your nose.
     effects:
@@ -89,7 +89,7 @@ entries:
 
   armor_2:
     name: stoneskin
-    value: 3
+    introFloor: 3
     color: Palette.PotionStoneskin
     description: Cool gray liquid with grit suspended within. It settles heavy in the stomach.
     effects:
@@ -101,7 +101,7 @@ entries:
 
   armor_3:
     name: ironskin
-    value: 4
+    introFloor: 4
     color: Palette.PotionIronskin
     description: Metallic blue-gray fluid, cold to the touch. Your reflection warps in its surface.
     effects:
@@ -113,7 +113,7 @@ entries:
 
   endurance_1:
     name: minor endurance
-    value: 1
+    introFloor: 1
     color: Palette.PotionEnduranceMinor
     description: Dusty rose fluid, thick and warm. It pulses faintly like a sleeping heart.
     effects:
@@ -125,7 +125,7 @@ entries:
 
   endurance_2:
     name: endurance
-    value: 3
+    introFloor: 3
     color: Palette.PotionEndurance
     description: Vibrant rose essence swirls with vitality. The glass feels alive in your grip.
     effects:
@@ -137,7 +137,7 @@ entries:
 
   endurance_3:
     name: major endurance
-    value: 4
+    introFloor: 4
     color: Palette.PotionEnduranceMajor
     description: Brilliant pink life force churns within. Merely holding it quickens your heartbeat.
     effects:
@@ -149,7 +149,7 @@ entries:
 
   will_1:
     name: minor will
-    value: 2
+    introFloor: 2
     color: Palette.PotionWillMinor
     description: Deep violet liquid rests perfectly still. Staring into it clears unwanted thoughts.
     effects:
@@ -161,7 +161,7 @@ entries:
 
   will_2:
     name: will
-    value: 3
+    introFloor: 3
     color: Palette.PotionWill
     description: Rich purple clarity shimmers with purpose. Your mind sharpens just holding it.
     effects:
@@ -173,7 +173,7 @@ entries:
 
   will_3:
     name: major will
-    value: 4
+    introFloor: 4
     color: Palette.PotionWillMajor
     description: Radiant lavender hums with focus. Reality feels more defined in its presence.
     effects:
@@ -185,7 +185,7 @@ entries:
 
   haste:
     name: haste
-    value: 5
+    introFloor: 5
     color: Palette.PotionHaste
     description: Shimmering chartreuse liquid vibrates with restless energy. Time seems to slow around it.
     effects:

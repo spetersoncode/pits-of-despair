@@ -115,7 +115,8 @@ public class ItemDefaults
     public bool? IsEquippable { get; set; }
     public string? EquipSlot { get; set; }
     public bool? AutoPickup { get; set; }
-    public float? SpawnWeight { get; set; }
+    public float? SpawnRarity { get; set; }
+    public float? RelevanceDecay { get; set; }
     public AttackDefaults? Attack { get; set; }
 }
 

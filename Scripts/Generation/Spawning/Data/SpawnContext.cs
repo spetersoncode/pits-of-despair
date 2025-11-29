@@ -77,16 +77,6 @@ public class SpawnContext
     public int MaxThreat { get; init; }
 
     /// <summary>
-    /// Minimum item value for this floor.
-    /// </summary>
-    public int MinItemValue { get; init; }
-
-    /// <summary>
-    /// Maximum item value for this floor.
-    /// </summary>
-    public int MaxItemValue { get; init; }
-
-    /// <summary>
     /// Chance to spawn out-of-depth creatures.
     /// </summary>
     public float CreatureOutOfDepthChance { get; init; }
@@ -157,8 +147,6 @@ public class SpawnContext
             // From Floor
             MinThreat = floor.MinThreat,
             MaxThreat = floor.MaxThreat,
-            MinItemValue = floor.GetMinItemValue(),
-            MaxItemValue = floor.GetMaxItemValue(),
             CreatureOutOfDepthChance = floor.CreatureOutOfDepthChance,
             OutOfDepthFloors = floor.OutOfDepthFloors,
             ThemeWeights = floor.ThemeWeights ?? new List<WeightedEntry>(),

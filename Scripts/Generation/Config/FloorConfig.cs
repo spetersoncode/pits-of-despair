@@ -72,16 +72,6 @@ public class FloorConfig
     public int MaxThreat { get; set; } = 999;
 
     /// <summary>
-    /// Minimum item value for this floor. If null, defaults to MinThreat.
-    /// </summary>
-    public int? MinItemValue { get; set; } = null;
-
-    /// <summary>
-    /// Maximum item value for this floor. If null, defaults to MaxThreat.
-    /// </summary>
-    public int? MaxItemValue { get; set; } = null;
-
-    /// <summary>
     /// Chance (0.0-1.0) to spawn an out-of-depth creature.
     /// </summary>
     public float CreatureOutOfDepthChance { get; set; } = 0.0f;
@@ -106,16 +96,6 @@ public class FloorConfig
     /// If null, uses defaults.
     /// </summary>
     public CreatureSelectionConfig CreatureSelection { get; set; }
-
-    /// <summary>
-    /// Gets the effective minimum item value (defaults to MinThreat if not specified).
-    /// </summary>
-    public int GetMinItemValue() => MinItemValue ?? MinThreat;
-
-    /// <summary>
-    /// Gets the effective maximum item value (defaults to MaxThreat if not specified).
-    /// </summary>
-    public int GetMaxItemValue() => MaxItemValue ?? MaxThreat;
 
     /// <summary>
     /// Selects a pipeline ID, either from the single Pipeline property or weighted random from Pipelines.

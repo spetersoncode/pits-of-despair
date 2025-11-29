@@ -23,10 +23,16 @@ public class ItemTypeInfo
     public bool UsesOfPattern { get; set; } = false;
 
     /// <summary>
-    /// Spawn weight multiplier for this item type.
+    /// How quickly this item type becomes less common after its intro floor.
+    /// 0 = always relevant (no decay), higher = faster decay.
+    /// </summary>
+    public float RelevanceDecay { get; set; } = 0.05f;
+
+    /// <summary>
+    /// Base spawn rarity for this item type.
     /// Values > 1.0 spawn more frequently, values < 1.0 spawn less frequently.
     /// </summary>
-    public float SpawnWeightMultiplier { get; set; } = 1.0f;
+    public float SpawnRarity { get; set; } = 1.0f;
 
     /// <summary>
     /// Default spawn quantity as dice notation (e.g., "2d6+8" for 10-20).
@@ -52,25 +58,29 @@ public class ItemData
         {
             IsConsumable = true,
             UsesOfPattern = true,
-            SpawnWeightMultiplier = 1.4f
+            RelevanceDecay = 0.05f,
+            SpawnRarity = 1.1f
         },
         ["scroll"] = new ItemTypeInfo
         {
             IsConsumable = true,
             UsesOfPattern = true,
-            SpawnWeightMultiplier = 1.0f // Less common than potions (1.4f)
+            RelevanceDecay = 0.03f,
+            SpawnRarity = 1.0f
         },
         ["weapon"] = new ItemTypeInfo
         {
             IsEquippable = true,
             EquipSlot = "MeleeWeapon",
-            SpawnWeightMultiplier = 0.8f
+            RelevanceDecay = 0.15f,
+            SpawnRarity = 0.9f
         },
         ["armor"] = new ItemTypeInfo
         {
             IsEquippable = true,
             EquipSlot = "Armor",
-            SpawnWeightMultiplier = 0.8f
+            RelevanceDecay = 0.15f,
+            SpawnRarity = 0.9f
         },
         ["ammo"] = new ItemTypeInfo
         {
@@ -78,7 +88,8 @@ public class ItemData
             IsConsumable = true,
             EquipSlot = "Ammo",
             AutoPickup = true,
-            SpawnWeightMultiplier = 1.2f,
+            RelevanceDecay = 0.0f,
+            SpawnRarity = 1.1f,
             DefaultQuantity = "2d6+8" // 10-20 arrows
         },
         ["ring"] = new ItemTypeInfo
@@ -86,17 +97,20 @@ public class ItemData
             IsEquippable = true,
             EquipSlot = "Ring",
             UsesOfPattern = true,
-            SpawnWeightMultiplier = 0.4f
+            RelevanceDecay = 0.05f,
+            SpawnRarity = 0.8f
         },
         ["wand"] = new ItemTypeInfo
         {
             UsesOfPattern = true,
-            SpawnWeightMultiplier = 0.6f
+            RelevanceDecay = 0.05f,
+            SpawnRarity = 0.85f
         },
         ["staff"] = new ItemTypeInfo
         {
             UsesOfPattern = true,
-            SpawnWeightMultiplier = 0.4f
+            RelevanceDecay = 0.05f,
+            SpawnRarity = 0.8f
         }
     };
 
@@ -109,10 +123,10 @@ public class ItemData
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gold value of this item. Used for shop pricing and loot budget calculations.
-    /// Higher value items are placed with stronger guardians.
+    /// First floor this item can spawn on (power gate).
+    /// Items become eligible when currentFloor >= IntroFloor.
     /// </summary>
-    public int Value { get; set; } = 0;
+    public int IntroFloor { get; set; } = 1;
 
     /// <summary>
     /// Rarity tier for loot distribution (common, uncommon, rare, epic).
@@ -127,10 +141,16 @@ public class ItemData
     public bool NoAutoSpawn { get; set; } = false;
 
     /// <summary>
-    /// Optional spawn weight override. If set, overrides the type-based multiplier.
+    /// Optional spawn rarity override. If set, overrides the type-based rarity.
     /// Values > 1.0 spawn more frequently, values < 1.0 spawn less frequently.
     /// </summary>
-    public float? SpawnWeight { get; set; } = null;
+    public float? SpawnRarity { get; set; } = null;
+
+    /// <summary>
+    /// Optional relevance decay override. If set, overrides the type-based decay.
+    /// 0 = always relevant (no decay), higher = faster decay.
+    /// </summary>
+    public float? RelevanceDecay { get; set; } = null;
 
     /// <summary>
     /// Item type for category-based defaults (e.g., "potion", "scroll").
@@ -306,16 +326,31 @@ public class ItemData
     }
 
     /// <summary>
-    /// Gets the spawn weight multiplier for this item.
-    /// Uses per-item override if set, otherwise falls back to type-based multiplier.
+    /// Gets the relevance decay rate for this item.
+    /// Uses per-item override if set, otherwise falls back to type-based decay.
     /// </summary>
-    public float GetSpawnWeightMultiplier()
+    public float GetRelevanceDecay()
     {
-        if (SpawnWeight.HasValue)
-            return SpawnWeight.Value;
+        if (RelevanceDecay.HasValue)
+            return RelevanceDecay.Value;
 
         if (!string.IsNullOrEmpty(Type) && TypeInfo.TryGetValue(Type.ToLower(), out var info))
-            return info.SpawnWeightMultiplier;
+            return info.RelevanceDecay;
+
+        return 0.05f;
+    }
+
+    /// <summary>
+    /// Gets the spawn rarity for this item.
+    /// Uses per-item override if set, otherwise falls back to type-based rarity.
+    /// </summary>
+    public float GetSpawnRarity()
+    {
+        if (SpawnRarity.HasValue)
+            return SpawnRarity.Value;
+
+        if (!string.IsNullOrEmpty(Type) && TypeInfo.TryGetValue(Type.ToLower(), out var info))
+            return info.SpawnRarity;
 
         return 1.0f;
     }

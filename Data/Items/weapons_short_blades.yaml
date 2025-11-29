@@ -9,7 +9,7 @@ defaults:
 entries:
   rusty_knife:
     name: rusty knife
-    value: 1
+    introFloor: 1
     color: Palette.RustedIron
     description: A corroded blade caked with old blood. What it lacks in craftsmanship it makes up for in tetanus.
     noAutoSpawn: true
@@ -20,7 +20,7 @@ entries:
 
   dagger:
     name: dagger
-    value: 2
+    introFloor: 2
     color: Palette.Steel
     description: A slender blade made for close work. It finds the gaps in armor and the spaces between ribs with equal ease.
     attack:

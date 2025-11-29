@@ -5,7 +5,7 @@ defaults:
 entries:
   blink:
     name: blink
-    # value omitted = always spawnable on all floors (weighted as max value = rare)
+    # introFloor omitted = spawns on floor 1+ (uses default introFloor: 1)
     color: Palette.ScrollBlink
     description: Ancient words of translocation writhe across yellowed parchment. Reading them tears reality asunder for the briefest moment.
     effects:
@@ -15,7 +15,7 @@ entries:
 
   teleport:
     name: teleport
-    # value omitted = always spawnable on all floors (weighted as max value = rare)
+    # introFloor omitted = spawns on floor 1+ (uses default introFloor: 1)
     color: Palette.ScrollTeleport
     description: Glowing runes pulse with unstable energy, their power barely contained by arcane bindings. Speaking them unmakes you and remakes you elsewhere.
     effects:
@@ -25,7 +25,7 @@ entries:
 
   charm:
     name: charm
-    value: 3
+    introFloor: 3
     color: Palette.ScrollCharm
     description: Soothing whispers emanate from the parchment, promising friendship and loyalty to any creature that hears them read aloud.
     effects:
@@ -34,7 +34,7 @@ entries:
 
   fear:
     name: fear
-    value: 3
+    introFloor: 3
     color: Palette.StatusDebuff
     description: Dark whispers emanate from this parchment, promising terror to any who hear them spoken.
     effects:
@@ -49,7 +49,7 @@ entries:
 
   sleep:
     name: sleep
-    value: 3
+    introFloor: 3
     color: Palette.Arcane
     description: Drowsy sigils drift across yellowed vellum. Even looking at them brings heavy eyelids.
     effects:
@@ -70,7 +70,7 @@ entries:
 
   magic_mapping:
     name: magic mapping
-    # value omitted = always spawnable on all floors (weighted as max value = rare)
+    # introFloor omitted = spawns on floor 1+ (uses default introFloor: 1)
     color: Palette.Arcane
     description: Arcane cartography fills this scroll. Reading it imprints the dungeon's layout upon your mind.
     effects:

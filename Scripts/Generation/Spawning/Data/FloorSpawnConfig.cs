@@ -104,28 +104,9 @@ public class FloorSpawnConfig
     /// <summary>
     /// Target item density as percentage of walkable tiles (0.0-1.0).
     /// Default 0.03 (3% of tiles get items).
+    /// Item spawning uses the Floor number for intro_floor filtering.
     /// </summary>
     public float ItemDensity { get; set; } = 0.03f;
-
-    /// <summary>
-    /// Minimum item value for this floor. If null, defaults to MinThreat.
-    /// </summary>
-    public int? MinItemValue { get; set; } = null;
-
-    /// <summary>
-    /// Maximum item value for this floor. If null, defaults to MaxThreat.
-    /// </summary>
-    public int? MaxItemValue { get; set; } = null;
-
-    /// <summary>
-    /// Gets the effective minimum item value (defaults to MinThreat if not specified).
-    /// </summary>
-    public int GetMinItemValue() => MinItemValue ?? MinThreat;
-
-    /// <summary>
-    /// Gets the effective maximum item value (defaults to MaxThreat if not specified).
-    /// </summary>
-    public int GetMaxItemValue() => MaxItemValue ?? MaxThreat;
 
     #endregion
 

@@ -13,7 +13,7 @@ namespace PitsOfDespair.Generation.Spawning;
 
 /// <summary>
 /// Places valuable items with guardians. Implements risk = reward principle.
-/// Higher value items are placed with tougher guardians.
+/// Higher intro_floor items are placed with tougher guardians.
 /// </summary>
 public class TreasurePlacer
 {
@@ -35,21 +35,21 @@ public class TreasurePlacer
     }
 
     /// <summary>
-    /// Places a guarded treasure in a region using value-based selection.
-    /// Higher threat guardians guard higher value items.
+    /// Places a guarded treasure in a region using intro floor-based selection.
+    /// Higher threat guardians guard higher intro_floor items.
     /// </summary>
     /// <param name="region">Region to place treasure in</param>
-    /// <param name="config">Floor spawn config with value ranges</param>
+    /// <param name="config">Floor spawn config</param>
     /// <param name="guardianThreat">Threat level of guardians in this region</param>
     /// <param name="occupiedPositions">Already occupied positions</param>
-    /// <returns>Tuple of (items placed, total value)</returns>
+    /// <returns>Tuple of (items placed, intro floor)</returns>
     public (int count, int value) PlaceGuardedTreasure(
         Region region,
         FloorSpawnConfig config,
         int guardianThreat,
         HashSet<Vector2I> occupiedPositions)
     {
-        // Select item based on guardian strength (stronger guardian = higher value item)
+        // Select item based on guardian strength (stronger guardian = higher intro_floor item)
         var (itemId, itemData) = SelectItemForGuardian(config, guardianThreat);
         if (itemData == null)
             return (0, 0);
@@ -67,23 +67,24 @@ public class TreasurePlacer
         _entityManager.AddEntity(itemEntity);
         occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
 
-        GD.Print($"[TreasurePlacer] Placed guarded treasure '{itemId}' (value {itemData.Value}) with guardian threat {guardianThreat}");
-        return (1, itemData.Value);
+        GD.Print($"[TreasurePlacer] Placed guarded treasure '{itemId}' (intro floor {itemData.IntroFloor}) with guardian threat {guardianThreat}");
+        return (1, itemData.IntroFloor);
     }
 
     /// <summary>
     /// Places an unguarded treasure in a low-danger region.
+    /// Selects low intro_floor items appropriate for the current floor.
     /// </summary>
     public int PlaceUnguardedTreasure(
         Region region,
         FloorSpawnConfig config,
         HashSet<Vector2I> occupiedPositions)
     {
-        // Select a lower-value item for unguarded placement
-        int minValue = config.GetMinItemValue();
-        int maxValue = minValue + 1; // Only lowest tier items unguarded
+        // Select a lower intro_floor item for unguarded placement
+        // Only items at or below current floor (no out-of-depth for unguarded)
+        int currentFloor = config.Floor;
 
-        var (itemId, itemData) = SelectItemByValueRange(minValue, maxValue);
+        var (itemId, itemData) = SelectItemByIntroFloor(currentFloor, minFloor: 1, maxFloor: currentFloor);
         if (itemData == null)
             return 0;
 
@@ -103,40 +104,41 @@ public class TreasurePlacer
 
     /// <summary>
     /// Selects an item appropriate for the guardian's threat level.
-    /// Higher threat guardians guard higher value items.
+    /// Higher threat guardians guard higher intro_floor items.
     /// </summary>
     private (string id, ItemData data) SelectItemForGuardian(FloorSpawnConfig config, int guardianThreat)
     {
-        int minValue = config.GetMinItemValue();
-        int maxValue = config.GetMaxItemValue();
+        int currentFloor = config.Floor;
 
-        // Map guardian threat to item value range
-        // Higher threat = bias towards higher value items
-        int valueRange = maxValue - minValue;
+        // Map guardian threat to intro_floor range
+        // Higher threat = bias towards higher intro_floor items
+        int minFloor = 1;
+        int maxFloor = currentFloor;
 
         if (guardianThreat >= 16)
         {
-            // Very dangerous - high value items only
-            minValue = maxValue - (valueRange / 3);
+            // Very dangerous - prefer high intro_floor items
+            minFloor = Mathf.Max(1, currentFloor - 1);
+            maxFloor = currentFloor + 2; // Allow some out-of-depth
         }
         else if (guardianThreat >= 8)
         {
-            // Moderately dangerous - mid-to-high value items
-            minValue = minValue + (valueRange / 3);
+            // Moderately dangerous - mid-to-high intro_floor items
+            minFloor = Mathf.Max(1, currentFloor / 2);
+            maxFloor = currentFloor + 1;
         }
-        // else: lower danger regions get full value range
+        // else: lower danger regions get full intro_floor range
 
-        return SelectItemByValueRange(minValue, maxValue);
+        return SelectItemByIntroFloor(currentFloor, minFloor, maxFloor);
     }
 
     /// <summary>
-    /// Selects an item within the given value range.
-    /// Uses combined weighting: inverse value (lower = more common) + type multiplier.
-    /// Items with Value <= 0 bypass floor filtering and are treated as maxValue for weighting (rare).
+    /// Selects an item within the given intro_floor range.
+    /// Uses decay-based weighting for selection.
     /// </summary>
-    private (string id, ItemData data) SelectItemByValueRange(int minValue, int maxValue)
+    private (string id, ItemData data) SelectItemByIntroFloor(int currentFloor, int minFloor, int maxFloor)
     {
-        var candidates = new List<(string id, ItemData data, int weight)>();
+        var candidates = new List<(string id, ItemData data, float weight)>();
 
         foreach (var itemData in _dataLoader.Items.GetAll())
         {
@@ -144,21 +146,14 @@ public class TreasurePlacer
             if (itemData.NoAutoSpawn)
                 continue;
 
-            // Items with no value (0 or less) bypass floor filtering
-            bool isValueless = itemData.Value <= 0;
-            bool inValueRange = itemData.Value >= minValue && itemData.Value <= maxValue;
-
-            if (isValueless || inValueRange)
+            // Check intro_floor range
+            if (itemData.IntroFloor >= minFloor && itemData.IntroFloor <= maxFloor)
             {
-                // Valueless items use maxValue for weighting (rarest tier)
-                int effectiveValue = isValueless ? maxValue : itemData.Value;
-
-                // Inverse value weighting: lower value = higher base weight
-                int baseWeight = Mathf.Max(1, maxValue - effectiveValue + 1);
-
-                // Apply type-based spawn weight multiplier
-                float finalWeight = baseWeight * itemData.GetSpawnWeightMultiplier();
-                int weight = Mathf.Max(1, Mathf.RoundToInt(finalWeight));
+                // Calculate decay-based weight
+                int floorsAboveIntro = currentFloor - itemData.IntroFloor;
+                float decay = itemData.GetRelevanceDecay();
+                float decayFactor = 1.0f / (1.0f + floorsAboveIntro * decay);
+                float weight = Mathf.Max(0.01f, decayFactor * itemData.GetSpawnRarity());
 
                 candidates.Add((itemData.DataFileId, itemData, weight));
             }
@@ -168,15 +163,15 @@ public class TreasurePlacer
             return (null, null);
 
         // Weighted random selection
-        int totalWeight = candidates.Sum(c => c.weight);
-        if (totalWeight == 0)
+        float totalWeight = candidates.Sum(c => c.weight);
+        if (totalWeight <= 0)
         {
             var random = candidates[_rng.RandiRange(0, candidates.Count - 1)];
             return (random.id, random.data);
         }
 
-        int roll = _rng.RandiRange(0, totalWeight - 1);
-        int cumulative = 0;
+        float roll = _rng.Randf() * totalWeight;
+        float cumulative = 0;
 
         foreach (var (id, data, weight) in candidates)
         {

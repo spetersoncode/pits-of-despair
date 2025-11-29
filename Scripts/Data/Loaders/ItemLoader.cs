@@ -109,8 +109,11 @@ public class ItemLoader
         if (!item.AutoPickup && defaults.AutoPickup.HasValue)
             item.AutoPickup = defaults.AutoPickup.Value;
 
-        if (!item.SpawnWeight.HasValue && defaults.SpawnWeight.HasValue)
-            item.SpawnWeight = defaults.SpawnWeight.Value;
+        if (!item.SpawnRarity.HasValue && defaults.SpawnRarity.HasValue)
+            item.SpawnRarity = defaults.SpawnRarity.Value;
+
+        if (!item.RelevanceDecay.HasValue && defaults.RelevanceDecay.HasValue)
+            item.RelevanceDecay = defaults.RelevanceDecay.Value;
 
         // Apply attack defaults if item has an attack
         if (item.Attack != null && defaults.Attack != null)

@@ -554,8 +554,6 @@ public partial class SpawnOrchestrator : Node
             // From Floor (difficulty/content)
             MinThreat = context.MinThreat,
             MaxThreat = context.MaxThreat,
-            MinItemValue = context.MinItemValue,
-            MaxItemValue = context.MaxItemValue,
             CreatureOutOfDepthChance = context.CreatureOutOfDepthChance,
             OutOfDepthFloors = context.OutOfDepthFloors,
             ThemeWeights = context.ThemeWeights,

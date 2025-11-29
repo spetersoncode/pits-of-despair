@@ -13,7 +13,7 @@ namespace PitsOfDespair.Generation.Spawning;
 
 /// <summary>
 /// Distributes items across the dungeon floor using density-based spawning.
-/// Items are filtered by value range and weighted inversely by value (common items more frequent).
+/// Items are filtered by intro floor and weighted by decay formula + spawn rarity.
 /// </summary>
 public class LootDistributor
 {
@@ -36,13 +36,13 @@ public class LootDistributor
 
     /// <summary>
     /// Distributes items across regions using density-based spawning.
-    /// Items are selected based on value range and weighted inversely by value.
+    /// Items are selected based on intro floor eligibility and weighted by decay formula.
     /// </summary>
     /// <param name="regions">Regions to distribute items across</param>
     /// <param name="regionSpawnData">Spawn data per region (for danger levels)</param>
-    /// <param name="config">Floor spawn configuration with density and value parameters</param>
+    /// <param name="config">Floor spawn configuration with density parameters</param>
     /// <param name="occupiedPositions">Already occupied positions</param>
-    /// <returns>Tuple of (items placed, total value)</returns>
+    /// <returns>Tuple of (items placed, total intro floor sum)</returns>
     public (int count, int value) DistributeItemsByDensity(
         List<Region> regions,
         Dictionary<int, RegionSpawnData> regionSpawnData,
@@ -56,32 +56,34 @@ public class LootDistributor
         int totalTiles = regions.Sum(r => r.Tiles?.Count ?? 0);
         int targetItems = Mathf.Max(1, Mathf.RoundToInt(totalTiles * config.ItemDensity));
 
-        // Get valid items within value range
-        int minValue = config.GetMinItemValue();
-        int maxValue = config.GetMaxItemValue();
-        var validItems = GetSpawnableItems(minValue, maxValue);
+        int currentFloor = config.Floor;
 
-        // Check for out-of-depth items
+        // Determine max intro floor (with out-of-depth chance)
+        int maxIntroFloor = currentFloor;
+        bool outOfDepthTriggered = false;
         if (config.CreatureOutOfDepthChance > 0 && _rng.Randf() < config.CreatureOutOfDepthChance)
         {
-            int oodMinValue = maxValue + 1;
-            int oodMaxValue = maxValue + config.OutOfDepthFloors * 2;
-            var oodItems = GetSpawnableItems(oodMinValue, oodMaxValue);
-            if (oodItems.Count > 0)
-            {
-                validItems.AddRange(oodItems);
-                GD.Print($"[LootDistributor] Out-of-depth triggered! Added {oodItems.Count} items from value range {oodMinValue}-{oodMaxValue}");
-            }
+            maxIntroFloor = currentFloor + config.OutOfDepthFloors;
+            outOfDepthTriggered = true;
         }
 
-        if (validItems.Count == 0)
+        // Get eligible items based on intro floor
+        var eligibleItems = GetEligibleItems(maxIntroFloor);
+
+        if (eligibleItems.Count == 0)
         {
-            GD.PushWarning($"[LootDistributor] No spawnable items found in value range {minValue}-{maxValue}");
+            GD.PushWarning($"[LootDistributor] No spawnable items found for floor {currentFloor} (maxIntroFloor {maxIntroFloor})");
             return (0, 0);
         }
 
+        if (outOfDepthTriggered)
+        {
+            int oodCount = eligibleItems.Count(i => i.data.IntroFloor > currentFloor);
+            GD.Print($"[LootDistributor] Out-of-depth triggered! {oodCount} items from floors {currentFloor + 1}-{maxIntroFloor} eligible");
+        }
+
         int itemsPlaced = 0;
-        int totalValue = 0;
+        int totalIntroFloor = 0;
 
         // Sort regions by danger (more dangerous = better loot placement preference)
         var sortedRegions = regions
@@ -95,12 +97,12 @@ public class LootDistributor
         // Distribute items across regions
         for (int i = 0; i < targetItems; i++)
         {
-            // Cycle through regions, with bias towards dangerous regions for higher value items
+            // Cycle through regions, with bias towards dangerous regions
             int regionIndex = i % sortedRegions.Count;
             var region = sortedRegions[regionIndex];
 
-            // Select item with inverse value weighting and type multiplier
-            var (itemId, itemData) = SelectItemWeighted(validItems, minValue, maxValue);
+            // Select item using decay-based weighting
+            var (itemId, itemData) = SelectItemWithDecay(eligibleItems, currentFloor);
             if (itemData == null)
                 continue;
 
@@ -115,18 +117,18 @@ public class LootDistributor
             _entityManager.AddEntity(itemEntity);
             occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
             itemsPlaced++;
-            totalValue += itemData.Value;
+            totalIntroFloor += itemData.IntroFloor;
         }
 
-        GD.Print($"[LootDistributor] Placed {itemsPlaced}/{targetItems} items (density {config.ItemDensity:P0} of {totalTiles} tiles, value range {minValue}-{maxValue})");
-        return (itemsPlaced, totalValue);
+        GD.Print($"[LootDistributor] Placed {itemsPlaced}/{targetItems} items (density {config.ItemDensity:P0} of {totalTiles} tiles, floor {currentFloor}, maxIntro {maxIntroFloor})");
+        return (itemsPlaced, totalIntroFloor);
     }
 
     /// <summary>
-    /// Gets all items that can spawn automatically within the given value range.
-    /// Items with Value <= 0 bypass floor filtering (always spawnable).
+    /// Gets all items eligible to spawn based on intro floor.
+    /// Items are eligible if IntroFloor <= maxIntroFloor and not marked NoAutoSpawn.
     /// </summary>
-    private List<(string id, ItemData data)> GetSpawnableItems(int minValue, int maxValue)
+    private List<(string id, ItemData data)> GetEligibleItems(int maxIntroFloor)
     {
         var result = new List<(string id, ItemData data)>();
 
@@ -136,15 +138,8 @@ public class LootDistributor
             if (itemData.NoAutoSpawn)
                 continue;
 
-            // Items with no value (0 or less) bypass floor filtering - always spawnable
-            if (itemData.Value <= 0)
-            {
-                result.Add((itemData.DataFileId, itemData));
-                continue;
-            }
-
-            // Check value range for items with positive value
-            if (itemData.Value >= minValue && itemData.Value <= maxValue)
+            // Check intro floor eligibility
+            if (itemData.IntroFloor <= maxIntroFloor)
             {
                 result.Add((itemData.DataFileId, itemData));
             }
@@ -154,43 +149,43 @@ public class LootDistributor
     }
 
     /// <summary>
-    /// Selects an item using combined weighting:
-    /// 1. Inverse value weighting (lower value = more common)
-    /// 2. Type-based spawn weight multiplier (consumables more common than equipment)
-    /// Items with Value <= 0 are treated as having maxValue for weighting (rare).
+    /// Selects an item using decay-based weighting.
+    /// Weight = decayFactor * spawnRarity
+    /// Where decayFactor = 1.0 / (1.0 + floorsAboveIntro * relevanceDecay)
+    /// Out-of-depth items (floorsAboveIntro < 0) get decayFactor > 1.0, making them more likely.
     /// </summary>
-    private (string id, ItemData data) SelectItemWeighted(List<(string id, ItemData data)> items, int minValue, int maxValue)
+    private (string id, ItemData data) SelectItemWithDecay(List<(string id, ItemData data)> items, int currentFloor)
     {
         if (items == null || items.Count == 0)
             return (null, null);
 
-        // Calculate weights with type multiplier
+        // Calculate weights using decay formula
         var weighted = items.Select(i => {
-            // Valueless items use maxValue (rarest tier - they bypass floor filtering so should be rare)
-            int effectiveValue = i.data.Value > 0 ? i.data.Value : maxValue;
+            int floorsAboveIntro = currentFloor - i.data.IntroFloor;
+            float decay = i.data.GetRelevanceDecay();
 
-            // Base weight from inverse value (lower value = higher weight)
-            int baseWeight = Mathf.Max(1, maxValue - effectiveValue + 1);
+            // decayFactor = 1.0 / (1.0 + floorsAboveIntro * decay)
+            // When floorsAboveIntro < 0 (out-of-depth), decayFactor > 1.0
+            float decayFactor = 1.0f / (1.0f + floorsAboveIntro * decay);
 
-            // Apply type-based spawn weight multiplier
-            float finalWeight = baseWeight * i.data.GetSpawnWeightMultiplier();
+            float finalWeight = decayFactor * i.data.GetSpawnRarity();
 
             return (
                 id: i.id,
                 data: i.data,
-                weight: Mathf.Max(1, Mathf.RoundToInt(finalWeight))
+                weight: Mathf.Max(0.01f, finalWeight)
             );
         }).ToList();
 
-        int totalWeight = weighted.Sum(w => w.weight);
-        if (totalWeight == 0)
+        float totalWeight = weighted.Sum(w => w.weight);
+        if (totalWeight <= 0)
         {
             var random = items[_rng.RandiRange(0, items.Count - 1)];
             return (random.id, random.data);
         }
 
-        int roll = _rng.RandiRange(0, totalWeight - 1);
-        int cumulative = 0;
+        float roll = _rng.Randf() * totalWeight;
+        float cumulative = 0;
 
         foreach (var (id, data, weight) in weighted)
         {

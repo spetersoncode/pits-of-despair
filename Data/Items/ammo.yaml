@@ -5,6 +5,6 @@ defaults:
 entries:
   arrow:
     name: arrows
-    value: 1
+    introFloor: 1
     color: Palette.Mahogany
     description: Straight wooden shafts tipped with iron heads and fletched with gray feathers. Simple but deadly when loosed from a bow.
