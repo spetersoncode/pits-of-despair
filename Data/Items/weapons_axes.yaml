@@ -7,8 +7,18 @@ defaults:
     delay: 1.3
 
 entries:
+  hatchet:
+    name: hatchet
+    introFloor: 1
+    color: Palette.AshWood
+    description: A small axe meant for kindling, now repurposed for skulls. Light enough to swing quickly, sharp enough to bite deep.
+    attack:
+      type: Melee
+      dice: "1d4+1"
+      delay: 1.1
+
   axe:
-    name: hand axe
+    name: axe
     introFloor: 3
     color: Palette.BrutalIron
     description: A brutal wedge of iron on a wooden haft. It bites deep and leaves ragged wounds that weep.

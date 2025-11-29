@@ -10,11 +10,11 @@ defaults:
 entries:
   short_bow:
     name: short bow
-    introFloor: 4
+    introFloor: 2
     color: Palette.Yew
-    description: Crafted from supple yew, this bow has ended lives from the shadows. The string hums with barely-contained tension when drawn.
+    description: A simple hunting bow, worn but functional. It lacks the draw weight for serious damage, but keeps threats at a distance.
     attack:
       type: Ranged
-      dice: "1d6"
+      dice: "1d4"
       range: 8
       ammoType: arrow

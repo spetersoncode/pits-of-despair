@@ -15,7 +15,7 @@ entries:
     attack:
       type: Melee
       dice: "1d6"
-      delay: 1.1
+      delay: 1.0
 
   flail:
     name: flail
@@ -33,4 +33,4 @@ entries:
     description: Iron spikes radiate from a heavy chain-mounted head. It crushes and punctures in equal measure.
     attack:
       type: Melee
-      dice: "1d10"
+      dice: "1d10+1"

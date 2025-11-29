@@ -29,7 +29,7 @@ entries:
     name: mace
     introFloor: 3
     color: Palette.HeavyIron
-    description: A heavy iron head mounted on a sturdy shaft. It cares nothing for armor, only the bones beneath.
+    description: A heavy iron head mounted on a sturdy shaft. Simple, brutal, effective.
     attack:
       type: Melee
-      dice: "1d6+1"
+      dice: "1d6"
