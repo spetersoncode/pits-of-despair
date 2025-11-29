@@ -259,7 +259,7 @@ public static class SkillExecutor
             }
 
             // Use unified ApplyToTargets for all effects
-            var effectResults = effect.ApplyToTargets(caster, effectTargets, context);
+            var effectResults = effect.ApplyToTargets(caster, effectTargets, context, targetPosition);
 
             foreach (var effectResult in effectResults)
             {

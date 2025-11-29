@@ -36,7 +36,7 @@ entries:
       - damage
     effects:
       - type: stat_bonus
-        stat: str
+        stat: melee_damage
         amount: 1
 
   cleave:

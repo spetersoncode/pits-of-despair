@@ -110,6 +110,7 @@ public partial class StatsComponent : Node
 		{ StatType.Will, new Dictionary<string, int>() },
 		{ StatType.Armor, new Dictionary<string, int>() },
 		{ StatType.Evasion, new Dictionary<string, int>() },
+		{ StatType.MeleeDamage, new Dictionary<string, int>() },
 	};
 
 	#endregion
@@ -147,6 +148,12 @@ public partial class StatsComponent : Node
 	/// Positive increases evasion, negative reduces it (heavy armor).
 	/// </summary>
 	public int TotalEvasionModifier => GetStatModifierTotal(StatType.Evasion);
+
+	/// <summary>
+	/// Total melee damage bonus from all sources (skills, equipment, buffs).
+	/// Added to melee damage in addition to Strength.
+	/// </summary>
+	public int TotalMeleeDamageBonus => GetStatModifierTotal(StatType.MeleeDamage);
 
 	/// <summary>
 	/// Melee attack modifier for attack rolls.
@@ -247,10 +254,10 @@ public partial class StatsComponent : Node
 	/// Gets the damage bonus for attacks (melee only).
 	/// </summary>
 	/// <param name="isMelee">True for melee weapons, false for ranged</param>
-	/// <returns>STR for melee, 0 for ranged</returns>
+	/// <returns>STR + melee damage bonus for melee, 0 for ranged</returns>
 	public int GetDamageBonus(bool isMelee)
 	{
-		return isMelee ? TotalStrength : 0;
+		return isMelee ? TotalStrength + TotalMeleeDamageBonus : 0;
 	}
 
 	/// <summary>

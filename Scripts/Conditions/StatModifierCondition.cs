@@ -31,7 +31,13 @@ public class StatModifierCondition : Condition
 
     public override string Name => $"{Stat} Modifier";
 
-    public override string TypeId => $"{Stat.ToString().ToLower()}_modifier";
+    /// <summary>
+    /// TypeId includes SourceId to allow multiple stat modifiers from different sources
+    /// (e.g., equipment armor + skill armor + potion armor can all coexist).
+    /// </summary>
+    public override string TypeId => SourceId != null
+        ? $"{Stat.ToString().ToLower()}_modifier_{SourceId}"
+        : $"{Stat.ToString().ToLower()}_modifier";
 
     /// <summary>
     /// Parameterless constructor for deserialization.

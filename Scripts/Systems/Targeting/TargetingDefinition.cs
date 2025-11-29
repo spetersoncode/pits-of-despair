@@ -91,12 +91,15 @@ public class TargetingDefinition
     /// <summary>
     /// Creates a targeting definition for line/beam targeting.
     /// </summary>
-    public static TargetingDefinition Line(int range, bool requiresLOS = true) => new()
+    /// <param name="range">Maximum range in tiles</param>
+    /// <param name="requiresLOS">Whether line-of-sight is required</param>
+    /// <param name="metric">Distance metric (Euclidean for beams, Chebyshev for movement)</param>
+    public static TargetingDefinition Line(int range, bool requiresLOS = true, DistanceMetric metric = DistanceMetric.Euclidean) => new()
     {
         Type = TargetingType.Line,
         Range = range,
         RequiresLOS = requiresLOS,
-        Metric = DistanceMetric.Euclidean,
+        Metric = metric,
         Filter = TargetFilter.Tile
     };
 
@@ -133,6 +136,9 @@ public class TargetingDefinition
         var skillTargeting = skill.Targeting?.ToLower() ?? "creature";
         int range = skill.Range > 0 ? skill.Range : 1;
 
+        // Movement skills use Chebyshev for 8-directional targeting
+        bool isMovementSkill = skill.Tags.Contains("movement");
+
         return skillTargeting switch
         {
             "self" => Creature(0, TargetFilter.Ally, DistanceMetric.Chebyshev, false), // Self handled at action level
@@ -146,7 +152,7 @@ public class TargetingDefinition
             "cleave" => Cleave(),
             "tile" => Tile(range),
             "area" => Area(range, skill.Radius),
-            "line" => Line(range),
+            "line" => Line(range, true, isMovementSkill ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean),
             "cone" => Cone(range, skill.Radius > 0 ? skill.Radius : 2),
             _ => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean)
         };

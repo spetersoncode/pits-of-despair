@@ -24,6 +24,7 @@ public static class StatConditionMapper
             // Combat stats
             "armor" => "armor_modifier",
             "evasion" => "evasion_modifier",
+            "melee_damage" => "melee_damage_modifier",
 
             // Resource stats
             "max_hp" or "hp" => "max_hp_modifier",

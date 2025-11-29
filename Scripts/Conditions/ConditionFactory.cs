@@ -39,6 +39,7 @@ public static class ConditionFactory
             "endurance_modifier" => new StatModifierCondition(StatType.Endurance, amount, duration, durationMode, sourceId),
             "will_modifier" => new StatModifierCondition(StatType.Will, amount, duration, durationMode, sourceId),
             "evasion_modifier" => new StatModifierCondition(StatType.Evasion, amount, duration, durationMode, sourceId),
+            "melee_damage_modifier" => new StatModifierCondition(StatType.MeleeDamage, amount, duration, durationMode, sourceId),
 
             // Resource modifiers
             "max_health_modifier" => new MaxHealthModifierCondition(amount, duration, durationMode, sourceId),
@@ -91,6 +92,7 @@ public static class ConditionFactory
             "endurance_modifier" => true,
             "will_modifier" => true,
             "evasion_modifier" => true,
+            "melee_damage_modifier" => true,
             "max_health_modifier" => true,
             "max_willpower_modifier" => true,
             "regen_modifier" => true,

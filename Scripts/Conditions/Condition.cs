@@ -15,7 +15,8 @@ public enum StatType
     Endurance,
     Will,
     Evasion,
-    Regen
+    Regen,
+    MeleeDamage
 }
 
 /// <summary>
