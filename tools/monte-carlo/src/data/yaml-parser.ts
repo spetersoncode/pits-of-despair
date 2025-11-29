@@ -180,7 +180,7 @@ export function parseCreatureFile(filePath: string): CreatureDefinition[] {
       strength: merged.strength as number,
       agility: merged.agility as number,
       endurance: merged.endurance as number,
-      will: merged.will as number,
+      will: (merged.wil ?? merged.will) as number,
       health: merged.health as number,
       speed: merged.speed as number,
       equipment: parseEquipment(merged.equipment),
