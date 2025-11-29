@@ -82,8 +82,17 @@ export function createProgram(): Command {
     .option('-o, --output <format>', 'Output format: console, json, csv', 'console')
     .option('--outfile <path>', 'Output file path (for json/csv)')
     .option('-c, --compact', 'Compact console output')
+    .option('-v, --verbose', 'Enable verbose debug output (limits to 3 iterations)')
     .action((creatureA, creatureB, options) => {
-      const iterations = parseInt(options.iterations, 10);
+      let iterations = parseInt(options.iterations, 10);
+      const verbose = options.verbose ?? false;
+
+      // Limit iterations in verbose mode
+      if (verbose && iterations > 3) {
+        console.log(`Verbose mode: limiting iterations from ${iterations} to 3\n`);
+        iterations = 3;
+      }
+
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
       const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
 
@@ -137,6 +146,7 @@ export function createProgram(): Command {
           equipmentOverridesB: equipB,
           inlineCreatureA,
           inlineCreatureB,
+          verbose,
         },
         gameData,
         rng
@@ -154,8 +164,17 @@ export function createProgram(): Command {
     .option('-o, --output <format>', 'Output format: console, json, csv', 'console')
     .option('--outfile <path>', 'Output file path (for json/csv)')
     .option('-c, --compact', 'Compact console output')
+    .option('-v, --verbose', 'Enable verbose debug output (limits to 3 iterations)')
     .action((teamAStr, teamBStr, options) => {
-      const iterations = parseInt(options.iterations, 10);
+      let iterations = parseInt(options.iterations, 10);
+      const verbose = options.verbose ?? false;
+
+      // Limit iterations in verbose mode
+      if (verbose && iterations > 3) {
+        console.log(`Verbose mode: limiting iterations from ${iterations} to 3\n`);
+        iterations = 3;
+      }
+
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
       const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
 
@@ -164,7 +183,7 @@ export function createProgram(): Command {
       const teamA = parseTeamString(teamAStr);
       const teamB = parseTeamString(teamBStr);
 
-      const result = runGroupBattle({ teamA, teamB, iterations }, gameData, rng);
+      const result = runGroupBattle({ teamA, teamB, iterations, verbose }, gameData, rng);
 
       handleOutput(result, options.output as OutputFormat, options.outfile, options.compact);
     });
@@ -176,8 +195,17 @@ export function createProgram(): Command {
     .option('-n, --iterations <number>', 'Number of iterations per variation', '1000')
     .option('-s, --seed <number>', 'Random seed for reproducibility')
     .option('--var <spec>', 'Variation spec "name:item1,item2" (can repeat)', (val, prev: string[]) => [...prev, val], [])
+    .option('-v, --verbose', 'Enable verbose debug output (limits to 3 iterations)')
     .action((creature, opponent, options) => {
-      const iterations = parseInt(options.iterations, 10);
+      let iterations = parseInt(options.iterations, 10);
+      const verbose = options.verbose ?? false;
+
+      // Limit iterations in verbose mode
+      if (verbose && iterations > 3) {
+        console.log(`Verbose mode: limiting iterations from ${iterations} to 3\n`);
+        iterations = 3;
+      }
+
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
       const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
 
@@ -197,7 +225,7 @@ export function createProgram(): Command {
 
       const gameData = loadGameData();
       const results = runVariations(
-        { baseCreature: creature, opponent, variations, iterations },
+        { baseCreature: creature, opponent, variations, iterations, verbose },
         gameData,
         rng
       );
@@ -212,8 +240,17 @@ export function createProgram(): Command {
     .option('-n, --iterations <number>', 'Number of iterations per variation', '1000')
     .option('-s, --seed <number>', 'Random seed for reproducibility')
     .option('--vars <json>', 'JSON array of inline creature definitions')
+    .option('-v, --verbose', 'Enable verbose debug output (limits to 3 iterations)')
     .action((opponent, options) => {
-      const iterations = parseInt(options.iterations, 10);
+      let iterations = parseInt(options.iterations, 10);
+      const verbose = options.verbose ?? false;
+
+      // Limit iterations in verbose mode
+      if (verbose && iterations > 3) {
+        console.log(`Verbose mode: limiting iterations from ${iterations} to 3\n`);
+        iterations = 3;
+      }
+
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
       const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
 
@@ -247,7 +284,8 @@ export function createProgram(): Command {
         opponent,
         iterations,
         gameData,
-        rng
+        rng,
+        verbose
       );
 
       printVariationResults(results);
@@ -261,8 +299,17 @@ export function createProgram(): Command {
     .option('-s, --seed <number>', 'Random seed')
     .option('-o, --output <format>', 'Output format: console, csv', 'console')
     .option('--outfile <path>', 'Output file path')
+    .option('-v, --verbose', 'Enable verbose debug output (limits to 3 iterations)')
     .action((options) => {
-      const iterations = parseInt(options.iterations, 10);
+      let iterations = parseInt(options.iterations, 10);
+      const verbose = options.verbose ?? false;
+
+      // Limit iterations in verbose mode
+      if (verbose && iterations > 3) {
+        console.log(`Verbose mode: limiting iterations from ${iterations} to 3\n`);
+        iterations = 3;
+      }
+
       const seed = options.seed ? parseInt(options.seed, 10) : undefined;
       const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
 
@@ -275,9 +322,11 @@ export function createProgram(): Command {
       for (const a of creatures) {
         for (const b of creatures) {
           if (a === b) continue;
-          const result = runDuel({ creatureA: a, creatureB: b, iterations }, gameData, rng);
+          const result = runDuel({ creatureA: a, creatureB: b, iterations, verbose }, gameData, rng);
           results.push(result);
-          printCompactResult(result);
+          if (!verbose) {
+            printCompactResult(result);
+          }
         }
       }
 

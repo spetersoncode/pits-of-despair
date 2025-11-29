@@ -13,6 +13,7 @@ import { getCreature } from '../data/data-loader.js';
 import { createCombatant, resetCombatantIdCounter } from '../simulation/combatant.js';
 import { runCombat, DEFAULT_CONFIG } from '../simulation/combat-engine.js';
 import { aggregateResults, type Scenario } from './scenario.js';
+import { createVerboseLogger } from '../output/verbose-logger.js';
 
 /**
  * Run a duel scenario.
@@ -27,6 +28,9 @@ export function runDuel(
   const creatureB = config.inlineCreatureB ?? getCreature(config.creatureB, gameData);
 
   const results: SimulationResult[] = [];
+
+  // Create logger for verbose mode
+  const logger = config.verbose ? createVerboseLogger() : undefined;
 
   for (let i = 0; i < config.iterations; i++) {
     resetCombatantIdCounter();
@@ -46,7 +50,12 @@ export function runDuel(
       config.equipmentOverridesB
     );
 
-    const result = runCombat([combatantA, combatantB], DEFAULT_CONFIG, rng);
+    // Start new fight in logger
+    if (logger) {
+      logger.startFight();
+    }
+
+    const result = runCombat([combatantA, combatantB], DEFAULT_CONFIG, rng, logger);
     results.push(result);
   }
 

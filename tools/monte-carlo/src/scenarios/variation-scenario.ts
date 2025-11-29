@@ -39,6 +39,7 @@ export function runVariations(
         creatureB: config.opponent,
         iterations: config.iterations,
         equipmentOverridesA: variation.equipmentOverrides,
+        verbose: config.verbose,
       },
       gameData,
       rng
@@ -93,7 +94,8 @@ export function runInlineVariations(
   opponent: string,
   iterations: number,
   gameData: GameData,
-  rng: RandomGenerator
+  rng: RandomGenerator,
+  verbose?: boolean
 ): VariationResult[] {
   const results: VariationResult[] = [];
   const opponentCreature = getCreature(opponent, gameData);
@@ -105,6 +107,7 @@ export function runInlineVariations(
         creatureB: opponent,
         iterations,
         inlineCreatureA: inlineCreature,
+        verbose,
       },
       gameData,
       rng

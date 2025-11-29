@@ -10,16 +10,24 @@ import type {
 } from '../data/types.js';
 import { type RandomGenerator, defaultRng } from '../data/dice-notation.js';
 import { isAlive, consumeWillpower } from './combatant.js';
-import { resolveAttack, applyDamage, type AttackResult } from './combat-resolver.js';
+import {
+  resolveAttack,
+  applyDamage,
+  getAttackModifier,
+  getDefenseModifier,
+  type AttackResult,
+} from './combat-resolver.js';
 import { resolveSkill } from './skill-resolver.js';
 import { processRegeneration, processWillpowerRegeneration } from './regeneration.js';
-import { decideAction, applyMovement, type AIAction } from './ai-controller.js';
+import { decideAction, decideActionWithReasoning, applyMovement, type AIAction } from './ai-controller.js';
 import {
   advanceTime,
   getNextReady,
   deductTime,
+  calculateDelay,
   STANDARD_ACTION_DELAY,
 } from './turn-scheduler.js';
+import type { VerboseLogger } from '../output/verbose-logger.js';
 
 // =============================================================================
 // Combat Configuration
@@ -162,25 +170,63 @@ export function executeTurn(
   actor: CombatantState,
   state: CombatState,
   rng: RandomGenerator,
-  verbose: boolean
+  verbose: boolean,
+  logger?: VerboseLogger
 ): number {
-  const action = decideAction(actor, state.combatants, rng);
+  // Get action with reasoning if we have a logger
+  const { action, reasoning } = logger
+    ? decideActionWithReasoning(actor, state.combatants, rng)
+    : { action: decideAction(actor, state.combatants, rng), reasoning: '' };
+
   let actionCost = STANDARD_ACTION_DELAY; // Default cost for move/wait
+
+  // Log AI decision
+  if (logger) {
+    logger.logAIDecision({ action: action.type, reasoning });
+  }
 
   switch (action.type) {
     case 'attack': {
       // Weapon delay affects action cost
       actionCost = Math.round(STANDARD_ACTION_DELAY * action.attack.delay);
+      const isMelee = action.attack.type === 'Melee';
+      const attackMod = getAttackModifier(actor, isMelee);
+      const defenseMod = getDefenseModifier(action.target);
+
       const result = resolveAttack(actor, action.target, action.attack, rng);
+      const oldHp = action.target.currentHealth;
 
       if (result.hit) {
         const actualDamage = applyDamage(action.target, result.damage);
+        const newHp = action.target.currentHealth;
 
         // Track damage dealt
         if (actor.team === 'A') {
           state.teamADamageDealt += actualDamage;
         } else {
           state.teamBDamageDealt += actualDamage;
+        }
+
+        if (logger) {
+          // Calculate damage bonus for logging
+          const damageBonus = isMelee ? actor.strength : 0;
+          logger.logAttack({
+            result,
+            attackMod,
+            defenseMod,
+            weaponDice: action.attack.dice,
+            damageRolled: result.damageBeforeModifiers - damageBonus + action.target.armor,
+            damageBonus,
+            armor: action.target.armor,
+          });
+          logger.logDamageApplied(
+            action.target.name,
+            actualDamage,
+            oldHp,
+            newHp,
+            action.target.maxHealth,
+            !isAlive(action.target)
+          );
         }
 
         if (verbose) {
@@ -198,32 +244,71 @@ export function executeTurn(
             details: msg,
           });
         }
-      } else if (verbose) {
-        state.events.push({
-          turn: state.turn,
-          actor: actor.name,
-          action: 'miss',
-          details: `${actor.name} misses ${action.target.name} (${result.attackRoll} vs ${result.defenseRoll})`,
-        });
+      } else {
+        if (logger) {
+          const damageBonus = isMelee ? actor.strength : 0;
+          logger.logAttack({
+            result,
+            attackMod,
+            defenseMod,
+            weaponDice: action.attack.dice,
+            damageRolled: 0,
+            damageBonus,
+            armor: action.target.armor,
+          });
+        }
+
+        if (verbose) {
+          state.events.push({
+            turn: state.turn,
+            actor: actor.name,
+            action: 'miss',
+            details: `${actor.name} misses ${action.target.name} (${result.attackRoll} vs ${result.defenseRoll})`,
+          });
+        }
       }
       break;
     }
 
     case 'skill': {
+      const wpBefore = actor.currentWillpower;
       // Consume willpower first
       consumeWillpower(actor, action.skill);
+      const wpAfter = actor.currentWillpower;
 
       // Resolve skill effects
       const result = resolveSkill(actor, action.target, action.skill, rng);
+      const oldHp = action.target.currentHealth;
 
       if (result.damage > 0) {
         const actualDamage = applyDamage(action.target, result.damage);
+        const newHp = action.target.currentHealth;
 
         // Track damage dealt
         if (actor.team === 'A') {
           state.teamADamageDealt += actualDamage;
         } else {
           state.teamBDamageDealt += actualDamage;
+        }
+
+        if (logger) {
+          logger.logSkill({
+            skillName: action.skill.name,
+            targetName: action.target.name,
+            wpCost: action.skill.willpowerCost,
+            wpRemaining: wpAfter,
+            damage: actualDamage,
+            damageType: result.damageType ?? 'unknown',
+            modifier: result.modifier,
+          });
+          logger.logDamageApplied(
+            action.target.name,
+            actualDamage,
+            oldHp,
+            newHp,
+            action.target.maxHealth,
+            !isAlive(action.target)
+          );
         }
 
         if (verbose) {
@@ -241,23 +326,43 @@ export function executeTurn(
             details: msg,
           });
         }
-      } else if (verbose) {
-        state.events.push({
-          turn: state.turn,
-          actor: actor.name,
-          action: 'skill',
-          details: `${actor.name} casts ${action.skill.name} on ${action.target.name} (no damage)`,
-        });
+      } else {
+        if (logger) {
+          logger.logSkill({
+            skillName: action.skill.name,
+            targetName: action.target.name,
+            wpCost: action.skill.willpowerCost,
+            wpRemaining: wpAfter,
+            damage: 0,
+            damageType: 'none',
+            modifier: 'none',
+          });
+        }
+
+        if (verbose) {
+          state.events.push({
+            turn: state.turn,
+            actor: actor.name,
+            action: 'skill',
+            details: `${actor.name} casts ${action.skill.name} on ${action.target.name} (no damage)`,
+          });
+        }
       }
       break;
     }
 
     case 'move': {
+      const oldPos = { x: actor.position.x, y: actor.position.y };
       applyMovement(actor, action.direction);
       // Clamp to arena bounds
       const clamped = clampToArena(actor.position, state.arenaSize);
       actor.position.x = clamped.x;
       actor.position.y = clamped.y;
+
+      if (logger) {
+        logger.logMovement(actor.name, oldPos, actor.position);
+      }
+
       if (verbose) {
         state.events.push({
           turn: state.turn,
@@ -270,6 +375,10 @@ export function executeTurn(
     }
 
     case 'wait': {
+      if (logger) {
+        logger.logWait(actor.name);
+      }
+
       if (verbose) {
         state.events.push({
           turn: state.turn,
@@ -284,24 +393,40 @@ export function executeTurn(
 
   // Process HP regeneration after action
   const healed = processRegeneration(actor);
-  if (healed > 0 && verbose) {
-    state.events.push({
-      turn: state.turn,
-      actor: actor.name,
-      action: 'regen',
-      details: `${actor.name} regenerates ${healed} HP`,
-    });
+  if (healed > 0) {
+    if (logger) {
+      logger.logRegeneration(actor.name, healed, actor.currentHealth, actor.maxHealth);
+    }
+    if (verbose) {
+      state.events.push({
+        turn: state.turn,
+        actor: actor.name,
+        action: 'regen',
+        details: `${actor.name} regenerates ${healed} HP`,
+      });
+    }
   }
 
   // Process WP regeneration after action
   const restored = processWillpowerRegeneration(actor);
-  if (restored > 0 && verbose) {
-    state.events.push({
-      turn: state.turn,
-      actor: actor.name,
-      action: 'wp_regen',
-      details: `${actor.name} restores ${restored} WP`,
-    });
+  if (restored > 0) {
+    if (logger) {
+      logger.logWillpowerRegeneration(actor.name, restored, actor.currentWillpower, actor.maxWillpower);
+    }
+    if (verbose) {
+      state.events.push({
+        turn: state.turn,
+        actor: actor.name,
+        action: 'wp_regen',
+        details: `${actor.name} restores ${restored} WP`,
+      });
+    }
+  }
+
+  // Log action cost
+  if (logger) {
+    const weaponDelay = action.type === 'attack' ? action.attack.delay : undefined;
+    logger.logActionCost(actor.name, actionCost, actor.speed, weaponDelay);
   }
 
   return actionCost;
@@ -317,9 +442,15 @@ export function executeTurn(
 export function runCombat(
   combatants: CombatantState[],
   config: CombatConfig = DEFAULT_CONFIG,
-  rng: RandomGenerator = defaultRng
+  rng: RandomGenerator = defaultRng,
+  logger?: VerboseLogger
 ): SimulationResult {
   const state = initializeCombat(combatants, config);
+
+  // Log combat start
+  if (logger) {
+    logger.logCombatStart(state.combatants);
+  }
 
   // Main combat loop
   while (!isCombatOver(state, config.maxTurns)) {
@@ -328,10 +459,21 @@ export function runCombat(
     // Advance time for all combatants
     advanceTime(state.combatants, STANDARD_ACTION_DELAY);
 
+    // Log turn start
+    if (logger) {
+      logger.logTurnStart(state.turn);
+    }
+
     // Process all ready combatants this tick
     let ready = getNextReady(state.combatants, STANDARD_ACTION_DELAY, rng);
     while (ready && !isCombatOver(state, config.maxTurns)) {
-      const actionCost = executeTurn(ready, state, rng, config.verbose);
+      // Log actor ready
+      if (logger) {
+        const delay = calculateDelay(ready.speed, STANDARD_ACTION_DELAY, rng);
+        logger.logActorReady(ready, ready.accumulatedTime, delay);
+      }
+
+      const actionCost = executeTurn(ready, state, rng, config.verbose, logger);
       deductTime(ready, actionCost, rng);
       ready = getNextReady(state.combatants, STANDARD_ACTION_DELAY, rng);
     }
@@ -341,6 +483,11 @@ export function runCombat(
   const winner = getWinner(state);
   const aliveA = state.combatants.filter((c) => c.team === 'A' && isAlive(c));
   const aliveB = state.combatants.filter((c) => c.team === 'B' && isAlive(c));
+
+  // Log combat end
+  if (logger) {
+    logger.logCombatEnd(winner, state.turn, state.combatants);
+  }
 
   return {
     winner,

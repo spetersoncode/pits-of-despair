@@ -350,6 +350,8 @@ export interface DuelConfig {
   // Optional inline creature definitions (takes precedence over ID lookup)
   inlineCreatureA?: CreatureDefinition;
   inlineCreatureB?: CreatureDefinition;
+  // Enable verbose debug logging (limits to 3 iterations)
+  verbose?: boolean;
 }
 
 /**
@@ -368,6 +370,8 @@ export interface GroupConfig {
   teamA: TeamMember[];
   teamB: TeamMember[];
   iterations: number;
+  // Enable verbose debug logging (limits to 3 iterations)
+  verbose?: boolean;
 }
 
 /**
@@ -444,6 +448,8 @@ export interface VariationConfig {
   opponent: string;
   variations: Variation[];
   iterations: number;
+  // Enable verbose debug logging (limits to 3 iterations)
+  verbose?: boolean;
 }
 
 /**

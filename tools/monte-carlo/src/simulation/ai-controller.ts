@@ -31,6 +31,11 @@ export type AIAction =
   | { type: 'move'; direction: Position }
   | { type: 'wait' };
 
+export interface AIDecisionResult {
+  action: AIAction;
+  reasoning: string;
+}
+
 // =============================================================================
 // Combat Option Types
 // =============================================================================
@@ -249,6 +254,13 @@ function createActionFromOption(
 // =============================================================================
 
 /**
+ * Get the name of a combat option for logging.
+ */
+function getOptionName(option: CombatOption): string {
+  return option.kind === 'attack' ? option.attack.name : option.skill.name;
+}
+
+/**
  * Decide action for a ranged combatant (has ranged options).
  * Priority: kite if adjacent > attack if in range > move toward
  */
@@ -257,10 +269,10 @@ function decideRangedBehavior(
   enemies: CombatantState[],
   rangedOptions: CombatOption[],
   rng: RandomGenerator
-): AIAction {
+): AIDecisionResult {
   const nearest = getNearestEnemy(combatant, enemies);
   if (!nearest) {
-    return { type: 'wait' };
+    return { action: { type: 'wait' }, reasoning: 'Wait (no enemies)' };
   }
 
   const dist = distance(combatant.position, nearest.position);
@@ -268,7 +280,10 @@ function decideRangedBehavior(
   // If enemy is adjacent (dist <= 1), kite away
   if (dist <= 1) {
     const direction = getMoveAway(combatant.position, nearest.position);
-    return { type: 'move', direction };
+    return {
+      action: { type: 'move', direction },
+      reasoning: `Kite away from ${nearest.name} (distance ${dist})`,
+    };
   }
 
   // Find the lowest HP enemy we can hit with any ranged option
@@ -282,7 +297,11 @@ function decideRangedBehavior(
     if (viableOptions.length > 0) {
       // Randomly pick from viable options
       const chosen = pickRandomOption(viableOptions, rng);
-      return createActionFromOption(chosen, lowestHP);
+      const action = createActionFromOption(chosen, lowestHP);
+      return {
+        action,
+        reasoning: `${getOptionName(chosen)} lowest HP target ${lowestHP.name} (${lowestHP.currentHealth} HP)`,
+      };
     }
   }
 
@@ -294,13 +313,20 @@ function decideRangedBehavior(
 
     if (viableOptions.length > 0) {
       const chosen = pickRandomOption(viableOptions, rng);
-      return createActionFromOption(chosen, enemy);
+      const action = createActionFromOption(chosen, enemy);
+      return {
+        action,
+        reasoning: `${getOptionName(chosen)} ${enemy.name} (in range)`,
+      };
     }
   }
 
   // No enemies in range, move toward nearest
   const direction = getMoveToward(combatant.position, nearest.position);
-  return { type: 'move', direction };
+  return {
+    action: { type: 'move', direction },
+    reasoning: `Move toward ${nearest.name} (distance ${dist})`,
+  };
 }
 
 /**
@@ -312,7 +338,7 @@ function decideMeleeBehavior(
   enemies: CombatantState[],
   meleeOptions: CombatOption[],
   rng: RandomGenerator
-): AIAction {
+): AIDecisionResult {
   // Find the lowest HP enemy we can hit with any melee option
   const lowestHP = getLowestHPEnemy(combatant, enemies);
   if (lowestHP) {
@@ -322,7 +348,11 @@ function decideMeleeBehavior(
 
     if (viableOptions.length > 0) {
       const chosen = pickRandomOption(viableOptions, rng);
-      return createActionFromOption(chosen, lowestHP);
+      const action = createActionFromOption(chosen, lowestHP);
+      return {
+        action,
+        reasoning: `${getOptionName(chosen)} lowest HP target ${lowestHP.name} (${lowestHP.currentHealth} HP)`,
+      };
     }
   }
 
@@ -334,32 +364,40 @@ function decideMeleeBehavior(
 
     if (viableOptions.length > 0) {
       const chosen = pickRandomOption(viableOptions, rng);
-      return createActionFromOption(chosen, enemy);
+      const action = createActionFromOption(chosen, enemy);
+      return {
+        action,
+        reasoning: `${getOptionName(chosen)} ${enemy.name} (adjacent)`,
+      };
     }
   }
 
   // No enemies in range, move toward nearest
   const nearest = getNearestEnemy(combatant, enemies);
   if (nearest) {
+    const dist = distance(combatant.position, nearest.position);
     const direction = getMoveToward(combatant.position, nearest.position);
-    return { type: 'move', direction };
+    return {
+      action: { type: 'move', direction },
+      reasoning: `Move toward ${nearest.name} (distance ${dist})`,
+    };
   }
 
-  return { type: 'wait' };
+  return { action: { type: 'wait' }, reasoning: 'Wait (no enemies)' };
 }
 
 /**
- * Decide the best action for a combatant.
+ * Decide the best action for a combatant with reasoning.
  * Uses unified ranged/melee pools with weighted random selection.
  */
-export function decideAction(
+export function decideActionWithReasoning(
   combatant: CombatantState,
   allCombatants: CombatantState[],
   rng: RandomGenerator = defaultRng
-): AIAction {
+): AIDecisionResult {
   const enemies = getEnemies(combatant, allCombatants);
   if (enemies.length === 0) {
-    return { type: 'wait' };
+    return { action: { type: 'wait' }, reasoning: 'Wait (no enemies)' };
   }
 
   // Collect all combat options
@@ -374,4 +412,16 @@ export function decideAction(
 
   // Otherwise, use melee behavior
   return decideMeleeBehavior(combatant, enemies, meleeOptions, rng);
+}
+
+/**
+ * Decide the best action for a combatant (without reasoning).
+ * Convenience wrapper for non-verbose mode.
+ */
+export function decideAction(
+  combatant: CombatantState,
+  allCombatants: CombatantState[],
+  rng: RandomGenerator = defaultRng
+): AIAction {
+  return decideActionWithReasoning(combatant, allCombatants, rng).action;
 }

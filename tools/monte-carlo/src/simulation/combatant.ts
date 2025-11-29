@@ -213,12 +213,13 @@ export function createCombatant(
   // Resolve skills
   const skills = resolveSkills(creature.skills, gameData);
 
-  // Generate unique ID
-  const id = `${creature.id}_${++_combatantIdCounter}`;
+  // Generate unique ID and numbered name for tracking (includes team for mirror matchups)
+  const instanceNum = ++_combatantIdCounter;
+  const id = `${creature.id}_${instanceNum}`;
 
   return {
     id,
-    name: creature.name,
+    name: `[${team}] ${creature.name} #${instanceNum}`,
     team,
 
     // Stats

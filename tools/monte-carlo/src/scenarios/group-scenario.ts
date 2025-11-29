@@ -15,6 +15,7 @@ import { getCreature } from '../data/data-loader.js';
 import { createCombatant, resetCombatantIdCounter } from '../simulation/combatant.js';
 import { runCombat, DEFAULT_CONFIG } from '../simulation/combat-engine.js';
 import { aggregateResults, type Scenario } from './scenario.js';
+import { createVerboseLogger } from '../output/verbose-logger.js';
 
 /**
  * Create combatants for a team.
@@ -66,13 +67,21 @@ export function runGroupBattle(
 ): AggregateResult {
   const results: SimulationResult[] = [];
 
+  // Create logger for verbose mode
+  const logger = config.verbose ? createVerboseLogger() : undefined;
+
   for (let i = 0; i < config.iterations; i++) {
     resetCombatantIdCounter();
 
     const teamA = createTeam(config.teamA, 'A', gameData, 0);
     const teamB = createTeam(config.teamB, 'B', gameData, 5);
 
-    const result = runCombat([...teamA, ...teamB], DEFAULT_CONFIG, rng);
+    // Start new fight in logger
+    if (logger) {
+      logger.startFight();
+    }
+
+    const result = runCombat([...teamA, ...teamB], DEFAULT_CONFIG, rng, logger);
     results.push(result);
   }
 
