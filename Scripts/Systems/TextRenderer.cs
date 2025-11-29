@@ -17,6 +17,11 @@ public partial class TextRenderer : Control
 	[Export] public int TileSize { get; set; } = 18;
 	[Export] public int FontSize { get; set; } = 18;
 
+	// UI layout offsets for centering the game view in the visible area
+	[Export] public int UiLeftOffset { get; set; } = 300;   // SidePanel width
+	[Export] public int UiTopOffset { get; set; } = 24;     // StatusBar height
+	[Export] public int UiBottomOffset { get; set; } = 200; // MessageLog height
+
 	private MapSystem _mapSystem;
 	private Player _player;
 	private EntityManager? _entityManager;
@@ -147,6 +152,22 @@ public partial class TextRenderer : Control
 	}
 
 	/// <summary>
+	/// Gets the center of the visible game area, accounting for UI elements.
+	/// </summary>
+	private Vector2 GetGameAreaCenter()
+	{
+		Vector2 viewportSize = GetViewportRect().Size;
+
+		// Calculate the center of the visible game area (not the full viewport)
+		// Game area is: Left edge at UiLeftOffset, Right edge at viewportWidth
+		//               Top edge at UiTopOffset, Bottom edge at viewportHeight - UiBottomOffset
+		float gameAreaCenterX = UiLeftOffset + (viewportSize.X - UiLeftOffset) / 2;
+		float gameAreaCenterY = UiTopOffset + (viewportSize.Y - UiTopOffset - UiBottomOffset) / 2;
+
+		return new Vector2(gameAreaCenterX, gameAreaCenterY);
+	}
+
+	/// <summary>
 	/// Gets the current render offset used to center the view on the player.
 	/// Used by visual effect system to position shader-based effects.
 	/// </summary>
@@ -157,8 +178,7 @@ public partial class TextRenderer : Control
 			return Vector2.Zero;
 		}
 
-		Vector2 viewportSize = GetViewportRect().Size;
-		Vector2 viewportCenter = viewportSize / 2;
+		Vector2 gameAreaCenter = GetGameAreaCenter();
 
 		// Player's world position in pixels
 		Vector2 playerWorldPos = new Vector2(
@@ -166,8 +186,8 @@ public partial class TextRenderer : Control
 			_player.CurrentPosition.Y * TileSize
 		);
 
-		// Offset needed to center player on screen
-		return viewportCenter - playerWorldPos;
+		// Offset needed to center player in the game area
+		return gameAreaCenter - playerWorldPos;
 	}
 
 	/// <summary>
@@ -286,8 +306,8 @@ public partial class TextRenderer : Control
 		Vector2 viewportSize = GetViewportRect().Size;
 		DrawRect(new Rect2(Vector2.Zero, viewportSize), Palette.Empty, true);
 
-		// Calculate offset to keep player centered on screen
-		Vector2 viewportCenter = viewportSize / 2;
+		// Calculate offset to keep player centered in the visible game area
+		Vector2 gameAreaCenter = GetGameAreaCenter();
 
 		// Player's world position in pixels
 		Vector2 playerWorldPos = new Vector2(
@@ -295,8 +315,8 @@ public partial class TextRenderer : Control
 			_player.CurrentPosition.Y * TileSize
 		);
 
-		// Offset needed to center player on screen
-		Vector2 offset = viewportCenter - playerWorldPos;
+		// Offset needed to center player in the game area
+		Vector2 offset = gameAreaCenter - playerWorldPos;
 
 		// Build set of positions occupied by entities (to suppress floor dot rendering)
 		var occupiedPositions = new System.Collections.Generic.HashSet<GridPosition>();
@@ -463,8 +483,8 @@ public partial class TextRenderer : Control
 			DrawString(_font, entityDrawPos, glyphToRender, HorizontalAlignment.Left, -1, FontSize, entityColor);
 		}
 
-		// Draw the player last (should be at viewport center, on top of everything)
-		DrawString(_font, viewportCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
+		// Draw the player last (should be at game area center, on top of everything)
+		DrawString(_font, gameAreaCenter, _player.Glyph, HorizontalAlignment.Left, -1, FontSize, _player.GlyphColor);
 
 		// Note: Projectiles and visual effects render via shader nodes (ColorRect children)
 		// They don't need explicit drawing here - they render themselves
@@ -561,14 +581,13 @@ public partial class TextRenderer : Control
 	/// </summary>
 	private void DrawTraceLine(GridPosition origin, GridPosition target, Vector2 offset)
 	{
-		// For the player (origin), use viewport center since player is always drawn there
-		// DrawString uses baseline positioning, so we need to adjust upward from viewportCenter
-		Vector2 viewportSize = GetViewportRect().Size;
-		Vector2 viewportCenter = viewportSize / 2;
+		// For the player (origin), use game area center since player is always drawn there
+		// DrawString uses baseline positioning, so we need to adjust upward from gameAreaCenter
+		Vector2 gameAreaCenter = GetGameAreaCenter();
 
 		// Origin: center of player glyph
 		// Adjust upward from baseline positioning
-		Vector2 originDrawPos = viewportCenter + new Vector2(TileSize / 2.0f - 2.0f, -TileSize / 4.0f + 2.0f);
+		Vector2 originDrawPos = gameAreaCenter + new Vector2(TileSize / 2.0f - 2.0f, -TileSize / 4.0f + 2.0f);
 
 		// Target: center of target glyph/entity
 		Vector2 targetDrawPos = offset + GridToTileCenter(target);
