@@ -10,17 +10,25 @@ namespace PitsOfDespair.Systems;
 /// </summary>
 public static class EpithetResolver
 {
-    private const string DefaultEpithet = "Wanderer";
+    /// <summary>
+    /// Fallback epithet when no matches found (should not happen with Condemned at priority 0).
+    /// </summary>
+    private static readonly EpithetDefinition DefaultEpithet = new()
+    {
+        Name = "Wanderer",
+        Description = "A lost soul, wandering the depths without purpose.",
+        Priority = -1
+    };
 
     /// <summary>
-    /// Resolves the best matching epithet for the given base stats.
+    /// Resolves the best matching epithet definition for the given base stats.
     /// </summary>
     /// <param name="str">Base Strength</param>
     /// <param name="agi">Base Agility</param>
     /// <param name="end">Base Endurance</param>
     /// <param name="wil">Base Will</param>
-    /// <returns>The name of the best matching epithet</returns>
-    public static string Resolve(int str, int agi, int end, int wil)
+    /// <returns>The best matching epithet definition</returns>
+    public static EpithetDefinition Resolve(int str, int agi, int end, int wil)
     {
         var match = EpithetRegistry.Epithets
             .Where(e => e.Matches(str, agi, end, wil))
@@ -28,6 +36,6 @@ public static class EpithetResolver
             .ThenByDescending(e => e.TotalRequirement)
             .FirstOrDefault();
 
-        return match?.Name ?? DefaultEpithet;
+        return match ?? DefaultEpithet;
     }
 }

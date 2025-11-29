@@ -1,5 +1,6 @@
 using Godot;
 using PitsOfDespair.Components;
+using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Systems;
 using PitsOfDespair.Systems.Entity;
@@ -31,7 +32,7 @@ public partial class PlayerStatsViewModel : Node
 	private WillpowerComponent _willpowerComponent;
 	private StatsComponent _statsComponent;
 	private GoldManager _goldManager;
-	private string _currentEpithet = "Wanderer";
+	private EpithetDefinition _currentEpithet;
 
 	#endregion
 
@@ -95,14 +96,19 @@ public partial class PlayerStatsViewModel : Node
 	#region Properties - Epithet
 
 	/// <summary>
-	/// Current epithet based on base stat distribution.
+	/// Current epithet name based on base stat distribution.
 	/// </summary>
-	public string Epithet => _currentEpithet;
+	public string Epithet => _currentEpithet?.Name ?? "Wanderer";
+
+	/// <summary>
+	/// Atmospheric description for the current epithet.
+	/// </summary>
+	public string EpithetDescription => _currentEpithet?.Description ?? string.Empty;
 
 	/// <summary>
 	/// Formatted display name including epithet (e.g., "Hero the Titan").
 	/// </summary>
-	public string FormattedName => $"{PlayerName} the {_currentEpithet}";
+	public string FormattedName => $"{PlayerName} the {Epithet}";
 
 	#endregion
 
@@ -242,6 +248,7 @@ public partial class PlayerStatsViewModel : Node
 
 	/// <summary>
 	/// Updates the current epithet based on base stats.
+	/// Also updates the player's description to match the epithet.
 	/// </summary>
 	private void UpdateEpithet()
 	{
@@ -254,6 +261,12 @@ public partial class PlayerStatsViewModel : Node
 			_statsComponent.BaseEndurance,
 			_statsComponent.BaseWill
 		);
+
+		// Update player description to match epithet
+		if (_player != null && _currentEpithet != null)
+		{
+			_player.Description = _currentEpithet.Description;
+		}
 	}
 
 	#endregion

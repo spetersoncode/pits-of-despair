@@ -37,6 +37,12 @@ public class EpithetDefinition
     public int Priority { get; init; } = 0;
 
     /// <summary>
+    /// Atmospheric description for this epithet.
+    /// Shown when examining the player.
+    /// </summary>
+    public string Description { get; init; } = string.Empty;
+
+    /// <summary>
     /// Checks if the given base stats meet this epithet's requirements.
     /// </summary>
     public bool Matches(int str, int agi, int end, int wil)
