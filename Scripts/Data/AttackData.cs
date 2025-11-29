@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Helpers;
 using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Data;
@@ -68,5 +69,15 @@ public partial class AttackData : Resource
 	public int GetDelayCost()
 	{
 		return Mathf.RoundToInt(PitsOfDespair.Actions.ActionDelay.Standard * Delay);
+	}
+
+	/// <summary>
+	/// Gets the average damage per turn for this attack.
+	/// Calculated as average dice damage divided by delay multiplier.
+	/// </summary>
+	public float GetAverageDamagePerTurn()
+	{
+		float avgDamage = DiceRoller.GetAverage(DiceNotation);
+		return avgDamage / Delay;
 	}
 }

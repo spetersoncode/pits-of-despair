@@ -114,72 +114,91 @@ public partial class ItemDetailModal : CenterContainer
 
 	private string BuildViewingDisplay(ItemData itemTemplate)
 	{
-		string glyph = $"[color={itemTemplate.Color}]{itemTemplate.GetGlyph()}[/color]";
-		string name = $"[color={itemTemplate.Color}]{itemTemplate.Name}[/color]";
-		string keyInfo = $"[color={Palette.ToHex(Palette.Disabled)}]Hotkey:[/color] [color={Palette.ToHex(Palette.Default)}]{_currentSlot.Key}[/color]";
+		var sb = new StringBuilder();
+		string disabled = Palette.ToHex(Palette.Disabled);
+		string defaultColor = Palette.ToHex(Palette.Default);
+		string itemColor = itemTemplate.Color;
 
-		// Stack count for consumables
-		string countInfo = "";
-		if (_currentSlot.Item.Quantity > 1)
+		// === HEADER ===
+		string glyph = $"[color={itemColor}]{itemTemplate.GetGlyph()}[/color]";
+		string displayName = itemTemplate.GetDisplayName(1); // Use "of" pattern (wand of fatigue, potion of healing)
+		string name = $"[color={itemColor}][b]{displayName}[/b][/color]";
+		string countInfo = _currentSlot.Item.Quantity > 1
+			? $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Item.Quantity})[/color]"
+			: "";
+
+		sb.Append($"[center]{glyph}  {name}{countInfo}[/center]");
+		sb.Append("\n");
+
+		// === META INFO LINE ===
+		var metaParts = new List<string>();
+
+		// Hotkey
+		metaParts.Add($"[color={disabled}]Hotkey:[/color] [color={defaultColor}]{_currentSlot.Key}[/color]");
+
+		// Slot and equipped status
+		if (itemTemplate.GetIsEquippable())
 		{
-			countInfo = $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Item.Quantity})[/color]";
+			var equipSlot = itemTemplate.GetEquipmentSlot();
+			string slotName = ItemFormatter.FormatSlotName(equipSlot);
+			var equipComponent = _player?.GetNodeOrNull<EquipComponent>("EquipComponent");
+			bool isEquipped = equipComponent?.IsEquipped(_currentSlot.Key) ?? false;
+			string equippedIndicator = isEquipped
+				? $" [color={Palette.ToHex(Palette.Success)}](equipped)[/color]"
+				: "";
+			metaParts.Add($"[color={disabled}]Slot:[/color] [color={Palette.ToHex(Palette.AshGray)}]{slotName}[/color]{equippedIndicator}");
 		}
 
-		// Charges for charged items (only shown with Attunement skill)
-		string chargesInfo = "";
+		// Charges (only shown with Attunement skill)
 		int maxCharges = itemTemplate.GetMaxCharges();
 		if (maxCharges > 0)
 		{
 			var skillComponent = _player?.GetNodeOrNull<SkillComponent>("SkillComponent");
 			bool hasAttunement = skillComponent?.HasSkill("attunement") ?? false;
-
 			if (hasAttunement)
 			{
 				string bracket = ItemFormatter.GetChargeBracket(_currentSlot.Item.CurrentCharges, maxCharges);
-				chargesInfo = $"\n[color={Palette.ToHex(Palette.Disabled)}]Charges:[/color] [color={itemTemplate.Color}]{bracket}[/color]";
+				metaParts.Add($"[color={disabled}]Charges:[/color] [color={itemColor}]{bracket}[/color]");
 			}
 		}
 
-		// Equipment slot info and equipped status
-		string slotInfo = "";
-		if (itemTemplate.GetIsEquippable())
+		sb.Append($"\n{string.Join("    ", metaParts)}");
+
+		// === COMBAT SECTION (weapons) ===
+		string weaponStats = BuildWeaponStats(itemTemplate);
+		if (!string.IsNullOrEmpty(weaponStats))
 		{
-			var equipSlot = itemTemplate.GetEquipmentSlot();
-			string slotName = ItemFormatter.FormatSlotName(equipSlot);
-
-			// Check if this item is currently equipped
-			var equipComponent = _player?.GetNodeOrNull<EquipComponent>("EquipComponent");
-			bool isEquipped = equipComponent?.IsEquipped(_currentSlot.Key) ?? false;
-			string equippedIndicator = isEquipped ? $" [color={Palette.ToHex(Palette.Success)}](equipped)[/color]" : "";
-
-			slotInfo = $"\n[color={Palette.ToHex(Palette.Disabled)}]Slot:[/color] [color={Palette.ToHex(Palette.AshGray)}]{slotName}[/color]{equippedIndicator}";
+			sb.Append($"\n\n[color={disabled}]COMBAT[/color]");
+			sb.Append(weaponStats);
 		}
 
-		// Weapon stats section
-		string weaponStats = BuildWeaponStats(itemTemplate);
-
-		// Equipment stats section (armor, evasion, stat modifiers)
+		// === EQUIPMENT SECTION (armor, stat modifiers) ===
 		string equipmentStats = BuildEquipmentStats(itemTemplate);
+		if (!string.IsNullOrEmpty(equipmentStats))
+		{
+			sb.Append($"\n\n[color={disabled}]EQUIPMENT[/color]");
+			sb.Append(equipmentStats);
+		}
 
-		// Effects description section
+		// === EFFECTS SECTION ===
 		string effectsSection = BuildEffectDescriptions(itemTemplate);
+		if (!string.IsNullOrEmpty(effectsSection))
+		{
+			sb.Append(effectsSection);
+		}
 
-		// Description section (flavor text)
-		string descriptionSection = "";
+		// === DESCRIPTION (flavor text) ===
 		if (!string.IsNullOrEmpty(itemTemplate.Description))
 		{
-			descriptionSection = $"\n\n[color={Palette.ToHex(Palette.AshGray)}]{itemTemplate.Description}[/color]";
+			sb.Append($"\n\n[color={disabled}]DESCRIPTION[/color]");
+			sb.Append($"\n[color={Palette.ToHex(Palette.AshGray)}][i]{itemTemplate.Description}[/i][/color]");
 		}
 
-		// Commands section
+		// === CLOSE HINT ===
 		var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-		string commands = $"\n\n[center][color={Palette.ToHex(Palette.Disabled)}]({closeKey} to close)[/color][/center]";
+		sb.Append($"\n\n[right][color={disabled}]{closeKey} to close[/color][/right]");
 
-		return $"{glyph} {name}{countInfo}\n" +
-		       $"{keyInfo}{chargesInfo}{slotInfo}" +
-		       $"{weaponStats}{equipmentStats}{effectsSection}" +
-		       $"{descriptionSection}" +
-		       $"{commands}";
+		return sb.ToString();
 	}
 
 	/// <summary>
@@ -191,17 +210,28 @@ public partial class ItemDetailModal : CenterContainer
 			return "";
 
 		var attack = itemTemplate.Attack;
+		string disabled = Palette.ToHex(Palette.Disabled);
+		string defaultColor = Palette.ToHex(Palette.Default);
+
+		var sb = new StringBuilder();
+
+		// Category (e.g., "Short Blades", "Flails")
+		if (!string.IsNullOrEmpty(itemTemplate.Category))
+		{
+			sb.Append($"\n[color={disabled}]Category:[/color] [color={defaultColor}]{itemTemplate.Category}[/color]");
+		}
+
 		string damageType = attack.DamageType.ToString().ToLower();
 		string strNote = attack.Type == AttackType.Melee ? " (+STR)" : "";
 
-		// Attack speed
 		var (speedText, speedColor) = SpeedStatus.GetWeaponSpeedDisplay(attack.Delay);
-		string speedLine = $"\n[color={Palette.ToHex(Palette.Disabled)}]Speed:[/color] " +
-		                   $"[color={Palette.ToHex(speedColor)}]{speedText}[/color]";
+		float dpt = attack.GetAverageDamagePerTurn();
 
-		return $"\n[color={Palette.ToHex(Palette.Disabled)}]Damage:[/color] " +
-		       $"[color={Palette.ToHex(Palette.Default)}]{attack.DiceNotation} {damageType}{strNote}[/color]" +
-		       speedLine;
+		sb.Append($"\n[color={disabled}]Damage:[/color] [color={defaultColor}]{attack.DiceNotation} {damageType}{strNote}[/color]");
+		sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
+		sb.Append($"\n[color={disabled}]Average damage per turn:[/color] [color={defaultColor}]{dpt:F1}[/color]");
+
+		return sb.ToString();
 	}
 
 	/// <summary>
@@ -210,19 +240,21 @@ public partial class ItemDetailModal : CenterContainer
 	private static string BuildEquipmentStats(ItemData itemTemplate)
 	{
 		var stats = new List<string>();
+		string disabled = Palette.ToHex(Palette.Disabled);
+		string defaultColor = Palette.ToHex(Palette.Default);
 
 		// Armor
 		if (itemTemplate.Armor is int armor && armor != 0)
 		{
 			string sign = armor > 0 ? "+" : "";
-			stats.Add($"[color={Palette.ToHex(Palette.Disabled)}]Armor:[/color] [color={Palette.ToHex(Palette.Default)}]{sign}{armor}[/color]");
+			stats.Add($"[color={disabled}]Armor:[/color] [color={defaultColor}]{sign}{armor}[/color]");
 		}
 
 		// Evasion
 		if (itemTemplate.Evasion is int evasion && evasion != 0)
 		{
 			string sign = evasion > 0 ? "+" : "";
-			stats.Add($"[color={Palette.ToHex(Palette.Disabled)}]Evasion:[/color] [color={Palette.ToHex(Palette.Default)}]{sign}{evasion}[/color]");
+			stats.Add($"[color={disabled}]Evasion:[/color] [color={defaultColor}]{sign}{evasion}[/color]");
 		}
 
 		// Attribute modifiers
@@ -240,9 +272,8 @@ public partial class ItemDetailModal : CenterContainer
 			stats.Add(FormatStatModifier("Max Willpower", maxWp));
 		if (itemTemplate.Regen is int regen && regen != 0)
 		{
-			// Regen is in basis points (100 = 1% per turn)
 			float percent = regen / 100f;
-			stats.Add($"[color={Palette.ToHex(Palette.Default)}]+{percent:0.#}% regen/turn[/color]");
+			stats.Add($"[color={defaultColor}]+{percent:0.#}% regen/turn[/color]");
 		}
 
 		if (stats.Count == 0)
@@ -285,11 +316,14 @@ public partial class ItemDetailModal : CenterContainer
 		if (descriptions.Count == 0)
 			return "";
 
+		string disabled = Palette.ToHex(Palette.Disabled);
+		string defaultColor = Palette.ToHex(Palette.Default);
+
 		var sb = new StringBuilder();
-		sb.Append($"\n\n[color={Palette.ToHex(Palette.Disabled)}]=== EFFECTS ===[/color]");
+		sb.Append($"\n\n[color={disabled}]EFFECTS[/color]");
 		foreach (var desc in descriptions)
 		{
-			sb.Append($"\n[color={Palette.ToHex(Palette.Default)}]{desc}[/color]");
+			sb.Append($"\n[color={defaultColor}]{desc}[/color]");
 		}
 
 		return sb.ToString();

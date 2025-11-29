@@ -10,7 +10,7 @@ namespace PitsOfDespair.UI;
 /// Base class for item selection modals (inventory, equip, drop, activate).
 /// Provides common functionality for displaying items and handling input.
 /// </summary>
-public abstract partial class ItemSelectionModal : PanelContainer
+public abstract partial class ItemSelectionModal : CenterContainer
 {
     [Signal]
     public delegate void ItemSelectedEventHandler(char key);
@@ -25,7 +25,17 @@ public abstract partial class ItemSelectionModal : PanelContainer
     public override void _Ready()
     {
         // Try common label names used by different modals
-        _itemsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/ItemsLabel");
+        // Check both old (direct) and new (via PanelContainer) paths
+        _itemsLabel = GetNodeOrNull<RichTextLabel>("PanelContainer/MarginContainer/VBoxContainer/ItemsLabel");
+        if (_itemsLabel == null)
+        {
+            _itemsLabel = GetNodeOrNull<RichTextLabel>("PanelContainer/MarginContainer/VBoxContainer/InventoryLabel");
+        }
+        // Fallback for old structure
+        if (_itemsLabel == null)
+        {
+            _itemsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/ItemsLabel");
+        }
         if (_itemsLabel == null)
         {
             _itemsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/InventoryLabel");

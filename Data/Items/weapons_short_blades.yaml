@@ -1,4 +1,5 @@
 type: weapon
+category: Short Blades
 defaults:
   glyph: "-"
   attack:

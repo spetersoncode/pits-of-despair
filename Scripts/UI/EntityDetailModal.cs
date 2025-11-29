@@ -24,9 +24,6 @@ public partial class EntityDetailModal : CenterContainer
     [Signal]
     public delegate void CancelledEventHandler();
 
-    // Approximate line width for the modal content area (monospace chars)
-    private const int LineWidth = 52;
-
     private RichTextLabel _contentLabel;
     private bool _isVisible = false;
 
@@ -93,51 +90,48 @@ public partial class EntityDetailModal : CenterContainer
     {
         if (_contentLabel == null) return;
 
-        string glyph = $"[color={Palette.ToHex(entity.GlyphColor)}]{entity.Glyph}[/color]";
-        string name = $"[color={Palette.ToHex(entity.GlyphColor)}]{entity.DisplayName}[/color]";
+        var sb = new StringBuilder();
+        string disabled = Palette.ToHex(Palette.Disabled);
+        string entityColor = Palette.ToHex(entity.GlyphColor);
 
-        // Health Status - get both plain text and colored version
+        // === HEADER (centered) ===
+        string glyph = $"[color={entityColor}]{entity.Glyph}[/color]";
+        string name = $"[color={entityColor}][b]{entity.DisplayName}[/b][/color]";
+        sb.Append($"[center]{glyph}  {name}[/center]");
+        sb.Append("\n");
+
+        // === HEALTH STATUS LINE ===
         var (healthText, healthColor) = GetHealthStatusParts(entity);
-        string healthStatus = $"[color={Palette.ToHex(healthColor)}]{healthText}[/color]";
+        if (!string.IsNullOrEmpty(healthText))
+        {
+            sb.Append($"\n[center][color={Palette.ToHex(healthColor)}]{healthText}[/color][/center]");
+        }
 
-        // Name and health on same line with space padding (monospace font)
-        int leftLen = entity.Glyph.Length + 1 + entity.DisplayName.Length; // "G Name"
-        int rightLen = healthText.Length;
-        int padding = Math.Max(1, LineWidth - leftLen - rightLen);
-        string headerRow = $"{glyph} {name}{new string(' ', padding)}{healthStatus}";
+        // === DESCRIPTION ===
+        if (!string.IsNullOrEmpty(entity.Description))
+        {
+            sb.Append($"\n\n[color={disabled}]DESCRIPTION[/color]");
+            sb.Append($"\n[color={Palette.ToHex(Palette.AshGray)}][i]{entity.Description}[/i][/color]");
+        }
 
-        // Description
-        string description = string.IsNullOrEmpty(entity.Description)
-            ? "No description available."
-            : entity.Description;
-        string descriptionSection = $"[color={Palette.ToHex(Palette.AshGray)}]{description}[/color]";
-
-        // Build entity-specific sections
-        string entitySpecificSection;
+        // === ENTITY-SPECIFIC SECTIONS ===
         if (entity is Player player)
         {
-            entitySpecificSection = BuildPlayerDisplay(player);
+            sb.Append(BuildPlayerDisplay(player));
         }
         else
         {
-            entitySpecificSection = BuildCreatureDisplay(entity);
+            sb.Append(BuildCreatureDisplay(entity));
         }
 
-        // Status (conditions + resistances/vulnerabilities) - shared by both
-        string statusSection = BuildStatusDisplay(entity);
+        // === STATUS (conditions + resistances/vulnerabilities) ===
+        sb.Append(BuildStatusDisplay(entity));
 
-        // Commands
+        // === CLOSE HINT ===
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
-        string commands = $"\n\n[color={Palette.ToHex(Palette.Disabled)}]Commands:[/color]\n";
-        commands += $"[color={Palette.ToHex(Palette.Default)}]{closeKey}[/color] Close";
+        sb.Append($"\n\n[right][color={disabled}]{closeKey} to close[/color][/right]");
 
-        string content = $"{headerRow}\n\n" +
-                         $"{descriptionSection}" +
-                         $"{entitySpecificSection}" +
-                         $"{statusSection}" +
-                         $"{commands}";
-
-        _contentLabel.Text = content;
+        _contentLabel.Text = sb.ToString();
     }
 
     private (string text, Color color) GetHealthStatusParts(BaseEntity entity)
@@ -207,8 +201,9 @@ public partial class EntityDetailModal : CenterContainer
         if (sentences.Count == 0)
             return "";
 
+        string disabled = Palette.ToHex(Palette.Disabled);
         string combined = string.Join(" ", sentences);
-        return $"\n\n[color={Palette.ToHex(Palette.AshGray)}]{combined}[/color]";
+        return $"\n\n[color={disabled}]STATUS[/color]\n[color={Palette.ToHex(Palette.AshGray)}]{combined}[/color]";
     }
 
     private string FormatDamageTypeList(List<DamageType> types)
@@ -239,20 +234,26 @@ public partial class EntityDetailModal : CenterContainer
     #region Player Display
 
     /// <summary>
-    /// Builds the player-specific display sections: attributes and skills.
+    /// Builds the player-specific display sections: statistics and skills.
     /// </summary>
     private string BuildPlayerDisplay(Player player)
     {
         var sb = new StringBuilder();
 
         var stats = player.GetNodeOrNull<StatsComponent>("StatsComponent");
+        var health = player.GetNodeOrNull<HealthComponent>("HealthComponent");
+        var willpower = player.GetNodeOrNull<WillpowerComponent>("WillpowerComponent");
+        var speed = player.GetNodeOrNull<SpeedComponent>("SpeedComponent");
         var skills = player.GetNodeOrNull<SkillComponent>("SkillComponent");
 
-        // Attributes section with modifier breakdown
+        // Primary statistics section
         if (stats != null)
         {
-            sb.Append(BuildAttributesSection(stats, player));
+            sb.Append(BuildPrimaryStatisticsSection(stats, player));
         }
+
+        // Secondary statistics section
+        sb.Append(BuildSecondaryStatisticsSection(stats, health, willpower, speed, player));
 
         // Skills section
         if (skills != null)
@@ -264,13 +265,14 @@ public partial class EntityDetailModal : CenterContainer
     }
 
     /// <summary>
-    /// Builds the attributes section with inline modifier breakdown.
+    /// Builds the primary statistics section (STR, AGI, END, WIL).
     /// </summary>
-    private string BuildAttributesSection(StatsComponent stats, Player player)
+    private string BuildPrimaryStatisticsSection(StatsComponent stats, Player player)
     {
         var sb = new StringBuilder();
-        sb.Append($"\n\n[color={Palette.ToHex(Palette.Disabled)}]=== ATTRIBUTES ===[/color]");
+        string disabled = Palette.ToHex(Palette.Disabled);
 
+        sb.Append($"\n\n[color={disabled}]PRIMARY STATISTICS[/color]");
         sb.Append(FormatStatWithModifiers("Strength", stats.BaseStrength, stats.TotalStrength, stats.GetStatModifiers(StatType.Strength), player));
         sb.Append(FormatStatWithModifiers("Agility", stats.BaseAgility, stats.TotalAgility, stats.GetStatModifiers(StatType.Agility), player));
         sb.Append(FormatStatWithModifiers("Endurance", stats.BaseEndurance, stats.TotalEndurance, stats.GetStatModifiers(StatType.Endurance), player));
@@ -280,13 +282,101 @@ public partial class EntityDetailModal : CenterContainer
     }
 
     /// <summary>
+    /// Builds the secondary statistics section (HP, WP, Armor, Evasion, Speed).
+    /// </summary>
+    private string BuildSecondaryStatisticsSection(
+        StatsComponent? stats,
+        HealthComponent? health,
+        WillpowerComponent? willpower,
+        SpeedComponent? speed,
+        Player player)
+    {
+        var sb = new StringBuilder();
+        string disabled = Palette.ToHex(Palette.Disabled);
+        string defaultColor = Palette.ToHex(Palette.Default);
+        string gray = Palette.ToHex(Palette.AshGray);
+
+        sb.Append($"\n\n[color={disabled}]SECONDARY STATISTICS[/color]");
+
+        // Health
+        if (health != null)
+        {
+            sb.Append($"\n[color={disabled}]Health:[/color] [color={defaultColor}]{health.CurrentHealth}/{health.MaxHealth}[/color]");
+        }
+
+        // Willpower
+        if (willpower != null)
+        {
+            sb.Append($"\n[color={disabled}]Willpower:[/color] [color={defaultColor}]{willpower.CurrentWillpower}/{willpower.MaxWillpower}[/color]");
+        }
+
+        // Armor
+        if (stats != null)
+        {
+            int totalArmor = stats.TotalArmor;
+            var armorMods = stats.GetStatModifiers(StatType.Armor);
+            sb.Append($"\n[color={disabled}]Armor:[/color] [color={defaultColor}]{totalArmor}[/color]");
+            if (armorMods.Count > 0)
+            {
+                sb.Append($" [color={gray}]({FormatModifierBreakdown(armorMods, player)})[/color]");
+            }
+        }
+
+        // Evasion (base from AGI + modifiers)
+        if (stats != null)
+        {
+            int totalEvasion = stats.TotalEvasion;
+            var evasionMods = stats.GetStatModifiers(StatType.Evasion);
+            sb.Append($"\n[color={disabled}]Evasion:[/color] [color={defaultColor}]{totalEvasion}[/color]");
+
+            var parts = new List<string> { $"{stats.TotalAgility} AGI" };
+            foreach (var mod in evasionMods)
+            {
+                string sign = mod.Value >= 0 ? "+" : "";
+                string sourceName = FormatSourceId(mod.Key, player);
+                parts.Add($"{sign}{mod.Value} {sourceName}");
+            }
+            sb.Append($" [color={gray}]({string.Join(", ", parts)})[/color]");
+        }
+
+        // Speed
+        if (speed != null)
+        {
+            var (speedText, speedColor) = SpeedStatus.GetCreatureSpeedDisplay(speed.EffectiveSpeed);
+            sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Formats modifier breakdown without parens.
+    /// Example: "+3 leather armor, +2 shield"
+    /// </summary>
+    private string FormatModifierBreakdown(IReadOnlyDictionary<string, int> modifiers, Player player)
+    {
+        var parts = new List<string>();
+        foreach (var mod in modifiers)
+        {
+            string sign = mod.Value >= 0 ? "+" : "";
+            string sourceName = FormatSourceId(mod.Key, player);
+            parts.Add($"{sign}{mod.Value} {sourceName}");
+        }
+        return string.Join(", ", parts);
+    }
+
+    /// <summary>
     /// Formats a stat line with its modifier sources.
     /// Example: "Strength: 5 (3), +2 Ring of Strength"
     /// </summary>
     private string FormatStatWithModifiers(string name, int baseValue, int totalValue, IReadOnlyDictionary<string, int> modifiers, Player player)
     {
+        string disabled = Palette.ToHex(Palette.Disabled);
+        string defaultColor = Palette.ToHex(Palette.Default);
+        string gray = Palette.ToHex(Palette.AshGray);
+
         var sb = new StringBuilder();
-        sb.Append($"\n[color={Palette.ToHex(Palette.Default)}]{name}:[/color] {totalValue}");
+        sb.Append($"\n[color={disabled}]{name}:[/color] [color={defaultColor}]{totalValue}[/color]");
 
         // Build modifier breakdown
         var parts = new List<string> { $"({baseValue})" };
@@ -296,7 +386,7 @@ public partial class EntityDetailModal : CenterContainer
             string sourceName = FormatSourceId(mod.Key, player);
             parts.Add($"{sign}{mod.Value} {sourceName}");
         }
-        sb.Append($" [color={Palette.ToHex(Palette.AshGray)}]{string.Join(", ", parts)}[/color]");
+        sb.Append($" [color={gray}]{string.Join(", ", parts)}[/color]");
 
         return sb.ToString();
     }
@@ -311,9 +401,11 @@ public partial class EntityDetailModal : CenterContainer
             return "";
 
         var grouped = skills.GetLearnedSkillsByCategory(dataLoader);
+        string disabled = Palette.ToHex(Palette.Disabled);
+        string defaultColor = Palette.ToHex(Palette.Default);
 
         var sb = new StringBuilder();
-        sb.Append($"\n\n[color={Palette.ToHex(Palette.Disabled)}]=== SKILLS ===[/color]");
+        sb.Append($"\n\n[color={disabled}]SKILLS[/color]");
 
         // Active skills with keybindings
         if (grouped[SkillCategory.Active].Count > 0)
@@ -324,21 +416,21 @@ public partial class EntityDetailModal : CenterContainer
                     var key = skills.GetSkillKey(s.Id);
                     return key.HasValue ? $"[{key.Value}] {s.Name}" : s.Name;
                 });
-            sb.Append($"\n[color={Palette.ToHex(Palette.Default)}]Active:[/color] {string.Join(", ", activeNames)}");
+            sb.Append($"\n[color={disabled}]Active:[/color] [color={defaultColor}]{string.Join(", ", activeNames)}[/color]");
         }
 
         // Passive skills
         if (grouped[SkillCategory.Passive].Count > 0)
         {
             var passiveNames = grouped[SkillCategory.Passive].Select(s => s.Name);
-            sb.Append($"\n[color={Palette.ToHex(Palette.Default)}]Passive:[/color] {string.Join(", ", passiveNames)}");
+            sb.Append($"\n[color={disabled}]Passive:[/color] [color={defaultColor}]{string.Join(", ", passiveNames)}[/color]");
         }
 
         // Reactive skills
         if (grouped[SkillCategory.Reactive].Count > 0)
         {
             var reactiveNames = grouped[SkillCategory.Reactive].Select(s => s.Name);
-            sb.Append($"\n[color={Palette.ToHex(Palette.Default)}]Reactive:[/color] {string.Join(", ", reactiveNames)}");
+            sb.Append($"\n[color={disabled}]Reactive:[/color] [color={defaultColor}]{string.Join(", ", reactiveNames)}[/color]");
         }
 
         return sb.ToString();
@@ -409,46 +501,49 @@ public partial class EntityDetailModal : CenterContainer
     #region Creature Display
 
     /// <summary>
-    /// Builds creature-specific display: intent and attack damage types.
+    /// Builds creature-specific display: intent, speed, and attacks.
     /// </summary>
     private static string BuildCreatureDisplay(BaseEntity entity)
     {
         var sb = new StringBuilder();
+        string disabled = Palette.ToHex(Palette.Disabled);
+        string defaultColor = Palette.ToHex(Palette.Default);
 
-        // Intent (for creatures with AI)
         var ai = entity.GetNodeOrNull<AIComponent>("AIComponent");
+        var speed = entity.GetNodeOrNull<SpeedComponent>("SpeedComponent");
+        var attacks = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+
+        // Only show COMBAT section if there's something to display
+        bool hasContent = ai != null || speed != null || (attacks != null && attacks.Attacks.Count > 0);
+        if (!hasContent)
+            return "";
+
+        sb.Append($"\n\n[color={disabled}]COMBAT[/color]");
+
+        // Intent
         if (ai != null)
         {
             var intent = ai.GetIntent();
             var intentColor = IntentHelper.GetColor(intent);
-            string intentName = intent.ToString();
-            sb.Append($"\n\n[color={Palette.ToHex(Palette.Disabled)}]Intent:[/color] ");
-            sb.Append($"[color={Palette.ToHex(intentColor)}]{intentName}[/color]");
+            sb.Append($"\n[color={disabled}]Intent:[/color] [color={Palette.ToHex(intentColor)}]{intent}[/color]");
         }
 
-        // Speed status
-        var speed = entity.GetNodeOrNull<SpeedComponent>("SpeedComponent");
+        // Speed
         if (speed != null)
         {
             var (speedText, speedColor) = SpeedStatus.GetCreatureSpeedDisplay(speed.EffectiveSpeed);
-            sb.Append($"\n[color={Palette.ToHex(Palette.Disabled)}]Speed:[/color] ");
-            sb.Append($"[color={Palette.ToHex(speedColor)}]{speedText}[/color]");
+            sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
         }
 
-        // Attacks with name and damage type
-        var attacks = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+        // Attacks
         if (attacks != null && attacks.Attacks.Count > 0)
         {
             var attackDescriptions = attacks.Attacks
                 .Select(a => $"{a.Name} ({a.DamageType.ToString().ToLower()})")
                 .ToList();
 
-            if (attackDescriptions.Count > 0)
-            {
-                string attackList = string.Join(", ", attackDescriptions);
-                sb.Append($"\n[color={Palette.ToHex(Palette.Disabled)}]Attacks:[/color] ");
-                sb.Append($"[color={Palette.ToHex(Palette.Default)}]{attackList}[/color]");
-            }
+            string attackList = string.Join(", ", attackDescriptions);
+            sb.Append($"\n[color={disabled}]Attacks:[/color] [color={defaultColor}]{attackList}[/color]");
         }
 
         return sb.ToString();

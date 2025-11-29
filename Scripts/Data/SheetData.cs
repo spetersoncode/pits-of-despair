@@ -75,6 +75,12 @@ public class ItemSheetData
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
+    /// Weapon category for this sheet (e.g., "Short Blades", "Flails").
+    /// Applied to all weapon entries in this sheet.
+    /// </summary>
+    public string? Category { get; set; } = null;
+
+    /// <summary>
     /// Default values applied to all entries in this sheet.
     /// Individual entries can override any default.
     /// </summary>

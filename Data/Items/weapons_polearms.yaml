@@ -1,4 +1,5 @@
 type: weapon
+category: Polearms
 defaults:
   glyph: "\u2020"
   attack:

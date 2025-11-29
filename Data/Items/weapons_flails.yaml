@@ -1,4 +1,5 @@
 type: weapon
+category: Flails
 defaults:
   glyph: "%"
   attack:
@@ -6,6 +7,16 @@ defaults:
     delay: 1.3
 
 entries:
+  nunchaku:
+    name: nunchaku
+    value: 2
+    color: Palette.AshWood
+    description: Twin rods bound by chain, demanding discipline to wield. Finding a fellow chucker in these depths is rare—most perish before mastering its art.
+    attack:
+      type: Melee
+      dice: "1d6"
+      delay: 1.1
+
   flail:
     name: flail
     value: 4

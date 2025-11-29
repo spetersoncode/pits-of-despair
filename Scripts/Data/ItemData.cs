@@ -139,6 +139,13 @@ public class ItemData
     [YamlMember(Alias = "type")]
     public string Type { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Weapon category (e.g., "Short Blades", "Flails").
+    /// Set automatically from YAML filename by ItemLoader.
+    /// </summary>
+    [YamlIgnore]
+    public string? Category { get; set; } = null;
+
     [YamlMember(Alias = "glyph")]
     public string? Glyph { get; set; } = null;
 

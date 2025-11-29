@@ -99,6 +99,25 @@ public static class DiceRoller
 	}
 
 	/// <summary>
+	/// Calculates the average (expected value) of a dice notation.
+	/// E.g., "1d6" = 3.5, "2d6+3" = 10, "1d8+1" = 5.5
+	/// </summary>
+	/// <param name="diceNotation">Dice notation string or plain number</param>
+	/// <returns>Average value, or 0 if notation is invalid</returns>
+	public static float GetAverage(string diceNotation)
+	{
+		if (!TryParse(diceNotation, out int count, out int sides, out int modifier))
+			return 0f;
+
+		// Plain number case
+		if (count == 0 && sides == 0)
+			return modifier;
+
+		// Average of NdS = N × (S+1)/2
+		return count * (sides + 1) / 2f + modifier;
+	}
+
+	/// <summary>
 	/// Adds a bonus to dice notation, combining with any existing modifier.
 	/// E.g., "1d6" + 2 = "1d6+2", "1d6+1" + 2 = "1d6+3", "1d6-1" + 2 = "1d6+1"
 	/// </summary>

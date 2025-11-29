@@ -77,16 +77,28 @@ public class SpeedModifierCondition : Condition
             return ConditionMessage.Empty;
         }
 
-        // Generate appropriate message based on duration mode and amount sign
-        string message = DurationMode switch
+        // Generate appropriate message based on target, duration mode, and amount sign
+        bool isPlayer = target is Player;
+        string message;
+
+        if (DurationMode == ConditionDuration.Permanent)
         {
-            ConditionDuration.Permanent => Amount >= 0
+            message = Amount >= 0
                 ? $"Speed permanently increased by {Amount}!"
-                : $"Speed permanently decreased by {Math.Abs(Amount)}!",
-            _ => Amount >= 0
+                : $"Speed permanently decreased by {Math.Abs(Amount)}!";
+        }
+        else if (isPlayer)
+        {
+            message = Amount >= 0
                 ? "You feel yourself speed up!"
-                : "You feel yourself slow down!"
-        };
+                : "You feel yourself slow down!";
+        }
+        else
+        {
+            message = Amount >= 0
+                ? $"The {target.DisplayName} speeds up!"
+                : $"The {target.DisplayName} slows down!";
+        }
 
         string color = Amount >= 0 ? Palette.ToHex(Palette.StatusBuff) : Palette.ToHex(Palette.StatusDebuff);
         return new ConditionMessage(message, color);
@@ -114,10 +126,22 @@ public class SpeedModifierCondition : Condition
             return ConditionMessage.Empty;
         }
 
-        // Generate appropriate message based on duration mode
-        string message = Amount >= 0
-            ? "Your haste wears off."
-            : "You no longer feel slowed.";
+        // Generate appropriate message based on target
+        bool isPlayer = target is Player;
+        string message;
+
+        if (isPlayer)
+        {
+            message = Amount >= 0
+                ? "Your haste wears off."
+                : "You no longer feel slowed.";
+        }
+        else
+        {
+            message = Amount >= 0
+                ? $"The {target.DisplayName}'s haste wears off."
+                : $"The {target.DisplayName} is no longer slowed.";
+        }
 
         return new ConditionMessage(message, Palette.ToHex(Palette.Default));
     }

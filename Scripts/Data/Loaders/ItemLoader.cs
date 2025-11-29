@@ -38,6 +38,12 @@ public class ItemLoader
                 item.Type = sheet.Type;
             }
 
+            // Apply sheet category (for weapons)
+            if (!string.IsNullOrEmpty(sheet.Category))
+            {
+                item.Category = sheet.Category;
+            }
+
             // Generate ID as {type}_{key}
             string id;
             if (!string.IsNullOrEmpty(item.Type))

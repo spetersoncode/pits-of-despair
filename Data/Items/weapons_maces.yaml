@@ -1,4 +1,5 @@
 type: weapon
+category: Maces
 defaults:
   glyph: "\u00B6"
   attack:
