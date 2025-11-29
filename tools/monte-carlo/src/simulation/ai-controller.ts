@@ -1,22 +1,25 @@
 /**
- * AIController - Basic tactical AI for combat simulation.
- * Simple heuristics without pathfinding (open arena assumption).
+ * AIController - Tactical AI for combat simulation.
+ * Unified ranged/melee pools with weighted random selection.
  */
 
 import type {
   Combatant as CombatantState,
   AttackDefinition,
+  SkillDefinition,
   Position,
 } from '../data/types.js';
 import {
   isAlive,
-  hasMeleeAttack,
-  hasRangedAttack,
   getMeleeAttack,
   getRangedAttack,
   distance,
   canAttack,
+  canUseSkillOn,
+  getUsableRangedSkills,
+  getUsableMeleeSkills,
 } from './combatant.js';
+import { type RandomGenerator, defaultRng } from '../data/dice-notation.js';
 
 // =============================================================================
 // AI Decision Types
@@ -24,8 +27,20 @@ import {
 
 export type AIAction =
   | { type: 'attack'; target: CombatantState; attack: AttackDefinition }
+  | { type: 'skill'; target: CombatantState; skill: SkillDefinition }
   | { type: 'move'; direction: Position }
   | { type: 'wait' };
+
+// =============================================================================
+// Combat Option Types
+// =============================================================================
+
+/**
+ * A unified combat option that can be either an attack or a skill.
+ */
+type CombatOption =
+  | { kind: 'attack'; attack: AttackDefinition; range: number }
+  | { kind: 'skill'; skill: SkillDefinition; range: number };
 
 // =============================================================================
 // Target Selection
@@ -127,62 +142,122 @@ export function applyMovement(
 }
 
 // =============================================================================
+// Combat Option Collection
+// =============================================================================
+
+/**
+ * Get all usable ranged options (attacks + skills with range > 1).
+ */
+function getRangedOptions(combatant: CombatantState): CombatOption[] {
+  const options: CombatOption[] = [];
+
+  // Ranged weapon attacks (if has ammo)
+  const rangedAttack = getRangedAttack(combatant);
+  if (rangedAttack) {
+    options.push({
+      kind: 'attack',
+      attack: rangedAttack,
+      range: rangedAttack.range ?? 6,
+    });
+  }
+
+  // Ranged skills (range > 1, active, targeting enemies, has WP)
+  const rangedSkills = getUsableRangedSkills(combatant);
+  for (const skill of rangedSkills) {
+    options.push({
+      kind: 'skill',
+      skill,
+      range: skill.range,
+    });
+  }
+
+  return options;
+}
+
+/**
+ * Get all usable melee options (attacks + skills with range <= 1).
+ */
+function getMeleeOptions(combatant: CombatantState): CombatOption[] {
+  const options: CombatOption[] = [];
+
+  // Melee weapon attacks (always available via getMeleeAttack fallback)
+  const meleeAttack = getMeleeAttack(combatant);
+  options.push({
+    kind: 'attack',
+    attack: meleeAttack,
+    range: meleeAttack.range ?? 1,
+  });
+
+  // Melee skills (range <= 1, active, targeting enemies, has WP)
+  const meleeSkills = getUsableMeleeSkills(combatant);
+  for (const skill of meleeSkills) {
+    options.push({
+      kind: 'skill',
+      skill,
+      range: skill.range,
+    });
+  }
+
+  return options;
+}
+
+/**
+ * Pick a random option from a list (equal weighting).
+ */
+function pickRandomOption(
+  options: CombatOption[],
+  rng: RandomGenerator
+): CombatOption {
+  if (options.length === 1) {
+    return options[0];
+  }
+  const index = Math.floor(rng.random() * options.length);
+  return options[index];
+}
+
+/**
+ * Check if a combat option can reach the target.
+ */
+function canReachTarget(
+  combatant: CombatantState,
+  target: CombatantState,
+  option: CombatOption
+): boolean {
+  if (option.kind === 'attack') {
+    return canAttack(combatant, target, option.attack);
+  } else {
+    return canUseSkillOn(combatant, target, option.skill);
+  }
+}
+
+/**
+ * Create an action from a combat option and target.
+ */
+function createActionFromOption(
+  option: CombatOption,
+  target: CombatantState
+): AIAction {
+  if (option.kind === 'attack') {
+    return { type: 'attack', target, attack: option.attack };
+  } else {
+    return { type: 'skill', target, skill: option.skill };
+  }
+}
+
+// =============================================================================
 // AI Decision Making
 // =============================================================================
 
 /**
- * Decide action for a melee combatant.
- * 1. If adjacent to enemy: attack lowest HP
- * 2. Else: move toward nearest enemy
+ * Decide action for a ranged combatant (has ranged options).
+ * Priority: kite if adjacent > attack if in range > move toward
  */
-function decideMeleeAction(
+function decideRangedBehavior(
   combatant: CombatantState,
-  enemies: CombatantState[]
+  enemies: CombatantState[],
+  rangedOptions: CombatOption[],
+  rng: RandomGenerator
 ): AIAction {
-  const meleeAttack = getMeleeAttack(combatant);
-  if (!meleeAttack) {
-    return { type: 'wait' };
-  }
-
-  // Find enemies we can attack
-  const attackableEnemies = enemies.filter((e) =>
-    canAttack(combatant, e, meleeAttack)
-  );
-
-  if (attackableEnemies.length > 0) {
-    // Attack lowest HP enemy in range
-    const target = getLowestHPEnemy(combatant, attackableEnemies);
-    if (target) {
-      return { type: 'attack', target, attack: meleeAttack };
-    }
-  }
-
-  // Move toward nearest enemy
-  const nearest = getNearestEnemy(combatant, enemies);
-  if (nearest) {
-    const direction = getMoveToward(combatant.position, nearest.position);
-    return { type: 'move', direction };
-  }
-
-  return { type: 'wait' };
-}
-
-/**
- * Decide action for a ranged combatant.
- * 1. If enemy adjacent: move away (kite)
- * 2. If enemy in range: attack lowest HP
- * 3. Else: move to get enemy in range
- */
-function decideRangedAction(
-  combatant: CombatantState,
-  enemies: CombatantState[]
-): AIAction {
-  const rangedAttack = getRangedAttack(combatant);
-  if (!rangedAttack) {
-    // Fall back to melee if no ranged attack available (out of ammo?)
-    return decideMeleeAction(combatant, enemies);
-  }
-
   const nearest = getNearestEnemy(combatant, enemies);
   if (!nearest) {
     return { type: 'wait' };
@@ -196,43 +271,107 @@ function decideRangedAction(
     return { type: 'move', direction };
   }
 
-  // Find enemies we can attack at range
-  const attackableEnemies = enemies.filter((e) =>
-    canAttack(combatant, e, rangedAttack)
-  );
+  // Find the lowest HP enemy we can hit with any ranged option
+  const lowestHP = getLowestHPEnemy(combatant, enemies);
+  if (lowestHP) {
+    // Filter options that can reach this target
+    const viableOptions = rangedOptions.filter((opt) =>
+      canReachTarget(combatant, lowestHP, opt)
+    );
 
-  if (attackableEnemies.length > 0) {
-    // Attack lowest HP enemy in range
-    const target = getLowestHPEnemy(combatant, attackableEnemies);
-    if (target) {
-      return { type: 'attack', target, attack: rangedAttack };
+    if (viableOptions.length > 0) {
+      // Randomly pick from viable options
+      const chosen = pickRandomOption(viableOptions, rng);
+      return createActionFromOption(chosen, lowestHP);
     }
   }
 
-  // Move toward nearest enemy to get in range
+  // Can't hit lowest HP, try any enemy in range
+  for (const enemy of enemies) {
+    const viableOptions = rangedOptions.filter((opt) =>
+      canReachTarget(combatant, enemy, opt)
+    );
+
+    if (viableOptions.length > 0) {
+      const chosen = pickRandomOption(viableOptions, rng);
+      return createActionFromOption(chosen, enemy);
+    }
+  }
+
+  // No enemies in range, move toward nearest
   const direction = getMoveToward(combatant.position, nearest.position);
   return { type: 'move', direction };
 }
 
 /**
+ * Decide action for a melee combatant (no ranged options or only melee).
+ * Priority: attack if adjacent > move toward
+ */
+function decideMeleeBehavior(
+  combatant: CombatantState,
+  enemies: CombatantState[],
+  meleeOptions: CombatOption[],
+  rng: RandomGenerator
+): AIAction {
+  // Find the lowest HP enemy we can hit with any melee option
+  const lowestHP = getLowestHPEnemy(combatant, enemies);
+  if (lowestHP) {
+    const viableOptions = meleeOptions.filter((opt) =>
+      canReachTarget(combatant, lowestHP, opt)
+    );
+
+    if (viableOptions.length > 0) {
+      const chosen = pickRandomOption(viableOptions, rng);
+      return createActionFromOption(chosen, lowestHP);
+    }
+  }
+
+  // Can't hit lowest HP, try any adjacent enemy
+  for (const enemy of enemies) {
+    const viableOptions = meleeOptions.filter((opt) =>
+      canReachTarget(combatant, enemy, opt)
+    );
+
+    if (viableOptions.length > 0) {
+      const chosen = pickRandomOption(viableOptions, rng);
+      return createActionFromOption(chosen, enemy);
+    }
+  }
+
+  // No enemies in range, move toward nearest
+  const nearest = getNearestEnemy(combatant, enemies);
+  if (nearest) {
+    const direction = getMoveToward(combatant.position, nearest.position);
+    return { type: 'move', direction };
+  }
+
+  return { type: 'wait' };
+}
+
+/**
  * Decide the best action for a combatant.
+ * Uses unified ranged/melee pools with weighted random selection.
  */
 export function decideAction(
   combatant: CombatantState,
-  allCombatants: CombatantState[]
+  allCombatants: CombatantState[],
+  rng: RandomGenerator = defaultRng
 ): AIAction {
   const enemies = getEnemies(combatant, allCombatants);
   if (enemies.length === 0) {
     return { type: 'wait' };
   }
 
-  // Determine if this is a ranged or melee combatant
-  // Prefer ranged if available and has ammo
-  // Once out of ammo, switch to melee behavior (no more kiting)
-  if (hasRangedAttack(combatant) && getRangedAttack(combatant)) {
-    return decideRangedAction(combatant, enemies);
+  // Collect all combat options
+  const rangedOptions = getRangedOptions(combatant);
+  const meleeOptions = getMeleeOptions(combatant);
+
+  // Priority order: ranged behavior > melee behavior
+  // If we have ranged options, use ranged behavior (includes kiting)
+  if (rangedOptions.length > 0) {
+    return decideRangedBehavior(combatant, enemies, rangedOptions, rng);
   }
 
-  // Melee behavior (includes ranged combatants who ran out of ammo)
-  return decideMeleeAction(combatant, enemies);
+  // Otherwise, use melee behavior
+  return decideMeleeBehavior(combatant, enemies, meleeOptions, rng);
 }

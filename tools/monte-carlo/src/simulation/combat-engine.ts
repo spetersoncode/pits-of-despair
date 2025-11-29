@@ -9,9 +9,10 @@ import type {
   Position,
 } from '../data/types.js';
 import { type RandomGenerator, defaultRng } from '../data/dice-notation.js';
-import { isAlive } from './combatant.js';
+import { isAlive, consumeWillpower } from './combatant.js';
 import { resolveAttack, applyDamage, type AttackResult } from './combat-resolver.js';
-import { processRegeneration } from './regeneration.js';
+import { resolveSkill } from './skill-resolver.js';
+import { processRegeneration, processWillpowerRegeneration } from './regeneration.js';
 import { decideAction, applyMovement, type AIAction } from './ai-controller.js';
 import {
   advanceTime,
@@ -162,7 +163,7 @@ export function executeTurn(
   rng: RandomGenerator,
   verbose: boolean
 ): void {
-  const action = decideAction(actor, state.combatants);
+  const action = decideAction(actor, state.combatants, rng);
 
   switch (action.type) {
     case 'attack': {
@@ -204,6 +205,49 @@ export function executeTurn(
       break;
     }
 
+    case 'skill': {
+      // Consume willpower first
+      consumeWillpower(actor, action.skill);
+
+      // Resolve skill effects
+      const result = resolveSkill(actor, action.target, action.skill, rng);
+
+      if (result.damage > 0) {
+        const actualDamage = applyDamage(action.target, result.damage);
+
+        // Track damage dealt
+        if (actor.team === 'A') {
+          state.teamADamageDealt += actualDamage;
+        } else {
+          state.teamBDamageDealt += actualDamage;
+        }
+
+        if (verbose) {
+          let msg = `${actor.name} casts ${action.skill.name} on ${action.target.name} for ${actualDamage} damage`;
+          if (result.modifier !== 'none') {
+            msg += ` (${result.modifier})`;
+          }
+          if (!isAlive(action.target)) {
+            msg += ` - ${action.target.name} dies!`;
+          }
+          state.events.push({
+            turn: state.turn,
+            actor: actor.name,
+            action: 'skill',
+            details: msg,
+          });
+        }
+      } else if (verbose) {
+        state.events.push({
+          turn: state.turn,
+          actor: actor.name,
+          action: 'skill',
+          details: `${actor.name} casts ${action.skill.name} on ${action.target.name} (no damage)`,
+        });
+      }
+      break;
+    }
+
     case 'move': {
       applyMovement(actor, action.direction);
       // Clamp to arena bounds
@@ -234,7 +278,7 @@ export function executeTurn(
     }
   }
 
-  // Process regeneration after action
+  // Process HP regeneration after action
   const healed = processRegeneration(actor);
   if (healed > 0 && verbose) {
     state.events.push({
@@ -242,6 +286,17 @@ export function executeTurn(
       actor: actor.name,
       action: 'regen',
       details: `${actor.name} regenerates ${healed} HP`,
+    });
+  }
+
+  // Process WP regeneration after action
+  const restored = processWillpowerRegeneration(actor);
+  if (restored > 0 && verbose) {
+    state.events.push({
+      turn: state.turn,
+      actor: actor.name,
+      action: 'wp_regen',
+      details: `${actor.name} restores ${restored} WP`,
     });
   }
 }

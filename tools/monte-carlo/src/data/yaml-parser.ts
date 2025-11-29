@@ -14,6 +14,10 @@ import type {
   DamageType,
   EquipmentEntry,
   ItemType,
+  SkillDefinition,
+  SkillYamlFile,
+  SkillEffect,
+  EffectStep,
 } from './types.js';
 
 // =============================================================================
@@ -33,6 +37,7 @@ const CREATURE_DEFAULTS: Omit<CreatureDefinition, 'id' | 'name' | 'type'> = {
   speed: 10,
   equipment: [],
   attacks: [],
+  skills: [],
   immunities: [],
   resistances: [],
   vulnerabilities: [],
@@ -122,6 +127,16 @@ function parseEquipment(data: unknown): EquipmentEntry[] {
   });
 }
 
+/**
+ * Parse skill IDs from YAML (creature references skills by ID).
+ */
+function parseSkillIds(data: unknown): string[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data.filter((item): item is string => typeof item === 'string');
+}
+
 // =============================================================================
 // Creature Parsing
 // =============================================================================
@@ -168,6 +183,7 @@ export function parseCreatureFile(filePath: string): CreatureDefinition[] {
       speed: merged.speed as number,
       equipment: parseEquipment(merged.equipment),
       attacks: parseAttacks(merged.attacks),
+      skills: parseSkillIds(merged.skills),
       immunities: parseDamageTypes(merged.immunities),
       resistances: parseDamageTypes(merged.resistances),
       vulnerabilities: parseDamageTypes(merged.vulnerabilities),
@@ -278,4 +294,109 @@ export function parseItemFiles(filePaths: string[]): ItemDefinition[] {
     items.push(...parseItemFile(filePath));
   }
   return items;
+}
+
+// =============================================================================
+// Skill Parsing
+// =============================================================================
+
+/**
+ * Parse an effect step from YAML.
+ */
+function parseEffectStep(data: Record<string, unknown>): EffectStep {
+  return {
+    type: (data.type as EffectStep['type']) ?? 'damage',
+    dice: data.dice as string | undefined,
+    damageType: data.damageType as DamageType | undefined,
+    scalingStat: data.scalingStat as string | undefined,
+    scalingMultiplier: data.scalingMultiplier as number | undefined,
+    attackStat: data.attackStat as string | undefined,
+    stopOnMiss: data.stopOnMiss as boolean | undefined,
+  };
+}
+
+/**
+ * Parse an effect block from YAML.
+ */
+function parseSkillEffect(data: Record<string, unknown>): SkillEffect {
+  const stepsData = data.steps;
+  const steps: EffectStep[] = [];
+
+  if (Array.isArray(stepsData)) {
+    for (const step of stepsData) {
+      if (typeof step === 'object' && step !== null) {
+        steps.push(parseEffectStep(step as Record<string, unknown>));
+      }
+    }
+  }
+
+  return { steps };
+}
+
+/**
+ * Parse effects array from YAML.
+ */
+function parseSkillEffects(data: unknown): SkillEffect[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  const effects: SkillEffect[] = [];
+  for (const effect of data) {
+    if (typeof effect === 'object' && effect !== null) {
+      effects.push(parseSkillEffect(effect as Record<string, unknown>));
+    }
+  }
+  return effects;
+}
+
+/**
+ * Parse a skill YAML file.
+ * @param filePath Path to the YAML file
+ * @returns Array of skill definitions
+ */
+export function parseSkillFile(filePath: string): SkillDefinition[] {
+  const content = readFileSync(filePath, 'utf-8');
+  const yaml = parseYaml(content) as SkillYamlFile;
+
+  const skills: SkillDefinition[] = [];
+
+  for (const [id, entry] of Object.entries(yaml.entries)) {
+    // Skip template entries
+    if (id.startsWith('_')) {
+      continue;
+    }
+
+    // Skip non-active skills (passive, reactive) for now
+    const category = (entry.category as string) ?? 'active';
+    if (category !== 'active') {
+      continue;
+    }
+
+    const skill: SkillDefinition = {
+      id,
+      name: (entry.name as string) ?? id,
+      description: entry.description as string | undefined,
+      category: category as 'active' | 'passive' | 'reactive',
+      targeting: (entry.targeting as string) ?? 'enemy',
+      range: (entry.range as number) ?? 1,
+      willpowerCost: (entry.willpowerCost as number) ?? 0,
+      effects: parseSkillEffects(entry.effects),
+    };
+
+    skills.push(skill);
+  }
+
+  return skills;
+}
+
+/**
+ * Parse multiple skill files.
+ */
+export function parseSkillFiles(filePaths: string[]): SkillDefinition[] {
+  const skills: SkillDefinition[] = [];
+  for (const filePath of filePaths) {
+    skills.push(...parseSkillFile(filePath));
+  }
+  return skills;
 }

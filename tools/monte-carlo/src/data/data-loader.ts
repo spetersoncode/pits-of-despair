@@ -3,10 +3,10 @@
  * Loads all creature and item definitions from the game's Data directory.
  */
 
-import { readdirSync } from 'fs';
+import { readdirSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
-import { parseCreatureFile, parseItemFile } from './yaml-parser.js';
-import type { CreatureDefinition, ItemDefinition } from './types.js';
+import { parseCreatureFile, parseItemFile, parseSkillFile } from './yaml-parser.js';
+import type { CreatureDefinition, ItemDefinition, SkillDefinition } from './types.js';
 
 // =============================================================================
 // Data Store
@@ -15,6 +15,7 @@ import type { CreatureDefinition, ItemDefinition } from './types.js';
 export interface GameData {
   creatures: Map<string, CreatureDefinition>;
   items: Map<string, ItemDefinition>;
+  skills: Map<string, SkillDefinition>;
 }
 
 // =============================================================================
@@ -143,7 +144,34 @@ export function loadItems(dataPath: string): Map<string, ItemDefinition> {
 }
 
 /**
- * Load all game data (creatures and items).
+ * Load all skill definitions from the Data/Skills directory.
+ */
+export function loadSkills(dataPath: string): Map<string, SkillDefinition> {
+  const skillsPath = join(dataPath, 'Skills');
+  const skills = new Map<string, SkillDefinition>();
+
+  // Skills directory may not exist in all projects
+  if (!existsSync(skillsPath)) {
+    return skills;
+  }
+
+  const files = getYamlFiles(skillsPath);
+
+  for (const file of files) {
+    const parsed = parseSkillFile(file);
+    for (const skill of parsed) {
+      if (skills.has(skill.id)) {
+        console.warn(`Duplicate skill ID: ${skill.id}`);
+      }
+      skills.set(skill.id, skill);
+    }
+  }
+
+  return skills;
+}
+
+/**
+ * Load all game data (creatures, items, and skills).
  */
 export function loadGameData(projectRoot?: string): GameData {
   const dataPath = getDataPath(projectRoot);
@@ -152,10 +180,11 @@ export function loadGameData(projectRoot?: string): GameData {
 
   const creatures = loadCreatures(dataPath);
   const items = loadItems(dataPath);
+  const skills = loadSkills(dataPath);
 
-  console.log(`Loaded ${creatures.size} creatures and ${items.size} items`);
+  console.log(`Loaded ${creatures.size} creatures, ${items.size} items, ${skills.size} skills`);
 
-  return { creatures, items };
+  return { creatures, items, skills };
 }
 
 // =============================================================================
@@ -187,10 +216,19 @@ export function validateGameData(data: GameData): ValidationResult {
       }
     }
 
-    // Check for creatures with no attacks and no equipment
-    if (creature.attacks.length === 0 && creature.equipment.length === 0) {
+    // Check skill references
+    for (const skillId of creature.skills) {
+      if (!data.skills.has(skillId)) {
+        warnings.push(
+          `Creature "${id}" references unknown skill: "${skillId}"`
+        );
+      }
+    }
+
+    // Check for creatures with no attacks, no equipment, and no skills
+    if (creature.attacks.length === 0 && creature.equipment.length === 0 && creature.skills.length === 0) {
       warnings.push(
-        `Creature "${id}" has no attacks and no equipment`
+        `Creature "${id}" has no attacks, no equipment, and no skills`
       );
     }
 
@@ -277,6 +315,19 @@ export function getItem(id: string, data?: GameData): ItemDefinition {
     throw new Error(`Item not found: "${id}"`);
   }
   return item;
+}
+
+/**
+ * Get a skill by ID.
+ * @throws Error if skill not found
+ */
+export function getSkill(id: string, data?: GameData): SkillDefinition {
+  const gameData = data ?? getGameData();
+  const skill = gameData.skills.get(id);
+  if (!skill) {
+    throw new Error(`Skill not found: "${id}"`);
+  }
+  return skill;
 }
 
 /**

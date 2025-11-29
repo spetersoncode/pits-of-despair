@@ -30,6 +30,7 @@ const CREATURE_DEFAULTS: Omit<CreatureDefinition, 'id' | 'name' | 'type'> = {
   speed: 10,
   equipment: [],
   attacks: [],
+  skills: [],
   immunities: [],
   resistances: [],
   vulnerabilities: [],

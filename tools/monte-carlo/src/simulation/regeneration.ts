@@ -80,3 +80,47 @@ export function turnsToFullHeal(combatant: CombatantState): number {
   if (missing <= 0) return 0;
   return turnsToHealOne(combatant) * missing;
 }
+
+// =============================================================================
+// Willpower Regeneration
+// =============================================================================
+
+/**
+ * Calculate the willpower regeneration rate for a combatant.
+ * Formula: 20 + (maxWP / 6)
+ * Same pattern as health regeneration.
+ */
+export function calculateWpRegenRate(combatant: CombatantState): number {
+  return BASE_REGEN_RATE + Math.floor(combatant.maxWillpower / 6);
+}
+
+/**
+ * Process willpower regeneration for a combatant.
+ * Called after each action. Accumulates regen points and restores WP when threshold reached.
+ * @returns The amount of WP restored (can be 0 or more).
+ */
+export function processWillpowerRegeneration(combatant: CombatantState): number {
+  // Don't regenerate if at full willpower
+  if (combatant.currentWillpower >= combatant.maxWillpower) {
+    // Reset regen points when at full WP to avoid stockpiling
+    combatant.wpRegenPoints = 0;
+    return 0;
+  }
+
+  // Accumulate regeneration points
+  const regenRate = calculateWpRegenRate(combatant);
+  combatant.wpRegenPoints += regenRate;
+
+  // Restore 1 WP for every 100 points accumulated
+  let restored = 0;
+  while (
+    combatant.wpRegenPoints >= REGEN_THRESHOLD &&
+    combatant.currentWillpower < combatant.maxWillpower
+  ) {
+    combatant.currentWillpower += 1;
+    combatant.wpRegenPoints -= REGEN_THRESHOLD;
+    restored += 1;
+  }
+
+  return restored;
+}

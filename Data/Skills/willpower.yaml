@@ -65,6 +65,7 @@ entries:
         steps:
           - type: damage
             dice: 1d6
+            damageType: Bludgeoning
             scalingStat: wil
             scalingMultiplier: 1.0
 

@@ -7,13 +7,14 @@ import type {
   CreatureDefinition,
   ItemDefinition,
   AttackDefinition,
+  SkillDefinition,
   DamageType,
   Combatant as CombatantState,
   Position,
   EquipmentEntry,
   GameData,
 } from '../data/types.js';
-import { getItem } from '../data/data-loader.js';
+import { getItem, getSkill } from '../data/data-loader.js';
 
 // =============================================================================
 // HP Formula
@@ -39,6 +40,45 @@ export function calculateHealthBonus(endurance: number): number {
 export function calculateMaxHealth(baseHealth: number, endurance: number): number {
   const bonus = calculateHealthBonus(endurance);
   return Math.max(baseHealth, baseHealth + bonus);
+}
+
+// =============================================================================
+// Willpower Formula
+// =============================================================================
+
+/**
+ * Calculate max willpower from will stat.
+ * Formula: 10 + (WIL × 5)
+ * Matches WillpowerComponent in C#.
+ */
+export function calculateMaxWillpower(will: number): number {
+  return 10 + Math.max(0, will * 5);
+}
+
+// =============================================================================
+// Skill Resolution
+// =============================================================================
+
+/**
+ * Resolve skill IDs to skill definitions.
+ */
+function resolveSkills(
+  skillIds: string[],
+  gameData: GameData
+): SkillDefinition[] {
+  const skills: SkillDefinition[] = [];
+
+  for (const skillId of skillIds) {
+    try {
+      const skill = getSkill(skillId, gameData);
+      skills.push(skill);
+    } catch {
+      // Skill not found - skip (validation should catch this)
+      console.warn(`Skill not found: ${skillId}`);
+    }
+  }
+
+  return skills;
 }
 
 // =============================================================================
@@ -154,6 +194,7 @@ export function createCombatant(
   const strength = creature.strength + equipStats.strength;
   const agility = creature.agility + equipStats.agility;
   const endurance = creature.endurance + equipStats.endurance;
+  const will = creature.will + equipStats.will;
   const armor = equipStats.armor;
   const evasion = equipStats.evasion;
   const speed = Math.max(1, creature.speed + equipStats.speed);
@@ -162,9 +203,15 @@ export function createCombatant(
   // Calculate max HP with effective endurance
   const maxHealth = calculateMaxHealth(creature.health, endurance);
 
+  // Calculate max willpower with effective will
+  const maxWillpower = calculateMaxWillpower(will);
+
   // Determine available attacks (equipment weapons or natural attacks)
   const attacks =
     equipStats.attacks.length > 0 ? equipStats.attacks : creature.attacks;
+
+  // Resolve skills
+  const skills = resolveSkills(creature.skills, gameData);
 
   // Generate unique ID
   const id = `${creature.id}_${++_combatantIdCounter}`;
@@ -178,6 +225,7 @@ export function createCombatant(
     strength,
     agility,
     endurance,
+    will,
     armor,
     evasion,
     speed,
@@ -187,11 +235,16 @@ export function createCombatant(
     maxHealth,
     currentHealth: maxHealth,
 
+    // Willpower
+    maxWillpower,
+    currentWillpower: maxWillpower,
+
     // Position
     position: { ...position },
 
     // Combat
     attacks,
+    skills,
     immunities: new Set(creature.immunities),
     resistances: new Set(creature.resistances),
     vulnerabilities: new Set(creature.vulnerabilities),
@@ -199,6 +252,7 @@ export function createCombatant(
     // Turn tracking
     accumulatedTime: 0,
     regenPoints: 0,
+    wpRegenPoints: 0,
 
     // Ammo
     ammo,
@@ -318,4 +372,95 @@ export function canAttack(
     }
     return true;
   }
+}
+
+// =============================================================================
+// Skill Queries
+// =============================================================================
+
+/**
+ * Check if a combatant has enough willpower to use a skill.
+ */
+export function canUseSkill(
+  combatant: CombatantState,
+  skill: SkillDefinition
+): boolean {
+  return combatant.currentWillpower >= skill.willpowerCost;
+}
+
+/**
+ * Check if a skill is a ranged offensive skill.
+ * Ranged skills have range > 1 and target enemies.
+ */
+export function isRangedSkill(skill: SkillDefinition): boolean {
+  const targeting = skill.targeting?.toLowerCase() ?? 'self';
+  const isOffensive = targeting === 'enemy' || targeting === 'creature';
+  return isOffensive && skill.range > 1;
+}
+
+/**
+ * Check if a skill is a melee offensive skill.
+ * Melee skills have range <= 1 and target enemies.
+ */
+export function isMeleeSkill(skill: SkillDefinition): boolean {
+  const targeting = skill.targeting?.toLowerCase() ?? 'self';
+  const isOffensive = targeting === 'enemy' || targeting === 'creature';
+  return isOffensive && skill.range <= 1;
+}
+
+/**
+ * Get all usable ranged skills (active, targeting enemies, range > 1, enough WP).
+ */
+export function getUsableRangedSkills(
+  combatant: CombatantState
+): SkillDefinition[] {
+  return combatant.skills.filter(
+    (s) =>
+      s.category === 'active' &&
+      isRangedSkill(s) &&
+      canUseSkill(combatant, s)
+  );
+}
+
+/**
+ * Get all usable melee skills (active, targeting enemies, range <= 1, enough WP).
+ */
+export function getUsableMeleeSkills(
+  combatant: CombatantState
+): SkillDefinition[] {
+  return combatant.skills.filter(
+    (s) =>
+      s.category === 'active' &&
+      isMeleeSkill(s) &&
+      canUseSkill(combatant, s)
+  );
+}
+
+/**
+ * Check if a combatant can use a skill on a target (in range, has WP).
+ */
+export function canUseSkillOn(
+  attacker: CombatantState,
+  target: CombatantState,
+  skill: SkillDefinition
+): boolean {
+  if (!canUseSkill(attacker, skill)) {
+    return false;
+  }
+
+  const dist = distance(attacker.position, target.position);
+  return dist <= skill.range;
+}
+
+/**
+ * Consume willpower for using a skill.
+ */
+export function consumeWillpower(
+  combatant: CombatantState,
+  skill: SkillDefinition
+): void {
+  combatant.currentWillpower = Math.max(
+    0,
+    combatant.currentWillpower - skill.willpowerCost
+  );
 }

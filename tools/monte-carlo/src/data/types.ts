@@ -78,6 +78,53 @@ export interface AttackDefinition {
 }
 
 // =============================================================================
+// Skill Definitions
+// =============================================================================
+
+/**
+ * Defines a skill (active ability, spell, etc.).
+ */
+export interface SkillDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  category: 'active' | 'passive' | 'reactive';
+  targeting: string; // 'enemy', 'self', 'ally', 'line', 'area', etc.
+  range: number;
+  willpowerCost: number;
+  effects: SkillEffect[];
+}
+
+/**
+ * A single effect block within a skill (may have multiple steps).
+ */
+export interface SkillEffect {
+  steps: EffectStep[];
+}
+
+/**
+ * A step within an effect (damage, attack_roll, heal, etc.).
+ * Only modeling what's needed for simple damage skills like magic_missile.
+ */
+export interface EffectStep {
+  type: 'damage' | 'attack_roll' | 'heal'; // Expand as needed
+  dice?: string;
+  damageType?: DamageType;
+  scalingStat?: string; // 'str', 'agi', 'end', 'wil'
+  scalingMultiplier?: number;
+  attackStat?: string; // For attack_roll steps
+  stopOnMiss?: boolean; // For attack_roll steps
+}
+
+/**
+ * Structure of skill YAML files.
+ */
+export interface SkillYamlFile {
+  type: string; // Category name (e.g., 'willpower')
+  entries: Record<string, Partial<Omit<SkillDefinition, 'id'>>>;
+}
+
+// =============================================================================
 // Equipment Entry (in creature definitions)
 // =============================================================================
 
@@ -117,6 +164,7 @@ export interface CreatureDefinition {
   // Combat
   equipment: EquipmentEntry[];
   attacks: AttackDefinition[]; // Natural attacks
+  skills: string[]; // Skill IDs (resolved at combatant creation)
 
   // Damage modifiers
   immunities: DamageType[];
@@ -211,6 +259,7 @@ export interface Combatant {
   strength: number;
   agility: number;
   endurance: number;
+  will: number;
   armor: number;
   evasion: number;
   speed: number;
@@ -220,11 +269,16 @@ export interface Combatant {
   maxHealth: number;
   currentHealth: number;
 
+  // Willpower
+  maxWillpower: number;
+  currentWillpower: number;
+
   // Position
   position: Position;
 
   // Combat capabilities
   attacks: AttackDefinition[];
+  skills: SkillDefinition[];
 
   // Damage modifiers
   immunities: Set<DamageType>;
@@ -234,6 +288,7 @@ export interface Combatant {
   // Turn tracking
   accumulatedTime: number;
   regenPoints: number;
+  wpRegenPoints: number;
 
   // Equipment reference (for ammo tracking)
   ammo: Map<string, number>; // ammoType -> count
