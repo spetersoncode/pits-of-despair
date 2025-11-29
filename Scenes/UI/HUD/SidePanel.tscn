@@ -25,42 +25,94 @@ theme_override_constants/separation = 4
 layout_mode = 2
 text = "Player"
 
-[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="HealthBarContainer" type="Control" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
+
+[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/HealthBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 value = 100.0
 show_percentage = false
 
-[node name="HealthLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Hit Points: 20/20"
+[node name="HealthLabel" type="Label" parent="MarginContainer/VBoxContainer/HealthBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Health: 20/20"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="WillpowerBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="WillpowerBarContainer" type="Control" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
+
+[node name="WillpowerBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/WillpowerBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 value = 100.0
 show_percentage = false
 
-[node name="WillpowerLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
+[node name="WillpowerLabel" type="Label" parent="MarginContainer/VBoxContainer/WillpowerBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "Willpower: 10/10"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="ExperienceBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="ExperienceBarContainer" type="Control" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
+
+[node name="ExperienceBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/ExperienceBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 show_percentage = false
+
+[node name="ExperienceLabel" type="Label" parent="MarginContainer/VBoxContainer/ExperienceBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "XP: 0/100"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="XPGoldLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 bbcode_enabled = true
-text = "XP: 0/100        Gold: 0"
+text = "Level: 1              Floor: 1"
 fit_content = true
 scroll_active = false
 
 [node name="LevelFloorLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 bbcode_enabled = true
-text = "Level: 1       Floor: 1"
+text = "Gold: 0"
 fit_content = true
 scroll_active = false
 

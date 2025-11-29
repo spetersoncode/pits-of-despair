@@ -71,22 +71,28 @@ public static class Palette
 
     #endregion
 
-    #region UI - Health States
+    #region UI - Health States (darkened for white text readability)
 
     /// <summary>Health bar at full capacity (>80%)</summary>
-    public static readonly Color HealthFull = new("#66DD66");
+    public static readonly Color HealthFull = new("#44AA44");
 
     /// <summary>Health bar at high level (60-80%)</summary>
-    public static readonly Color HealthHigh = new("#99DD66");
+    public static readonly Color HealthHigh = new("#77AA44");
 
     /// <summary>Health bar at medium level (30-60%)</summary>
-    public static readonly Color HealthMedium = new("#DDDD66");
+    public static readonly Color HealthMedium = new("#AAAA44");
 
     /// <summary>Health bar at low level (15-30%)</summary>
-    public static readonly Color HealthLow = new("#DDAA55");
+    public static readonly Color HealthLow = new("#AA7744");
 
     /// <summary>Health bar at critical level (&lt;15%)</summary>
-    public static readonly Color HealthCritical = new("#DD6655");
+    public static readonly Color HealthCritical = new("#AA4444");
+
+    /// <summary>Experience bar fill color (darker gold)</summary>
+    public static readonly Color ExperienceBar = new("#997733");
+
+    /// <summary>Willpower bar fill color (darker blue-purple)</summary>
+    public static readonly Color WillpowerBar = new("#4D4D8C");
 
     #endregion
 
