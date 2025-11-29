@@ -1,3 +1,4 @@
+using PitsOfDespair.Brands;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -19,6 +20,14 @@ public static class ItemEvaluator
     private const int ArmorScore = 30;
     private const int AmmoScore = 20;
     private const int DefaultScore = 10;
+
+    /// <summary>
+    /// Brand scoring values.
+    /// </summary>
+    private const int DamageBrandScore = 15;
+    private const int AccuracyBrandScore = 10;
+    private const int ElementalBrandScore = 20;
+    private const int VampiricBrandScore = 25;
 
     /// <summary>
     /// Evaluates the desirability of an item for a specific entity.
@@ -94,6 +103,53 @@ public static class ItemEvaluator
         }
 
         return score;
+    }
+
+    /// <summary>
+    /// Evaluates the desirability of an item instance for a specific entity.
+    /// Includes brand evaluation for enchanted items.
+    /// </summary>
+    /// <param name="itemInstance">The item instance to evaluate.</param>
+    /// <param name="entity">The entity considering the item.</param>
+    /// <returns>A score representing item desirability.</returns>
+    public static int EvaluateItem(ItemInstance itemInstance, BaseEntity entity)
+    {
+        if (itemInstance?.Template == null)
+            return 0;
+
+        // Start with base item evaluation
+        int score = EvaluateItem(itemInstance.Template, entity);
+
+        // Add brand value
+        score += EvaluateBrands(itemInstance);
+
+        return score;
+    }
+
+    /// <summary>
+    /// Evaluates the total value of brands on an item.
+    /// </summary>
+    /// <param name="itemInstance">The item instance to evaluate.</param>
+    /// <returns>Combined score from all brands.</returns>
+    public static int EvaluateBrands(ItemInstance itemInstance)
+    {
+        if (itemInstance == null)
+            return 0;
+
+        int brandScore = 0;
+        foreach (var brand in itemInstance.GetBrands())
+        {
+            brandScore += brand switch
+            {
+                VampiricBrand => VampiricBrandScore,
+                ElementalBrand => ElementalBrandScore,
+                IDamageBrand db => DamageBrandScore + (db.GetDamageBonus() * 5),
+                IHitBrand hb => AccuracyBrandScore + (hb.GetHitBonus() * 3),
+                _ => 5 // Default brand value
+            };
+        }
+
+        return brandScore;
     }
 
     /// <summary>

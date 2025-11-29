@@ -22,6 +22,20 @@ public partial class TurnManager : Node
     [Signal]
     public delegate void CreatureTurnsEndedEventHandler();
 
+    /// <summary>
+    /// Emitted at the start of each round (with PlayerTurnStarted).
+    /// Use for effects that trigger once per round at the start.
+    /// </summary>
+    [Signal]
+    public delegate void RoundStartedEventHandler();
+
+    /// <summary>
+    /// Emitted at the end of each round (with CreatureTurnsEnded).
+    /// Use for duration tick-downs, temporary effects expiring, etc.
+    /// </summary>
+    [Signal]
+    public delegate void RoundEndedEventHandler();
+
     private bool _isPlayerTurn = true;
     private bool _waitingForEffects = false;
     private int _pendingPlayerDelay = 0;
@@ -83,6 +97,7 @@ public partial class TurnManager : Node
     {
         _isPlayerTurn = true;
         _messageSystem?.BeginSequence();
+        EmitSignal(SignalName.RoundStarted);
         EmitSignal(SignalName.PlayerTurnStarted);
     }
 
@@ -191,9 +206,11 @@ public partial class TurnManager : Node
 
         _isPlayerTurn = true;
         EmitSignal(SignalName.CreatureTurnsEnded);
+        EmitSignal(SignalName.RoundEnded);
 
         // Begin sequencing for next player turn
         _messageSystem?.BeginSequence();
+        EmitSignal(SignalName.RoundStarted);
         EmitSignal(SignalName.PlayerTurnStarted);
     }
 

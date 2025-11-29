@@ -14,6 +14,7 @@ public static class DebugCommandFactory
     private static readonly Dictionary<string, Func<DebugCommand>> _commandRegistry = new()
     {
         { "ally", () => new AllyCommand() },
+        { "brand", () => new BrandCommand() },
         { "give", () => new GiveCommand() },
         { "level", () => new LevelCommand() },
         { "reveal", () => new RevealCommand() },

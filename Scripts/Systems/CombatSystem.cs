@@ -1,11 +1,14 @@
 using System.Linq;
 using Godot;
+using PitsOfDespair.Brands;
 using PitsOfDespair.Components;
 using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Scripts.Data;
 
 // Using FactionExtensions from BaseEntity.cs
 
@@ -56,6 +59,19 @@ public partial class CombatSystem : Node
     /// </summary>
     [Signal]
     public delegate void SkillDamageDealtEventHandler(BaseEntity caster, BaseEntity target, int damage, string skillName);
+
+    /// <summary>
+    /// Emitted when a brand effect triggers on hit (attacker, target, verb, damage, color)
+    /// Used for combining brand damage into attack messages.
+    /// </summary>
+    [Signal]
+    public delegate void BrandEffectAppliedEventHandler(BaseEntity attacker, BaseEntity target, string verb, int damage, string color);
+
+    /// <summary>
+    /// Emitted when lifesteal occurs from a vampiric brand (attacker, target, healing)
+    /// </summary>
+    [Signal]
+    public delegate void LifestealAppliedEventHandler(BaseEntity attacker, BaseEntity target, int healing);
 
     /// <summary>
     /// Register an AttackComponent to listen for attack requests.
@@ -141,6 +157,10 @@ public partial class CombatSystem : Node
         int primeHitBonus = primedAttack?.GetHitBonus() ?? 0;
         int primeDamageBonus = primedAttack?.GetDamageBonus() ?? 0;
 
+        // Get weapon brand bonuses
+        var weaponInstance = GetEquippedWeaponInstance(attacker, isMelee);
+        var (brandHitBonus, brandDamageBonus) = GetWeaponBrandBonuses(attacker, isMelee);
+
         int baseDamage;
         int finalDamage;
 
@@ -149,13 +169,13 @@ public partial class CombatSystem : Node
         if (targetStats == null)
         {
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus;
+            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus + brandDamageBonus;
             finalDamage = Mathf.Max(0, baseDamage + damageBonus);
         }
         else
         {
             // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
-            int attackModifier = attackerStats.GetAttackModifier(isMelee) + primeHitBonus;
+            int attackModifier = attackerStats.GetAttackModifier(isMelee) + primeHitBonus + brandHitBonus;
             int defenseModifier = targetStats.GetDefenseModifier();
 
             int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
@@ -172,9 +192,9 @@ public partial class CombatSystem : Node
                 return;
             }
 
-            // PHASE 2: Damage Calculation (weapon damage + STR [if melee] + prime bonus - armor)
+            // PHASE 2: Damage Calculation (weapon damage + STR [if melee] + prime + brand bonus - armor)
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus;
+            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus + brandDamageBonus;
             int armor = targetStats.TotalArmor;
             finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
         }
@@ -191,6 +211,9 @@ public partial class CombatSystem : Node
 
             // Now apply the damage (which may trigger death signals)
             targetHealth.TakeDamage(finalDamage, attackData.DamageType, attacker);
+
+            // PHASE 4: Process on-hit brand effects (elemental damage, vampiric, etc.)
+            ProcessOnHitBrands(attacker, target, weaponInstance, actualDamage);
         }
         else
         {
@@ -235,6 +258,66 @@ public partial class CombatSystem : Node
     {
         return entity.GetActiveConditions()
             .FirstOrDefault(c => c.TypeId == "primed_attack") as PrimedAttackCondition;
+    }
+
+    /// <summary>
+    /// Gets the equipped weapon ItemInstance for an entity based on attack type.
+    /// </summary>
+    /// <param name="entity">The entity to check.</param>
+    /// <param name="isMelee">True for melee weapon, false for ranged weapon.</param>
+    /// <returns>The ItemInstance of the equipped weapon, or null if none equipped.</returns>
+    private static ItemInstance? GetEquippedWeaponInstance(BaseEntity entity, bool isMelee)
+    {
+        var equipComponent = entity.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent == null) return null;
+
+        var slot = isMelee ? EquipmentSlot.MeleeWeapon : EquipmentSlot.RangedWeapon;
+        var inventoryKey = equipComponent.GetEquippedKey(slot);
+        if (inventoryKey == null) return null;
+
+        var inventoryComponent = entity.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventoryComponent == null) return null;
+
+        var inventorySlot = inventoryComponent.GetSlot(inventoryKey.Value);
+        return inventorySlot?.Item;
+    }
+
+    /// <summary>
+    /// Gets hit and damage bonuses from weapon brands.
+    /// </summary>
+    private static (int hitBonus, int damageBonus) GetWeaponBrandBonuses(BaseEntity attacker, bool isMelee)
+    {
+        var weapon = GetEquippedWeaponInstance(attacker, isMelee);
+        if (weapon == null) return (0, 0);
+
+        return (weapon.GetTotalHitBonus(), weapon.GetTotalDamageBonus());
+    }
+
+    /// <summary>
+    /// Processes on-hit brand effects after a successful attack.
+    /// Emits signals for brand damage/healing so messages can be combined with attack message.
+    /// </summary>
+    private void ProcessOnHitBrands(BaseEntity attacker, BaseEntity target, ItemInstance? weapon, int damage)
+    {
+        if (weapon == null || damage <= 0) return;
+
+        foreach (var brand in weapon.GetOnHitBrands())
+        {
+            var result = brand.OnHit(attacker, target, damage);
+
+            // Emit brand effect for elemental/damage brands
+            if (result.DamageDealt > 0 && !string.IsNullOrEmpty(result.Verb))
+            {
+                string color = result.MessageColor ?? Palette.ToHex(Palette.Default);
+                EmitSignal(SignalName.BrandEffectApplied, attacker, target, result.Verb, result.DamageDealt, color);
+            }
+
+            // Emit lifesteal for vampiric brands
+            if (result.HealingDone > 0)
+            {
+                EmitSignal(SignalName.LifestealApplied, attacker, target, result.HealingDone);
+            }
+        }
     }
 
     public override void _ExitTree()

@@ -1,7 +1,18 @@
+using System.Collections.Generic;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 
 namespace PitsOfDespair.Systems;
+
+/// <summary>
+/// Represents a brand effect that occurred during combat.
+/// </summary>
+public struct BrandEffectData
+{
+    public string Verb { get; set; }      // e.g., "scorched", "shocked", "frozen"
+    public int Damage { get; set; }
+    public string Color { get; set; }
+}
 
 /// <summary>
 /// Holds combat event data for a single target, allowing multiple events
@@ -63,6 +74,16 @@ public class CombatMessageData
     /// XP reward if the target died and attacker is player.
     /// </summary>
     public int XPReward { get; set; }
+
+    /// <summary>
+    /// Brand effects that triggered on this attack (elemental damage, lifesteal, etc.).
+    /// </summary>
+    public List<BrandEffectData> BrandEffects { get; set; } = new();
+
+    /// <summary>
+    /// Healing received from vampiric effects.
+    /// </summary>
+    public int LifestealHealing { get; set; }
 
     /// <summary>
     /// Creates a unique key for grouping messages by attacker-target-source combination.

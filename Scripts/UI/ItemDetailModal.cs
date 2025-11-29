@@ -1,4 +1,5 @@
 using Godot;
+using PitsOfDespair.Brands;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
@@ -121,7 +122,7 @@ public partial class ItemDetailModal : CenterContainer
 
 		// === HEADER ===
 		string glyph = $"[color={itemColor}]{itemTemplate.GetGlyph()}[/color]";
-		string displayName = itemTemplate.GetDisplayName(1); // Use "of" pattern (wand of fatigue, potion of healing)
+		string displayName = _currentSlot.Item.GetBrandedDisplayName(); // Use branded name with prefixes/suffixes
 		string name = $"[color={itemColor}][b]{displayName}[/b][/color]";
 		string countInfo = _currentSlot.Item.Quantity > 1
 			? $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Item.Quantity})[/color]"
@@ -170,6 +171,14 @@ public partial class ItemDetailModal : CenterContainer
 		{
 			sb.Append($"\n\n[color={disabled}]COMBAT[/color]");
 			sb.Append(weaponStats);
+		}
+
+		// === BRANDS SECTION (weapon enchantments) ===
+		string brandsSection = BuildBrandsSection(_currentSlot.Item);
+		if (!string.IsNullOrEmpty(brandsSection))
+		{
+			sb.Append($"\n\n[color={disabled}]BRANDS[/color]");
+			sb.Append(brandsSection);
 		}
 
 		// === EQUIPMENT SECTION (armor, stat modifiers) ===
@@ -232,6 +241,56 @@ public partial class ItemDetailModal : CenterContainer
 		sb.Append($"\n[color={disabled}]Average damage per turn:[/color] [color={defaultColor}]{dpt:F1}[/color]");
 
 		return sb.ToString();
+	}
+
+	/// <summary>
+	/// Builds the brands section for enchanted items.
+	/// </summary>
+	private static string BuildBrandsSection(ItemInstance item)
+	{
+		var brands = item.GetBrands();
+		if (brands.Count == 0)
+			return "";
+
+		string disabled = Palette.ToHex(Palette.Disabled);
+		string defaultColor = Palette.ToHex(Palette.Default);
+		string buffColor = Palette.ToHex(Palette.StatusBuff);
+
+		var sb = new StringBuilder();
+
+		foreach (var brand in brands)
+		{
+			string brandLine = DescribeBrand(brand);
+			string durationInfo = "";
+
+			if (brand.IsTemporary)
+			{
+				durationInfo = $" [color={disabled}]({brand.RemainingTurns} turns)[/color]";
+			}
+
+			sb.Append($"\n[color={buffColor}]{brand.Name}[/color]: [color={defaultColor}]{brandLine}[/color]{durationInfo}");
+		}
+
+		return sb.ToString();
+	}
+
+	/// <summary>
+	/// Generates a human-readable description of a brand's effects.
+	/// </summary>
+	private static string DescribeBrand(Brand brand)
+	{
+		return brand switch
+		{
+			IDamageBrand db when db.GetDamageBonus() != 0 =>
+				$"+{db.GetDamageBonus()} damage",
+			IHitBrand hb when hb.GetHitBonus() != 0 =>
+				$"+{hb.GetHitBonus()} to hit",
+			ElementalBrand eb =>
+				$"+1d6 {eb.Name.ToLower()} damage on hit",
+			VampiricBrand =>
+				"Heals on hit",
+			_ => brand.Name
+		};
 	}
 
 	/// <summary>

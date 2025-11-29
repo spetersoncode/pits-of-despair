@@ -63,11 +63,12 @@ public static class ItemFormatter
         string key = $"[color={keyColor}]{slot.Key})[/color]";
         string glyph = $"[color={itemColor}]{itemTemplate.GetGlyph()}[/color]";
 
-        // Name with optional count
-        string displayName = itemTemplate.Name;
-        if (options.HasFlag(ItemDisplayOptions.ShowCount))
+        // Name with optional count and brands
+        string displayName = slot.Item.GetBrandedDisplayName();
+        if (options.HasFlag(ItemDisplayOptions.ShowCount) && slot.Item.Quantity > 1)
         {
-            displayName = itemTemplate.GetDisplayName(slot.Item.Quantity);
+            // For stackable items with count, append quantity
+            displayName = $"{displayName} (x{slot.Item.Quantity})";
         }
         string name = $"[color={itemColor}]{displayName}[/color]";
 

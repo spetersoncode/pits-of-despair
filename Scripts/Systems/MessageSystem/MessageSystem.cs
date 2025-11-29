@@ -143,6 +143,8 @@ public partial class MessageSystem : Node
         _combatSystem.Connect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         _combatSystem.Connect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
         _combatSystem.Connect(CombatSystem.SignalName.SkillDamageDealt, Callable.From<BaseEntity, BaseEntity, int, string>(OnSkillDamageDealt));
+        _combatSystem.Connect(CombatSystem.SignalName.BrandEffectApplied, Callable.From<BaseEntity, BaseEntity, string, int, string>(OnBrandEffectApplied));
+        _combatSystem.Connect(CombatSystem.SignalName.LifestealApplied, Callable.From<BaseEntity, BaseEntity, int>(OnLifestealApplied));
     }
 
     /// <summary>
@@ -261,6 +263,18 @@ public partial class MessageSystem : Node
     {
         // Use ActionDamage priority so combat messages appear before death messages
         QueueMessage(MessagePriority.ActionDamage, message, color);
+    }
+
+    private void OnBrandEffectApplied(BaseEntity attacker, BaseEntity target, string verb, int damage, string color)
+    {
+        // Record brand effect to be combined with the attack message
+        RecordBrandEffect(attacker, target, verb, damage, color);
+    }
+
+    private void OnLifestealApplied(BaseEntity attacker, BaseEntity target, int healing)
+    {
+        // Record lifesteal to be combined with the attack message
+        RecordLifesteal(attacker, target, healing);
     }
 
     private void OnEntityDied(BaseEntity victim)
@@ -384,6 +398,56 @@ public partial class MessageSystem : Node
         }
 
         data.Damage = damage;
+    }
+
+    /// <summary>
+    /// Records a brand effect to be appended to the attack message.
+    /// </summary>
+    private void RecordBrandEffect(BaseEntity attacker, BaseEntity target, string verb, int damage, string color)
+    {
+        if (!IsSequencing)
+        {
+            // Emit standalone message if not sequencing
+            bool isPlayer = attacker.DisplayName == "Player";
+            string targetName = isPlayer ? target.DisplayName : "you";
+            QueueMessage(MessagePriority.ActionDamage, $"{verb} for {damage}", color);
+            return;
+        }
+
+        // Find the combat message to attach this brand effect to
+        var matchingKey = FindCombatKeyForTarget(target, attacker, null);
+        if (matchingKey != null && _combatMessages.TryGetValue(matchingKey, out var data))
+        {
+            data.BrandEffects.Add(new BrandEffectData
+            {
+                Verb = verb,
+                Damage = damage,
+                Color = color
+            });
+        }
+    }
+
+    /// <summary>
+    /// Records lifesteal healing to be appended to the attack message.
+    /// </summary>
+    private void RecordLifesteal(BaseEntity attacker, BaseEntity target, int healing)
+    {
+        if (!IsSequencing)
+        {
+            bool isPlayer = attacker.DisplayName == "Player";
+            if (isPlayer)
+            {
+                QueueMessage(MessagePriority.ActionDamage, $"draining {healing} life", Palette.ToHex(Palette.Blood));
+            }
+            return;
+        }
+
+        // Find the combat message to attach this lifesteal to
+        var matchingKey = FindCombatKeyForTarget(target, attacker, null);
+        if (matchingKey != null && _combatMessages.TryGetValue(matchingKey, out var data))
+        {
+            data.LifestealHealing += healing;
+        }
     }
 
     /// <summary>
@@ -642,6 +706,23 @@ public partial class MessageSystem : Node
         {
             string damageTypeName = data.DamageType.ToString().ToLower();
             message += $" ({data.Modifier} to {damageTypeName})";
+        }
+
+        // Add brand effects (e.g., "scorched for 5, shocked for 3")
+        if (data.BrandEffects.Count > 0)
+        {
+            var brandParts = new System.Collections.Generic.List<string>();
+            foreach (var effect in data.BrandEffects)
+            {
+                brandParts.Add($"[color={effect.Color}]{effect.Verb} for {effect.Damage}[/color]");
+            }
+            message += ", " + string.Join(", ", brandParts);
+        }
+
+        // Add lifesteal if present
+        if (data.LifestealHealing > 0 && isPlayerAttacker)
+        {
+            message += $", [color={Palette.ToHex(Palette.Blood)}]draining {data.LifestealHealing} life[/color]";
         }
 
         // Add death if applicable
@@ -996,6 +1077,8 @@ public partial class MessageSystem : Node
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
             _combatSystem.Disconnect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
             _combatSystem.Disconnect(CombatSystem.SignalName.SkillDamageDealt, Callable.From<BaseEntity, BaseEntity, int, string>(OnSkillDamageDealt));
+            _combatSystem.Disconnect(CombatSystem.SignalName.BrandEffectApplied, Callable.From<BaseEntity, BaseEntity, string, int, string>(OnBrandEffectApplied));
+            _combatSystem.Disconnect(CombatSystem.SignalName.LifestealApplied, Callable.From<BaseEntity, BaseEntity, int>(OnLifestealApplied));
         }
 
         // Disconnect from all health components

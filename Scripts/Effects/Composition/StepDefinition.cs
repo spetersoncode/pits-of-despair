@@ -227,6 +227,21 @@ public class StepDefinition
 
     #endregion
 
+    #region Brand Properties
+
+    /// <summary>
+    /// Brand type to apply (e.g., "damage", "flaming", "vampiric").
+    /// </summary>
+    public string? BrandType { get; set; }
+
+    /// <summary>
+    /// Target equipment slot for brand application: "melee", "ranged".
+    /// Defaults to "melee" if not specified.
+    /// </summary>
+    public string? TargetSlot { get; set; }
+
+    #endregion
+
     /// <summary>
     /// Gets the duration string, defaulting to "1" if not specified.
     /// </summary>

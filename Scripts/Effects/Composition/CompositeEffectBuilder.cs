@@ -105,6 +105,7 @@ public static class CompositeEffectBuilder
             "clone" => new CloneStep(stepDef),
             "weapon_damage" => new WeaponDamageStep(stepDef),
             "apply_prime" => new ApplyPrimeStep(stepDef),
+            "apply_brand" => new ApplyBrandStep(stepDef),
             _ => null
         };
     }
