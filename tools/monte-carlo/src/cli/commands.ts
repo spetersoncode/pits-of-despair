@@ -314,7 +314,10 @@ export function createProgram(): Command {
       const rng = seed !== undefined ? new SeededRng(seed) : new SeededRng(Date.now());
 
       const gameData = loadGameData();
-      const creatures = listCreatures(gameData);
+
+      // Exclude creatures that won't fight properly (cowardly AI, etc.)
+      const MATRIX_EXCLUSIONS = ['goblin_scout'];
+      const creatures = listCreatures(gameData).filter((id) => !MATRIX_EXCLUSIONS.includes(id));
       const results: AggregateResult[] = [];
 
       console.log(`\nRunning ${creatures.length}x${creatures.length} matrix (${creatures.length * creatures.length} matchups)...\n`);
