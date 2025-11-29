@@ -4,8 +4,6 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Systems.VisualEffects;
 using System.Linq;
 

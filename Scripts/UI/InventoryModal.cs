@@ -2,7 +2,6 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;
 using System.Linq;

@@ -4,7 +4,6 @@ using System.Linq;
 using PitsOfDespair.Core;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Data;
 using YamlDotNet.Serialization;
 
 namespace PitsOfDespair.Data;
@@ -382,13 +381,13 @@ public class ItemData
     {
         if (string.IsNullOrEmpty(EquipSlot))
         {
-            return Scripts.Data.EquipmentSlot.None;
+            return EquipmentSlot.None;
         }
 
         // Handle "Ring" specially - it maps to Ring1 (callers can check for Ring2 if needed)
         if (EquipSlot.Equals("Ring", System.StringComparison.OrdinalIgnoreCase))
         {
-            return Scripts.Data.EquipmentSlot.Ring1;
+            return EquipmentSlot.Ring1;
         }
 
         if (System.Enum.TryParse<EquipmentSlot>(EquipSlot, ignoreCase: true, out var slot))
@@ -397,7 +396,7 @@ public class ItemData
         }
 
         GD.PrintErr($"ItemData: Invalid equipment slot '{EquipSlot}' for item '{Name}'");
-        return Scripts.Data.EquipmentSlot.None;
+        return EquipmentSlot.None;
     }
 
     /// <summary>

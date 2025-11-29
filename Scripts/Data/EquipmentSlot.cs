@@ -1,4 +1,4 @@
-namespace PitsOfDespair.Scripts.Data;
+namespace PitsOfDespair.Data;
 
 /// <summary>
 /// Defines the equipment slots available for equippable items.

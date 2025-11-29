@@ -4,8 +4,6 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Systems.Entity;
 using System.Linq;
 using System.Text;
@@ -19,6 +17,7 @@ public partial class SidePanel : PanelContainer
 {
     private const float HealthGreenThreshold = 0.6f;
     private const float HealthYellowThreshold = 0.3f;
+    private const int EquipmentSlotLabelWidth = 6; // Length of "Ranged", the longest slot name
 
     private static readonly Color HealthColorGreen = Palette.HealthFull;
     private static readonly Color HealthColorYellow = Palette.HealthMedium;
@@ -260,10 +259,23 @@ public partial class SidePanel : PanelContainer
         _experienceBar.AddThemeStyleboxOverride("fill", CreateExperienceBarStyle());
 
         string xpText = $"XP: {currentXP}/{xpToNext}";
-        string goldText = $"Gold: {_statsViewModel.Gold}";
         string colorHex = ColorToHex(ExperienceBarColor);
-        string paddedText = PadBetween(xpText, goldText, SidePanelLabelWidth);
-        _xpGoldLabel.Text = $"[color={colorHex}]{paddedText}[/color]";
+
+        // Show level-up indicator if pending level-ups exist
+        if (_pendingLevelUps > 0)
+        {
+            string levelText = "LEVEL UP! [L]";
+            string levelColorHex = ColorToHex(Palette.Alert);
+            string paddedText = PadBetween(xpText, levelText, SidePanelLabelWidth);
+            int xpLen = xpText.Length;
+            _xpGoldLabel.Text = $"[color={colorHex}]{paddedText.Substring(0, xpLen)}[/color]{paddedText.Substring(xpLen, paddedText.Length - xpLen - levelText.Length)}[color={levelColorHex}]{levelText}[/color]";
+        }
+        else
+        {
+            string levelText = $"Level: {_statsViewModel.Level}";
+            string paddedText = PadBetween(xpText, levelText, SidePanelLabelWidth);
+            _xpGoldLabel.Text = $"[color={colorHex}]{paddedText}[/color]";
+        }
     }
 
     private void UpdateLevelFloorDisplay()
@@ -271,26 +283,11 @@ public partial class SidePanel : PanelContainer
         if (_levelFloorLabel == null || _statsViewModel == null)
             return;
 
-        int level = _statsViewModel.Level;
+        string goldText = $"Gold: {_statsViewModel.Gold}";
         string floorText = $"Floor: {_statsViewModel.FloorDepth}";
-
-        // Show level-up indicator if pending level-ups exist
-        if (_pendingLevelUps > 0)
-        {
-            string levelText = "LEVEL UP! [L]";
-            string levelColorHex = ColorToHex(Palette.Alert);
-            string floorColorHex = ColorToHex(DefaultTextColor);
-            string paddedText = PadBetween(levelText, floorText, SidePanelLabelWidth);
-            int levelLen = levelText.Length;
-            _levelFloorLabel.Text = $"[color={levelColorHex}]{paddedText.Substring(0, levelLen)}[/color]{paddedText.Substring(levelLen, paddedText.Length - levelLen - floorText.Length)}[color={floorColorHex}]{floorText}[/color]";
-        }
-        else
-        {
-            string levelText = $"Level: {level}";
-            string colorHex = ColorToHex(DefaultTextColor);
-            string paddedText = PadBetween(levelText, floorText, SidePanelLabelWidth);
-            _levelFloorLabel.Text = $"[color={colorHex}]{paddedText}[/color]";
-        }
+        string colorHex = ColorToHex(DefaultTextColor);
+        string paddedText = PadBetween(goldText, floorText, SidePanelLabelWidth);
+        _levelFloorLabel.Text = $"[color={colorHex}]{paddedText}[/color]";
     }
 
     private static string ColorToHex(Color color)
@@ -336,7 +333,7 @@ public partial class SidePanel : PanelContainer
         // Use EquipmentViewModel for all equipment data
         foreach (var slot in _equipmentViewModel.AllSlots)
         {
-            sb.Append($"{slot.SlotName}: ");
+            sb.Append($"{slot.SlotName.PadRight(EquipmentSlotLabelWidth)}: ");
 
             if (slot.IsEquipped)
             {
@@ -361,65 +358,48 @@ public partial class SidePanel : PanelContainer
 
         var sb = new StringBuilder();
 
-        // Base stats - 2 column layout
-        int statLabelWidth = 18;
-        sb.AppendLine(PadBetween($"STR: {_statsViewModel.TotalStrength}", $"END: {_statsViewModel.TotalEndurance}", statLabelWidth));
-        sb.AppendLine(PadBetween($"AGI: {_statsViewModel.TotalAgility}", $"WIL: {_statsViewModel.TotalWill}", statLabelWidth));
+        // Base stats - 2 column layout (left-aligned columns)
+        const int statColumnWidth = 16;
+        sb.AppendLine($"{"Strength: " + _statsViewModel.TotalStrength,-statColumnWidth}Agility: {_statsViewModel.TotalAgility}");
+        sb.AppendLine($"{"Endurance: " + _statsViewModel.TotalEndurance,-statColumnWidth}Will: {_statsViewModel.TotalWill}");
+        sb.AppendLine($"{"Armor: " + _statsViewModel.TotalArmor,-statColumnWidth}Evasion: {_statsViewModel.TotalEvasion}");
 
         sb.AppendLine(); // Blank line for spacing
 
         // Derived combat values (from ViewModel)
         int meleeAttack = _statsViewModel.MeleeAttack;
         int rangedAttack = _statsViewModel.RangedAttack;
-        int armor = _statsViewModel.TotalArmor;
-        int evasion = _statsViewModel.TotalEvasion;
 
-        // Get attack component for damage dice (still needs direct access)
+        // Get attack component for DPT calculations
         var attackComponent = _player.GetNodeOrNull<Components.AttackComponent>("AttackComponent");
-        string meleeDamage = "-";
-        string rangedDamage = "-";
+        string meleeDpt = "-";
+        string rangedDpt = "-";
 
         if (attackComponent != null)
         {
-            // Find melee and ranged attacks
+            // Find melee and ranged attacks and calculate DPT
             foreach (var attack in attackComponent.Attacks)
             {
                 if (attack.Type == Data.AttackType.Melee)
                 {
                     int damageBonus = _statsViewModel.MeleeDamageBonus;
-                    meleeDamage = Helpers.DiceRoller.AddBonus(attack.DiceNotation, damageBonus);
+                    float avgDamage = Helpers.DiceRoller.GetAverage(attack.DiceNotation) + damageBonus;
+                    float dpt = avgDamage / attack.Delay;
+                    meleeDpt = dpt.ToString("F1");
                 }
                 else if (attack.Type == Data.AttackType.Ranged)
                 {
-                    rangedDamage = attack.DiceNotation;
-                }
-            }
-        }
-
-        // Combined attack speed (player speed + weapon delay)
-        var speedComponent = _player.GetNodeOrNull<SpeedComponent>("SpeedComponent");
-        var equipComponent = _player.GetNodeOrNull<EquipComponent>("EquipComponent");
-        if (speedComponent != null && equipComponent != null)
-        {
-            var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
-            if (meleeKey.HasValue)
-            {
-                var slot = _player.GetInventorySlot(meleeKey.Value);
-                if (slot?.Item?.Template?.Attack != null)
-                {
-                    int weaponDelayCost = slot.Item.Template.Attack.GetDelayCost();
-                    var (attackText, attackColor) = SpeedStatus.GetCombinedAttackSpeedDisplay(speedComponent.EffectiveSpeed, weaponDelayCost);
-                    sb.AppendLine($"Attack Speed: [color={ColorToHex(attackColor)}]{attackText}[/color]");
+                    float avgDamage = Helpers.DiceRoller.GetAverage(attack.DiceNotation);
+                    float dpt = avgDamage / attack.Delay;
+                    rangedDpt = dpt.ToString("F1");
                 }
             }
         }
 
         sb.AppendLine($"Melee Attack: {meleeAttack}");
-        sb.AppendLine($"Melee Damage: {meleeDamage}");
+        sb.AppendLine($"Melee Damage/Turn: {meleeDpt}");
         sb.AppendLine($"Ranged Attack: {rangedAttack}");
-        sb.AppendLine($"Ranged Damage: {rangedDamage}");
-        sb.AppendLine($"Armor: {armor}");
-        sb.AppendLine($"Evasion: {evasion}");
+        sb.AppendLine($"Ranged Damage/Turn: {rangedDpt}");
 
         _statsLabel.Text = sb.ToString();
     }

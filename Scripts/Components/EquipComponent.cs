@@ -6,9 +6,8 @@ using PitsOfDespair.Conditions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Data;
 
-namespace PitsOfDespair.Scripts.Components;
+namespace PitsOfDespair.Components;
 
 /// <summary>
 /// Component that manages equipped items for an entity.
@@ -112,8 +111,9 @@ public partial class EquipComponent : Node
             return false; // Slot already empty
         }
 
-        // Remove item bonuses before unequipping
-        RemoveItemBonuses(slot);
+        // Remove item bonuses before unequipping (need the key before we remove it)
+        char inventoryKey = _equippedSlots[slot];
+        RemoveItemBonuses(slot, inventoryKey);
 
         _equippedSlots.Remove(slot);
 
@@ -264,34 +264,32 @@ public partial class EquipComponent : Node
             return;
         }
 
-        // Generate source prefix for tracking (e.g., "equipped_armor", "equipped_ring1")
-        string sourcePrefix = $"equipped_{slot.ToString().ToLower()}";
-        int effectIndex = 0;
+        // Generate source prefix for tracking (e.g., "equipped_armor_a", "equipped_ring1_b")
+        string sourcePrefix = $"equipped_{slot.ToString().ToLower()}_{inventoryKey}";
 
         // Apply stat modifiers from ItemData properties
-        ApplyStatCondition(itemData.Armor, "armor_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.Evasion, "evasion_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.Strength, "strength_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.Agility, "agility_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.Endurance, "endurance_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.Will, "will_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.MaxHealth, "max_health_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.MaxWillpower, "max_willpower_modifier", sourcePrefix, ref effectIndex);
-        ApplyStatCondition(itemData.Regen, "regen_modifier", sourcePrefix, ref effectIndex);
+        ApplyStatCondition(itemData.Armor, "armor_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.Evasion, "evasion_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.Strength, "strength_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.Agility, "agility_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.Endurance, "endurance_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.Will, "will_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.MaxHealth, "max_health_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.MaxWillpower, "max_willpower_modifier", sourcePrefix);
+        ApplyStatCondition(itemData.Regen, "regen_modifier", sourcePrefix);
     }
 
     /// <summary>
     /// Creates and applies a stat condition if the value is non-null.
     /// </summary>
-    private void ApplyStatCondition(int? value, string conditionType, string sourcePrefix, ref int effectIndex)
+    private void ApplyStatCondition(int? value, string conditionType, string sourcePrefix)
     {
         if (value == null || _entity == null)
         {
             return;
         }
 
-        string sourceId = $"{sourcePrefix}_{effectIndex}";
-        effectIndex++;
+        string sourceId = sourcePrefix;
 
         var condition = ConditionFactory.Create(
             conditionType,
@@ -311,7 +309,7 @@ public partial class EquipComponent : Node
     /// Removes item conditions when unequipping.
     /// Removes all conditions with the slot's source prefix.
     /// </summary>
-    private void RemoveItemBonuses(EquipmentSlot slot)
+    private void RemoveItemBonuses(EquipmentSlot slot, char inventoryKey)
     {
         if (_entity == null)
         {
@@ -319,7 +317,7 @@ public partial class EquipComponent : Node
         }
 
         // Generate source prefix (must match what was used in ApplyItemBonuses)
-        string sourcePrefix = $"equipped_{slot.ToString().ToLower()}";
+        string sourcePrefix = $"equipped_{slot.ToString().ToLower()}_{inventoryKey}";
 
         // Remove all conditions from this equipment slot
         _entity.RemoveConditionsBySource(sourcePrefix);

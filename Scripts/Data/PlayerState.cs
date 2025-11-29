@@ -3,8 +3,6 @@ using PitsOfDespair.Brands;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
 using PitsOfDespair.Conditions;
 using System.Collections.Generic;
 using System.Linq;

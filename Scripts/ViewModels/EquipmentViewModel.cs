@@ -1,7 +1,7 @@
 using Godot;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Components;
+using PitsOfDespair.Data;
 using System.Collections.Generic;
 
 namespace PitsOfDespair.ViewModels;

@@ -1,7 +1,7 @@
 using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
+using PitsOfDespair.Components;
 using System.Linq;
 using System.Text;
 

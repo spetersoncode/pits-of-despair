@@ -1,7 +1,6 @@
 using PitsOfDespair.Components;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
 using System.Text;
 
 namespace PitsOfDespair.Actions;

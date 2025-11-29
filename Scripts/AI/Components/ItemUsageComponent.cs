@@ -4,7 +4,6 @@ using PitsOfDespair.AI;
 using PitsOfDespair.Components;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Components;
 
 namespace PitsOfDespair.AI.Components;
 

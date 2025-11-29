@@ -29,7 +29,7 @@ public partial class NearbyEntitiesTracker : Node
 	/// <summary>
 	/// Maximum number of nearby entities to track.
 	/// </summary>
-	private const int MAX_NEARBY_ENTITIES = 5;
+	private const int MAX_NEARBY_ENTITIES = 12;
 
 	#endregion
 

@@ -6,7 +6,6 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Effects.Composition;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;
 using System.Collections.Generic;
@@ -212,8 +211,9 @@ public partial class ItemDetailModal : CenterContainer
 
 	/// <summary>
 	/// Builds weapon damage information if this item is a weapon.
+	/// Shows Base DPT and Equipped DPT (with player stat bonuses).
 	/// </summary>
-	private static string BuildWeaponStats(ItemData itemTemplate)
+	private string BuildWeaponStats(ItemData itemTemplate)
 	{
 		if (itemTemplate.Attack == null)
 			return "";
@@ -234,11 +234,27 @@ public partial class ItemDetailModal : CenterContainer
 		string strNote = attack.Type == AttackType.Melee ? " (+STR)" : "";
 
 		var (speedText, speedColor) = SpeedStatus.GetWeaponSpeedDisplay(attack.Delay);
-		float dpt = attack.GetAverageDamagePerTurn();
+
+		// Calculate Base DPT (weapon only)
+		float baseDpt = attack.GetAverageDamagePerTurn();
+
+		// Calculate Equipped DPT (with player stat bonuses)
+		float equippedDpt = baseDpt;
+		if (_player != null && attack.Type == AttackType.Melee)
+		{
+			var statsComponent = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
+			if (statsComponent != null)
+			{
+				int damageBonus = statsComponent.GetDamageBonus(true); // true = melee
+				float avgDamage = DiceRoller.GetAverage(attack.DiceNotation) + damageBonus;
+				equippedDpt = avgDamage / attack.Delay;
+			}
+		}
 
 		sb.Append($"\n[color={disabled}]Damage:[/color] [color={defaultColor}]{attack.DiceNotation} {damageType}{strNote}[/color]");
 		sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
-		sb.Append($"\n[color={disabled}]Average damage per turn:[/color] [color={defaultColor}]{dpt:F1}[/color]");
+		sb.Append($"\n[color={disabled}]Base Damage/Turn:[/color] [color={defaultColor}]{baseDpt:F1}[/color]");
+		sb.Append($"\n[color={disabled}]Equipped Damage/Turn:[/color] [color={defaultColor}]{equippedDpt:F1}[/color]");
 
 		return sb.ToString();
 	}

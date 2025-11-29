@@ -4,8 +4,7 @@ using System.Linq;
 using PitsOfDespair.Brands;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Data;
 
 namespace PitsOfDespair.Debug.Commands;
 

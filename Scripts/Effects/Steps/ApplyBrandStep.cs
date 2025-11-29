@@ -3,8 +3,7 @@ using PitsOfDespair.Brands;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Effects.Composition;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Data;
 
 namespace PitsOfDespair.Effects.Steps;
 

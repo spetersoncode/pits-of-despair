@@ -235,7 +235,7 @@ public static class ItemEvaluator
         // Check if entity can equip the item
         if (itemData.GetIsEquippable())
         {
-            var equipComponent = entity.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
+            var equipComponent = entity.GetNodeOrNull<EquipComponent>("EquipComponent");
             if (equipComponent != null)
             {
                 return true;

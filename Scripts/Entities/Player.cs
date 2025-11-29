@@ -3,7 +3,6 @@ using PitsOfDespair.Actions;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
-using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Skills;
 using PitsOfDespair.Systems;
 using PitsOfDespair.Systems.Entity;

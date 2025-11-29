@@ -1,7 +1,6 @@
 using Godot;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -201,7 +200,7 @@ public partial class InventoryComponent : Node
         }
 
         // Get EquipComponent to update equipped keys
-        var equipComponent = GetParent()?.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
+        var equipComponent = GetParent()?.GetNodeOrNull<EquipComponent>("EquipComponent");
 
         // Check if target key is occupied
         var targetSlot = GetSlot(newKey);

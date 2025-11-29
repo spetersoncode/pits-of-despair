@@ -121,7 +121,16 @@ public partial class EntityDetailModal : CenterContainer
         }
         else
         {
-            sb.Append(BuildCreatureDisplay(entity));
+            // Get player level for threat comparison
+            int playerLevel = 1;
+            var playerNode = GetTree().GetFirstNodeInGroup("player") as Player;
+            if (playerNode != null)
+            {
+                var playerStats = playerNode.GetNodeOrNull<StatsComponent>("StatsComponent");
+                if (playerStats != null)
+                    playerLevel = playerStats.Level;
+            }
+            sb.Append(BuildCreatureDisplay(entity, playerLevel));
         }
 
         // === STATUS (conditions + resistances/vulnerabilities) ===
@@ -136,6 +145,10 @@ public partial class EntityDetailModal : CenterContainer
 
     private (string text, Color color) GetHealthStatusParts(BaseEntity entity)
     {
+        // Skip health status for players (shown in side panel instead)
+        if (entity is Player)
+            return ("", Palette.Default);
+
         var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
 
         // Items don't have health - return empty string
@@ -270,9 +283,9 @@ public partial class EntityDetailModal : CenterContainer
     private string BuildPrimaryStatisticsSection(StatsComponent stats, Player player)
     {
         var sb = new StringBuilder();
-        string disabled = Palette.ToHex(Palette.Disabled);
 
-        sb.Append($"\n\n[color={disabled}]PRIMARY STATISTICS[/color]");
+        // No header label - merged with secondary stats
+        sb.Append("\n");
         sb.Append(FormatStatWithModifiers("Strength", stats.BaseStrength, stats.TotalStrength, stats.GetStatModifiers(StatType.Strength), player));
         sb.Append(FormatStatWithModifiers("Agility", stats.BaseAgility, stats.TotalAgility, stats.GetStatModifiers(StatType.Agility), player));
         sb.Append(FormatStatWithModifiers("Endurance", stats.BaseEndurance, stats.TotalEndurance, stats.GetStatModifiers(StatType.Endurance), player));
@@ -282,7 +295,7 @@ public partial class EntityDetailModal : CenterContainer
     }
 
     /// <summary>
-    /// Builds the secondary statistics section (HP, WP, Armor, Evasion, Speed).
+    /// Builds the secondary statistics section (Armor, Evasion, Speed, Melee Attack Speed, Regeneration).
     /// </summary>
     private string BuildSecondaryStatisticsSection(
         StatsComponent? stats,
@@ -296,19 +309,7 @@ public partial class EntityDetailModal : CenterContainer
         string defaultColor = Palette.ToHex(Palette.Default);
         string gray = Palette.ToHex(Palette.AshGray);
 
-        sb.Append($"\n\n[color={disabled}]SECONDARY STATISTICS[/color]");
-
-        // Health
-        if (health != null)
-        {
-            sb.Append($"\n[color={disabled}]Health:[/color] [color={defaultColor}]{health.CurrentHealth}/{health.MaxHealth}[/color]");
-        }
-
-        // Willpower
-        if (willpower != null)
-        {
-            sb.Append($"\n[color={disabled}]Willpower:[/color] [color={defaultColor}]{willpower.CurrentWillpower}/{willpower.MaxWillpower}[/color]");
-        }
+        // No header label - merged with primary stats
 
         // Armor
         if (stats != null)
@@ -316,9 +317,10 @@ public partial class EntityDetailModal : CenterContainer
             int totalArmor = stats.TotalArmor;
             var armorMods = stats.GetStatModifiers(StatType.Armor);
             sb.Append($"\n[color={disabled}]Armor:[/color] [color={defaultColor}]{totalArmor}[/color]");
-            if (armorMods.Count > 0)
+            string armorBreakdown = FormatModifierBreakdown(armorMods, player);
+            if (!string.IsNullOrEmpty(armorBreakdown))
             {
-                sb.Append($" [color={gray}]({FormatModifierBreakdown(armorMods, player)})[/color]");
+                sb.Append($" [color={gray}]{armorBreakdown}[/color]");
             }
         }
 
@@ -329,14 +331,28 @@ public partial class EntityDetailModal : CenterContainer
             var evasionMods = stats.GetStatModifiers(StatType.Evasion);
             sb.Append($"\n[color={disabled}]Evasion:[/color] [color={defaultColor}]{totalEvasion}[/color]");
 
-            var parts = new List<string> { $"{stats.TotalAgility} AGI" };
-            foreach (var mod in evasionMods)
+            var parts = new List<string>();
+            if (stats.TotalAgility != 0)
+            {
+                parts.Add($"{stats.TotalAgility} AGI");
+            }
+            foreach (var mod in evasionMods.Where(m => m.Value != 0))
             {
                 string sign = mod.Value >= 0 ? "+" : "";
                 string sourceName = FormatSourceId(mod.Key, player);
                 parts.Add($"{sign}{mod.Value} {sourceName}");
             }
-            sb.Append($" [color={gray}]({string.Join(", ", parts)})[/color]");
+            if (parts.Count > 0)
+            {
+                sb.Append($" [color={gray}]{string.Join(", ", parts)}[/color]");
+            }
+        }
+
+        // Regeneration
+        if (health != null)
+        {
+            var (regenText, regenColor) = RegenStatus.GetRegenDisplay(health.BaseRegenRate);
+            sb.Append($"\n[color={disabled}]Regeneration:[/color] [color={Palette.ToHex(regenColor)}]{regenText}[/color]");
         }
 
         // Speed
@@ -344,6 +360,47 @@ public partial class EntityDetailModal : CenterContainer
         {
             var (speedText, speedColor) = SpeedStatus.GetCreatureSpeedDisplay(speed.EffectiveSpeed);
             sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
+        }
+
+        // Melee Attack Speed (player speed + weapon delay)
+        var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (speed != null && equipComponent != null)
+        {
+            var meleeKey = equipComponent.GetEquippedKey(EquipmentSlot.MeleeWeapon);
+            if (meleeKey.HasValue)
+            {
+                var slot = player.GetInventorySlot(meleeKey.Value);
+                if (slot?.Item?.Template?.Attack != null)
+                {
+                    int weaponDelayCost = slot.Item.Template.Attack.GetDelayCost();
+                    var (attackText, attackColor) = SpeedStatus.GetCombinedAttackSpeedDisplay(speed.EffectiveSpeed, weaponDelayCost);
+                    sb.Append($"\n[color={disabled}]Melee Attack Speed:[/color] [color={Palette.ToHex(attackColor)}]{attackText}[/color]");
+                }
+            }
+        }
+
+        // Ranged Attack Speed (player speed + weapon delay)
+        if (speed != null && equipComponent != null)
+        {
+            var rangedKey = equipComponent.GetEquippedKey(EquipmentSlot.RangedWeapon);
+            if (rangedKey.HasValue)
+            {
+                var slot = player.GetInventorySlot(rangedKey.Value);
+                if (slot?.Item?.Template?.Attack != null)
+                {
+                    int weaponDelayCost = slot.Item.Template.Attack.GetDelayCost();
+                    var (attackText, attackColor) = SpeedStatus.GetCombinedAttackSpeedDisplay(speed.EffectiveSpeed, weaponDelayCost);
+                    sb.Append($"\n[color={disabled}]Ranged Attack Speed:[/color] [color={Palette.ToHex(attackColor)}]{attackText}[/color]");
+                }
+                else
+                {
+                    sb.Append($"\n[color={disabled}]Ranged Attack Speed:[/color] [color={defaultColor}]-[/color]");
+                }
+            }
+            else
+            {
+                sb.Append($"\n[color={disabled}]Ranged Attack Speed:[/color] [color={defaultColor}]-[/color]");
+            }
         }
 
         return sb.ToString();
@@ -356,7 +413,7 @@ public partial class EntityDetailModal : CenterContainer
     private string FormatModifierBreakdown(IReadOnlyDictionary<string, int> modifiers, Player player)
     {
         var parts = new List<string>();
-        foreach (var mod in modifiers)
+        foreach (var mod in modifiers.Where(m => m.Value != 0))
         {
             string sign = mod.Value >= 0 ? "+" : "";
             string sourceName = FormatSourceId(mod.Key, player);
@@ -501,24 +558,32 @@ public partial class EntityDetailModal : CenterContainer
     #region Creature Display
 
     /// <summary>
-    /// Builds creature-specific display: intent, speed, and attacks.
+    /// Builds creature-specific display: threat, intent, speed, and attacks.
     /// </summary>
-    private static string BuildCreatureDisplay(BaseEntity entity)
+    private static string BuildCreatureDisplay(BaseEntity entity, int playerLevel)
     {
         var sb = new StringBuilder();
         string disabled = Palette.ToHex(Palette.Disabled);
         string defaultColor = Palette.ToHex(Palette.Default);
 
+        var stats = entity.GetNodeOrNull<StatsComponent>("StatsComponent");
         var ai = entity.GetNodeOrNull<AIComponent>("AIComponent");
         var speed = entity.GetNodeOrNull<SpeedComponent>("SpeedComponent");
         var attacks = entity.GetNodeOrNull<AttackComponent>("AttackComponent");
 
         // Only show COMBAT section if there's something to display
-        bool hasContent = ai != null || speed != null || (attacks != null && attacks.Attacks.Count > 0);
+        bool hasContent = stats != null || ai != null || speed != null || (attacks != null && attacks.Attacks.Count > 0);
         if (!hasContent)
             return "";
 
         sb.Append($"\n\n[color={disabled}]COMBAT[/color]");
+
+        // Threat (relative to player level)
+        if (stats != null && stats.Threat > 0)
+        {
+            var (threatText, threatColor) = ThreatStatus.GetThreatDisplay(stats.Threat, playerLevel);
+            sb.Append($"\n[color={disabled}]Threat:[/color] [color={Palette.ToHex(threatColor)}]{threatText}[/color]");
+        }
 
         // Intent
         if (ai != null)

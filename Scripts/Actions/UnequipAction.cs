@@ -1,6 +1,6 @@
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
+using PitsOfDespair.Components;
+using PitsOfDespair.Data;
 
 namespace PitsOfDespair.Actions;
 

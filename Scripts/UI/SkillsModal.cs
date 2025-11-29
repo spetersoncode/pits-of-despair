@@ -6,7 +6,6 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Skills;
 using PitsOfDespair.Systems.Input;
 using PitsOfDespair.Systems.Input.Processors;

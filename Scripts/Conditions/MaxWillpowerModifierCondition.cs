@@ -3,7 +3,6 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
 
 namespace PitsOfDespair.Conditions;
 

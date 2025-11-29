@@ -7,9 +7,6 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-using PitsOfDespair.Scripts.Components;
-using PitsOfDespair.Scripts.Data;
-
 // Using FactionExtensions from BaseEntity.cs
 
 namespace PitsOfDespair.Systems;

@@ -6,7 +6,6 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Data;
 
 namespace PitsOfDespair.Systems.Entity;
 
@@ -277,7 +276,7 @@ public partial class EntityFactory : Node
 			entity.AddChild(inventoryComponent);
 
 			// Add EquipComponent
-			var equipComponent = new Scripts.Components.EquipComponent
+			var equipComponent = new EquipComponent
 			{
 				Name = "EquipComponent"
 			};
@@ -512,7 +511,7 @@ public partial class EntityFactory : Node
 	public void InitializePlayerInventory(Player player)
 	{
 		var inventoryComponent = player.GetNodeOrNull<InventoryComponent>("InventoryComponent");
-		var equipComponent = player.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent");
+		var equipComponent = player.GetNodeOrNull<EquipComponent>("EquipComponent");
 
 		if (inventoryComponent == null || equipComponent == null)
 		{
@@ -645,7 +644,7 @@ public partial class EntityFactory : Node
 			return;
 		}
 
-		var equipComponent = autoEquip ? entity.GetNodeOrNull<Scripts.Components.EquipComponent>("EquipComponent") : null;
+		var equipComponent = autoEquip ? entity.GetNodeOrNull<EquipComponent>("EquipComponent") : null;
 
 		foreach (var itemId in itemDataIds)
 		{

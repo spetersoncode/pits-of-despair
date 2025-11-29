@@ -3,7 +3,6 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
-using PitsOfDespair.Scripts.Components;
 using PitsOfDespair.Targeting;
 using System.Collections.Generic;
 using System.Text;
