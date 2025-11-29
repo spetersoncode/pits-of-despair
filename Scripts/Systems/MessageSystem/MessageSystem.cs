@@ -259,7 +259,8 @@ public partial class MessageSystem : Node
 
     private void OnActionMessage(BaseEntity actor, string message, string color)
     {
-        QueueMessage(MessagePriority.Generic, message, color);
+        // Use ActionDamage priority so combat messages appear before death messages
+        QueueMessage(MessagePriority.ActionDamage, message, color);
     }
 
     private void OnEntityDied(BaseEntity victim)

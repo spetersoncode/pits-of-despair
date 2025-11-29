@@ -64,7 +64,7 @@ public class ApplyPrimeStep : IEffectStep
         // Add message
         if (!string.IsNullOrEmpty(conditionMessage.Message))
         {
-            messages.AddConditionApplied(conditionMessage.Message, conditionMessage.Color);
+            messages.AddConditionApplied(caster, conditionMessage.Message, conditionMessage.Color);
         }
 
         state.Success = true;

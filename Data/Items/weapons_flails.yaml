@@ -9,7 +9,7 @@ entries:
   flail:
     name: flail
     value: 4
-    color: Palette.DarkIron
+    color: Palette.HeavyIron
     description: A spiked ball on a chain, unwieldy but devastating. Its unpredictable arc makes it difficult to parry.
     attack:
       type: Melee

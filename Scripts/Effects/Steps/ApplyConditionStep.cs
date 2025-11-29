@@ -86,7 +86,7 @@ public class ApplyConditionStep : IEffectStep
         // Add condition message
         if (!string.IsNullOrEmpty(conditionMessage.Message))
         {
-            messages.AddConditionApplied(conditionMessage.Message, conditionMessage.Color);
+            messages.AddConditionApplied(context.Target, conditionMessage.Message, conditionMessage.Color);
         }
 
         state.Success = true;

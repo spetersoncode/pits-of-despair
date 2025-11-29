@@ -59,7 +59,7 @@ public class StunCondition : Condition
 		stats?.AddStatModifier(StatType.Evasion, ModifierSourceId, EvasionPenalty);
 
 		return new ConditionMessage(
-			$"{target.DisplayName} is stunned!",
+			$"The {target.DisplayName} is stunned!",
 			Palette.ToHex(Palette.StatusDebuff)
 		);
 	}
@@ -85,7 +85,7 @@ public class StunCondition : Condition
 		stats?.RemoveStatModifier(StatType.Evasion, ModifierSourceId);
 
 		return new ConditionMessage(
-			$"{target.DisplayName} recovers from stun.",
+			$"The {target.DisplayName} recovers from stun.",
 			Palette.ToHex(Palette.Default)
 		);
 	}
@@ -110,7 +110,12 @@ internal class StunGoal : Goal
 		// Roll for action loss
 		if (GD.Randf() < ActionLossChance)
 		{
-			// Lost action - do nothing this turn
+			// Lost action - emit message and do nothing this turn
+			context.Entity.EmitSignal(
+				Entities.BaseEntity.SignalName.ConditionMessage,
+				$"The {context.Entity.DisplayName} is too stunned to act!",
+				Palette.ToHex(Palette.StatusDebuff)
+			);
 			return;
 		}
 

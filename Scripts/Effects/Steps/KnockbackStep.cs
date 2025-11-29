@@ -113,7 +113,7 @@ public class KnockbackStep : IEffectStep
         // Handle case where target couldn't move at all
         if (tilesKnocked == 0 && collisionType == CollisionType.None)
         {
-            messages.Add($"{target.DisplayName} cannot be pushed!", Palette.ToHex(Palette.Disabled));
+            messages.Add($"The {target.DisplayName} cannot be pushed!", Palette.ToHex(Palette.Disabled));
             return;
         }
 
@@ -123,8 +123,8 @@ public class KnockbackStep : IEffectStep
             target.SetGridPosition(currentPos);
 
             string message = tilesKnocked == 1
-                ? $"{target.DisplayName} is knocked back!"
-                : $"{target.DisplayName} is knocked back {tilesKnocked} tiles!";
+                ? $"The {target.DisplayName} is knocked back!"
+                : $"The {target.DisplayName} is knocked back {tilesKnocked} tiles!";
 
             messages.Add(message, Palette.ToHex(Palette.CombatDamage));
         }
@@ -132,9 +132,24 @@ public class KnockbackStep : IEffectStep
         state.Success = true;
 
         // Run collision sub-effects if collision occurred and OnCollision is defined
-        if (collisionType != CollisionType.None && _onCollisionDefinitions != null && _onCollisionDefinitions.Count > 0)
+        if (collisionType != CollisionType.None)
         {
-            RunCollisionEffects(context, collisionType, collidedEntity, messages);
+            // Add collision message (tagged with target entity for proper grouping)
+            messages.CurrentEntity = target;
+            if (collisionType == CollisionType.Wall)
+            {
+                messages.Add($"The {target.DisplayName} crashes into the wall!", Palette.ToHex(Palette.CombatDamage));
+            }
+            else if (collisionType == CollisionType.Entity && collidedEntity != null)
+            {
+                messages.Add($"The {target.DisplayName} slams into the {collidedEntity.DisplayName}!", Palette.ToHex(Palette.CombatDamage));
+            }
+
+            // Run collision sub-pipeline if defined
+            if (_onCollisionDefinitions != null && _onCollisionDefinitions.Count > 0)
+            {
+                RunCollisionEffects(context, collisionType, collidedEntity, messages);
+            }
         }
     }
 
@@ -168,7 +183,7 @@ public class KnockbackStep : IEffectStep
     /// Runs a sub-pipeline of steps for a specific target.
     /// Creates fresh EffectContext and EffectState for independent execution.
     /// </summary>
-    private void RunSubPipeline(
+    private static void RunSubPipeline(
         List<IEffectStep> steps,
         BaseEntity target,
         EffectContext originalContext,
@@ -185,6 +200,10 @@ public class KnockbackStep : IEffectStep
         // Fresh state for independent save rolls
         var subState = new EffectState();
 
+        // Set current entity for message grouping (handles same-name entities correctly)
+        var previousEntity = messages.CurrentEntity;
+        messages.CurrentEntity = target;
+
         // Execute each step
         foreach (var step in steps)
         {
@@ -193,5 +212,8 @@ public class KnockbackStep : IEffectStep
 
             step.Execute(subContext, subState, messages);
         }
+
+        // Restore previous entity context
+        messages.CurrentEntity = previousEntity;
     }
 }

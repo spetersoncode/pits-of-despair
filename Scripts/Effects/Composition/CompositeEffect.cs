@@ -48,6 +48,9 @@ public class CompositeEffect : Effect
         var state = new EffectState();
         var messages = new MessageCollector();
 
+        // Set current entity for proper message grouping
+        messages.CurrentEntity = context.Target;
+
         // Execute steps in sequence
         foreach (var step in _steps)
         {
@@ -57,8 +60,8 @@ public class CompositeEffect : Effect
             step.Execute(context, state, messages);
         }
 
-        // Emit accumulated messages
-        messages.Emit(context.Target, context);
+        // Emit accumulated messages (combined by subject for better narrative)
+        messages.EmitCombined(context.Target, context);
 
         // Return result based on state
         return new EffectResult(state.Success, string.Empty)

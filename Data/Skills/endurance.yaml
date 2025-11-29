@@ -51,7 +51,7 @@ entries:
 
   shoulder_charge:
     name: Shoulder Charge
-    description: Charge an adjacent enemy, dealing 1d4+END damage and knocking them back 2 tiles. Collision with walls or creatures stuns on failed END save.
+    description: Charge an adjacent enemy, dealing 1d6+END damage and knocking them back 2 tiles. Collisions stun on failed END save.
     category: active
     targeting: adjacent
     willpowerCost: 3
@@ -65,7 +65,7 @@ entries:
     effects:
       - steps:
           - type: damage
-            dice: 1d4
+            dice: 1d6
             scalingStat: end
             scalingMultiplier: 1
           - type: knockback
