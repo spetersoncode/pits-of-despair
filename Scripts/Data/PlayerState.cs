@@ -80,8 +80,28 @@ public class PlayerState
 
 	/// <summary>
 	/// Active conditions with their remaining turns.
+	/// Excludes WhileEquipped conditions (recreated by equipment on restore).
 	/// </summary>
 	public List<Condition> ActiveConditions { get; set; } = new();
+
+	#endregion
+
+	#region Skills State
+
+	/// <summary>
+	/// List of learned skill IDs.
+	/// </summary>
+	public List<string> LearnedSkills { get; set; } = new();
+
+	/// <summary>
+	/// Skill slot assignments (key -> skillId) for active skills.
+	/// </summary>
+	public Dictionary<char, string> SkillSlots { get; set; } = new();
+
+	/// <summary>
+	/// Number of skill points used (for tracking progression).
+	/// </summary>
+	public int SkillPointsUsed { get; set; }
 
 	#endregion
 
@@ -180,7 +200,19 @@ public class PlayerState
 		}
 
 		// Extract Conditions (now managed directly by BaseEntity)
-		state.ActiveConditions = new List<Condition>(player.GetActiveConditions());
+		// Exclude WhileEquipped conditions - they will be recreated when equipment is re-applied
+		state.ActiveConditions = player.GetActiveConditions()
+			.Where(c => c.DurationMode != ConditionDuration.WhileEquipped)
+			.ToList();
+
+		// Extract Skills
+		var skillComponent = player.GetNodeOrNull<SkillComponent>("SkillComponent");
+		if (skillComponent != null)
+		{
+			state.LearnedSkills = new List<string>(skillComponent.LearnedSkills);
+			state.SkillSlots = new Dictionary<char, string>(skillComponent.SkillSlots);
+			state.SkillPointsUsed = skillComponent.SkillPointsUsed;
+		}
 
 		return state;
 	}
@@ -297,6 +329,13 @@ public class PlayerState
 		foreach (var condition in ActiveConditions)
 		{
 			player.AddCondition(condition);
+		}
+
+		// Apply Skills
+		var skillComponent = player.GetNodeOrNull<SkillComponent>("SkillComponent");
+		if (skillComponent != null && LearnedSkills.Count > 0)
+		{
+			skillComponent.RestoreState(LearnedSkills, SkillSlots, SkillPointsUsed);
 		}
 	}
 

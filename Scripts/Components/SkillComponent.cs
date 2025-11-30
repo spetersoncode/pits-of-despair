@@ -372,5 +372,25 @@ public partial class SkillComponent : Node
         GD.Print("SkillComponent: Floor cooldowns reset");
     }
 
+    /// <summary>
+    /// Restores skill state from saved data. Used during floor transitions.
+    /// </summary>
+    /// <param name="learnedSkills">List of learned skill IDs</param>
+    /// <param name="skillSlots">Skill slot assignments</param>
+    /// <param name="skillPointsUsed">Number of skill points used</param>
+    public void RestoreState(IEnumerable<string> learnedSkills, IReadOnlyDictionary<char, string> skillSlots, int skillPointsUsed)
+    {
+        _learnedSkills.Clear();
+        _learnedSkills.AddRange(learnedSkills);
+
+        _skillSlots.Clear();
+        foreach (var kvp in skillSlots)
+        {
+            _skillSlots[kvp.Key] = kvp.Value;
+        }
+
+        SkillPointsUsed = skillPointsUsed;
+    }
+
     #endregion
 }
