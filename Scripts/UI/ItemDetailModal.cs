@@ -1,5 +1,5 @@
 using Godot;
-using PitsOfDespair.Brands;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
@@ -121,7 +121,7 @@ public partial class ItemDetailModal : CenterContainer
 
 		// === HEADER ===
 		string glyph = $"[color={itemColor}]{itemTemplate.GetGlyph()}[/color]";
-		string displayName = _currentSlot.Item.GetBrandedDisplayName(); // Use branded name with prefixes/suffixes
+		string displayName = _currentSlot.Item.GetDisplayName(); // Use display name with prefixes/suffixes
 		string name = $"[color={itemColor}][b]{displayName}[/b][/color]";
 		string countInfo = _currentSlot.Item.Quantity > 1
 			? $" [color={Palette.ToHex(Palette.AshGray)}](x{_currentSlot.Item.Quantity})[/color]"
@@ -172,12 +172,12 @@ public partial class ItemDetailModal : CenterContainer
 			sb.Append(weaponStats);
 		}
 
-		// === BRANDS SECTION (weapon enchantments) ===
-		string brandsSection = BuildBrandsSection(_currentSlot.Item);
-		if (!string.IsNullOrEmpty(brandsSection))
+		// === PROPERTIES SECTION (item enchantments) ===
+		string propertiesSection = BuildPropertiesSection(_currentSlot.Item);
+		if (!string.IsNullOrEmpty(propertiesSection))
 		{
-			sb.Append($"\n\n[color={disabled}]BRANDS[/color]");
-			sb.Append(brandsSection);
+			sb.Append($"\n\n[color={disabled}]PROPERTIES[/color]");
+			sb.Append(propertiesSection);
 		}
 
 		// === EQUIPMENT SECTION (armor, stat modifiers) ===
@@ -260,12 +260,12 @@ public partial class ItemDetailModal : CenterContainer
 	}
 
 	/// <summary>
-	/// Builds the brands section for enchanted items.
+	/// Builds the properties section for enchanted items.
 	/// </summary>
-	private static string BuildBrandsSection(ItemInstance item)
+	private static string BuildPropertiesSection(ItemInstance item)
 	{
-		var brands = item.GetBrands();
-		if (brands.Count == 0)
+		var properties = item.GetProperties();
+		if (properties.Count == 0)
 			return "";
 
 		string disabled = Palette.ToHex(Palette.Disabled);
@@ -274,38 +274,38 @@ public partial class ItemDetailModal : CenterContainer
 
 		var sb = new StringBuilder();
 
-		foreach (var brand in brands)
+		foreach (var property in properties)
 		{
-			string brandLine = DescribeBrand(brand);
+			string propertyLine = DescribeProperty(property);
 			string durationInfo = "";
 
-			if (brand.IsTemporary)
+			if (property.IsTemporary)
 			{
-				durationInfo = $" [color={disabled}]({brand.RemainingTurns} turns)[/color]";
+				durationInfo = $" [color={disabled}]({property.RemainingTurns} turns)[/color]";
 			}
 
-			sb.Append($"\n[color={buffColor}]{brand.Name}[/color]: [color={defaultColor}]{brandLine}[/color]{durationInfo}");
+			sb.Append($"\n[color={buffColor}]{property.Name}[/color]: [color={defaultColor}]{propertyLine}[/color]{durationInfo}");
 		}
 
 		return sb.ToString();
 	}
 
 	/// <summary>
-	/// Generates a human-readable description of a brand's effects.
+	/// Generates a human-readable description of a property's effects.
 	/// </summary>
-	private static string DescribeBrand(Brand brand)
+	private static string DescribeProperty(ItemProperty property)
 	{
-		return brand switch
+		return property switch
 		{
-			IDamageBrand db when db.GetDamageBonus() != 0 =>
-				$"+{db.GetDamageBonus()} damage",
-			IHitBrand hb when hb.GetHitBonus() != 0 =>
-				$"+{hb.GetHitBonus()} to hit",
-			ElementalBrand eb =>
-				$"+1d6 {eb.Name.ToLower()} damage on hit",
-			VampiricBrand =>
+			IDamageProperty dp when dp.GetDamageBonus() != 0 =>
+				$"+{dp.GetDamageBonus()} damage",
+			IHitProperty hp when hp.GetHitBonus() != 0 =>
+				$"+{hp.GetHitBonus()} to hit",
+			ElementalProperty ep =>
+				$"+1d6 {ep.Name.ToLower()} damage on hit",
+			VampiricProperty =>
 				"Heals on hit",
-			_ => brand.Name
+			_ => property.Name
 		};
 	}
 

@@ -3,13 +3,13 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 
-namespace PitsOfDespair.Brands;
+namespace PitsOfDespair.ItemProperties;
 
 /// <summary>
-/// A brand that heals the attacker for a percentage of damage dealt.
+/// A property that heals the attacker for a percentage of damage dealt.
 /// Example: Vampiric Dagger - heal 25% of damage dealt on hit
 /// </summary>
-public class VampiricBrand : Brand, IOnHitBrand
+public class VampiricProperty : ItemProperty, IOnHitProperty
 {
     private readonly int _healPercent;
 
@@ -17,7 +17,7 @@ public class VampiricBrand : Brand, IOnHitBrand
     public override string TypeId => "vampiric";
 
     /// <param name="healPercent">Percentage of damage to heal (default 25%).</param>
-    public VampiricBrand(int healPercent = 25, string duration = "permanent", string? sourceId = null)
+    public VampiricProperty(int healPercent = 25, string duration = "permanent", string? sourceId = null)
     {
         _healPercent = healPercent > 0 ? healPercent : 25;
         Duration = duration;
@@ -42,23 +42,23 @@ public class VampiricBrand : Brand, IOnHitBrand
         return OnHitResult.None;
     }
 
-    public override BrandMessage OnApplied(ItemInstance item)
+    public override PropertyMessage OnApplied(ItemInstance item)
     {
-        return new BrandMessage(
+        return new PropertyMessage(
             $"{item.Template.Name} thirsts for blood!",
             Palette.ToHex(Palette.Blood)
         );
     }
 
-    public override BrandMessage OnRemoved(ItemInstance item)
+    public override PropertyMessage OnRemoved(ItemInstance item)
     {
         if (IsTemporary)
         {
-            return new BrandMessage(
+            return new PropertyMessage(
                 $"The hunger in {item.Template.Name} fades.",
                 Palette.ToHex(Palette.StatusNeutral)
             );
         }
-        return BrandMessage.Empty;
+        return PropertyMessage.Empty;
     }
 }

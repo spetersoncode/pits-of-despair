@@ -242,15 +242,15 @@ public class StepDefinition
 
     #endregion
 
-    #region Brand Properties
+    #region Item Property Properties
 
     /// <summary>
-    /// Brand type to apply (e.g., "damage", "flaming", "vampiric").
+    /// Property type to apply (e.g., "damage", "flaming", "vampiric").
     /// </summary>
-    public string? BrandType { get; set; }
+    public string? PropertyType { get; set; }
 
     /// <summary>
-    /// Target equipment slot for brand application: "melee", "ranged".
+    /// Target equipment slot for property application: "melee", "ranged".
     /// Defaults to "melee" if not specified.
     /// </summary>
     public string? TargetSlot { get; set; }

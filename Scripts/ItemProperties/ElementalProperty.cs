@@ -4,14 +4,14 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
-namespace PitsOfDespair.Brands;
+namespace PitsOfDespair.ItemProperties;
 
 /// <summary>
-/// A brand that deals bonus elemental damage on hit.
+/// A property that deals bonus elemental damage on hit.
 /// Supports Fire, Cold, Lightning, and Poison damage types.
 /// Example: Flaming Sword - deals +Nd6 fire damage on hit
 /// </summary>
-public class ElementalBrand : Brand, IOnHitBrand
+public class ElementalProperty : ItemProperty, IOnHitProperty
 {
     private readonly int _diceCount;
     private readonly DamageType _damageType;
@@ -19,7 +19,7 @@ public class ElementalBrand : Brand, IOnHitBrand
     public override string Name => GetNameForType(_damageType);
     public override string TypeId => GetTypeIdForType(_damageType);
 
-    public ElementalBrand(DamageType damageType, int diceCount = 1, string duration = "permanent", string? sourceId = null)
+    public ElementalProperty(DamageType damageType, int diceCount = 1, string duration = "permanent", string? sourceId = null)
     {
         _damageType = damageType;
         _diceCount = diceCount > 0 ? diceCount : 1;
@@ -60,7 +60,7 @@ public class ElementalBrand : Brand, IOnHitBrand
         _ => "blasted"
     };
 
-    public override BrandMessage OnApplied(ItemInstance item)
+    public override PropertyMessage OnApplied(ItemInstance item)
     {
         string message = _damageType switch
         {
@@ -71,12 +71,12 @@ public class ElementalBrand : Brand, IOnHitBrand
             _ => $"{item.Template.Name} is imbued with elemental power!"
         };
 
-        return new BrandMessage(message, Palette.ToHex(GetColorForType(_damageType)));
+        return new PropertyMessage(message, Palette.ToHex(GetColorForType(_damageType)));
     }
 
-    public override BrandMessage OnRemoved(ItemInstance item)
+    public override PropertyMessage OnRemoved(ItemInstance item)
     {
-        if (!IsTemporary) return BrandMessage.Empty;
+        if (!IsTemporary) return PropertyMessage.Empty;
 
         string message = _damageType switch
         {
@@ -87,7 +87,7 @@ public class ElementalBrand : Brand, IOnHitBrand
             _ => $"The enchantment on {item.Template.Name} fades."
         };
 
-        return new BrandMessage(message, Palette.ToHex(Palette.StatusNeutral));
+        return new PropertyMessage(message, Palette.ToHex(Palette.StatusNeutral));
     }
 
     private static string GetNameForType(DamageType type) => type switch

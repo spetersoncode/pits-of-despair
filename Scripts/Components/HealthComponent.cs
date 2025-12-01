@@ -2,6 +2,7 @@ using Godot;
 using PitsOfDespair.AI;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Systems;
 using System.Collections.Generic;
 
@@ -43,6 +44,12 @@ public partial class HealthComponent : Node, IAIEventHandler
     /// </summary>
     [Signal]
     public delegate void DamageModifierAppliedEventHandler(int damageType, string modifierType);
+
+    /// <summary>
+    /// Emitted when thorns damage is reflected back to an attacker.
+    /// </summary>
+    [Signal]
+    public delegate void ThornsDamageEventHandler(BaseEntity defender, BaseEntity attacker, int damage, string verb, string color);
 
     /// <summary>
     /// Base maximum health (before Endurance modifiers).
@@ -364,6 +371,11 @@ public partial class HealthComponent : Node, IAIEventHandler
             EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "resisted");
             amount /= 2;
         }
+        // Check for equipment-based resistance properties
+        else
+        {
+            amount = ApplyEquipmentResistance(amount, damageType);
+        }
 
         // Apply damage after modifiers
         int oldHealth = CurrentHealth;
@@ -372,12 +384,86 @@ public partial class HealthComponent : Node, IAIEventHandler
         EmitSignal(SignalName.DamageTaken, amount);
         EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
 
+        // Process thorns/on-damaged properties after damage is applied
+        if (amount > 0 && source != null)
+        {
+            ProcessOnDamagedProperties(source, amount, damageType);
+        }
+
         if (CurrentHealth == 0 && oldHealth > 0)
         {
             EmitSignal(SignalName.Died);
         }
 
         return amount;
+    }
+
+    /// <summary>
+    /// Applies resistance from equipped items with IResistanceProperty.
+    /// Returns the modified damage amount.
+    /// </summary>
+    private int ApplyEquipmentResistance(int amount, DamageType damageType)
+    {
+        var equipComponent = _entity?.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent == null)
+            return amount;
+
+        float multiplier = 1f;
+        bool hasResistance = false;
+
+        foreach (var property in equipComponent.GetDefensiveProperties<IResistanceProperty>())
+        {
+            if (property.AppliesToDamageType(damageType))
+            {
+                multiplier *= property.GetDamageMultiplier();
+                hasResistance = true;
+            }
+        }
+
+        if (hasResistance)
+        {
+            int modifiedAmount = Mathf.RoundToInt(amount * multiplier);
+            if (multiplier < 1f)
+            {
+                EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "resisted");
+            }
+            else if (multiplier > 1f)
+            {
+                EmitSignal(SignalName.DamageModifierApplied, (int)damageType, "vulnerable");
+            }
+            return modifiedAmount;
+        }
+
+        return amount;
+    }
+
+    /// <summary>
+    /// Processes IOnDamagedProperty from equipped armor (thorns, reflection, etc).
+    /// </summary>
+    private void ProcessOnDamagedProperties(BaseEntity attacker, int damage, DamageType damageType)
+    {
+        var equipComponent = _entity?.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent == null || _entity == null)
+            return;
+
+        foreach (var property in equipComponent.GetDefensiveProperties<IOnDamagedProperty>())
+        {
+            var result = property.OnDamaged(_entity, attacker, damage, damageType);
+            if (result.ReflectedDamage > 0)
+            {
+                // Apply thorns damage to attacker
+                var attackerHealth = attacker.GetNodeOrNull<HealthComponent>("HealthComponent");
+                if (attackerHealth != null)
+                {
+                    attackerHealth.TakeDamage(result.ReflectedDamage, DamageType.Bludgeoning, _entity);
+                }
+
+                // Emit thorns event for messaging
+                string verb = result.Verb ?? "retaliated";
+                string color = result.MessageColor ?? Core.Palette.ToHex(Core.Palette.Blood);
+                EmitSignal(SignalName.ThornsDamage, _entity, attacker, result.ReflectedDamage, verb, color);
+            }
+        }
     }
 
     /// <summary>

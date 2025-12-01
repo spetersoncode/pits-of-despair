@@ -6,6 +6,7 @@ using PitsOfDespair.Conditions;
 using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
+using PitsOfDespair.ItemProperties;
 
 namespace PitsOfDespair.Components;
 
@@ -249,7 +250,7 @@ public partial class EquipComponent : Node
 
     /// <summary>
     /// Applies item stat modifiers as conditions when equipping.
-    /// Reads stat properties from ItemData and creates WhileEquipped conditions.
+    /// Reads stat properties from ItemData and ItemInstance properties, creates WhileEquipped conditions.
     /// </summary>
     private void ApplyItemBonuses(char inventoryKey, EquipmentSlot slot)
     {
@@ -267,7 +268,7 @@ public partial class EquipComponent : Node
         // Generate source prefix for tracking (e.g., "equipped_armor_a", "equipped_ring1_b")
         string sourcePrefix = $"equipped_{slot.ToString().ToLower()}_{inventoryKey}";
 
-        // Apply stat modifiers from ItemData properties
+        // Apply base stat modifiers from ItemData
         ApplyStatCondition(itemData.Armor, "armor_modifier", sourcePrefix);
         ApplyStatCondition(itemData.Evasion, "evasion_modifier", sourcePrefix);
         ApplyStatCondition(itemData.Strength, "strength_modifier", sourcePrefix);
@@ -277,6 +278,41 @@ public partial class EquipComponent : Node
         ApplyStatCondition(itemData.MaxHealth, "max_health_modifier", sourcePrefix);
         ApplyStatCondition(itemData.MaxWillpower, "max_willpower_modifier", sourcePrefix);
         ApplyStatCondition(itemData.Regen, "regen_modifier", sourcePrefix);
+
+        // Apply enhancement bonuses from item properties (IStatBonusProperty)
+        var itemInstance = GetItemInstance(inventoryKey);
+        if (itemInstance != null)
+        {
+            ApplyPropertyStatBonuses(itemInstance, $"{sourcePrefix}_prop");
+        }
+    }
+
+    /// <summary>
+    /// Applies stat bonuses from item properties (IStatBonusProperty).
+    /// </summary>
+    private void ApplyPropertyStatBonuses(ItemInstance item, string sourcePrefix)
+    {
+        if (_entity == null) return;
+
+        foreach (var property in item.GetProperties())
+        {
+            if (property is IStatBonusProperty statProperty)
+            {
+                string conditionType = statProperty.BonusType switch
+                {
+                    StatBonusType.Armor => "armor_modifier",
+                    StatBonusType.Evasion => "evasion_modifier",
+                    StatBonusType.Regen => "regen_modifier",
+                    StatBonusType.MaxHealth => "max_health_modifier",
+                    _ => null
+                };
+
+                if (conditionType != null)
+                {
+                    ApplyStatCondition(statProperty.GetBonus(), conditionType, sourcePrefix);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -307,7 +343,7 @@ public partial class EquipComponent : Node
 
     /// <summary>
     /// Removes item conditions when unequipping.
-    /// Removes all conditions with the slot's source prefix.
+    /// Removes all conditions with the slot's source prefix (both base and property bonuses).
     /// </summary>
     private void RemoveItemBonuses(EquipmentSlot slot, char inventoryKey)
     {
@@ -319,8 +355,11 @@ public partial class EquipComponent : Node
         // Generate source prefix (must match what was used in ApplyItemBonuses)
         string sourcePrefix = $"equipped_{slot.ToString().ToLower()}_{inventoryKey}";
 
-        // Remove all conditions from this equipment slot
+        // Remove all conditions from this equipment slot (base stats)
         _entity.RemoveConditionsBySource(sourcePrefix);
+
+        // Remove property-based stat bonuses
+        _entity.RemoveConditionsBySource($"{sourcePrefix}_prop");
     }
 
     /// <summary>
@@ -335,5 +374,53 @@ public partial class EquipComponent : Node
 
         var slot = inventory.GetSlot(inventoryKey);
         return slot?.Item?.Template;
+    }
+
+    /// <summary>
+    /// Gets the ItemInstance for an equipped item by inventory key.
+    /// </summary>
+    public ItemInstance? GetItemInstance(char inventoryKey)
+    {
+        var inventory = GetParent()?.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventory == null)
+            return null;
+
+        var slot = inventory.GetSlot(inventoryKey);
+        return slot?.Item;
+    }
+
+    /// <summary>
+    /// Gets the ItemInstance equipped in a specific slot.
+    /// Returns null if slot is empty.
+    /// </summary>
+    public ItemInstance? GetEquippedItem(EquipmentSlot slot)
+    {
+        if (!_equippedSlots.TryGetValue(slot, out char key))
+            return null;
+        return GetItemInstance(key);
+    }
+
+    /// <summary>
+    /// Gets all properties of a specific interface type from equipped defensive items (Armor, Ring1, Ring2).
+    /// </summary>
+    /// <typeparam name="T">The property interface type to retrieve.</typeparam>
+    /// <returns>Enumerable of all matching properties from equipped items.</returns>
+    public IEnumerable<T> GetDefensiveProperties<T>() where T : class
+    {
+        EquipmentSlot[] defensiveSlots = { EquipmentSlot.Armor, EquipmentSlot.Ring1, EquipmentSlot.Ring2 };
+
+        foreach (var slot in defensiveSlots)
+        {
+            var item = GetEquippedItem(slot);
+            if (item == null) continue;
+
+            foreach (var property in item.GetProperties())
+            {
+                if (property is T typedProperty)
+                {
+                    yield return typedProperty;
+                }
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Godot;
-using PitsOfDespair.Brands;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Core;
 using PitsOfDespair.Helpers;
 
@@ -43,9 +43,9 @@ public class ItemInstance
     public bool AutoPickup { get; set; }
 
     /// <summary>
-    /// Brands applied to this item instance.
+    /// Properties applied to this item instance.
     /// </summary>
-    private readonly List<Brand> _brands = new();
+    private readonly List<ItemProperty> _properties = new();
 
     public ItemInstance(ItemData template)
     {
@@ -129,128 +129,128 @@ public class ItemInstance
             AutoPickup = this.AutoPickup
         };
 
-        // Clone brands
-        foreach (var brand in _brands)
+        // Clone properties
+        foreach (var property in _properties)
         {
-            // Create a new brand of the same type with the same properties
-            var clonedBrand = BrandFactory.Create(
-                brand.TypeId,
-                GetBrandAmount(brand),
-                brand.Duration,
-                brand.SourceId
+            // Create a new property of the same type with the same values
+            var clonedProperty = ItemPropertyFactory.Create(
+                property.TypeId,
+                GetPropertyAmount(property),
+                property.Duration,
+                property.SourceId
             );
-            if (clonedBrand != null)
+            if (clonedProperty != null)
             {
-                clonedBrand.RemainingTurns = brand.RemainingTurns;
-                clone._brands.Add(clonedBrand);
+                clonedProperty.RemainingTurns = property.RemainingTurns;
+                clone._properties.Add(clonedProperty);
             }
         }
 
         return clone;
     }
 
-    #region Brand Management
+    #region Property Management
 
     /// <summary>
-    /// Adds a brand to this item. If a brand of the same type exists, refreshes its duration.
+    /// Adds a property to this item. If a property of the same type exists, refreshes its duration.
     /// </summary>
-    /// <param name="brand">The brand to add.</param>
+    /// <param name="property">The property to add.</param>
     /// <returns>Message describing what happened.</returns>
-    public BrandMessage AddBrand(Brand brand)
+    public PropertyMessage AddProperty(ItemProperty property)
     {
-        // Check for existing brand of same type
-        var existing = _brands.FirstOrDefault(b => b.TypeId == brand.TypeId);
+        // Check for existing property of same type
+        var existing = _properties.FirstOrDefault(p => p.TypeId == property.TypeId);
         if (existing != null)
         {
             // Refresh duration instead of stacking
-            int newDuration = brand.ResolveDuration();
+            int newDuration = property.ResolveDuration();
             existing.RefreshDuration(newDuration);
-            return new BrandMessage($"{Template.Name}'s {brand.Name} brand refreshed.", Palette.ToHex(Palette.StatusBuff));
+            return new PropertyMessage($"{Template.Name}'s {property.Name} property refreshed.", Palette.ToHex(Palette.StatusBuff));
         }
 
-        // Resolve duration for new brand
-        if (brand.IsTemporary)
+        // Resolve duration for new property
+        if (property.IsTemporary)
         {
-            brand.RemainingTurns = brand.ResolveDuration();
+            property.RemainingTurns = property.ResolveDuration();
         }
 
-        _brands.Add(brand);
-        return brand.OnApplied(this);
+        _properties.Add(property);
+        return property.OnApplied(this);
     }
 
     /// <summary>
-    /// Removes a specific brand from this item.
+    /// Removes a specific property from this item.
     /// </summary>
-    /// <param name="brand">The brand to remove.</param>
+    /// <param name="property">The property to remove.</param>
     /// <returns>Message describing the removal.</returns>
-    public BrandMessage RemoveBrand(Brand brand)
+    public PropertyMessage RemoveProperty(ItemProperty property)
     {
-        if (_brands.Remove(brand))
+        if (_properties.Remove(property))
         {
-            return brand.OnRemoved(this);
+            return property.OnRemoved(this);
         }
-        return BrandMessage.Empty;
+        return PropertyMessage.Empty;
     }
 
     /// <summary>
-    /// Removes a brand by its type ID.
+    /// Removes a property by its type ID.
     /// </summary>
-    /// <param name="typeId">The type ID of the brand to remove.</param>
+    /// <param name="typeId">The type ID of the property to remove.</param>
     /// <returns>Message describing the removal.</returns>
-    public BrandMessage RemoveBrandByType(string typeId)
+    public PropertyMessage RemovePropertyByType(string typeId)
     {
-        var brand = _brands.FirstOrDefault(b => b.TypeId == typeId);
-        if (brand != null)
+        var property = _properties.FirstOrDefault(p => p.TypeId == typeId);
+        if (property != null)
         {
-            return RemoveBrand(brand);
+            return RemoveProperty(property);
         }
-        return BrandMessage.Empty;
+        return PropertyMessage.Empty;
     }
 
     /// <summary>
-    /// Checks if this item has a brand of the specified type.
+    /// Checks if this item has a property of the specified type.
     /// </summary>
-    public bool HasBrand(string typeId)
+    public bool HasProperty(string typeId)
     {
-        return _brands.Any(b => b.TypeId == typeId);
+        return _properties.Any(p => p.TypeId == typeId);
     }
 
     /// <summary>
-    /// Gets all brands on this item.
+    /// Gets all properties on this item.
     /// </summary>
-    public IReadOnlyList<Brand> GetBrands()
+    public IReadOnlyList<ItemProperty> GetProperties()
     {
-        return _brands.AsReadOnly();
+        return _properties.AsReadOnly();
     }
 
     /// <summary>
-    /// Processes turn for all brands (decrements temporary brand durations).
+    /// Processes turn for all properties (decrements temporary property durations).
     /// Called at the end of each round.
     /// </summary>
-    /// <returns>List of messages from expired brands.</returns>
-    public List<BrandMessage> ProcessBrandTurns()
+    /// <returns>List of messages from expired properties.</returns>
+    public List<PropertyMessage> ProcessPropertyTurns()
     {
-        var messages = new List<BrandMessage>();
-        var expiredBrands = new List<Brand>();
+        var messages = new List<PropertyMessage>();
+        var expiredProperties = new List<ItemProperty>();
 
-        foreach (var brand in _brands)
+        foreach (var property in _properties)
         {
-            brand.OnTurnProcessed(this);
+            property.OnTurnProcessed(this);
 
-            if (brand.IsTemporary)
+            if (property.IsTemporary)
             {
-                brand.RemainingTurns--;
-                if (brand.RemainingTurns <= 0)
+                property.RemainingTurns--;
+                if (property.RemainingTurns <= 0)
                 {
-                    expiredBrands.Add(brand);
+                    expiredProperties.Add(property);
                 }
             }
         }
 
-        // Remove expired brands
-        foreach (var brand in expiredBrands)
+        // Remove expired properties
+        foreach (var property in expiredProperties)
         {
-            var msg = RemoveBrand(brand);
+            var msg = RemoveProperty(property);
             if (!string.IsNullOrEmpty(msg.Message))
             {
                 messages.Add(msg);
@@ -265,31 +265,31 @@ public class ItemInstance
     #region Combat Queries
 
     /// <summary>
-    /// Gets total damage bonus from all brands implementing IDamageBrand.
+    /// Gets total damage bonus from all properties implementing IDamageProperty.
     /// </summary>
     public int GetTotalDamageBonus()
     {
-        return _brands
-            .OfType<IDamageBrand>()
-            .Sum(b => b.GetDamageBonus());
+        return _properties
+            .OfType<IDamageProperty>()
+            .Sum(p => p.GetDamageBonus());
     }
 
     /// <summary>
-    /// Gets total hit bonus from all brands implementing IHitBrand.
+    /// Gets total hit bonus from all properties implementing IHitProperty.
     /// </summary>
     public int GetTotalHitBonus()
     {
-        return _brands
-            .OfType<IHitBrand>()
-            .Sum(b => b.GetHitBonus());
+        return _properties
+            .OfType<IHitProperty>()
+            .Sum(p => p.GetHitBonus());
     }
 
     /// <summary>
-    /// Gets all on-hit brands for processing during combat.
+    /// Gets all on-hit properties for processing during combat.
     /// </summary>
-    public IEnumerable<IOnHitBrand> GetOnHitBrands()
+    public IEnumerable<IOnHitProperty> GetOnHitProperties()
     {
-        return _brands.OfType<IOnHitBrand>();
+        return _properties.OfType<IOnHitProperty>();
     }
 
     #endregion
@@ -297,20 +297,20 @@ public class ItemInstance
     #region Display
 
     /// <summary>
-    /// Gets the display name with brand prefixes and suffixes.
+    /// Gets the display name with property prefixes and suffixes.
     /// </summary>
-    public string GetBrandedDisplayName()
+    public string GetDisplayName()
     {
-        if (_brands.Count == 0)
+        if (_properties.Count == 0)
             return Template.Name;
 
-        var prefixes = _brands
-            .Select(b => b.GetPrefix())
+        var prefixes = _properties
+            .Select(p => p.GetPrefix())
             .Where(p => !string.IsNullOrEmpty(p))
             .ToList();
 
-        var suffixes = _brands
-            .Select(b => b.GetSuffix())
+        var suffixes = _properties
+            .Select(p => p.GetSuffix())
             .Where(s => !string.IsNullOrEmpty(s))
             .ToList();
 
@@ -332,14 +332,14 @@ public class ItemInstance
     #region Private Helpers
 
     /// <summary>
-    /// Gets the amount value from a brand for cloning purposes.
+    /// Gets the amount value from a property for cloning purposes.
     /// </summary>
-    private static int GetBrandAmount(Brand brand)
+    private static int GetPropertyAmount(ItemProperty property)
     {
-        return brand switch
+        return property switch
         {
-            IDamageBrand db => db.GetDamageBonus(),
-            IHitBrand hb => hb.GetHitBonus(),
+            IDamageProperty dp => dp.GetDamageBonus(),
+            IHitProperty hp => hp.GetHitBonus(),
             _ => 0
         };
     }

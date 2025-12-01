@@ -62,8 +62,8 @@ public static class ItemFormatter
         string key = $"[color={keyColor}]{slot.Key})[/color]";
         string glyph = $"[color={itemColor}]{itemTemplate.GetGlyph()}[/color]";
 
-        // Name with optional count and brands
-        string displayName = slot.Item.GetBrandedDisplayName();
+        // Name with optional count and properties
+        string displayName = slot.Item.GetDisplayName();
         if (options.HasFlag(ItemDisplayOptions.ShowCount) && slot.Item.Quantity > 1)
         {
             // For stackable items with count, append quantity

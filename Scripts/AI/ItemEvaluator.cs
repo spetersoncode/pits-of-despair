@@ -1,4 +1,4 @@
-using PitsOfDespair.Brands;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -22,12 +22,12 @@ public static class ItemEvaluator
     private const int DefaultScore = 10;
 
     /// <summary>
-    /// Brand scoring values.
+    /// Property scoring values.
     /// </summary>
-    private const int DamageBrandScore = 15;
-    private const int AccuracyBrandScore = 10;
-    private const int ElementalBrandScore = 20;
-    private const int VampiricBrandScore = 25;
+    private const int DamagePropertyScore = 15;
+    private const int AccuracyPropertyScore = 10;
+    private const int ElementalPropertyScore = 20;
+    private const int VampiricPropertyScore = 25;
 
     /// <summary>
     /// Evaluates the desirability of an item for a specific entity.
@@ -107,7 +107,7 @@ public static class ItemEvaluator
 
     /// <summary>
     /// Evaluates the desirability of an item instance for a specific entity.
-    /// Includes brand evaluation for enchanted items.
+    /// Includes property evaluation for enchanted items.
     /// </summary>
     /// <param name="itemInstance">The item instance to evaluate.</param>
     /// <param name="entity">The entity considering the item.</param>
@@ -120,36 +120,36 @@ public static class ItemEvaluator
         // Start with base item evaluation
         int score = EvaluateItem(itemInstance.Template, entity);
 
-        // Add brand value
-        score += EvaluateBrands(itemInstance);
+        // Add property value
+        score += EvaluateProperties(itemInstance);
 
         return score;
     }
 
     /// <summary>
-    /// Evaluates the total value of brands on an item.
+    /// Evaluates the total value of properties on an item.
     /// </summary>
     /// <param name="itemInstance">The item instance to evaluate.</param>
-    /// <returns>Combined score from all brands.</returns>
-    public static int EvaluateBrands(ItemInstance itemInstance)
+    /// <returns>Combined score from all properties.</returns>
+    public static int EvaluateProperties(ItemInstance itemInstance)
     {
         if (itemInstance == null)
             return 0;
 
-        int brandScore = 0;
-        foreach (var brand in itemInstance.GetBrands())
+        int propertyScore = 0;
+        foreach (var property in itemInstance.GetProperties())
         {
-            brandScore += brand switch
+            propertyScore += property switch
             {
-                VampiricBrand => VampiricBrandScore,
-                ElementalBrand => ElementalBrandScore,
-                IDamageBrand db => DamageBrandScore + (db.GetDamageBonus() * 5),
-                IHitBrand hb => AccuracyBrandScore + (hb.GetHitBonus() * 3),
-                _ => 5 // Default brand value
+                VampiricProperty => VampiricPropertyScore,
+                ElementalProperty => ElementalPropertyScore,
+                IDamageProperty dp => DamagePropertyScore + (dp.GetDamageBonus() * 5),
+                IHitProperty hp => AccuracyPropertyScore + (hp.GetHitBonus() * 3),
+                _ => 5 // Default property value
             };
         }
 
-        return brandScore;
+        return propertyScore;
     }
 
     /// <summary>

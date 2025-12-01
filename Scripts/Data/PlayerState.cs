@@ -1,5 +1,5 @@
 using Godot;
-using PitsOfDespair.Brands;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Components;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -175,16 +175,16 @@ public class PlayerState
 					CurrentCharges = slot.Item.CurrentCharges
 				};
 
-				// Serialize brands
-				foreach (var brand in slot.Item.GetBrands())
+				// Serialize properties
+				foreach (var property in slot.Item.GetProperties())
 				{
-					serializableSlot.Brands.Add(new SerializableBrand
+					serializableSlot.Properties.Add(new SerializableProperty
 					{
-						BrandType = brand.TypeId,
-						Amount = GetBrandAmount(brand),
-						Duration = brand.Duration,
-						RemainingTurns = brand.RemainingTurns,
-						SourceId = brand.SourceId
+						PropertyType = property.TypeId,
+						Amount = GetPropertyAmount(property),
+						Duration = property.Duration,
+						RemainingTurns = property.RemainingTurns,
+						SourceId = property.SourceId
 					});
 				}
 
@@ -293,19 +293,19 @@ public class PlayerState
 						Quantity = slot.Quantity
 					};
 
-					// Restore brands
-					foreach (var serializedBrand in slot.Brands)
+					// Restore properties
+					foreach (var serializedProperty in slot.Properties)
 					{
-						var brand = BrandFactory.Create(
-							serializedBrand.BrandType,
-							serializedBrand.Amount,
-							serializedBrand.Duration,
-							serializedBrand.SourceId
+						var property = ItemPropertyFactory.Create(
+							serializedProperty.PropertyType,
+							serializedProperty.Amount,
+							serializedProperty.Duration,
+							serializedProperty.SourceId
 						);
-						if (brand != null)
+						if (property != null)
 						{
-							brand.RemainingTurns = serializedBrand.RemainingTurns;
-							itemInstance.AddBrand(brand);
+							property.RemainingTurns = serializedProperty.RemainingTurns;
+							itemInstance.AddProperty(property);
 						}
 					}
 
@@ -418,14 +418,14 @@ public class PlayerState
 	}
 
 	/// <summary>
-	/// Gets the amount value from a brand for serialization purposes.
+	/// Gets the amount value from a property for serialization purposes.
 	/// </summary>
-	private static int GetBrandAmount(Brand brand)
+	private static int GetPropertyAmount(ItemProperty property)
 	{
-		return brand switch
+		return property switch
 		{
-			IDamageBrand db => db.GetDamageBonus(),
-			IHitBrand hb => hb.GetHitBonus(),
+			IDamageProperty dp => dp.GetDamageBonus(),
+			IHitProperty hp => hp.GetHitBonus(),
 			_ => 0
 		};
 	}
@@ -442,15 +442,15 @@ public class SerializableInventorySlot
 	public string ItemDataFileId { get; set; } = "";
 	public int Quantity { get; set; }
 	public int CurrentCharges { get; set; }
-	public List<SerializableBrand> Brands { get; set; } = new();
+	public List<SerializableProperty> Properties { get; set; } = new();
 }
 
 /// <summary>
-/// Serializable representation of a brand on an item.
+/// Serializable representation of a property on an item.
 /// </summary>
-public class SerializableBrand
+public class SerializableProperty
 {
-	public string BrandType { get; set; } = "";
+	public string PropertyType { get; set; } = "";
 	public int Amount { get; set; }
 	public string Duration { get; set; } = "permanent";
 	public int RemainingTurns { get; set; }

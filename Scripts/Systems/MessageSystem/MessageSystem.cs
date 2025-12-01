@@ -141,7 +141,7 @@ public partial class MessageSystem : Node
         _combatSystem.Connect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         _combatSystem.Connect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
         _combatSystem.Connect(CombatSystem.SignalName.SkillDamageDealt, Callable.From<BaseEntity, BaseEntity, int, string>(OnSkillDamageDealt));
-        _combatSystem.Connect(CombatSystem.SignalName.BrandEffectApplied, Callable.From<BaseEntity, BaseEntity, string, int, string>(OnBrandEffectApplied));
+        _combatSystem.Connect(CombatSystem.SignalName.PropertyEffectApplied, Callable.From<BaseEntity, BaseEntity, string, int, string>(OnPropertyEffectApplied));
         _combatSystem.Connect(CombatSystem.SignalName.LifestealApplied, Callable.From<BaseEntity, BaseEntity, int>(OnLifestealApplied));
     }
 
@@ -263,10 +263,10 @@ public partial class MessageSystem : Node
         QueueMessage(MessagePriority.ActionDamage, message, color);
     }
 
-    private void OnBrandEffectApplied(BaseEntity attacker, BaseEntity target, string verb, int damage, string color)
+    private void OnPropertyEffectApplied(BaseEntity attacker, BaseEntity target, string verb, int damage, string color)
     {
-        // Record brand effect to be combined with the attack message
-        RecordBrandEffect(attacker, target, verb, damage, color);
+        // Record property effect to be combined with the attack message
+        RecordPropertyEffect(attacker, target, verb, damage, color);
     }
 
     private void OnLifestealApplied(BaseEntity attacker, BaseEntity target, int healing)
@@ -399,9 +399,9 @@ public partial class MessageSystem : Node
     }
 
     /// <summary>
-    /// Records a brand effect to be appended to the attack message.
+    /// Records a property effect to be appended to the attack message.
     /// </summary>
-    private void RecordBrandEffect(BaseEntity attacker, BaseEntity target, string verb, int damage, string color)
+    private void RecordPropertyEffect(BaseEntity attacker, BaseEntity target, string verb, int damage, string color)
     {
         if (!IsSequencing)
         {
@@ -412,11 +412,11 @@ public partial class MessageSystem : Node
             return;
         }
 
-        // Find the combat message to attach this brand effect to
+        // Find the combat message to attach this property effect to
         var matchingKey = FindCombatKeyForTarget(target, attacker, null);
         if (matchingKey != null && _combatMessages.TryGetValue(matchingKey, out var data))
         {
-            data.BrandEffects.Add(new BrandEffectData
+            data.PropertyEffects.Add(new PropertyEffectData
             {
                 Verb = verb,
                 Damage = damage,
@@ -706,15 +706,15 @@ public partial class MessageSystem : Node
             message += $" ({data.Modifier} to {damageTypeName})";
         }
 
-        // Add brand effects (e.g., "scorched for 5, shocked for 3")
-        if (data.BrandEffects.Count > 0)
+        // Add property effects (e.g., "scorched for 5, shocked for 3")
+        if (data.PropertyEffects.Count > 0)
         {
-            var brandParts = new System.Collections.Generic.List<string>();
-            foreach (var effect in data.BrandEffects)
+            var effectParts = new System.Collections.Generic.List<string>();
+            foreach (var effect in data.PropertyEffects)
             {
-                brandParts.Add($"[color={effect.Color}]{effect.Verb} for {effect.Damage}[/color]");
+                effectParts.Add($"[color={effect.Color}]{effect.Verb} for {effect.Damage}[/color]");
             }
-            message += ", " + string.Join(", ", brandParts);
+            message += ", " + string.Join(", ", effectParts);
         }
 
         // Add lifesteal if present
@@ -1075,7 +1075,7 @@ public partial class MessageSystem : Node
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
             _combatSystem.Disconnect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
             _combatSystem.Disconnect(CombatSystem.SignalName.SkillDamageDealt, Callable.From<BaseEntity, BaseEntity, int, string>(OnSkillDamageDealt));
-            _combatSystem.Disconnect(CombatSystem.SignalName.BrandEffectApplied, Callable.From<BaseEntity, BaseEntity, string, int, string>(OnBrandEffectApplied));
+            _combatSystem.Disconnect(CombatSystem.SignalName.PropertyEffectApplied, Callable.From<BaseEntity, BaseEntity, string, int, string>(OnPropertyEffectApplied));
             _combatSystem.Disconnect(CombatSystem.SignalName.LifestealApplied, Callable.From<BaseEntity, BaseEntity, int>(OnLifestealApplied));
         }
 

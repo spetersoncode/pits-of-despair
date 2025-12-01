@@ -1,5 +1,5 @@
 using Godot;
-using PitsOfDespair.Brands;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Effects.Composition;
@@ -8,19 +8,19 @@ using PitsOfDespair.Data;
 namespace PitsOfDespair.Effects.Steps;
 
 /// <summary>
-/// Step that applies a brand to the caster's equipped weapon.
+/// Step that applies a property to the caster's equipped weapon.
 /// Used for weapon enchantment spells, oils, etc.
 /// </summary>
-public class ApplyBrandStep : IEffectStep
+public class ApplyPropertyStep : IEffectStep
 {
-    private readonly string? _brandType;
+    private readonly string? _propertyType;
     private readonly string _targetSlot;
     private readonly int _amount;
     private readonly string _duration;
 
-    public ApplyBrandStep(StepDefinition definition)
+    public ApplyPropertyStep(StepDefinition definition)
     {
-        _brandType = definition.BrandType;
+        _propertyType = definition.PropertyType;
         _targetSlot = definition.TargetSlot?.ToLower() ?? "melee";
         _amount = definition.Amount;
         _duration = definition.GetDurationString();
@@ -28,9 +28,9 @@ public class ApplyBrandStep : IEffectStep
 
     public void Execute(EffectContext context, EffectState state, MessageCollector messages)
     {
-        if (string.IsNullOrEmpty(_brandType))
+        if (string.IsNullOrEmpty(_propertyType))
         {
-            GD.PrintErr("ApplyBrandStep: No brand type specified");
+            GD.PrintErr("ApplyPropertyStep: No property type specified");
             return;
         }
 
@@ -42,21 +42,21 @@ public class ApplyBrandStep : IEffectStep
             return;
         }
 
-        // Create the brand
-        var brand = BrandFactory.Create(_brandType, _amount, _duration);
-        if (brand == null)
+        // Create the property
+        var property = ItemPropertyFactory.Create(_propertyType, _amount, _duration);
+        if (property == null)
         {
-            GD.PrintErr($"ApplyBrandStep: Unknown brand type '{_brandType}'");
+            GD.PrintErr($"ApplyPropertyStep: Unknown property type '{_propertyType}'");
             return;
         }
 
-        // Apply the brand to the item
-        var brandMessage = item.AddBrand(brand);
+        // Apply the property to the item
+        var propertyMessage = item.AddProperty(property);
 
         // Add message if one was returned
-        if (!string.IsNullOrEmpty(brandMessage.Message))
+        if (!string.IsNullOrEmpty(propertyMessage.Message))
         {
-            messages.Add(brandMessage.Message, brandMessage.Color);
+            messages.Add(propertyMessage.Message, propertyMessage.Color);
         }
 
         state.Success = true;

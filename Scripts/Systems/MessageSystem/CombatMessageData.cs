@@ -5,9 +5,9 @@ using PitsOfDespair.Entities;
 namespace PitsOfDespair.Systems;
 
 /// <summary>
-/// Represents a brand effect that occurred during combat.
+/// Represents a property effect that occurred during combat.
 /// </summary>
-public struct BrandEffectData
+public struct PropertyEffectData
 {
     public string Verb { get; set; }      // e.g., "scorched", "shocked", "frozen"
     public int Damage { get; set; }
@@ -76,9 +76,9 @@ public class CombatMessageData
     public int XPReward { get; set; }
 
     /// <summary>
-    /// Brand effects that triggered on this attack (elemental damage, lifesteal, etc.).
+    /// Property effects that triggered on this attack (elemental damage, lifesteal, etc.).
     /// </summary>
-    public List<BrandEffectData> BrandEffects { get; set; } = new();
+    public List<PropertyEffectData> PropertyEffects { get; set; } = new();
 
     /// <summary>
     /// Healing received from vampiric effects.
