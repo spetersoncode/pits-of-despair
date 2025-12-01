@@ -20,10 +20,10 @@ public partial class CombatSystem : Node
     private readonly System.Collections.Generic.List<AttackComponent> _registeredComponents = new();
 
     /// <summary>
-    /// Emitted when an attack hits and deals damage (attacker, target, damage, attackName, attackType)
+    /// Emitted when an attack hits and deals damage (attacker, target, damage, attackName, attackType, damageType)
     /// </summary>
     [Signal]
-    public delegate void AttackHitEventHandler(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType);
+    public delegate void AttackHitEventHandler(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType, DamageType damageType);
 
     /// <summary>
     /// Emitted when an attack hits but deals no damage due to armor (attacker, target, attackName)
@@ -207,7 +207,7 @@ public partial class CombatSystem : Node
             int actualDamage = targetHealth.CalculateDamage(finalDamage, attackData.DamageType);
 
             // Emit hit signal BEFORE applying damage (so "hit" message appears before "death" message)
-            EmitSignal(SignalName.AttackHit, attacker, target, actualDamage, attackData.Name, (int)attackData.Type);
+            EmitSignal(SignalName.AttackHit, attacker, target, actualDamage, attackData.Name, (int)attackData.Type, (int)attackData.DamageType);
             EmitSignal(SignalName.AttackExecuted, attacker, target, actualDamage, attackData.Name); // Legacy support
 
             // Now apply the damage (which may trigger death signals)

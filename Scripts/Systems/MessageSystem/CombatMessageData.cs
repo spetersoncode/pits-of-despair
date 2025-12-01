@@ -86,6 +86,16 @@ public class CombatMessageData
     public int LifestealHealing { get; set; }
 
     /// <summary>
+    /// The target's maximum HP at time of attack (for severity calculation).
+    /// </summary>
+    public int TargetMaxHP { get; set; }
+
+    /// <summary>
+    /// The target's HP after damage (for injury state display).
+    /// </summary>
+    public int TargetCurrentHP { get; set; }
+
+    /// <summary>
     /// Creates a unique key for grouping messages by attacker-target-source combination.
     /// </summary>
     public string GetGroupKey()

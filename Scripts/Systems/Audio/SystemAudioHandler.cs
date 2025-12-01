@@ -37,7 +37,7 @@ public partial class SystemAudioHandler : Node
 
         _combatSystem.Connect(
             CombatSystem.SignalName.AttackHit,
-            Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit)
+            Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit)
         );
 
         _combatSystem.Connect(
@@ -70,7 +70,7 @@ public partial class SystemAudioHandler : Node
         {
             _combatSystem.Disconnect(
                 CombatSystem.SignalName.AttackHit,
-                Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit)
+                Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit)
             );
 
             _combatSystem.Disconnect(
@@ -98,9 +98,9 @@ public partial class SystemAudioHandler : Node
         AudioManager.PlaySystemSound(SystemSounds.LevelUp);
     }
 
-    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
+    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType, DamageType damageType)
     {
-        // Only play sound for player attacks
+        // Only play sound for player attacks (damageType unused for audio)
         if (attacker is Player)
         {
             var sound = attackType == AttackType.Ranged

@@ -162,13 +162,8 @@ public partial class EntityDetailModal : CenterContainer
 
         if (entity.IsDead) return ("Dead", Palette.Crimson);
 
-        float hpPercent = (float)health.CurrentHealth / health.MaxHealth;
-
-        if (hpPercent >= 1.0f) return ("Uninjured", Palette.Success);
-        if (hpPercent >= 0.75f) return ("Slightly Wounded", Palette.Success);
-        if (hpPercent >= 0.5f) return ("Wounded", Palette.Caution);
-        if (hpPercent >= 0.25f) return ("Severely Wounded", Palette.Alert);
-        return ("Near Death", Palette.Crimson);
+        var (text, color) = InjuryState.GetInjuryDisplay(health.CurrentHealth, health.MaxHealth);
+        return (text, color);
     }
 
     private string BuildStatusDisplay(BaseEntity entity)

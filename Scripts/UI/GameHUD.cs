@@ -877,17 +877,9 @@ public partial class GameHUD : Control
         var health = entity.GetNodeOrNull<HealthComponent>("HealthComponent");
         if (health != null && !entity.IsDead)
         {
-            float hpPercent = (float)health.CurrentHealth / health.MaxHealth;
-            string injury = hpPercent switch
-            {
-                >= 1.0f => null,
-                >= 0.75f => "Slightly Wounded",
-                >= 0.5f => "Wounded",
-                >= 0.25f => "Severely Wounded",
-                _ => "Near Death"
-            };
-            if (injury != null)
-                parts.Add(injury);
+            var tier = InjuryState.GetInjuryTier(health.CurrentHealth, health.MaxHealth);
+            if (tier != InjuryState.Tier.Uninjured)
+                parts.Add(InjuryState.GetTierText(tier));
         }
 
         // Add speed status for non-average creatures

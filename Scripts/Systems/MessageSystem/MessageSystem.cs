@@ -3,6 +3,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Helpers;
 using PitsOfDespair.Systems.Entity;
 using PitsOfDespair.Systems.Vision;
 using System.Collections.Generic;
@@ -136,7 +137,7 @@ public partial class MessageSystem : Node
     {
         _combatSystem = combatSystem;
 
-        _combatSystem.Connect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
+        _combatSystem.Connect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit));
         _combatSystem.Connect(CombatSystem.SignalName.AttackBlocked, Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked));
         _combatSystem.Connect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         _combatSystem.Connect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
@@ -213,7 +214,7 @@ public partial class MessageSystem : Node
 
     #region Signal Handlers
 
-    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
+    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType, DamageType damageType)
     {
         // Track for death message attribution (always track, even if not visible)
         _lastAttacker[target] = attacker;
@@ -223,7 +224,7 @@ public partial class MessageSystem : Node
         if (!IsCombatVisible(attacker, target))
             return;
 
-        RecordDamage(attacker, target, damage, attackName, isSkill: false);
+        RecordDamage(attacker, target, damage, attackName, isSkill: false, damageType);
     }
 
     private void OnSkillDamageDealt(BaseEntity caster, BaseEntity target, int damage, string skillName)
@@ -373,29 +374,35 @@ public partial class MessageSystem : Node
     /// <summary>
     /// Records a damage event (hit, skill damage).
     /// </summary>
-    private void RecordDamage(BaseEntity attacker, BaseEntity target, int damage, string sourceName, bool isSkill)
+    private void RecordDamage(BaseEntity attacker, BaseEntity target, int damage, string sourceName, bool isSkill, DamageType damageType = DamageType.Bludgeoning)
     {
         if (!IsSequencing)
         {
-            EmitDamageMessageImmediate(attacker, target, damage, sourceName, isSkill);
+            EmitDamageMessageImmediate(attacker, target, damage, sourceName, isSkill, damageType);
             return;
         }
 
         var key = GetCombatKey(attacker, target, sourceName);
         if (!_combatMessages.TryGetValue(key, out var data))
         {
+            // Capture target's HP state for severity/injury calculation
+            var targetHealth = target?.GetNodeOrNull<HealthComponent>("HealthComponent");
+
             data = new CombatMessageData
             {
                 Attacker = attacker,
                 Target = target,
                 SourceName = sourceName,
                 IsSkill = isSkill,
-                DamageType = DamageType.Bludgeoning
+                DamageType = damageType,
+                TargetMaxHP = targetHealth?.MaxHealth ?? 100,
+                TargetCurrentHP = targetHealth?.CurrentHealth ?? 100
             };
             _combatMessages[key] = data;
         }
 
         data.Damage = damage;
+        data.DamageType = damageType;
     }
 
     /// <summary>
@@ -644,6 +651,38 @@ public partial class MessageSystem : Node
         _genericMessages.Clear();
     }
 
+    /// <summary>
+    /// Builds consolidated damage type phrase from primary damage + property effects.
+    /// </summary>
+    private static string FormatDamageTypes(DamageType primaryType, List<PropertyEffectData> propertyEffects)
+    {
+        var types = new List<string> { primaryType.ToString().ToLower() };
+
+        foreach (var effect in propertyEffects)
+        {
+            // Property effects use verbs like "scorched" - convert to damage type names
+            string damageTypeName = effect.Verb switch
+            {
+                "scorched" => "fire",
+                "frozen" => "cold",
+                "shocked" => "lightning",
+                "corroded" => "acid",
+                "poisoned" => "poison",
+                _ => effect.Verb
+            };
+
+            if (!types.Contains(damageTypeName))
+                types.Add(damageTypeName);
+        }
+
+        return types.Count switch
+        {
+            1 => types[0],
+            2 => $"{types[0]} and {types[1]}",
+            _ => string.Join(", ", types.Take(types.Count - 1)) + $", and {types.Last()}"
+        };
+    }
+
     private (string message, string color) FormatCombinedCombatMessage(CombatMessageData data)
     {
         bool isPlayerAttacker = data.Attacker?.DisplayName == "Player";
@@ -674,79 +713,111 @@ public partial class MessageSystem : Node
             return (blockMsg, color);
         }
 
-        // Build combined damage message
+        // Build weapon/skill display
         string sourceDisplay = data.IsSkill
             ? $"[color={ColorWizard}]{data.SourceName}[/color]"
             : GetWeaponDisplay(data.Attacker, data.SourceName);
 
         string message;
-        if (isPlayerAttacker)
+
+        // Player is target: keep numeric format (player sees health bar)
+        if (isPlayerTarget)
         {
+            // Calculate total damage including property effects
+            int totalDamage = data.Damage + data.PropertyEffects.Sum(e => e.Damage);
+            string damageTypesPhrase = FormatDamageTypes(data.DamageType, data.PropertyEffects);
+
             message = data.IsSkill
-                ? $"Your {sourceDisplay} hits the {data.Target.DisplayName} for {data.Damage} damage"
-                : $"You hit the {data.Target.DisplayName} with your {sourceDisplay} for {data.Damage} damage";
+                ? $"The {data.Attacker.DisplayName}'s {sourceDisplay} hits you for {totalDamage} {damageTypesPhrase} damage"
+                : $"The {data.Attacker.DisplayName} hits you with its {sourceDisplay} for {totalDamage} {damageTypesPhrase} damage";
+
+            // Add modifier if present
+            if (!string.IsNullOrEmpty(data.Modifier))
+            {
+                string modDamageTypeName = data.DamageType.ToString().ToLower();
+                message += $" ({data.Modifier} to {modDamageTypeName})";
+            }
+
+            // Add lifesteal note if enemy healed
+            if (data.LifestealHealing > 0)
+            {
+                message += $", [color={Palette.ToHex(Palette.Blood)}]draining life[/color]";
+            }
+
+            message += ".";
         }
-        else if (isPlayerTarget)
-        {
-            message = data.IsSkill
-                ? $"The {data.Attacker.DisplayName}'s {sourceDisplay} hits you for {data.Damage} damage"
-                : $"The {data.Attacker.DisplayName} hits you with its {sourceDisplay} for {data.Damage} damage";
-        }
+        // Enemy is target: use severity-based format
         else
         {
-            message = data.IsSkill
-                ? $"The {data.Attacker.DisplayName}'s {sourceDisplay} hits the {data.Target.DisplayName} for {data.Damage} damage"
-                : $"The {data.Attacker.DisplayName} hits the {data.Target.DisplayName} with its {sourceDisplay} for {data.Damage} damage";
-        }
+            // Calculate total damage including property effects
+            int totalDamage = data.Damage + data.PropertyEffects.Sum(e => e.Damage);
 
-        // Add modifier if present
-        if (!string.IsNullOrEmpty(data.Modifier))
-        {
-            string damageTypeName = data.DamageType.ToString().ToLower();
-            message += $" ({data.Modifier} to {damageTypeName})";
-        }
+            // Get severity based on total damage vs target max health
+            string severity = DamageSeverity.GetTierText(DamageSeverity.GetSeverityTier(totalDamage, data.TargetMaxHP));
 
-        // Add property effects (e.g., "scorched for 5, shocked for 3")
-        if (data.PropertyEffects.Count > 0)
-        {
-            var effectParts = new System.Collections.Generic.List<string>();
-            foreach (var effect in data.PropertyEffects)
+            // Build damage type phrase (e.g., "slashing and fire")
+            string damageTypesPhrase = FormatDamageTypes(data.DamageType, data.PropertyEffects);
+
+            // Build attack phrase with severity
+            if (isPlayerAttacker)
             {
-                effectParts.Add($"[color={effect.Color}]{effect.Verb} for {effect.Damage}[/color]");
+                message = data.IsSkill
+                    ? $"Your {sourceDisplay} strikes the {data.Target.DisplayName}, dealing {severity} {damageTypesPhrase} damage"
+                    : $"You strike the {data.Target.DisplayName} with your {sourceDisplay}, dealing {severity} {damageTypesPhrase} damage";
             }
-            message += ", " + string.Join(", ", effectParts);
-        }
-
-        // Add lifesteal if present
-        if (data.LifestealHealing > 0 && isPlayerAttacker)
-        {
-            message += $", [color={Palette.ToHex(Palette.Blood)}]draining {data.LifestealHealing} life[/color]";
-        }
-
-        // Add death if applicable
-        if (data.TargetDied)
-        {
-            // Check for decoration custom destruction message
-            if (!string.IsNullOrEmpty(data.Target?.DecorationId) && _dataLoader != null)
+            else
             {
-                var decorationData = _dataLoader.Decorations.Get(data.Target.DecorationId);
-                if (decorationData != null && !string.IsNullOrEmpty(decorationData.DestructionMessage))
+                message = data.IsSkill
+                    ? $"The {data.Attacker.DisplayName}'s {sourceDisplay} strikes the {data.Target.DisplayName}, dealing {severity} {damageTypesPhrase} damage"
+                    : $"The {data.Attacker.DisplayName} strikes the {data.Target.DisplayName} with its {sourceDisplay}, dealing {severity} {damageTypesPhrase} damage";
+            }
+
+            // Add modifier if present
+            if (!string.IsNullOrEmpty(data.Modifier))
+            {
+                string modDamageTypeName = data.DamageType.ToString().ToLower();
+                message += $" ({data.Modifier} to {modDamageTypeName})";
+            }
+
+            // Add lifesteal if present
+            if (data.LifestealHealing > 0 && isPlayerAttacker)
+            {
+                message += $", [color={Palette.ToHex(Palette.Blood)}]draining {data.LifestealHealing} life[/color]";
+            }
+
+            // Add death or injury state
+            if (data.TargetDied)
+            {
+                // Check for decoration custom destruction message
+                if (!string.IsNullOrEmpty(data.Target?.DecorationId) && _dataLoader != null)
                 {
-                    message += $" - it {decorationData.DestructionMessage}!";
+                    var decorationData = _dataLoader.Decorations.Get(data.Target.DecorationId);
+                    if (decorationData != null && !string.IsNullOrEmpty(decorationData.DestructionMessage))
+                    {
+                        message += $" - it {decorationData.DestructionMessage}!";
+                    }
+                    else
+                    {
+                        message += ", destroying it!";
+                    }
                 }
                 else
                 {
-                    message += ", destroying it!";
+                    message += ", killing it!";
                 }
             }
             else
             {
-                message += ", killing it!";
+                message += ".";
+
+                // Append injury state if target is injured
+                var injuryTier = InjuryState.GetInjuryTier(data.TargetCurrentHP, data.TargetMaxHP);
+                string? injuryText = InjuryState.GetTierTextLower(injuryTier);
+                if (injuryText != null)
+                {
+                    message += $" The {data.Target.DisplayName} is {injuryText}.";
+                }
             }
-        }
-        else
-        {
-            message += ".";
         }
 
         return (message, color);
@@ -942,7 +1013,7 @@ public partial class MessageSystem : Node
 
     #region Immediate Message Fallbacks
 
-    private void EmitDamageMessageImmediate(BaseEntity attacker, BaseEntity target, int damage, string sourceName, bool isSkill)
+    private void EmitDamageMessageImmediate(BaseEntity attacker, BaseEntity target, int damage, string sourceName, bool isSkill, DamageType damageType = DamageType.Bludgeoning)
     {
         if (_messageLog == null) return;
 
@@ -954,24 +1025,35 @@ public partial class MessageSystem : Node
             ? $"[color={ColorWizard}]{sourceName}[/color]"
             : GetWeaponDisplay(attacker, sourceName);
 
+        string damageTypeName = damageType.ToString().ToLower();
         string message;
-        if (isPlayerAttacker)
+
+        // Player is target: keep numeric format
+        if (isPlayerTarget)
         {
             message = isSkill
-                ? $"Your {sourceDisplay} hits the {target.DisplayName} for {damage} damage."
-                : $"You hit the {target.DisplayName} with your {sourceDisplay} for {damage} damage.";
+                ? $"The {attacker.DisplayName}'s {sourceDisplay} hits you for {damage} {damageTypeName} damage."
+                : $"The {attacker.DisplayName} hits you with its {sourceDisplay} for {damage} {damageTypeName} damage.";
         }
-        else if (isPlayerTarget)
-        {
-            message = isSkill
-                ? $"The {attacker.DisplayName}'s {sourceDisplay} hits you for {damage} damage."
-                : $"The {attacker.DisplayName} hits you with its {sourceDisplay} for {damage} damage.";
-        }
+        // Enemy is target: use severity-based format
         else
         {
-            message = isSkill
-                ? $"The {attacker.DisplayName}'s {sourceDisplay} hits the {target.DisplayName} for {damage} damage."
-                : $"The {attacker.DisplayName} hits the {target.DisplayName} with its {sourceDisplay} for {damage} damage.";
+            var targetHealth = target?.GetNodeOrNull<HealthComponent>("HealthComponent");
+            int maxHP = targetHealth?.MaxHealth ?? 100;
+            string severity = DamageSeverity.GetTierText(DamageSeverity.GetSeverityTier(damage, maxHP));
+
+            if (isPlayerAttacker)
+            {
+                message = isSkill
+                    ? $"Your {sourceDisplay} strikes the {target.DisplayName}, dealing {severity} {damageTypeName} damage."
+                    : $"You strike the {target.DisplayName} with your {sourceDisplay}, dealing {severity} {damageTypeName} damage.";
+            }
+            else
+            {
+                message = isSkill
+                    ? $"The {attacker.DisplayName}'s {sourceDisplay} strikes the {target.DisplayName}, dealing {severity} {damageTypeName} damage."
+                    : $"The {attacker.DisplayName} strikes the {target.DisplayName} with its {sourceDisplay}, dealing {severity} {damageTypeName} damage.";
+            }
         }
 
         _messageLog.AddMessage(message, color);
@@ -1070,7 +1152,7 @@ public partial class MessageSystem : Node
         // Disconnect from combat system
         if (_combatSystem != null)
         {
-            _combatSystem.Disconnect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
+            _combatSystem.Disconnect(CombatSystem.SignalName.AttackHit, Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackBlocked, Callable.From<BaseEntity, BaseEntity, string>(OnAttackBlocked));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed, Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
             _combatSystem.Disconnect(CombatSystem.SignalName.ActionMessage, Callable.From<BaseEntity, string, string>(OnActionMessage));
