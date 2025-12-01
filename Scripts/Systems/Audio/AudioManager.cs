@@ -18,7 +18,7 @@ public partial class AudioManager : Node
     private readonly Dictionary<string, AudioStream> _audioCache = new();
     private readonly AudioRegistry _registry = new();
 
-    private float _masterVolume = 1.0f;
+    private float _masterVolume = 0.3f;
     private float _sfxVolume = 1.0f;
 
     public float MasterVolume
