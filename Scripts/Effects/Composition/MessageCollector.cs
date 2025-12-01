@@ -71,14 +71,16 @@ public class MessageCollector
 
     /// <summary>
     /// Adds a save resistance message.
+    /// Emits immediately so resist feedback is shown right away.
     /// </summary>
     public void AddSaveResist(BaseEntity target)
     {
-        _messages.Add((
+        // Emit immediately via entity signal for instant feedback
+        target.EmitSignal(
+            BaseEntity.SignalName.ConditionMessage,
             $"The {target.DisplayName} resists!",
-            Palette.ToHex(Palette.Default),
-            target
-        ));
+            Palette.ToHex(Palette.CombatBlocked)
+        );
     }
 
     /// <summary>

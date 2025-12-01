@@ -48,7 +48,9 @@ public static class ConditionFactory
 
             // Debuffs / Status effects
             "confusion" => new ConfusionCondition(duration),
+            "daze" => new DazeCondition(duration),
             "fear" => new FearCondition(duration),
+            "grappled" => new GrappledCondition(duration),
             "sleep" => new SleepCondition(duration),
             "stun" => new StunCondition(duration),
             "acid" => new AcidCondition(duration),
@@ -97,7 +99,9 @@ public static class ConditionFactory
             "max_willpower_modifier" => true,
             "regen_modifier" => true,
             "confusion" => true,
+            "daze" => true,
             "fear" => true,
+            "grappled" => true,
             "sleep" => true,
             "stun" => true,
             "acid" => true,

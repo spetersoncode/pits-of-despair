@@ -1,7 +1,9 @@
 using Godot;
 using PitsOfDespair.Components;
+using PitsOfDespair.Conditions;
 using PitsOfDespair.Core;
 using PitsOfDespair.Entities;
+using System.Linq;
 
 namespace PitsOfDespair.Actions;
 
@@ -113,6 +115,9 @@ public class MoveAction : Action
                 actor.LastSwappedWith = targetEntity;
                 targetEntity.LastSwappedWith = actor;
 
+                // Breaking grapples when swapping positions
+                BreakGrapplesOnMove(actor, context);
+
                 return ActionResult.CreateSuccess();
             }
 
@@ -137,7 +142,41 @@ public class MoveAction : Action
         // Clear swap cooldown since we moved normally
         actor.LastSwappedWith = null;
 
+        // Break any grapples the actor was maintaining
+        BreakGrapplesOnMove(actor, context);
+
         return ActionResult.CreateSuccess();
+    }
+
+    /// <summary>
+    /// Breaks all grapples that the actor is maintaining.
+    /// Called when the actor moves away from grappled targets.
+    /// </summary>
+    private void BreakGrapplesOnMove(BaseEntity actor, ActionContext context)
+    {
+        foreach (var entity in context.EntityManager.GetAllEntities())
+        {
+            var grappled = entity.GetActiveConditions()
+                .OfType<GrappledCondition>()
+                .FirstOrDefault(g => g.Grappler == actor);
+
+            if (grappled != null)
+            {
+                // Mark as broken by movement so OnRemoved returns empty message
+                grappled.WasBrokenByMovement = true;
+                entity.RemoveConditionByType("grappled");
+
+                // Emit release message from the actor (player)
+                if (actor == context.Player)
+                {
+                    actor.EmitSignal(
+                        BaseEntity.SignalName.ConditionMessage,
+                        $"You release the {entity.DisplayName} from your grapple.",
+                        Palette.ToHex(Palette.Default)
+                    );
+                }
+            }
+        }
     }
 
     /// <summary>

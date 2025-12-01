@@ -8,7 +8,7 @@ namespace PitsOfDespair.Effects.Steps;
 
 /// <summary>
 /// Step that applies a prepared attack condition to the caster.
-/// The prepared attack adds bonuses to the next successful melee attack.
+/// The prepared attack adds bonuses to the next successful attack.
 /// </summary>
 public class ApplyPrepareStep : IEffectStep
 {
@@ -17,6 +17,9 @@ public class ApplyPrepareStep : IEffectStep
     private readonly int _damageBonus;
     private readonly string _duration;
     private readonly PrepareTargetingMode _targetingMode;
+    private readonly PrepareAttackTypeFilter _attackTypeFilter;
+    private readonly string? _onHitCondition;
+    private readonly string _onHitConditionDuration;
 
     public ApplyPrepareStep(StepDefinition definition)
     {
@@ -25,6 +28,9 @@ public class ApplyPrepareStep : IEffectStep
         _damageBonus = definition.DamageBonus;
         _duration = definition.GetDurationString();
         _targetingMode = ParseTargetingMode(definition.TargetingMode);
+        _attackTypeFilter = ParseAttackTypeFilter(definition.AttackTypeFilter);
+        _onHitCondition = definition.OnHitCondition;
+        _onHitConditionDuration = definition.OnHitConditionDuration ?? "1";
     }
 
     private static PrepareTargetingMode ParseTargetingMode(string? mode)
@@ -37,6 +43,19 @@ public class ApplyPrepareStep : IEffectStep
             "arc" => PrepareTargetingMode.Arc,
             "cleave" => PrepareTargetingMode.Arc,
             _ => PrepareTargetingMode.Single
+        };
+    }
+
+    private static PrepareAttackTypeFilter ParseAttackTypeFilter(string? filter)
+    {
+        if (string.IsNullOrEmpty(filter))
+            return PrepareAttackTypeFilter.Melee;
+
+        return filter.ToLower() switch
+        {
+            "ranged" => PrepareAttackTypeFilter.Ranged,
+            "any" => PrepareAttackTypeFilter.Any,
+            _ => PrepareAttackTypeFilter.Melee
         };
     }
 
@@ -67,7 +86,10 @@ public class ApplyPrepareStep : IEffectStep
         {
             HitBonus = _hitBonus,
             DamageBonus = _damageBonus,
-            TargetingMode = _targetingMode
+            TargetingMode = _targetingMode,
+            AttackTypeFilter = _attackTypeFilter,
+            OnHitCondition = _onHitCondition,
+            OnHitConditionDuration = _onHitConditionDuration
         };
 
         // Apply to caster (replaces any existing different prepared attack due to same TypeId)

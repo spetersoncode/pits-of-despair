@@ -20,8 +20,21 @@ public enum PrepareTargetingMode
 }
 
 /// <summary>
-/// Condition that prepares the entity's next melee attack with bonus effects.
-/// Consumed on successful melee hit, persists through misses, expires after duration.
+/// Attack type filter for prepared attacks.
+/// </summary>
+public enum PrepareAttackTypeFilter
+{
+    /// <summary>Only triggers on melee attacks (default for backwards compatibility).</summary>
+    Melee,
+    /// <summary>Only triggers on ranged attacks.</summary>
+    Ranged,
+    /// <summary>Triggers on any attack type.</summary>
+    Any
+}
+
+/// <summary>
+/// Condition that prepares the entity's next attack with bonus effects.
+/// Consumed on successful hit, persists through misses, expires after duration.
 /// Only one prepared attack can be active at a time (same TypeId replaces).
 /// </summary>
 public class PreparedAttackCondition : Condition
@@ -69,6 +82,21 @@ public class PreparedAttackCondition : Condition
     /// Targeting mode for the prepared attack (Single or Arc).
     /// </summary>
     public PrepareTargetingMode TargetingMode { get; set; } = PrepareTargetingMode.Single;
+
+    /// <summary>
+    /// Which attack types this prepared attack triggers on (Melee, Ranged, or Any).
+    /// </summary>
+    public PrepareAttackTypeFilter AttackTypeFilter { get; set; } = PrepareAttackTypeFilter.Melee;
+
+    /// <summary>
+    /// Optional condition to apply to target on hit (e.g., "daze").
+    /// </summary>
+    public string? OnHitCondition { get; set; }
+
+    /// <summary>
+    /// Duration of the on-hit condition (dice notation).
+    /// </summary>
+    public string OnHitConditionDuration { get; set; } = "1";
 
     private BaseEntity? _owner;
     private CombatSystem? _combatSystem;
@@ -123,7 +151,7 @@ public class PreparedAttackCondition : Condition
     }
 
     /// <summary>
-    /// Called when any attack hits. Check if it's our owner's melee attack.
+    /// Called when any attack hits. Check if it's our owner's attack and matches the filter.
     /// </summary>
     private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, int attackTypeInt)
     {
@@ -131,22 +159,68 @@ public class PreparedAttackCondition : Condition
         if (attacker != _owner || _owner == null)
             return;
 
-        // Only trigger on melee attacks
+        // Check if attack type matches our filter
         var attackType = (AttackType)attackTypeInt;
-        if (attackType != AttackType.Melee)
+        if (!MatchesAttackTypeFilter(attackType))
             return;
 
         // Apply bonus damage to primary target if configured
         ApplyBonusDamage(target);
 
-        // Handle arc targeting - attack adjacent enemies
-        if (TargetingMode == PrepareTargetingMode.Arc)
+        // Apply on-hit condition if configured
+        ApplyOnHitCondition(target);
+
+        // Handle arc targeting - attack adjacent enemies (melee only)
+        if (TargetingMode == PrepareTargetingMode.Arc && attackType == AttackType.Melee)
         {
             ExecuteArcAttacks(target);
         }
 
         // Consume the prepared attack - remove self from owner
         _owner.RemoveConditionByType(TypeId);
+    }
+
+    /// <summary>
+    /// Check if the attack type matches this prepared attack's filter.
+    /// </summary>
+    private bool MatchesAttackTypeFilter(AttackType attackType)
+    {
+        return AttackTypeFilter switch
+        {
+            PrepareAttackTypeFilter.Melee => attackType == AttackType.Melee,
+            PrepareAttackTypeFilter.Ranged => attackType == AttackType.Ranged,
+            PrepareAttackTypeFilter.Any => true,
+            _ => attackType == AttackType.Melee // Default to melee for safety
+        };
+    }
+
+    /// <summary>
+    /// Apply the on-hit condition to the target if configured.
+    /// </summary>
+    private void ApplyOnHitCondition(BaseEntity target)
+    {
+        if (string.IsNullOrEmpty(OnHitCondition))
+            return;
+
+        var condition = ConditionFactory.Create(OnHitCondition, 0, OnHitConditionDuration);
+        if (condition == null)
+        {
+            GD.PrintErr($"PreparedAttackCondition: Unknown condition type '{OnHitCondition}'");
+            return;
+        }
+
+        var conditionMessage = condition.OnApplied(target);
+        target.AddConditionWithoutMessage(condition);
+
+        // Emit the condition message
+        if (!string.IsNullOrEmpty(conditionMessage.Message))
+        {
+            target.EmitSignal(
+                BaseEntity.SignalName.ConditionMessage,
+                conditionMessage.Message,
+                conditionMessage.Color
+            );
+        }
     }
 
     /// <summary>

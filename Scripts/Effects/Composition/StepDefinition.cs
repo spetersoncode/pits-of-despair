@@ -195,6 +195,21 @@ public class StepDefinition
     /// </summary>
     public string? TargetingMode { get; set; }
 
+    /// <summary>
+    /// Attack type filter for prepared attacks: "melee" (default), "ranged", or "any".
+    /// </summary>
+    public string? AttackTypeFilter { get; set; }
+
+    /// <summary>
+    /// Condition to apply to target on hit (e.g., "daze", "acid").
+    /// </summary>
+    public string? OnHitCondition { get; set; }
+
+    /// <summary>
+    /// Duration of the on-hit condition (dice notation). Defaults to "1".
+    /// </summary>
+    public string? OnHitConditionDuration { get; set; }
+
     #endregion
 
     #region Chain Damage Properties

@@ -728,6 +728,12 @@ public partial class GameHUD : Control
         {
             _messageSystem.ConnectToAIComponent(aiComponent);
         }
+
+        // Connect to creature condition messages (daze, stun, etc.)
+        entity.Connect(
+            Entities.BaseEntity.SignalName.ConditionMessage,
+            Callable.From<string, string>((message, color) => _messageLog.AddMessage(message, color))
+        );
     }
 
     /// <summary>

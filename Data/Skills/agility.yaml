@@ -34,6 +34,28 @@ entries:
         stat: evasion
         amount: 1
 
+  pinning_shot:
+    name: Pinning Shot
+    description: Prepare your next ranged attack to daze the target on hit, causing them to lose their next turn.
+    category: active
+    targeting: self
+    willpowerCost: 3
+    consumesTurn: false
+    prerequisites:
+      agi: 3
+    tags:
+      - ranged
+      - crowd_control
+      - prime
+    effects:
+      - steps:
+          - type: apply_prepare
+            prepareName: Pinning Shot
+            attackTypeFilter: ranged
+            onHitCondition: daze
+            onHitConditionDuration: "1"
+            duration: "5"
+
   double_shot:
     name: Double Shot
     description: Fire two ranged attacks.

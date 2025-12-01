@@ -79,6 +79,12 @@ public class ApplyConditionStep : IEffectStep
             fearCondition.FearSource = context.Caster;
         }
 
+        // Special handling for GrappledCondition - set the grappler to caster
+        if (condition is GrappledCondition grappledCondition)
+        {
+            grappledCondition.Grappler = context.Caster;
+        }
+
         // Apply condition to target
         var conditionMessage = condition.OnApplied(context.Target);
         context.Target.AddConditionWithoutMessage(condition);

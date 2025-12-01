@@ -49,6 +49,32 @@ entries:
     effects:
       - type: survive_lethal
 
+  grapple:
+    name: Grapple
+    description: Grab an adjacent enemy (END vs END). On success, they lose their turn and can't move for 3 turns. Moving breaks the grapple.
+    category: active
+    targeting: adjacent
+    willpowerCost: 3
+    prerequisites:
+      end: 2
+    tags:
+      - melee
+      - crowd_control
+    effects:
+      - steps:
+          - type: save_check
+            saveStat: end
+            attackStat: end
+            stopOnSuccess: true
+          - type: apply_condition
+            conditionType: daze
+            duration: "1"
+            requireSaveFailed: true
+          - type: apply_condition
+            conditionType: grappled
+            duration: "3"
+            requireSaveFailed: true
+
   shoulder_charge:
     name: Shoulder Charge
     description: Charge an adjacent enemy, dealing 1d6+END damage and knocking them back 2 tiles. Collisions stun on failed END save.
