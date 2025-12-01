@@ -510,14 +510,14 @@ public static class Palette
 
     #region Potions - Strength
 
-    /// <summary>Minor strength potion (burnt orange)</summary>
-    public static readonly Color PotionStrengthMinor = new("#AA6633");
+    /// <summary>Minor strength potion (dull gold)</summary>
+    public static readonly Color PotionStrengthMinor = new("#AA8822");
 
-    /// <summary>Regular strength potion (rich amber-orange)</summary>
-    public static readonly Color PotionStrength = new("#CC7733");
+    /// <summary>Regular strength potion (rich amber)</summary>
+    public static readonly Color PotionStrength = new("#CCAA22");
 
-    /// <summary>Major strength potion (blazing orange)</summary>
-    public static readonly Color PotionStrengthMajor = new("#EE8833");
+    /// <summary>Major strength potion (blazing gold)</summary>
+    public static readonly Color PotionStrengthMajor = new("#EECC33");
 
     #endregion
 
@@ -536,14 +536,14 @@ public static class Palette
 
     #region Potions - Endurance
 
-    /// <summary>Minor endurance potion (dusty rose)</summary>
-    public static readonly Color PotionEnduranceMinor = new("#AA5566");
+    /// <summary>Minor endurance potion (deep crimson)</summary>
+    public static readonly Color PotionEnduranceMinor = new("#993344");
 
-    /// <summary>Regular endurance potion (vibrant rose)</summary>
-    public static readonly Color PotionEndurance = new("#CC6677");
+    /// <summary>Regular endurance potion (rich crimson)</summary>
+    public static readonly Color PotionEndurance = new("#BB4455");
 
-    /// <summary>Major endurance potion (brilliant pink)</summary>
-    public static readonly Color PotionEnduranceMajor = new("#EE7788");
+    /// <summary>Major endurance potion (vibrant crimson)</summary>
+    public static readonly Color PotionEnduranceMajor = new("#DD5566");
 
     #endregion
 

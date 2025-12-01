@@ -4,76 +4,76 @@ defaults:
 
 entries:
   strength_1:
-    name: minor strength
+    name: brawn
     introFloor: 1
     color: Palette.PotionStrengthMinor
-    description: Burnt orange liquid swirls sluggishly. It smells of iron and exertion.
+    description: Murky orange liquid thick as honey. Your muscles twitch just holding it.
     effects:
       - steps:
           - type: apply_condition
             conditionType: strength_modifier
             amount: 1
-            duration: 10
+            duration: 20
 
   strength_2:
-    name: strength
+    name: bull's strength
     introFloor: 3
     color: Palette.PotionStrength
-    description: Amber fluid pulses with warmth. The taste of forge-fire lingers on sealed lips.
+    description: Amber fluid pulses with heat. The scent of iron and sweat fills the air.
     effects:
       - steps:
           - type: apply_condition
             conditionType: strength_modifier
             amount: 2
-            duration: 10
+            duration: 20
 
   strength_3:
-    name: major strength
-    introFloor: 4
+    name: titan's blood
+    introFloor: 5
     color: Palette.PotionStrengthMajor
-    description: Blazing orange radiance strains against the glass. Raw power made liquid.
+    description: Blazing orange ichor strains against the glass. Ancient power courses within.
     effects:
       - steps:
           - type: apply_condition
             conditionType: strength_modifier
             amount: 3
-            duration: 10
+            duration: 20
 
   agility_1:
-    name: minor agility
+    name: swiftness
     introFloor: 1
     color: Palette.PotionAgilityMinor
-    description: Deep teal liquid shifts like restless water. Light bends strangely around it.
+    description: Deep teal liquid shifts restlessly. Your feet feel lighter just standing near it.
     effects:
       - steps:
           - type: apply_condition
             conditionType: agility_modifier
             amount: 1
-            duration: 10
+            duration: 20
 
   agility_2:
-    name: agility
+    name: cat's grace
     introFloor: 3
     color: Palette.PotionAgility
-    description: Bright teal flows endlessly within itself. Holding it makes your fingers twitch.
+    description: Bright teal flows endlessly within itself. The world seems sluggish in comparison.
     effects:
       - steps:
           - type: apply_condition
             conditionType: agility_modifier
             amount: 2
-            duration: 10
+            duration: 20
 
   agility_3:
-    name: major agility
-    introFloor: 4
+    name: wind dancer
+    introFloor: 5
     color: Palette.PotionAgilityMajor
-    description: Brilliant cyan dances without stillness. Time itself seems to hesitate nearby.
+    description: Brilliant cyan swirls in impossible spirals. Reality blurs at its edges.
     effects:
       - steps:
           - type: apply_condition
             conditionType: agility_modifier
             amount: 3
-            duration: 10
+            duration: 20
 
   armor_1:
     name: barkskin
@@ -85,7 +85,7 @@ entries:
           - type: apply_condition
             conditionType: armor_modifier
             amount: 1
-            duration: 10
+            duration: 20
 
   armor_2:
     name: stoneskin
@@ -97,11 +97,11 @@ entries:
           - type: apply_condition
             conditionType: armor_modifier
             amount: 2
-            duration: 10
+            duration: 20
 
   armor_3:
     name: ironskin
-    introFloor: 4
+    introFloor: 5
     color: Palette.PotionIronskin
     description: Metallic blue-gray fluid, cold to the touch. Your reflection warps in its surface.
     effects:
@@ -109,10 +109,10 @@ entries:
           - type: apply_condition
             conditionType: armor_modifier
             amount: 3
-            duration: 10
+            duration: 20
 
   endurance_1:
-    name: minor endurance
+    name: fortitude
     introFloor: 1
     color: Palette.PotionEnduranceMinor
     description: Dusty rose fluid, thick and warm. It pulses faintly like a sleeping heart.
@@ -121,67 +121,67 @@ entries:
           - type: apply_condition
             conditionType: endurance_modifier
             amount: 1
-            duration: 10
+            duration: 20
 
   endurance_2:
-    name: endurance
+    name: bear's vitality
     introFloor: 3
     color: Palette.PotionEndurance
-    description: Vibrant rose essence swirls with vitality. The glass feels alive in your grip.
+    description: Vibrant rose essence swirls with life. The glass thrums against your palm.
     effects:
       - steps:
           - type: apply_condition
             conditionType: endurance_modifier
             amount: 2
-            duration: 10
+            duration: 20
 
   endurance_3:
-    name: major endurance
-    introFloor: 4
+    name: dragon's heart
+    introFloor: 5
     color: Palette.PotionEnduranceMajor
-    description: Brilliant pink life force churns within. Merely holding it quickens your heartbeat.
+    description: Brilliant crimson churns with primal vitality. Your heartbeat thunders in response.
     effects:
       - steps:
           - type: apply_condition
             conditionType: endurance_modifier
             amount: 3
-            duration: 10
+            duration: 20
 
   will_1:
-    name: minor will
-    introFloor: 2
+    name: clarity
+    introFloor: 1
     color: Palette.PotionWillMinor
-    description: Deep violet liquid rests perfectly still. Staring into it clears unwanted thoughts.
+    description: Deep violet liquid rests perfectly still. Staring into it silences distractions.
     effects:
       - steps:
           - type: apply_condition
             conditionType: will_modifier
             amount: 1
-            duration: 10
+            duration: 20
 
   will_2:
-    name: will
+    name: iron mind
     introFloor: 3
     color: Palette.PotionWill
-    description: Rich purple clarity shimmers with purpose. Your mind sharpens just holding it.
+    description: Rich purple essence shimmers with purpose. Doubt dissolves at its touch.
     effects:
       - steps:
           - type: apply_condition
             conditionType: will_modifier
             amount: 2
-            duration: 10
+            duration: 20
 
   will_3:
-    name: major will
-    introFloor: 4
+    name: mind's eye
+    introFloor: 5
     color: Palette.PotionWillMajor
-    description: Radiant lavender hums with focus. Reality feels more defined in its presence.
+    description: Radiant lavender hums with perfect focus. Thoughts crystallize into absolute certainty.
     effects:
       - steps:
           - type: apply_condition
             conditionType: will_modifier
             amount: 3
-            duration: 10
+            duration: 20
 
   haste:
     name: haste
@@ -193,4 +193,4 @@ entries:
           - type: apply_condition
             conditionType: speed_modifier
             amount: 5
-            duration: 10
+            duration: 20
