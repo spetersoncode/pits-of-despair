@@ -19,9 +19,30 @@ entries:
 
   dagger:
     name: dagger
-    introFloor: 2
+    introFloor: 1
     color: Palette.Steel
     description: A slender blade made for close work. It finds the gaps in armor and the spaces between ribs with equal ease.
     attack:
       type: Melee
       dice: "1d4"
+
+  stiletto:
+    name: stiletto
+    introFloor: 1
+    color: Palette.Silver
+    description: A needle-thin blade designed for thrusting between armor plates. What it lacks in cutting power it makes up for in precision.
+    attack:
+      type: Melee
+      dice: "1d4"
+      damageType: Piercing
+
+  rapier:
+    name: rapier
+    introFloor: 5
+    color: Palette.Mithril
+    relevanceDecay: 0.05
+    description: An elegant thrusting sword with a slender blade. Its reach and speed make it deadly in skilled hands.
+    attack:
+      type: Melee
+      dice: "1d6"
+      damageType: Piercing

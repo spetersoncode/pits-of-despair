@@ -5,14 +5,34 @@ defaults:
   attack:
     damageType: Piercing
     delay: 1.1
-    range: 2
 
 entries:
-  spear:
-    name: spear
-    introFloor: 4
+  short_spear:
+    name: short spear
+    introFloor: 2
     color: Palette.AshWood
-    description: An iron-tipped shaft of ash wood, balanced for both thrust and throw. Its reach keeps the dangers of the deep at arm's length.
+    description: A compact spear designed for tight corridors. What it lacks in reach it makes up for in maneuverability.
     attack:
       type: Melee
       dice: "1d6"
+
+  spear:
+    name: spear
+    introFloor: 3
+    color: Palette.Oak
+    description: A sturdy spear with good reach. The iron tip finds gaps in armor with practiced ease.
+    attack:
+      type: Melee
+      dice: "1d6"
+      range: 2
+
+  pike:
+    name: pike
+    introFloor: 5
+    color: Palette.HeavyIron
+    description: A massive polearm tipped with a heavy iron head. Unwieldy in close quarters, but devastating at range.
+    attack:
+      type: Melee
+      dice: "1d8"
+      delay: 1.3
+      range: 2

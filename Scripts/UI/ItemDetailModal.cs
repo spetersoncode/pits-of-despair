@@ -232,26 +232,31 @@ public partial class ItemDetailModal : CenterContainer
 
 		string damageType = attack.DamageType.ToString().ToLower();
 		string strNote = attack.Type == AttackType.Melee ? " (+STR)" : "";
+		int maxStrBonus = attack.GetMaxStrengthBonus();
 
 		var (speedText, speedColor) = SpeedStatus.GetWeaponSpeedDisplay(attack.Delay);
 
 		// Calculate Base DPT (weapon only)
 		float baseDpt = attack.GetAverageDamagePerTurn();
 
-		// Calculate Equipped DPT (with player stat bonuses)
+		// Calculate Equipped DPT (with player stat bonuses, capped by weapon)
 		float equippedDpt = baseDpt;
 		if (_player != null && attack.Type == AttackType.Melee)
 		{
 			var statsComponent = _player.GetNodeOrNull<StatsComponent>("StatsComponent");
 			if (statsComponent != null)
 			{
-				int damageBonus = statsComponent.GetDamageBonus(true); // true = melee
+				int damageBonus = Mathf.Min(statsComponent.GetDamageBonus(true), maxStrBonus);
 				float avgDamage = DiceRoller.GetAverage(attack.DiceNotation) + damageBonus;
 				equippedDpt = avgDamage / attack.Delay;
 			}
 		}
 
 		sb.Append($"\n[color={disabled}]Damage:[/color] [color={defaultColor}]{attack.DiceNotation} {damageType}{strNote}[/color]");
+		if (attack.Type == AttackType.Melee)
+		{
+			sb.Append($"\n[color={disabled}]Max STR Bonus:[/color] [color={defaultColor}]+{maxStrBonus}[/color]");
+		}
 		sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
 		sb.Append($"\n[color={disabled}]Base Damage/Turn:[/color] [color={defaultColor}]{baseDpt:F1}[/color]");
 		sb.Append($"\n[color={disabled}]Equipped Damage/Turn:[/color] [color={defaultColor}]{equippedDpt:F1}[/color]");

@@ -69,6 +69,9 @@ public class WeaponDamageStep : IEffectStep
         // Calculate damage (weapon dice + STR bonus + skill bonus - armor)
         int baseDamage = DiceRoller.Roll(attackData.DiceNotation);
         int strBonus = attackerStats?.GetDamageBonus(isMelee: true) ?? 0;
+        // Cap STR bonus at weapon's max base roll (lighter weapons benefit less from STR)
+        int maxStrBonus = attackData.GetMaxStrengthBonus();
+        strBonus = Mathf.Min(strBonus, maxStrBonus);
         int armor = targetStats?.TotalArmor ?? 0;
 
         int finalDamage = Mathf.Max(0, baseDamage + strBonus + _bonusDamage - armor);

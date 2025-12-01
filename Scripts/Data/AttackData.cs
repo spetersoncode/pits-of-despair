@@ -80,4 +80,18 @@ public partial class AttackData : Resource
 		float avgDamage = DiceRoller.GetAverage(DiceNotation);
 		return avgDamage / Delay;
 	}
+
+	/// <summary>
+	/// Gets the maximum strength bonus for this weapon.
+	/// Capped at the weapon's max base damage roll, with an overall cap of 12.
+	/// Returns 0 for ranged weapons (they don't get STR bonus).
+	/// </summary>
+	public int GetMaxStrengthBonus()
+	{
+		if (Type != AttackType.Melee)
+			return 0;
+
+		int maxRoll = DiceRoller.GetMax(DiceNotation);
+		return Mathf.Min(maxRoll, 12);
+	}
 }

@@ -99,6 +99,25 @@ public static class DiceRoller
 	}
 
 	/// <summary>
+	/// Calculates the maximum possible roll from a dice notation.
+	/// E.g., "1d6" = 6, "2d6+3" = 15, "1d4" = 4
+	/// </summary>
+	/// <param name="diceNotation">Dice notation string or plain number</param>
+	/// <returns>Maximum value, or 0 if notation is invalid</returns>
+	public static int GetMax(string diceNotation)
+	{
+		if (!TryParse(diceNotation, out int count, out int sides, out int modifier))
+			return 0;
+
+		// Plain number case
+		if (count == 0 && sides == 0)
+			return modifier;
+
+		// Max of NdS = N × S + modifier
+		return count * sides + modifier;
+	}
+
+	/// <summary>
 	/// Calculates the average (expected value) of a dice notation.
 	/// E.g., "1d6" = 3.5, "2d6+3" = 10, "1d8+1" = 5.5
 	/// </summary>

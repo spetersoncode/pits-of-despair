@@ -71,14 +71,14 @@ public class ItemData
         {
             IsEquippable = true,
             EquipSlot = "MeleeWeapon",
-            RelevanceDecay = 0.15f,
+            RelevanceDecay = 0.10f,
             SpawnRarity = 0.9f
         },
         ["armor"] = new ItemTypeInfo
         {
             IsEquippable = true,
             EquipSlot = "Armor",
-            RelevanceDecay = 0.15f,
+            RelevanceDecay = 0.10f,
             SpawnRarity = 0.9f
         },
         ["ammo"] = new ItemTypeInfo
