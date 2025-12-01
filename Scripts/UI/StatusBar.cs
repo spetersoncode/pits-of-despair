@@ -76,7 +76,7 @@ public partial class StatusBar : PanelContainer
 
         var displayItems = new System.Collections.Generic.List<string>();
 
-        // Get active toggle skill names (shown in cyan)
+        // Get active toggle skills - stances get [Stance] label
         if (_toggleProcessor != null && _dataLoader != null)
         {
             foreach (var skillId in _toggleProcessor.GetActiveToggles())
@@ -84,23 +84,29 @@ public partial class StatusBar : PanelContainer
                 var skill = _dataLoader.Skills.Get(skillId);
                 if (skill != null)
                 {
-                    displayItems.Add($"[color={Palette.ToHex(Palette.Cyan)}]{skill.Name}[/color]");
+                    bool isStance = skill.Tags?.Contains("stance") == true;
+                    string label = isStance
+                        ? $"[color={Palette.ToHex(Palette.Cyan)}][Stance][/color] {skill.Name}"
+                        : $"[color={Palette.ToHex(Palette.Cyan)}]{skill.Name}[/color]";
+                    displayItems.Add(label);
                 }
             }
         }
 
-        // Get displayable conditions (those with ExamineDescription)
-        var conditions = _player.GetActiveConditions()
-            .Where(c => c.ExamineDescription != null)
-            .Select(c => c.ExamineDescription!)
-            .Distinct()
-            .ToList();
-
-        // Capitalize each condition for display
-        foreach (var condition in conditions)
+        // Get displayable conditions
+        foreach (var condition in _player.GetActiveConditions())
         {
-            string capitalized = char.ToUpper(condition[0]) + condition[1..];
-            displayItems.Add(capitalized);
+            // Prepared attacks get [Prep] label with just the attack name
+            if (condition.TypeId == "prepared_attack")
+            {
+                displayItems.Add($"[color={Palette.ToHex(Palette.StatusBuff)}][Prep][/color] {condition.Name}");
+            }
+            else if (condition.ExamineDescription != null)
+            {
+                // Other conditions with descriptions
+                string capitalized = char.ToUpper(condition.ExamineDescription[0]) + condition.ExamineDescription[1..];
+                displayItems.Add(capitalized);
+            }
         }
 
         _label.Text = displayItems.Count > 0 ? string.Join("  ", displayItems) : "";

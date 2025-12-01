@@ -3,7 +3,8 @@ type: strength
 entries:
   power_attack:
     name: Power Attack
-    description: Prepare your next melee attack with +3 hit and damage.
+    flavor: Channel raw strength into a devastating blow.
+    description: "Prepare: +3 accuracy, +3 damage."
     category: active
     targeting: self
     willpowerCost: 3
@@ -25,7 +26,8 @@ entries:
 
   mighty_thews:
     name: Mighty Thews
-    description: +1 melee damage.
+    flavor: Your muscles are hardened from years of brutal combat.
+    description: "+1 melee damage."
     category: passive
     targeting: self
     willpowerCost: 0
@@ -41,7 +43,8 @@ entries:
 
   cleave:
     name: Cleave
-    description: Prepare your next melee attack to hit a 3-tile arc.
+    flavor: Swing wide and let none escape your wrath.
+    description: "Prepare: Hit enemies in a 3-tile arc."
     category: active
     targeting: self
     willpowerCost: 6
@@ -63,7 +66,8 @@ entries:
 
   rampage:
     name: Rampage
-    description: On kill, prepare next melee attack with +3 damage.
+    flavor: The scent of blood drives you into a frenzy.
+    description: "On kill: Prepare next attack with +3 damage."
     category: reactive
     targeting: self
     willpowerCost: 0
@@ -84,9 +88,10 @@ entries:
             damageBonus: 3
             duration: 5
 
-  power_stance:
-    name: Power Stance
-    description: "Toggle. While active: +2 melee damage, -2 melee accuracy."
+  aggressive_stance:
+    name: Aggressive Stance
+    flavor: Abandon defense and commit fully to the attack.
+    description: "+2 melee damage, -2 melee accuracy."
     category: toggle
     targeting: self
     willpowerCost: 0

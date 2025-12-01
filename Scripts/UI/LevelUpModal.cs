@@ -15,15 +15,16 @@ namespace PitsOfDespair.UI;
 /// Modal displayed when the player levels up.
 /// Phase 1: Choose a stat to increase permanently.
 /// Phase 2: Choose a skill to learn (on skill-granting levels).
-/// Cannot be cancelled - player must make choices.
+/// Phase 3: Confirm choices before applying.
+/// ESC cancels at any point without applying bonuses.
 /// </summary>
 public partial class LevelUpModal : PanelContainer
 {
     [Signal]
-    public delegate void StatChosenEventHandler(int statIndex);
+    public delegate void CancelledEventHandler();
 
     [Signal]
-    public delegate void SkillChosenEventHandler(string skillId);
+    public delegate void ConfirmedEventHandler(int statIndex, string skillId);
 
     private RichTextLabel _contentLabel;
     private int _newLevel;
@@ -41,8 +42,12 @@ public partial class LevelUpModal : PanelContainer
     };
 
     // Phase tracking
-    private enum LevelUpPhase { StatSelection, SkillSelection }
+    private enum LevelUpPhase { StatSelection, SkillSelection, Confirmation }
     private LevelUpPhase _currentPhase = LevelUpPhase.StatSelection;
+
+    // Selection tracking (deferred until confirmation)
+    private int? _selectedStatIndex = null;
+    private string _selectedSkillId = null;
 
     // Skills available for selection (populated after stat choice)
     private List<SkillDefinition> _availableSkills = new();
@@ -73,6 +78,8 @@ public partial class LevelUpModal : PanelContainer
         _currentPhase = LevelUpPhase.StatSelection;
         _availableSkills.Clear();
         _newlyUnlockedSkills.Clear();
+        _selectedStatIndex = null;
+        _selectedSkillId = null;
 
         UpdateStatSelectionContent();
 
@@ -93,6 +100,8 @@ public partial class LevelUpModal : PanelContainer
         _skills = null;
         _dataLoader = null;
         _currentPhase = LevelUpPhase.StatSelection;
+        _selectedStatIndex = null;
+        _selectedSkillId = null;
 
         UpdateStatSelectionContent();
         _keybindingService.CurrentContext = InputContext.Modal;
@@ -317,6 +326,15 @@ public partial class LevelUpModal : PanelContainer
 
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            // ESC cancels the entire level-up flow at any point
+            if (MenuInputProcessor.IsCloseKey(keyEvent))
+            {
+                EmitSignal(SignalName.Cancelled);
+                HideModal();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
             if (_currentPhase == LevelUpPhase.StatSelection)
             {
                 HandleStatSelectionInput(keyEvent);
@@ -325,7 +343,10 @@ public partial class LevelUpModal : PanelContainer
             {
                 HandleSkillSelectionInput(keyEvent);
             }
-            // Note: ESC does NOT close this modal - player must choose
+            else if (_currentPhase == LevelUpPhase.Confirmation)
+            {
+                HandleConfirmationInput(keyEvent);
+            }
         }
     }
 
@@ -355,20 +376,24 @@ public partial class LevelUpModal : PanelContainer
                     return;
                 }
 
+                // Store selection (don't apply yet)
+                _selectedStatIndex = statIndex;
+
                 // Record which skills will be newly unlocked by this stat choice
                 _newlyUnlockedSkills = GetSkillsUnlockedByStat(statIndex);
 
-                // Check if this level grants a skill - must happen BEFORE signal emission
-                // because GameHUD checks IsInSkillSelectionPhase synchronously when handling the signal
+                // Check if this level grants a skill
                 if (SkillGrantingLevels.Contains(_newLevel) && _dataLoader != null && _skills != null && _stats != null)
                 {
                     // Transition to skill selection phase (pass statIndex to simulate stat increase)
                     TransitionToSkillSelection(statIndex);
                 }
+                else
+                {
+                    // No skill selection - go directly to confirmation
+                    TransitionToConfirmation();
+                }
 
-                // Emit signal for stat selection - GameHUD will check IsInSkillSelectionPhase
-                // and only hide modal if we're NOT in skill selection phase
-                EmitSignal(SignalName.StatChosen, statIndex);
                 GetViewport().SetInputAsHandled();
             }
         }
@@ -530,7 +555,11 @@ public partial class LevelUpModal : PanelContainer
 
             if (_skillLetterMap.TryGetValue(selectedKey, out var selectedSkill))
             {
-                EmitSignal(SignalName.SkillChosen, selectedSkill.Id);
+                // Store selection (don't apply yet)
+                _selectedSkillId = selectedSkill.Id;
+
+                // Transition to confirmation
+                TransitionToConfirmation();
                 GetViewport().SetInputAsHandled();
             }
         }
@@ -548,4 +577,114 @@ public partial class LevelUpModal : PanelContainer
     /// Returns whether we're in skill selection phase.
     /// </summary>
     public bool IsInSkillSelectionPhase => _currentPhase == LevelUpPhase.SkillSelection;
+
+    /// <summary>
+    /// Transitions to confirmation phase after all selections are made.
+    /// </summary>
+    private void TransitionToConfirmation()
+    {
+        _currentPhase = LevelUpPhase.Confirmation;
+        UpdateConfirmationContent();
+    }
+
+    /// <summary>
+    /// Updates the modal content for confirmation phase.
+    /// Shows summary of selections with confirm/cancel instructions.
+    /// </summary>
+    private void UpdateConfirmationContent()
+    {
+        var content = new System.Text.StringBuilder();
+
+        // Header
+        content.AppendLine($"[center][color={Palette.ToHex(Palette.Success)}]╔══════════════════════════════════════╗");
+        content.AppendLine($"║         CONFIRM LEVEL UP             ║");
+        content.AppendLine($"╚══════════════════════════════════════╝[/color][/center]");
+        content.AppendLine();
+        content.AppendLine($"[center]Level {_newLevel}[/center]");
+        content.AppendLine();
+
+        // Stat choice summary
+        if (_selectedStatIndex.HasValue)
+        {
+            string statName = _selectedStatIndex.Value switch
+            {
+                0 => "Strength",
+                1 => "Agility",
+                2 => "Endurance",
+                3 => "Will",
+                _ => "Unknown"
+            };
+
+            string shortName = _selectedStatIndex.Value switch
+            {
+                0 => "STR",
+                1 => "AGI",
+                2 => "END",
+                3 => "WIL",
+                _ => "???"
+            };
+
+            int currentValue = _stats?.GetBaseStat(_selectedStatIndex.Value) ?? 0;
+            int newValue = currentValue + 1;
+            string derived = GetDerivedStatPreview(_selectedStatIndex.Value);
+
+            content.Append($"  [color={Palette.ToHex(Palette.Alert)}]Stat:[/color]   ");
+            content.Append($"[color={Palette.ToHex(Palette.Default)}]{statName,-11}[/color] ");
+            content.Append($"[color={Palette.ToHex(Palette.Success)}]{shortName} {currentValue} → {newValue}[/color]");
+
+            if (!string.IsNullOrEmpty(derived))
+            {
+                content.Append($"  [color={Palette.ToHex(Palette.Cyan)}]({derived})[/color]");
+            }
+            content.AppendLine();
+        }
+
+        // Skill choice summary (if any)
+        if (!string.IsNullOrEmpty(_selectedSkillId) && _dataLoader != null)
+        {
+            var skillDef = _dataLoader.Skills.Get(_selectedSkillId);
+            if (skillDef != null)
+            {
+                content.AppendLine();
+                string category = skillDef.GetCategory() == SkillCategory.Active ? "Active" : "Passive";
+
+                content.Append($"  [color={Palette.ToHex(Palette.Alert)}]Skill:[/color]  ");
+                content.Append($"[color={Palette.ToHex(Palette.PotionWill)}]{skillDef.Name}[/color]  ");
+                content.Append($"[color={Palette.ToHex(Palette.Cyan)}]{category}[/color]");
+
+                if (skillDef.WillpowerCost > 0)
+                {
+                    content.Append($"  [color={Palette.ToHex(Palette.PotionWill)}]{skillDef.WillpowerCost} Willpower[/color]");
+                }
+                content.AppendLine();
+
+                // Skill description
+                content.AppendLine($"          [color={Palette.ToHex(Palette.Disabled)}]{skillDef.Description}[/color]");
+            }
+        }
+
+        content.AppendLine();
+        content.AppendLine();
+        content.AppendLine($"[center][color={Palette.ToHex(Palette.Success)}][Y][/color] or [color={Palette.ToHex(Palette.Success)}][Enter][/color] Confirm       [color={Palette.ToHex(Palette.Disabled)}][Esc][/color] Cancel[/center]");
+
+        _contentLabel.Text = content.ToString();
+    }
+
+    /// <summary>
+    /// Handles input during confirmation phase.
+    /// </summary>
+    private void HandleConfirmationInput(InputEventKey keyEvent)
+    {
+        // Y or Enter confirms
+        if (keyEvent.Keycode == Key.Y || keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.KpEnter)
+        {
+            if (_selectedStatIndex.HasValue)
+            {
+                EmitSignal(SignalName.Confirmed, _selectedStatIndex.Value, _selectedSkillId ?? "");
+                HideModal();
+                GetViewport().SetInputAsHandled();
+            }
+        }
+        // ESC is handled at the top level of _Input
+    }
 }

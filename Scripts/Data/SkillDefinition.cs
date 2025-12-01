@@ -23,7 +23,12 @@ public class SkillDefinition
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Description of what the skill does.
+    /// Flavor text describing the skill thematically.
+    /// </summary>
+    public string Flavor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Mechanical description of what the skill does.
     /// </summary>
     public string Description { get; set; } = string.Empty;
 

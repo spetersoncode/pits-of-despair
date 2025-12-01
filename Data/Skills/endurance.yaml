@@ -3,7 +3,8 @@ type: endurance
 entries:
   thick_skin:
     name: Thick Skin
-    description: +1 armor.
+    flavor: Scars upon scars have made you harder to hurt.
+    description: "+1 armor."
     category: passive
     targeting: self
     willpowerCost: 0
@@ -17,7 +18,8 @@ entries:
 
   recover:
     name: Recover
-    description: Heal END x 3 HP.
+    flavor: Draw upon your reserves to mend your wounds.
+    description: "Heal END x 3 HP."
     category: active
     targeting: self
     willpowerCost: 5
@@ -33,7 +35,8 @@ entries:
 
   die_hard:
     name: Die Hard
-    description: Once per floor, survive lethal damage at 1 HP.
+    flavor: Sheer stubbornness keeps you standing when others would fall.
+    description: "Once per floor: Survive lethal damage at 1 HP."
     category: reactive
     targeting: self
     willpowerCost: 0
@@ -51,7 +54,8 @@ entries:
 
   grapple:
     name: Grapple
-    description: Grab an adjacent enemy (END vs END). On success, they lose their turn and can't move for 3 turns. Moving breaks the grapple.
+    flavor: Get your hands on them and don't let go.
+    description: "END vs END: Daze 1 turn, immobilize 3 turns. Moving breaks grapple."
     category: active
     targeting: adjacent
     willpowerCost: 3
@@ -77,7 +81,8 @@ entries:
 
   shoulder_charge:
     name: Shoulder Charge
-    description: Charge an adjacent enemy, dealing 1d6+END damage and knocking them back 2 tiles. Collisions stun on failed END save.
+    flavor: Sometimes the direct approach works best.
+    description: "1d6+END damage, knockback 2. Collision: END save or stunned."
     category: active
     targeting: adjacent
     willpowerCost: 3
@@ -107,7 +112,8 @@ entries:
 
   shoulder_charge_mastery:
     name: Shoulder Charge Mastery
-    description: Shoulder Charge knocks enemies back +2 tiles.
+    flavor: Hit them so hard they forget where they started.
+    description: "Shoulder Charge knockback +2 tiles."
     category: improvement
     targeting: self
     willpowerCost: 0

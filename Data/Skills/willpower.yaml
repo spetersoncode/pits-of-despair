@@ -3,7 +3,8 @@ type: willpower
 entries:
   lightning_bolt:
     name: Lightning Bolt
-    description: A bolt of lightning strikes all enemies in a line.
+    flavor: Call down the fury of the storm.
+    description: "2d6 lightning damage to all enemies in a line."
     category: active
     targeting: line
     range: 8
@@ -26,7 +27,8 @@ entries:
 
   chain_lightning:
     name: Chain Lightning
-    description: Lightning arcs between enemies, bouncing to nearby foes.
+    flavor: Let the lightning find its own path.
+    description: "2d4 lightning, bounces to 3 nearby enemies (75% per bounce)."
     category: active
     targeting: enemy
     range: 6
@@ -48,7 +50,8 @@ entries:
 
   magic_missile:
     name: Magic Missile
-    description: 1d6+WIL damage, never misses, 6 range.
+    flavor: A mote of arcane force that never misses its mark.
+    description: "1d6+WIL damage, auto-hit, range 6."
     category: active
     targeting: enemy
     range: 6
@@ -71,7 +74,8 @@ entries:
 
   attunement:
     name: Attunement
-    description: Sense charge levels on wands and staves.
+    flavor: The flow of magic reveals its secrets to you.
+    description: "Sense charge levels on wands and staves."
     category: passive
     targeting: self
     willpowerCost: 0
@@ -81,7 +85,8 @@ entries:
 
   minor_heal:
     name: Minor Heal
-    description: Heal 2d6 HP to self or adjacent ally.
+    flavor: Channel restorative energy through your touch.
+    description: "Heal 2d6 HP to self or adjacent ally."
     category: active
     targeting: ally
     range: 1
@@ -98,7 +103,8 @@ entries:
 
   acid_blast:
     name: Acid Blast
-    description: 2d6 acid damage, +WIL to hit, ignores 3 armor. Applies acid DoT on hit.
+    flavor: Conjure a glob of caustic acid that eats through armor.
+    description: "2d6 acid (ignores 3 armor), applies acid DoT 2d3 turns."
     category: active
     targeting: enemy
     range: 6
@@ -129,7 +135,8 @@ entries:
 
   mana_shield:
     name: Mana Shield
-    description: When damaged, spend 2 WP to reduce damage by 3.
+    flavor: Weave your willpower into a protective barrier.
+    description: "On damage: Spend 2 WP to reduce damage by 3."
     category: reactive
     targeting: self
     willpowerCost: 0

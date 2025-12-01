@@ -156,8 +156,8 @@ public partial class GameHUD : Control
             _skillsModal.Connect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
         }
 
-        _levelUpModal.Connect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
-        _levelUpModal.Connect(LevelUpModal.SignalName.SkillChosen, Callable.From<string>(OnSkillChosen));
+        _levelUpModal.Connect(LevelUpModal.SignalName.Confirmed, Callable.From<int, string>(OnLevelUpConfirmed));
+        _levelUpModal.Connect(LevelUpModal.SignalName.Cancelled, Callable.From(OnLevelUpCancelled));
 
         // Connect to LevelUpSystem for showing level-up modal
         _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.ShowLevelUpModal, Callable.From<int>(OnShowLevelUpModal));
@@ -895,45 +895,43 @@ public partial class GameHUD : Control
     }
 
     /// <summary>
-    /// Called when the player chooses a stat to increase in the level-up modal.
-    /// Delegates to LevelUpSystem for applying the reward.
+    /// Called when the player confirms their level-up choices.
+    /// Applies stat increase and skill learning.
     /// </summary>
-    private void OnStatChosen(int statIndex)
+    private void OnLevelUpConfirmed(int statIndex, string skillId)
     {
-        // Delegate stat application to LevelUpSystem
+        // Apply stat increase
         _levelUpSystem.ApplyStatChoice(statIndex);
 
-        // Only hide modal if not transitioning to skill selection
-        // Modal handles transition internally and will emit SkillChosen when done
-        if (!_levelUpModal.IsInSkillSelectionPhase)
-        {
-            _levelUpModal.HideModal();
-            _currentMenuState = MenuState.None;
-
-            // Notify LevelUpSystem that this level-up is complete (no skill selection phase)
-            _levelUpSystem.CompleteLevelUp();
-        }
-    }
-
-    /// <summary>
-    /// Called when the player chooses a skill to learn in the level-up modal.
-    /// </summary>
-    private void OnSkillChosen(string skillId)
-    {
-        // Learn the skill
-        if (_playerSkills != null && _playerSkills.LearnSkill(skillId))
+        // Learn skill if one was chosen
+        if (!string.IsNullOrEmpty(skillId) && _playerSkills != null && _playerSkills.LearnSkill(skillId))
         {
             var skillDef = _dataLoader?.Skills.Get(skillId);
             string skillName = skillDef?.Name ?? skillId;
             _messageLog.AddMessage($"Learned {skillName}!", Palette.ToHex(Palette.PotionWill));
         }
 
-        // Hide modal and reset menu state
-        _levelUpModal.HideModal();
+        // Reset menu state (modal already hidden by itself)
         _currentMenuState = MenuState.None;
 
         // Notify LevelUpSystem that this level-up is complete
         _levelUpSystem.CompleteLevelUp();
+    }
+
+    /// <summary>
+    /// Called when the player cancels the level-up flow with ESC.
+    /// Does NOT apply any bonuses - keeps level up pending for retry.
+    /// </summary>
+    private void OnLevelUpCancelled()
+    {
+        // Reset menu state (modal already hidden by itself)
+        _currentMenuState = MenuState.None;
+
+        // Log cancellation message
+        _messageLog.AddMessage("Level up cancelled.", Palette.ToHex(Palette.Disabled));
+
+        // Do NOT call CompleteLevelUp() - keeps the level up pending
+        // Player can press L again to retry
     }
 
     /// <summary>
@@ -1017,8 +1015,8 @@ public partial class GameHUD : Control
 
         if (_levelUpModal != null)
         {
-            _levelUpModal.Disconnect(LevelUpModal.SignalName.StatChosen, Callable.From<int>(OnStatChosen));
-            _levelUpModal.Disconnect(LevelUpModal.SignalName.SkillChosen, Callable.From<string>(OnSkillChosen));
+            _levelUpModal.Disconnect(LevelUpModal.SignalName.Confirmed, Callable.From<int, string>(OnLevelUpConfirmed));
+            _levelUpModal.Disconnect(LevelUpModal.SignalName.Cancelled, Callable.From(OnLevelUpCancelled));
         }
 
         if (_debugConsoleModal != null)

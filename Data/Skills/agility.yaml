@@ -3,7 +3,8 @@ type: agility
 entries:
   quick_step:
     name: Quick Step
-    description: Move 2 tiles in the selected direction.
+    flavor: Swift footwork carries you past danger.
+    description: "Move 2 tiles in the selected direction."
     category: active
     targeting: line
     range: 2
@@ -18,10 +19,11 @@ entries:
           - type: move_tiles
             amount: 2
 
-  fleet_of_foot:
-    name: Fleet of Foot
-    description: +1 evasion.
-    category: passive
+  defensive_stance:
+    name: Defensive Stance
+    flavor: Focus on reading your opponent's moves.
+    description: "+1 evasion, -1 melee accuracy."
+    category: toggle
     targeting: self
     willpowerCost: 0
     prerequisites:
@@ -29,14 +31,20 @@ entries:
     tags:
       - defense
       - evasion
-    effects:
-      - type: stat_bonus
-        stat: evasion
-        amount: 1
+      - stance
+      - toggle
+    toggle:
+      modifiers:
+        - stat: evasion
+          amount: 1
+        - stat: melee_accuracy
+          amount: -1
+      wpDrainPerTurn: 0
 
   pinning_shot:
     name: Pinning Shot
-    description: Prepare your next ranged attack to daze the target on hit, causing them to lose their next turn.
+    flavor: A well-placed arrow leaves your target reeling.
+    description: "Prepare: Ranged attack dazes target for 1 turn."
     category: active
     targeting: self
     willpowerCost: 3
@@ -58,7 +66,8 @@ entries:
 
   double_shot:
     name: Double Shot
-    description: Fire two ranged attacks.
+    flavor: Loose two arrows before your enemy can react.
+    description: "Fire two ranged attacks at one target."
     category: active
     targeting: enemy
     range: 8
@@ -75,7 +84,8 @@ entries:
 
   riposte:
     name: Riposte
-    description: When an enemy misses you, counter-attack.
+    flavor: Turn your enemy's failure into your opportunity.
+    description: "On enemy miss: Counter-attack."
     category: reactive
     targeting: self
     willpowerCost: 0

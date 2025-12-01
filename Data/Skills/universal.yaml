@@ -3,7 +3,8 @@ type: universal
 entries:
   second_wind:
     name: Second Wind
-    description: Heal 20% max HP. Once per floor.
+    flavor: Dig deep and find the strength to carry on.
+    description: "Heal 20% max HP. Once per floor."
     category: active
     targeting: self
     willpowerCost: 5
@@ -19,7 +20,8 @@ entries:
 
   keen_hearing:
     name: Keen Hearing
-    description: Detect creatures around corners within vision range.
+    flavor: Every footstep, every breath - nothing escapes your notice.
+    description: "Detect creatures around corners within vision range."
     category: passive
     willpowerCost: 0
     tags:
