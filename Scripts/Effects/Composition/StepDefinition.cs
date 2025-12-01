@@ -173,25 +173,25 @@ public class StepDefinition
 
     #endregion
 
-    #region Prime Attack Properties
+    #region Prepared Attack Properties
 
     /// <summary>
-    /// Name of the primed attack (e.g., "Power Attack").
+    /// Name of the prepared attack (e.g., "Power Attack").
     /// </summary>
-    public string? PrimeName { get; set; }
+    public string? PrepareName { get; set; }
 
     /// <summary>
-    /// Bonus to attack roll when prime triggers.
+    /// Bonus to attack roll when prepared attack triggers.
     /// </summary>
     public int HitBonus { get; set; } = 0;
 
     /// <summary>
-    /// Bonus to damage when prime triggers.
+    /// Bonus to damage when prepared attack triggers.
     /// </summary>
     public int DamageBonus { get; set; } = 0;
 
     /// <summary>
-    /// Targeting mode for primed attacks: "single" (default) or "arc" (cleave-style 3-tile arc).
+    /// Targeting mode for prepared attacks: "single" (default) or "arc" (cleave-style 3-tile arc).
     /// </summary>
     public string? TargetingMode { get; set; }
 

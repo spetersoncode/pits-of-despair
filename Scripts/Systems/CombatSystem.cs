@@ -149,10 +149,10 @@ public partial class CombatSystem : Node
         // Determine if this is a melee or ranged attack
         bool isMelee = attackData.Type == AttackType.Melee;
 
-        // Check for primed attack bonuses (melee only)
-        var primedAttack = isMelee ? GetPrimedAttack(attacker) : null;
-        int primeHitBonus = primedAttack?.GetHitBonus() ?? 0;
-        int primeDamageBonus = primedAttack?.GetDamageBonus() ?? 0;
+        // Check for prepared attack bonuses (melee only)
+        var preparedAttack = isMelee ? GetPreparedAttack(attacker) : null;
+        int prepareHitBonus = preparedAttack?.GetHitBonus() ?? 0;
+        int prepareDamageBonus = preparedAttack?.GetDamageBonus() ?? 0;
 
         // Get weapon brand bonuses
         var weaponInstance = GetEquippedWeaponInstance(attacker, isMelee);
@@ -166,13 +166,13 @@ public partial class CombatSystem : Node
         if (targetStats == null)
         {
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus + brandDamageBonus;
+            int damageBonus = attackerStats.GetDamageBonus(isMelee) + prepareDamageBonus + brandDamageBonus;
             finalDamage = Mathf.Max(0, baseDamage + damageBonus);
         }
         else
         {
             // PHASE 1: Opposed Attack Roll (2d6 + modifiers)
-            int attackModifier = attackerStats.GetAttackModifier(isMelee) + primeHitBonus + brandHitBonus;
+            int attackModifier = attackerStats.GetAttackModifier(isMelee) + prepareHitBonus + brandHitBonus;
             int defenseModifier = targetStats.GetDefenseModifier();
 
             int attackRoll = DiceRoller.Roll(2, 6, attackModifier);
@@ -191,7 +191,7 @@ public partial class CombatSystem : Node
 
             // PHASE 2: Damage Calculation (weapon damage + STR [if melee] + prime + brand bonus - armor)
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
-            int damageBonus = attackerStats.GetDamageBonus(isMelee) + primeDamageBonus + brandDamageBonus;
+            int damageBonus = attackerStats.GetDamageBonus(isMelee) + prepareDamageBonus + brandDamageBonus;
             int armor = targetStats.TotalArmor;
             finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
         }
@@ -249,12 +249,12 @@ public partial class CombatSystem : Node
     }
 
     /// <summary>
-    /// Gets the active primed attack condition on an entity, if any.
+    /// Gets the active prepared attack condition on an entity, if any.
     /// </summary>
-    private static PrimedAttackCondition? GetPrimedAttack(BaseEntity entity)
+    private static PreparedAttackCondition? GetPreparedAttack(BaseEntity entity)
     {
         return entity.GetActiveConditions()
-            .FirstOrDefault(c => c.TypeId == "primed_attack") as PrimedAttackCondition;
+            .FirstOrDefault(c => c.TypeId == "prepared_attack") as PreparedAttackCondition;
     }
 
     /// <summary>

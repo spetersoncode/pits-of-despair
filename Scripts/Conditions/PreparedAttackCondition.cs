@@ -9,9 +9,9 @@ using PitsOfDespair.Systems.Entity;
 namespace PitsOfDespair.Conditions;
 
 /// <summary>
-/// Targeting modes for primed attacks.
+/// Targeting modes for prepared attacks.
 /// </summary>
-public enum PrimeTargetingMode
+public enum PrepareTargetingMode
 {
     /// <summary>Single target (default) - only affects the hit target.</summary>
     Single,
@@ -20,11 +20,11 @@ public enum PrimeTargetingMode
 }
 
 /// <summary>
-/// Condition that primes the entity's next melee attack with bonus effects.
+/// Condition that prepares the entity's next melee attack with bonus effects.
 /// Consumed on successful melee hit, persists through misses, expires after duration.
-/// Only one prime can be active at a time (same TypeId replaces).
+/// Only one prepared attack can be active at a time (same TypeId replaces).
 /// </summary>
-public class PrimedAttackCondition : Condition
+public class PreparedAttackCondition : Condition
 {
     // Clockwise order for arc calculation (same as CleaveTargetingHandler)
     private static readonly (int dx, int dy)[] ClockwiseOffsets = new[]
@@ -39,11 +39,11 @@ public class PrimedAttackCondition : Condition
         (-1, -1)   // NW (index 7)
     };
 
-    private readonly string _primeName;
+    private readonly string _prepareName;
 
-    public override string Name => _primeName;
-    public override string TypeId => "primed_attack";
-    public override string? ExamineDescription => $"primed: {_primeName}";
+    public override string Name => _prepareName;
+    public override string TypeId => "prepared_attack";
+    public override string? ExamineDescription => $"preparing {_prepareName}";
 
     /// <summary>
     /// Bonus to attack roll.
@@ -66,22 +66,22 @@ public class PrimedAttackCondition : Condition
     public string? BonusDamageDice { get; set; }
 
     /// <summary>
-    /// Targeting mode for the prime (Single or Arc).
+    /// Targeting mode for the prepared attack (Single or Arc).
     /// </summary>
-    public PrimeTargetingMode TargetingMode { get; set; } = PrimeTargetingMode.Single;
+    public PrepareTargetingMode TargetingMode { get; set; } = PrepareTargetingMode.Single;
 
     private BaseEntity? _owner;
     private CombatSystem? _combatSystem;
     private EntityManager? _entityManager;
 
     /// <summary>
-    /// Creates a new primed attack condition.
+    /// Creates a new prepared attack condition.
     /// </summary>
-    /// <param name="primeName">Display name for the prime (e.g., "Power Attack").</param>
+    /// <param name="prepareName">Display name for the prepared attack (e.g., "Power Attack").</param>
     /// <param name="duration">Duration in turns before expiring if unused.</param>
-    public PrimedAttackCondition(string primeName, string duration = "5")
+    public PreparedAttackCondition(string prepareName, string duration = "5")
     {
-        _primeName = primeName;
+        _prepareName = prepareName;
         Duration = duration;
         DurationMode = ConditionDuration.Temporary;
     }
@@ -95,7 +95,7 @@ public class PrimedAttackCondition : Condition
 
         if (_combatSystem == null)
         {
-            GD.PrintErr($"PrimedAttackCondition: Could not find CombatSystem for {target.DisplayName}");
+            GD.PrintErr($"PreparedAttackCondition: Could not find CombatSystem for {target.DisplayName}");
             return ConditionMessage.Empty;
         }
 
@@ -106,7 +106,7 @@ public class PrimedAttackCondition : Condition
         );
 
         return new ConditionMessage(
-            $"Primed: {_primeName}!",
+            $"Preparing {_prepareName}!",
             Palette.ToHex(Palette.StatusBuff)
         );
     }
@@ -140,12 +140,12 @@ public class PrimedAttackCondition : Condition
         ApplyBonusDamage(target);
 
         // Handle arc targeting - attack adjacent enemies
-        if (TargetingMode == PrimeTargetingMode.Arc)
+        if (TargetingMode == PrepareTargetingMode.Arc)
         {
             ExecuteArcAttacks(target);
         }
 
-        // Consume the prime - remove self from owner
+        // Consume the prepared attack - remove self from owner
         _owner.RemoveConditionByType(TypeId);
     }
 
@@ -196,7 +196,7 @@ public class PrimedAttackCondition : Condition
                 continue;
 
             // Request attack on this target (will go through CombatSystem)
-            // Note: This won't re-trigger the prime since we're removing it after this method
+            // Note: This won't re-trigger the prepared attack since we're removing it after this method
             attackComponent.RequestAttack(entity, 0);
         }
     }
@@ -236,12 +236,12 @@ public class PrimedAttackCondition : Condition
     }
 
     /// <summary>
-    /// Returns the hit bonus for this prime (used by CombatSystem).
+    /// Returns the hit bonus for this prepared attack (used by CombatSystem).
     /// </summary>
     public int GetHitBonus() => HitBonus;
 
     /// <summary>
-    /// Returns the damage bonus for this prime (used by CombatSystem).
+    /// Returns the damage bonus for this prepared attack (used by CombatSystem).
     /// </summary>
     public int GetDamageBonus() => DamageBonus;
 

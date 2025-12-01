@@ -3,7 +3,7 @@ type: strength
 entries:
   power_attack:
     name: Power Attack
-    description: Prime your next melee attack with +3 hit and damage.
+    description: Prepare your next melee attack with +3 hit and damage.
     category: active
     targeting: self
     willpowerCost: 3
@@ -14,11 +14,11 @@ entries:
     tags:
       - melee
       - damage
-      - prime
+      - prepare
     effects:
       - steps:
-          - type: apply_prime
-            primeName: Power Attack
+          - type: apply_prepare
+            prepareName: Power Attack
             hitBonus: 3
             damageBonus: 3
             duration: 5
@@ -41,7 +41,7 @@ entries:
 
   cleave:
     name: Cleave
-    description: Prime your next melee attack to hit a 3-tile arc.
+    description: Prepare your next melee attack to hit a 3-tile arc.
     category: active
     targeting: self
     willpowerCost: 6
@@ -51,11 +51,11 @@ entries:
     tags:
       - melee
       - damage
-      - prime
+      - prepare
     effects:
       - steps:
-          - type: apply_prime
-            primeName: Cleave
+          - type: apply_prepare
+            prepareName: Cleave
             hitBonus: 0
             damageBonus: 0
             targetingMode: arc
@@ -63,7 +63,7 @@ entries:
 
   rampage:
     name: Rampage
-    description: On kill, prime next melee attack with +3 damage.
+    description: On kill, prepare next melee attack with +3 damage.
     category: reactive
     targeting: self
     willpowerCost: 0
@@ -75,11 +75,11 @@ entries:
     tags:
       - melee
       - damage
-      - prime
+      - prepare
     effects:
       - steps:
-          - type: apply_prime
-            primeName: Rampage
+          - type: apply_prepare
+            prepareName: Rampage
             hitBonus: 0
             damageBonus: 3
             duration: 5
