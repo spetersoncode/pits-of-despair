@@ -6,6 +6,7 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Generation.Metadata;
 using PitsOfDespair.Generation.Spawning.Data;
+using PitsOfDespair.ItemProperties;
 using PitsOfDespair.Systems;
 using PitsOfDespair.Systems.Entity;
 
@@ -95,29 +96,61 @@ public class LootDistributor
             sortedRegions = regions.ToList();
 
         // Distribute items across regions
+        int ringsPlaced = 0;
         for (int i = 0; i < targetItems; i++)
         {
             // Cycle through regions, with bias towards dangerous regions
             int regionIndex = i % sortedRegions.Count;
             var region = sortedRegions[regionIndex];
 
+            var position = FindLootPosition(region, occupiedPositions);
+            if (position == null)
+                continue;
+
+            BaseEntity? itemEntity;
+
+            // Check if this should be a ring instead of a regular item
+            if (_rng.Randf() < RingSpawnChance)
+            {
+                // Generate a ring with a random property
+                itemEntity = _entityFactory.CreateRandomRing(currentFloor, position.Value, _rng);
+                if (itemEntity != null)
+                {
+                    ringsPlaced++;
+                    _entityManager.AddEntity(itemEntity);
+                    occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
+                    itemsPlaced++;
+                    // Rings use floor 3 as average intro for stats
+                    totalIntroFloor += 3;
+                    continue;
+                }
+                // Fall through to regular item if ring creation failed
+            }
+
             // Select item using decay-based weighting
             var (itemId, itemData) = SelectItemWithDecay(eligibleItems, currentFloor);
             if (itemData == null)
                 continue;
 
-            var position = FindLootPosition(region, occupiedPositions);
-            if (position == null)
-                continue;
-
-            var itemEntity = _entityFactory.CreateItem(itemId, position.Value);
+            itemEntity = _entityFactory.CreateItem(itemId, position.Value);
             if (itemEntity == null)
                 continue;
+
+            // Apply random properties based on item type and floor
+            if (itemEntity.ItemData != null)
+            {
+                ApplySpawnProperties(itemEntity.ItemData, currentFloor);
+            }
 
             _entityManager.AddEntity(itemEntity);
             occupiedPositions.Add(new Vector2I(position.Value.X, position.Value.Y));
             itemsPlaced++;
             totalIntroFloor += itemData.IntroFloor;
+        }
+
+        if (ringsPlaced > 0)
+        {
+            GD.Print($"[LootDistributor] Generated {ringsPlaced} rings with properties");
         }
 
         GD.Print($"[LootDistributor] Placed {itemsPlaced}/{targetItems} items (density {config.ItemDensity:P0} of {totalTiles} tiles, floor {currentFloor}, maxIntro {maxIntroFloor})");
@@ -216,4 +249,67 @@ public class LootDistributor
         var tile = availableTiles[_rng.RandiRange(0, availableTiles.Count - 1)];
         return new GridPosition(tile.X, tile.Y);
     }
+
+    #region Property Distribution
+
+    // Property spawn chances by item type
+    private const float WeaponPropertyChance = 0.08f;  // 8% for weapons
+    private const float ArmorPropertyChance = 0.08f;   // 8% for armor
+    private const float AmmoPropertyChance = 0.03f;    // 3% for ammo
+    private const float WandPropertyChance = 0.10f;    // 10% for wands
+    private const float StaffPropertyChance = 0.15f;   // 15% for staves
+    private const float RingPropertyChance = 1.0f;     // 100% for rings (always get property)
+
+    // Chance to spawn a ring instead of a regular item (per item spawn)
+    private const float RingSpawnChance = 0.08f;       // 8% of items could be rings
+
+    /// <summary>
+    /// Applies random properties to an item based on its type and floor.
+    /// </summary>
+    private void ApplySpawnProperties(ItemInstance item, int currentFloor)
+    {
+        if (item == null) return;
+
+        var itemType = ItemPropertyFactory.ParseItemType(item.Template.Type);
+        if (itemType == ItemType.None) return;
+
+        float propertyChance = GetPropertyChance(itemType);
+        if (propertyChance <= 0f) return;
+
+        // Roll for property
+        if (_rng.Randf() > propertyChance) return;
+
+        // Get eligible properties for this item type and floor
+        var eligible = ItemPropertyFactory.GetEligibleProperties(currentFloor, itemType);
+        if (eligible.Count == 0) return;
+
+        // Select and apply property
+        var selected = ItemPropertyFactory.SelectPropertyWithDecay(eligible, currentFloor, _rng);
+        if (selected == null) return;
+
+        var property = ItemPropertyFactory.CreateFromMetadata(selected, _rng);
+        if (property != null)
+        {
+            item.AddProperty(property);
+        }
+    }
+
+    /// <summary>
+    /// Gets the property spawn chance for an item type.
+    /// </summary>
+    private static float GetPropertyChance(ItemType itemType)
+    {
+        return itemType switch
+        {
+            ItemType.Weapon => WeaponPropertyChance,
+            ItemType.Armor => ArmorPropertyChance,
+            ItemType.Ammo => AmmoPropertyChance,
+            ItemType.Wand => WandPropertyChance,
+            ItemType.Staff => StaffPropertyChance,
+            ItemType.Ring => RingPropertyChance,
+            _ => 0f
+        };
+    }
+
+    #endregion
 }

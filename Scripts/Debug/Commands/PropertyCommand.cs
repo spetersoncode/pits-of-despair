@@ -10,34 +10,42 @@ namespace PitsOfDespair.Debug.Commands;
 
 /// <summary>
 /// Debug command to apply properties to equipped items.
-/// Usage: property [type] [amount?] [slot?]
+/// Usage: property [slot] [propname] [amount?]
 /// Examples:
-///   property flaming       - Apply flaming property to melee weapon
-///   property damage 3      - Apply +3 damage to melee weapon
-///   property vampiric 25 ranged - Apply vampiric to ranged weapon
-///   property thorns 2 armor - Apply thorns to equipped armor
-///   property resistance_fire 50 armor - Apply 50% fire resistance to armor
+///   property melee flaming           - Apply flaming property to melee weapon
+///   property melee weapon_enhancement 2 - Apply +2 weapon enhancement
+///   property armor armor_enhancement 2  - Apply +2 armor enhancement
+///   property ring1 evasion           - Apply evasion to ring in slot 1
+///   property ammo flaming            - Apply flaming to equipped ammo
 /// </summary>
 public class PropertyCommand : DebugCommand
 {
-    private static readonly string[] WeaponPropertyTypes = { "damage", "accuracy", "flaming", "freezing", "electrified", "venomous", "vampiric" };
-    private static readonly string[] ArmorPropertyTypes = { "thorns", "resistance_fire", "resistance_cold", "resistance_lightning", "resistance_poison", "resistance_necrotic", "resistance_acid", "resistance_slashing", "resistance_piercing", "resistance_bludgeoning", "armor", "evasion", "regen", "max_health" };
-    private static readonly string[] AllPropertyTypes = WeaponPropertyTypes.Concat(ArmorPropertyTypes).ToArray();
-    private static readonly string[] ValidSlots = { "melee", "ranged", "armor", "ring1", "ring2" };
+    private static readonly string[] ValidSlots = { "melee", "ranged", "armor", "ring1", "ring2", "ammo" };
 
     public override string Name => "property";
     public override string Description => "Apply a property to equipped item";
-    public override string Usage => "property [type] [amount?] [slot?]";
+    public override string Usage => "property [slot] [propname] [amount?]";
 
     public override IReadOnlyList<string> GetArgumentSuggestions(int argIndex, string currentValue)
     {
         return argIndex switch
         {
-            0 => FilterSuggestions(AllPropertyTypes, currentValue),
-            1 => new[] { "1", "2", "3", "5", "25", "50" }, // Amount suggestions
-            2 => FilterSuggestions(ValidSlots, currentValue),
+            0 => FilterSuggestions(ValidSlots, currentValue),
+            1 => GetPropertySuggestionsForSlot(currentValue),
+            2 => new[] { "1", "2", "3", "5", "25", "50" }, // Amount suggestions
             _ => null
         };
+    }
+
+    private IReadOnlyList<string> GetPropertySuggestionsForSlot(string currentValue)
+    {
+        // Get all property types and filter
+        var allTypes = new List<string>();
+        foreach (var itemType in new[] { ItemType.Weapon, ItemType.Armor, ItemType.Ring, ItemType.Ammo })
+        {
+            allTypes.AddRange(ItemPropertyFactory.GetValidPropertyTypes(itemType));
+        }
+        return FilterSuggestions(allTypes.Distinct().ToArray(), currentValue);
     }
 
     private static IReadOnlyList<string> FilterSuggestions(string[] options, string currentValue)
@@ -50,23 +58,43 @@ public class PropertyCommand : DebugCommand
 
     public override DebugCommandResult Execute(DebugContext context, string[] args)
     {
-        if (args.Length == 0)
+        if (args.Length < 2)
         {
             return DebugCommandResult.CreateFailure(
-                $"Usage: {Usage}\nWeapon: {string.Join(", ", WeaponPropertyTypes)}\nArmor: {string.Join(", ", ArmorPropertyTypes)}",
+                $"Usage: {Usage}\nSlots: {string.Join(", ", ValidSlots)}",
                 Palette.ToHex(Palette.Danger)
             );
         }
 
-        string propertyType = args[0].ToLower();
-        int amount = args.Length > 1 && int.TryParse(args[1], out int a) ? a : 1;
-        string slotType = args.Length > 2 ? args[2].ToLower() : "melee";
+        string slotType = args[0].ToLower();
+        string propertyType = args[1].ToLower();
+        int amount = args.Length > 2 && int.TryParse(args[2], out int a) ? a : 0;
+
+        // Validate slot
+        if (!ValidSlots.Contains(slotType))
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Invalid slot: {slotType}\nValid slots: {string.Join(", ", ValidSlots)}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
 
         // Validate property type
         if (!ItemPropertyFactory.IsValidType(propertyType))
         {
             return DebugCommandResult.CreateFailure(
                 $"Unknown property type: {propertyType}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        // Check if property is valid for slot's item type
+        var itemType = ItemPropertyFactory.ParseSlotType(slotType);
+        var validProperties = ItemPropertyFactory.GetValidPropertyTypes(itemType);
+        if (!validProperties.Contains(propertyType))
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Property '{propertyType}' cannot be applied to {slotType}\nValid for {slotType}: {string.Join(", ", validProperties)}",
                 Palette.ToHex(Palette.Danger)
             );
         }
@@ -91,6 +119,7 @@ public class PropertyCommand : DebugCommand
             "armor" => EquipmentSlot.Armor,
             "ring1" => EquipmentSlot.Ring1,
             "ring2" => EquipmentSlot.Ring2,
+            "ammo" => EquipmentSlot.Ammo,
             _ => EquipmentSlot.MeleeWeapon
         };
 
@@ -111,6 +140,13 @@ public class PropertyCommand : DebugCommand
                 "Could not find equipped item in inventory!",
                 Palette.ToHex(Palette.Danger)
             );
+        }
+
+        // Use default amount from metadata if not specified
+        if (amount == 0)
+        {
+            var metadata = ItemPropertyFactory.GetMetadata(propertyType);
+            amount = metadata?.MinAmount ?? 1;
         }
 
         // Create and apply the property

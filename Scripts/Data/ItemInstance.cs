@@ -327,6 +327,21 @@ public class ItemInstance
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Gets a color override from properties, if any property specifies one.
+    /// Returns the first property's color override found.
+    /// </summary>
+    public Godot.Color? GetColorOverride()
+    {
+        foreach (var property in _properties)
+        {
+            var color = property.GetColorOverride();
+            if (color.HasValue)
+                return color;
+        }
+        return null;
+    }
+
     #endregion
 
     #region Private Helpers

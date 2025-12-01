@@ -1,3 +1,4 @@
+using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
@@ -11,8 +12,9 @@ public class ThornsProperty : ItemProperty, IOnDamagedProperty
 {
     private readonly int _damage;
 
-    public override string Name => $"Thorns +{_damage}";
+    public override string Name => $"thorns +{_damage}";
     public override string TypeId => "thorns";
+    public override ItemType ValidItemTypes => ItemType.Ring;
 
     /// <summary>
     /// Creates a new thorns property.
@@ -38,8 +40,6 @@ public class ThornsProperty : ItemProperty, IOnDamagedProperty
         };
     }
 
-    public override string? GetSuffix()
-    {
-        return "of Thorns";
-    }
+    public override string? GetSuffix() => "of thorns";
+    public override Color? GetColorOverride() => Palette.Blood;
 }

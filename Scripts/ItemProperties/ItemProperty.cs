@@ -1,9 +1,31 @@
+using System;
+using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
 
 namespace PitsOfDespair.ItemProperties;
+
+/// <summary>
+/// Item types that properties can apply to. Uses flags for many-to-many mapping.
+/// </summary>
+[Flags]
+public enum ItemType
+{
+    None = 0,
+    Weapon = 1 << 0,
+    Armor = 1 << 1,
+    Ammo = 1 << 2,
+    Ring = 1 << 3,
+    Wand = 1 << 4,
+    Staff = 1 << 5,
+
+    // Convenience groups
+    ChargedItems = Wand | Staff,
+    Equipment = Weapon | Armor | Ring,
+    Defensive = Armor | Ring
+}
 
 /// <summary>
 /// Represents a property message with associated color.
@@ -113,6 +135,54 @@ public interface IStatBonusProperty
 }
 
 /// <summary>
+/// Interface for properties that provide passive abilities while equipped.
+/// </summary>
+public interface IPassiveAbilityProperty
+{
+    string AbilityId { get; }
+}
+
+/// <summary>
+/// Interface for properties that provide immunity to specific conditions.
+/// </summary>
+public interface IConditionImmunityProperty
+{
+    bool PreventsCondition(string conditionTypeId);
+}
+
+/// <summary>
+/// Interface for properties that pierce armor.
+/// </summary>
+public interface IArmorPiercingProperty
+{
+    int GetArmorPiercing();
+}
+
+/// <summary>
+/// Interface for properties that bypass damage type resistances.
+/// </summary>
+public interface IBypassResistanceProperty
+{
+    bool BypassesResistance(DamageType damageType);
+}
+
+/// <summary>
+/// Interface for properties that modify recharge rate on charged items.
+/// </summary>
+public interface IRechargeModifierProperty
+{
+    float GetRechargeMultiplier();
+}
+
+/// <summary>
+/// Interface for properties that modify effect power/damage.
+/// </summary>
+public interface IEffectPowerProperty
+{
+    float GetDamageMultiplier();
+}
+
+/// <summary>
 /// Base class for all item properties.
 /// Properties are enhancements attached to items that modify their behavior or stats.
 /// Unlike conditions (which affect entities), properties describe the item itself.
@@ -129,6 +199,17 @@ public abstract class ItemProperty
     /// Properties with the same TypeId will not stack on the same item.
     /// </summary>
     public abstract string TypeId { get; }
+
+    /// <summary>
+    /// Item types this property can be applied to.
+    /// Uses ItemType flags for many-to-many mapping.
+    /// </summary>
+    public abstract ItemType ValidItemTypes { get; }
+
+    /// <summary>
+    /// Checks if this property can be applied to the given item type.
+    /// </summary>
+    public bool CanApplyTo(ItemType itemType) => (ValidItemTypes & itemType) != 0;
 
     /// <summary>
     /// Optional source identifier for tracking property origin.
@@ -201,10 +282,17 @@ public abstract class ItemProperty
     public virtual string? GetPrefix() => null;
 
     /// <summary>
-    /// Gets the suffix to append to item name (e.g., "of Slaying").
+    /// Gets the suffix to append to item name (e.g., "of slaying").
     /// Return null for no suffix.
     /// </summary>
     public virtual string? GetSuffix() => null;
+
+    /// <summary>
+    /// Gets a color override for items with this property.
+    /// Used primarily for rings to set their display color.
+    /// Return null to use default item color.
+    /// </summary>
+    public virtual Color? GetColorOverride() => null;
 
     /// <summary>
     /// Refreshes the remaining turns of this property.

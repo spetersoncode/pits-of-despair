@@ -13,8 +13,9 @@ public class VampiricProperty : ItemProperty, IOnHitProperty
 {
     private readonly int _healPercent;
 
-    public override string Name => "Vampiric";
+    public override string Name => "vampiric";
     public override string TypeId => "vampiric";
+    public override ItemType ValidItemTypes => ItemType.Weapon;
 
     /// <param name="healPercent">Percentage of damage to heal (default 25%).</param>
     public VampiricProperty(int healPercent = 25, string duration = "permanent", string? sourceId = null)
@@ -24,7 +25,7 @@ public class VampiricProperty : ItemProperty, IOnHitProperty
         SourceId = sourceId;
     }
 
-    public override string? GetPrefix() => "Vampiric";
+    public override string? GetPrefix() => "vampiric";
 
     public OnHitResult OnHit(BaseEntity attacker, BaseEntity target, int damage)
     {

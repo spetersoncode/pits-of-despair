@@ -18,6 +18,7 @@ public class ElementalProperty : ItemProperty, IOnHitProperty
 
     public override string Name => GetNameForType(_damageType);
     public override string TypeId => GetTypeIdForType(_damageType);
+    public override ItemType ValidItemTypes => ItemType.Weapon | ItemType.Ammo;
 
     public ElementalProperty(DamageType damageType, int diceCount = 1, string duration = "permanent", string? sourceId = null)
     {
@@ -92,11 +93,11 @@ public class ElementalProperty : ItemProperty, IOnHitProperty
 
     private static string GetNameForType(DamageType type) => type switch
     {
-        DamageType.Fire => "Flaming",
-        DamageType.Cold => "Freezing",
-        DamageType.Lightning => "Electrified",
-        DamageType.Poison => "Venomous",
-        _ => "Elemental"
+        DamageType.Fire => "flaming",
+        DamageType.Cold => "freezing",
+        DamageType.Lightning => "electrified",
+        DamageType.Poison => "venomous",
+        _ => "elemental"
     };
 
     private static string GetTypeIdForType(DamageType type) => type switch

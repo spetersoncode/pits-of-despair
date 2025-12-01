@@ -1,3 +1,4 @@
+using Godot;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 
@@ -13,10 +14,11 @@ public class ResistanceProperty : ItemProperty, IResistanceProperty
     private readonly float _multiplier;
 
     public override string Name => _multiplier < 1f
-        ? $"{_damageType} Resistance"
-        : $"{_damageType} Vulnerability";
+        ? $"{_damageType.ToString().ToLower()} resistance"
+        : $"{_damageType.ToString().ToLower()} vulnerability";
 
     public override string TypeId => $"resistance_{_damageType}";
+    public override ItemType ValidItemTypes => ItemType.Ring;
 
     /// <summary>
     /// Creates a new resistance property.
@@ -42,7 +44,22 @@ public class ResistanceProperty : ItemProperty, IResistanceProperty
     public override string? GetSuffix()
     {
         return _multiplier < 1f
-            ? $"of {_damageType} Resistance"
-            : $"of {_damageType} Vulnerability";
+            ? $"of {_damageType.ToString().ToLower()} resistance"
+            : $"of {_damageType.ToString().ToLower()} vulnerability";
+    }
+
+    public override Color? GetColorOverride()
+    {
+        // Colors based on damage type
+        return _damageType switch
+        {
+            DamageType.Fire => Palette.Fire,
+            DamageType.Cold => Palette.Ice,
+            DamageType.Lightning => Palette.Lightning,
+            DamageType.Poison => Palette.Poison,
+            DamageType.Acid => Palette.Acid,
+            DamageType.Necrotic => Palette.Shadow,
+            _ => null
+        };
     }
 }

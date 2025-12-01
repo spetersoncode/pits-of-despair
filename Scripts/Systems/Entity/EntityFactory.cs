@@ -6,6 +6,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.ItemProperties;
 
 namespace PitsOfDespair.Systems.Entity;
 
@@ -89,6 +90,138 @@ public partial class EntityFactory : Node
 	{
 		return BuildItemEntity(itemInstance, position);
 	}
+
+	#region Ring Generation
+
+	/// <summary>
+	/// Static base ring template used for programmatic ring generation.
+	/// Rings are generated with properties rather than loaded from YAML.
+	/// </summary>
+	private static readonly ItemData BaseRingTemplate = new ItemData
+	{
+		Name = "ring",
+		Description = "A simple metal band.",
+		Type = "ring",
+		Glyph = "=",
+		Color = "#FFD700", // Gold
+		IntroFloor = 1,
+		IsEquippable = true,
+		EquipSlot = "Ring",
+		NoAutoSpawn = true, // Don't spawn base rings without properties
+		DataFileId = "ring_base"
+	};
+
+	/// <summary>
+	/// Creates a ring entity with a specific property applied.
+	/// The ring's name will be derived from the property's suffix (e.g., "ring of true sight").
+	/// </summary>
+	/// <param name="property">The property to apply to the ring.</param>
+	/// <param name="position">The grid position to place the ring.</param>
+	/// <param name="colorOverride">Optional color override (property's GetColorOverride takes precedence).</param>
+	/// <returns>The created ring entity with the property applied.</returns>
+	public BaseEntity CreateRingWithProperty(ItemProperty property, GridPosition position, string? colorOverride = null)
+	{
+		// Create item instance from base template
+		var itemInstance = new ItemInstance(BaseRingTemplate);
+
+		// Apply the property
+		itemInstance.AddProperty(property);
+
+		// Determine color: property override > metadata override > default gold
+		var ringColor = property.GetColorOverride() ?? ResolveRingColor(colorOverride);
+
+		// Build the entity with appropriate display settings
+		var entity = new BaseEntity
+		{
+			GridPosition = position,
+			DisplayName = itemInstance.GetDisplayName(),
+			Description = GetRingDescription(property),
+			Glyph = BaseRingTemplate.Glyph ?? "=",
+			GlyphColor = ringColor,
+			IsWalkable = true,
+			ItemData = itemInstance,
+			Name = itemInstance.GetDisplayName()
+		};
+
+		return entity;
+	}
+
+	/// <summary>
+	/// Creates a ring entity by selecting an appropriate property for the floor.
+	/// Uses decay-weighted random selection from eligible ring properties.
+	/// </summary>
+	/// <param name="currentFloor">The current dungeon floor (for property eligibility).</param>
+	/// <param name="position">The grid position to place the ring.</param>
+	/// <param name="rng">Random number generator for property selection.</param>
+	/// <returns>The created ring entity with a property, or null if no properties available.</returns>
+	public BaseEntity? CreateRandomRing(int currentFloor, GridPosition position, RandomNumberGenerator rng)
+	{
+		// Get eligible ring properties for this floor
+		var eligible = ItemPropertyFactory.GetEligibleProperties(currentFloor, ItemType.Ring);
+		if (eligible.Count == 0)
+		{
+			GD.PushWarning($"EntityFactory: No ring properties available for floor {currentFloor}");
+			return null;
+		}
+
+		// Select property using decay-weighted random selection
+		var metadata = ItemPropertyFactory.SelectPropertyWithDecay(eligible, currentFloor, rng);
+		if (metadata == null)
+			return null;
+
+		// Create the property instance
+		var property = ItemPropertyFactory.CreateFromMetadata(metadata, rng);
+		if (property == null)
+			return null;
+
+		return CreateRingWithProperty(property, position, metadata.ColorOverride);
+	}
+
+	/// <summary>
+	/// Gets a thematic description for a ring based on its property.
+	/// </summary>
+	private static string GetRingDescription(ItemProperty property)
+	{
+		return property.TypeId switch
+		{
+			"see_invisible" => "A pale ring that seems to shimmer with hidden light. When worn, hidden things become visible to your eyes.",
+			"free_action" => "A ring of burnished silver that feels warm to the touch. It grants freedom from bonds and paralysis.",
+			"evasion" or "stat_Evasion" => "A pale green ring that shimmers with captured light. When worn, your reflexes sharpen and blows seem to miss you.",
+			"regen" or "stat_Regen" => "This deep red ring pulses with a warm inner light. Wounds close faster while you wear it.",
+			"armor" or "stat_Armor" => "A sturdy ring of layered metal. It provides a subtle protective ward to the wearer.",
+			"max_health" or "stat_MaxHealth" => "A ring that pulses with vibrant energy. You feel heartier while wearing it.",
+			"thorns" => "A ring covered in tiny metal barbs. Attackers will feel its bite.",
+			_ when property.TypeId.StartsWith("resistance_") => "A ring infused with elemental protection. It shields the wearer from harmful energies.",
+			_ => "A metal band with mysterious properties."
+		};
+	}
+
+	/// <summary>
+	/// Resolves a ring color from a color override string.
+	/// </summary>
+	private Color ResolveRingColor(string? colorOverride)
+	{
+		if (string.IsNullOrEmpty(colorOverride))
+			return Palette.Gold;
+
+		// Handle Palette references
+		if (colorOverride.StartsWith("Palette."))
+		{
+			var colorName = colorOverride.Substring(8);
+			var field = typeof(Palette).GetField(colorName,
+				System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+			if (field != null && field.FieldType == typeof(Color))
+				return (Color)field.GetValue(null)!;
+		}
+
+		// Handle hex colors
+		if (colorOverride.StartsWith("#"))
+			return new Color(colorOverride);
+
+		return Palette.Gold;
+	}
+
+	#endregion
 
 	/// <summary>
 	/// Builds a BaseEntity from an existing ItemInstance.

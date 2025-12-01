@@ -5,41 +5,62 @@ using Godot;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
+using PitsOfDespair.ItemProperties;
 
 namespace PitsOfDespair.Debug.Commands;
 
 /// <summary>
 /// Debug command to spawn items directly into player inventory.
+/// Usage: give [itemId] OR give ring [property]
 /// </summary>
 public class GiveCommand : DebugCommand
 {
+    private static readonly string[] RingProperties = {
+        "evasion", "regen", "armor", "max_health", "thorns",
+        "resistance_fire", "resistance_cold", "resistance_poison",
+        "see_invisible", "free_action"
+    };
+
     public override string Name => "give";
     public override string Description => "Spawn an item in player inventory";
-    public override string Usage => "give [itemId]";
+    public override string Usage => "give [itemId] OR give ring [property]";
 
     public override IReadOnlyList<string> GetArgumentSuggestions(int argIndex, string currentValue)
     {
-        // Only provide suggestions for the first argument (itemId)
-        if (argIndex != 0)
+        // First argument: item IDs + "ring"
+        if (argIndex == 0)
         {
-            return null;
+            var dataLoader = ((SceneTree)Engine.GetMainLoop()).Root.GetNode<DataLoader>("/root/DataLoader");
+            if (dataLoader == null)
+            {
+                return new[] { "ring" };
+            }
+
+            var allItems = dataLoader.Items.GetAllIds().OrderBy(id => id).ToList();
+            allItems.Insert(0, "ring"); // Add ring option at the beginning
+
+            if (string.IsNullOrEmpty(currentValue))
+            {
+                return allItems;
+            }
+
+            var lowerValue = currentValue.ToLower();
+            return allItems.Where(id => id.Contains(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
-        var dataLoader = ((SceneTree)Engine.GetMainLoop()).Root.GetNode<DataLoader>("/root/DataLoader");
-        if (dataLoader == null)
+        // Second argument: if first arg is "ring", suggest ring properties
+        if (argIndex == 1)
         {
-            return null;
+            if (string.IsNullOrEmpty(currentValue))
+            {
+                return RingProperties;
+            }
+
+            var lowerValue = currentValue.ToLower();
+            return RingProperties.Where(p => p.Contains(lowerValue, StringComparison.OrdinalIgnoreCase)).ToArray();
         }
 
-        var allItems = dataLoader.Items.GetAllIds().OrderBy(id => id).ToList();
-
-        if (string.IsNullOrEmpty(currentValue))
-        {
-            return allItems;
-        }
-
-        var lowerValue = currentValue.ToLower();
-        return allItems.Where(id => id.Contains(lowerValue, StringComparison.OrdinalIgnoreCase)).ToList();
+        return null;
     }
 
     public override DebugCommandResult Execute(DebugContext context, string[] args)
@@ -47,12 +68,11 @@ public class GiveCommand : DebugCommand
         if (args.Length == 0)
         {
             return DebugCommandResult.CreateFailure(
-                "Usage: give [itemId]",
+                $"Usage: {Usage}",
                 Palette.ToHex(Palette.Danger)
             );
         }
 
-        string itemId = args[0];
         var player = context.ActionContext.Player;
         var inventory = player.GetNodeOrNull<InventoryComponent>("InventoryComponent");
 
@@ -64,12 +84,19 @@ public class GiveCommand : DebugCommand
             );
         }
 
-        // Get item data to check type for quantity
+        string itemId = args[0].ToLower();
+
+        // Handle ring generation
+        if (itemId == "ring")
+        {
+            return ExecuteRingCommand(context, args, inventory);
+        }
+
+        // Regular item handling
         var itemData = context.DataLoader?.Items.Get(itemId);
         GD.Print($"GiveCommand: Got itemData for '{itemId}': {(itemData != null ? "found" : "null")}");
         int quantity = itemData?.Type?.ToLower() == "ammo" ? 50 : 1;
 
-        // Create item at player's position with appropriate quantity
         var item = context.ActionContext.EntityFactory.CreateItem(itemId, player.GridPosition, quantity);
         GD.Print($"GiveCommand: CreateItem returned: {(item != null ? "entity" : "null")}");
 
@@ -82,13 +109,11 @@ public class GiveCommand : DebugCommand
         }
 
         GD.Print($"GiveCommand: item.ItemData is {(item.ItemData != null ? "present" : "null")}");
-        // Add to inventory (use out parameter for message)
         var key = inventory.AddItem(item.ItemData, out string message, excludeEquipped: true);
         GD.Print($"GiveCommand: AddItem returned key={key}, message={message}");
 
         if (key != null)
         {
-            // Success - remove item from world
             context.ActionContext.EntityManager.RemoveEntity(item);
             item.QueueFree();
 
@@ -100,9 +125,84 @@ public class GiveCommand : DebugCommand
         }
         else
         {
-            // Inventory full, clean up the item
             context.ActionContext.EntityManager.RemoveEntity(item);
             item.QueueFree();
+
+            return DebugCommandResult.CreateFailure(
+                message,
+                Palette.ToHex(Palette.Caution)
+            );
+        }
+    }
+
+    private DebugCommandResult ExecuteRingCommand(DebugContext context, string[] args, InventoryComponent inventory)
+    {
+        if (args.Length < 2)
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Usage: give ring [property]\nProperties: {string.Join(", ", RingProperties)}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        string propertyType = args[1].ToLower();
+
+        // Validate property type
+        if (!RingProperties.Contains(propertyType))
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Unknown ring property: {propertyType}\nValid properties: {string.Join(", ", RingProperties)}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        // Get metadata for color override
+        var metadata = ItemPropertyFactory.GetMetadata(propertyType);
+
+        // Create the property
+        int amount = metadata?.MinAmount ?? 1;
+        var property = ItemPropertyFactory.Create(propertyType, amount, "permanent", "debug");
+
+        if (property == null)
+        {
+            return DebugCommandResult.CreateFailure(
+                $"Failed to create property: {propertyType}",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        // Create ring entity with property
+        var player = context.ActionContext.Player;
+        var ringEntity = context.ActionContext.EntityFactory.CreateRingWithProperty(
+            property,
+            player.GridPosition,
+            metadata?.ColorOverride
+        );
+
+        if (ringEntity?.ItemData == null)
+        {
+            return DebugCommandResult.CreateFailure(
+                "Failed to create ring entity!",
+                Palette.ToHex(Palette.Danger)
+            );
+        }
+
+        // Add to inventory
+        var key = inventory.AddItem(ringEntity.ItemData, out string message, excludeEquipped: true);
+
+        if (key != null)
+        {
+            ringEntity.QueueFree();
+
+            string ringName = ringEntity.ItemData.GetDisplayName();
+            return DebugCommandResult.CreateSuccess(
+                $"Spawned [b]{ringName}[/b] in inventory.",
+                Palette.ToHex(Palette.Success)
+            );
+        }
+        else
+        {
+            ringEntity.QueueFree();
 
             return DebugCommandResult.CreateFailure(
                 message,

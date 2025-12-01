@@ -154,9 +154,13 @@ public partial class CombatSystem : Node
         int prepareHitBonus = preparedAttack?.GetHitBonus() ?? 0;
         int prepareDamageBonus = preparedAttack?.GetDamageBonus() ?? 0;
 
-        // Get weapon property bonuses
+        // Get weapon and ammo instances
         var weaponInstance = GetEquippedWeaponInstance(attacker, isMelee);
+        var ammoInstance = isMelee ? null : GetEquippedAmmoInstance(attacker);
         var (propertyHitBonus, propertyDamageBonus) = GetWeaponPropertyBonuses(attacker, isMelee);
+
+        // Get armor piercing from ammo (ranged attacks only)
+        int armorPiercing = isMelee ? 0 : GetAmmoArmorPiercing(attacker);
 
         int baseDamage;
         int finalDamage;
@@ -192,8 +196,8 @@ public partial class CombatSystem : Node
             // PHASE 2: Damage Calculation (weapon damage + STR [if melee] + prime + property bonus - armor)
             baseDamage = DiceRoller.Roll(attackData.DiceNotation);
             int damageBonus = attackerStats.GetDamageBonus(isMelee) + prepareDamageBonus + propertyDamageBonus;
-            int armor = targetStats.TotalArmor;
-            finalDamage = Mathf.Max(0, baseDamage + damageBonus - armor);
+            int effectiveArmor = Mathf.Max(0, targetStats.TotalArmor - armorPiercing);
+            finalDamage = Mathf.Max(0, baseDamage + damageBonus - effectiveArmor);
         }
 
         // PHASE 3: Calculate Actual Damage, Emit Feedback, Then Apply Damage
@@ -210,7 +214,7 @@ public partial class CombatSystem : Node
             targetHealth.TakeDamage(finalDamage, attackData.DamageType, attacker);
 
             // PHASE 4: Process on-hit property effects (elemental damage, vampiric, etc.)
-            ProcessOnHitProperties(attacker, target, weaponInstance, actualDamage);
+            ProcessOnHitProperties(attacker, target, weaponInstance, ammoInstance, actualDamage);
         }
         else
         {
@@ -280,25 +284,92 @@ public partial class CombatSystem : Node
     }
 
     /// <summary>
-    /// Gets hit and damage bonuses from weapon properties.
+    /// Gets the equipped ammo ItemInstance for an entity.
+    /// </summary>
+    private static ItemInstance? GetEquippedAmmoInstance(BaseEntity entity)
+    {
+        var equipComponent = entity.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent == null) return null;
+
+        var inventoryKey = equipComponent.GetEquippedKey(EquipmentSlot.Ammo);
+        if (inventoryKey == null) return null;
+
+        var inventoryComponent = entity.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        if (inventoryComponent == null) return null;
+
+        var inventorySlot = inventoryComponent.GetSlot(inventoryKey.Value);
+        return inventorySlot?.Item;
+    }
+
+    /// <summary>
+    /// Gets hit and damage bonuses from weapon and ammo properties.
     /// </summary>
     private static (int hitBonus, int damageBonus) GetWeaponPropertyBonuses(BaseEntity attacker, bool isMelee)
     {
         var weapon = GetEquippedWeaponInstance(attacker, isMelee);
-        if (weapon == null) return (0, 0);
+        int hitBonus = weapon?.GetTotalHitBonus() ?? 0;
+        int damageBonus = weapon?.GetTotalDamageBonus() ?? 0;
 
-        return (weapon.GetTotalHitBonus(), weapon.GetTotalDamageBonus());
+        // For ranged attacks, also include ammo bonuses
+        if (!isMelee)
+        {
+            var ammo = GetEquippedAmmoInstance(attacker);
+            if (ammo != null)
+            {
+                hitBonus += ammo.GetTotalHitBonus();
+                damageBonus += ammo.GetTotalDamageBonus();
+            }
+        }
+
+        return (hitBonus, damageBonus);
+    }
+
+    /// <summary>
+    /// Gets armor piercing from ammo properties.
+    /// </summary>
+    private static int GetAmmoArmorPiercing(BaseEntity attacker)
+    {
+        var ammo = GetEquippedAmmoInstance(attacker);
+        if (ammo == null) return 0;
+
+        int armorPiercing = 0;
+        foreach (var property in ammo.GetProperties())
+        {
+            if (property is IArmorPiercingProperty piercingProperty)
+            {
+                armorPiercing += piercingProperty.GetArmorPiercing();
+            }
+        }
+        return armorPiercing;
     }
 
     /// <summary>
     /// Processes on-hit property effects after a successful attack.
     /// Emits signals for property damage/healing so messages can be combined with attack message.
     /// </summary>
-    private void ProcessOnHitProperties(BaseEntity attacker, BaseEntity target, ItemInstance? weapon, int damage)
+    private void ProcessOnHitProperties(BaseEntity attacker, BaseEntity target, ItemInstance? weapon, ItemInstance? ammo, int damage)
     {
-        if (weapon == null || damage <= 0) return;
+        if (damage <= 0) return;
 
-        foreach (var property in weapon.GetOnHitProperties())
+        // Process weapon on-hit properties
+        if (weapon != null)
+        {
+            ProcessItemOnHitProperties(attacker, target, weapon, damage);
+        }
+
+        // Process ammo on-hit properties (for ranged attacks)
+        if (ammo != null)
+        {
+            ProcessItemOnHitProperties(attacker, target, ammo, damage);
+        }
+    }
+
+    /// <summary>
+    /// Processes on-hit properties for a single item.
+    /// </summary>
+    private void ProcessItemOnHitProperties(BaseEntity attacker, BaseEntity target, ItemInstance item, int damage)
+    {
+        foreach (var property in item.GetOnHitProperties())
         {
             var result = property.OnHit(attacker, target, damage);
 
