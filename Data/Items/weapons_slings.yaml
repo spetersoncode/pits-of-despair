@@ -1,0 +1,20 @@
+type: weapon
+category: Slings
+defaults:
+  glyph: "("
+  equipSlot: RangedWeapon
+  attack:
+    damageType: Bludgeoning
+    delay: 0.8
+
+entries:
+  sling:
+    name: sling
+    introFloor: 1
+    color: Palette.SoftLeather
+    description: A simple leather sling. Fast but weak, it flings stones with surprising accuracy.
+    attack:
+      type: Ranged
+      dice: "1d4"
+      range: 5
+      ammoType: stone

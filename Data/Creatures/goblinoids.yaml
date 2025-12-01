@@ -31,7 +31,7 @@ entries:
     equipment:
       - weapon_short_bow
       - id: ammo_arrow
-        quantity: 20
+        quantity: 10
 
   goblin_ruffian:
     name: goblin ruffian

@@ -1,0 +1,20 @@
+type: weapon
+category: Crossbows
+defaults:
+  glyph: "{"
+  equipSlot: RangedWeapon
+  attack:
+    damageType: Piercing
+    delay: 1.2
+
+entries:
+  crossbow:
+    name: crossbow
+    introFloor: 4
+    color: Palette.Oak
+    description: A mechanical bow with a lever mechanism. Slower to reload than a bow, but hits harder.
+    attack:
+      type: Ranged
+      dice: "1d8"
+      range: 6
+      ammoType: bolt

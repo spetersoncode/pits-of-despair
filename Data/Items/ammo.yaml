@@ -8,3 +8,17 @@ entries:
     introFloor: 1
     color: Palette.Mahogany
     description: Straight wooden shafts tipped with iron heads and fletched with gray feathers. Simple but deadly when loosed from a bow.
+
+  stone:
+    name: stones
+    introFloor: 1
+    color: Palette.Granite
+    glyph: "●"
+    description: Smooth river stones, sized for slinging. Common and plentiful.
+
+  bolt:
+    name: bolts
+    introFloor: 3
+    color: Palette.Steel
+    glyph: "↓"
+    description: Short, heavy quarrels with iron tips. Made for crossbows.

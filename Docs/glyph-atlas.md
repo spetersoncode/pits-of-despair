@@ -32,16 +32,20 @@ Complete catalog of glyphs used in Pits of Despair. For design philosophy and ex
 
 | Glyph | Type | Default Color | Notes |
 |-------|------|---------------|-------|
-| `-` | Short blade | Default | Daggers, knives (fast, 0.7 delay) |
+| `-` | Short blade | Default | Daggers, knives (fast, 0.8 delay) |
 | `/` | Long blade | Default | Swords (average, 1.0 delay) |
-| `\` | Axe | Default | Axes (slow, 1.3 delay) |
+| `\` | Axe | Default | Axes (slow, 1.2 delay) |
 | `†` | Polearm | Default | Spears, halberds (reach, 1.2 delay) |
 | `¶` | Mace | Default | Clubs, maces, hammers (average, 1.0 delay) |
-| `%` | Flail | Default | Flails, morning stars (slow, 1.3 delay) |
-| `}` | Ranged weapon | Default | Bows, crossbows |
+| `%` | Flail | Default | Flails, morning stars (slow, 1.2 delay) |
+| `(` | Sling | Default | Primitive ranged (fast, 0.8 delay) |
+| `}` | Bow | Default | Standard ranged (average, 1.0 delay) |
+| `{` | Crossbow | Default | Mechanical ranged (slow, 1.2 delay) |
 | `[` | Armor | Default | All body armor |
 | `=` | Ring | Default | Uses "X of Y" naming |
-| `↑` | Ammunition | Default | Auto-pickup enabled |
+| `↑` | Arrow | Default | Ammunition for bows |
+| `●` | Stone | Default | Ammunition for slings |
+| `↓` | Bolt | Default | Ammunition for crossbows |
 
 ### Magic Items
 

@@ -72,9 +72,9 @@ entries:
     ai:
       - type: ShootAndScoot
     equipment:
-      - weapon_hunting_bow
-      - id: ammo_arrow
-        quantity: 20
+      - weapon_crossbow
+      - id: ammo_bolt
+        quantity: 10
 
   lizardfolk_shaman:
     name: lizardfolk shaman

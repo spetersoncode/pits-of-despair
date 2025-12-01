@@ -133,6 +133,20 @@ public static class VisualEffectDefinitions
         size: 0.9f
     );
 
+    /// <summary>
+    /// Sling stone - small, fast projectile.
+    /// Uses arrow shader with granite coloring.
+    /// </summary>
+    public static readonly VisualEffectDefinition Stone = new(
+        id: "stone",
+        shaderPath: ArrowShader,
+        headColor: Palette.Granite,
+        trailColor: WithAlpha(Palette.Granite, 0.2f),
+        speed: 28.0f,
+        trailLength: 1,
+        size: 0.7f
+    );
+
     #endregion
 
     #region Projectile Effects - Fire
@@ -308,6 +322,7 @@ public static class VisualEffectDefinitions
             // Projectiles - Physical
             "arrow" => Arrow,
             "bolt" => Bolt,
+            "stone" => Stone,
             // Projectiles - Fire
             "fireball" => FireballProjectile,
             "fire_bolt" => FireBolt,
@@ -342,6 +357,7 @@ public static class VisualEffectDefinitions
         // Projectiles
         yield return Arrow;
         yield return Bolt;
+        yield return Stone;
         yield return FireballProjectile;
         yield return FireBolt;
         yield return IceShard;

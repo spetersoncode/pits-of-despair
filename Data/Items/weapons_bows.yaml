@@ -12,18 +12,7 @@ entries:
     name: short bow
     introFloor: 2
     color: Palette.Yew
-    description: A simple hunting bow, worn but functional. It lacks the draw weight for serious damage, but keeps threats at a distance.
-    attack:
-      type: Ranged
-      dice: "1d4"
-      range: 8
-      ammoType: arrow
-
-  hunting_bow:
-    name: hunting bow
-    introFloor: 4
-    color: Palette.Yew
-    description: A well-crafted bow with good draw weight and balance. Built for bringing down game, it serves equally well against dungeon denizens.
+    description: A simple bow of flexible yew wood. Reliable and accurate, it keeps threats at a distance.
     attack:
       type: Ranged
       dice: "1d6"
