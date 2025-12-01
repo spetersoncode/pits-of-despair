@@ -7,11 +7,11 @@ entries:
   skeleton:
     name: skeleton
     description: Animated bones held together by dark magic. Empty sockets regard you with hollow purpose, and its claws reach for your flesh.
-    threat: 1
+    threat: 2
     strength: 0
-    agility: 0
-    endurance: -1
-    health: 8
+    agility: 1
+    endurance: 0
+    health: 10
     attacks:
       - name: claw
         type: Melee
@@ -41,8 +41,6 @@ entries:
         damageType: Bludgeoning
     immunities:
       - Poison
-    resistances:
-      - Piercing
 
   skeleton_warrior:
     name: skeleton warrior

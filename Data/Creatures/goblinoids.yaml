@@ -75,7 +75,7 @@ entries:
     wil: -1
     health: 5
     equipment:
-      - weapon_rusty_knife
+      - weapon_dagger
 
   goblin_slasher:
     name: goblin slasher
@@ -93,7 +93,7 @@ entries:
     name: goblin adept
     description: A goblin with glowing eyes who mutters arcane syllables. Dark magic crackles at its fingertips.
     color: Palette.Wizard
-    threat: 3
+    threat: 6
     strength: -1
     agility: 0
     endurance: 0

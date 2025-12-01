@@ -16,6 +16,6 @@ entries:
     agility: 0
     endurance: 1
     wil: 1
-    health: 14
+    health: 12
     equipment:
       - weapon_spear

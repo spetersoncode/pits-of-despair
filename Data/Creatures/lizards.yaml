@@ -1,0 +1,110 @@
+type: lizards
+defaults:
+  glyph: l
+  color: Palette.Minion
+
+entries:
+  cave_lizard:
+    name: cave lizard
+    description: A pale reptile with unblinking eyes, adapted to the eternal darkness below. It prowls silently through the tunnels, hunting for warmth and movement.
+    threat: 1
+    strength: 0
+    agility: 1
+    endurance: 0
+    wil: -1
+    health: 5
+    ai:
+      - type: Patrol
+        mode: FreeRoaming
+        scope: Extended
+        minDistance: 5
+        maxDistance: 15
+    attacks:
+      - name: bite
+        type: Melee
+        dice: "1d3"
+        damageType: Piercing
+
+  giant_lizard:
+    name: giant lizard
+    description: A hulking reptile the size of a large dog. Its thick scales deflect all but the sharpest blows, and its jaws can crush bone.
+    threat: 3
+    color: Palette.Brute
+    strength: 2
+    agility: 0
+    endurance: 1
+    wil: 0
+    health: 14
+    ai:
+      - type: Wandering
+    attacks:
+      - name: crushing bite
+        type: Melee
+        dice: "1d6"
+        damageType: Piercing
+
+  lizardfolk:
+    name: lizardfolk
+    description: A cold-blooded humanoid with scales and a tail. It wields crude weapons with reptilian patience, waiting for the perfect moment to strike.
+    color: Palette.Fur
+    threat: 4
+    strength: 1
+    agility: 1
+    endurance: 1
+    wil: 0
+    health: 14
+    attacks:
+      - name: spear
+        type: Melee
+        dice: "1d6"
+        damageType: Piercing
+
+  lizardfolk_hunter:
+    name: lizardfolk hunter
+    description: A lithe lizardfolk carrying a hunting bow and quiver of bone-tipped arrows. It stalks prey through the tunnels with predatory patience.
+    color: Palette.Ranged
+    threat: 4
+    strength: 0
+    agility: 3
+    endurance: 0
+    wil: 1
+    health: 14
+    ai:
+      - type: ShootAndScoot
+    equipment:
+      - weapon_hunting_bow
+      - id: ammo_arrow
+        quantity: 20
+
+  lizardfolk_shaman:
+    name: lizardfolk shaman
+    description: An elder lizardfolk adorned with bone fetishes and dried herbs. It hisses incantations in a forgotten tongue, calling upon primal cold-blooded spirits.
+    color: Palette.Caster
+    threat: 6
+    strength: 0
+    agility: 1
+    endurance: 1
+    wil: 3
+    health: 16
+    attacks:
+      - name: spirit claw
+        type: Melee
+        dice: "1d8"
+        damageType: Slashing
+
+  komodo_dragon:
+    name: komodo dragon
+    description: A massive predatory lizard with serrated teeth and a venomous bite. It moves with deceptive speed for its bulk, and its prey rarely escapes infection.
+    glyph: L
+    color: Palette.Brute
+    threat: 6
+    strength: 3
+    agility: 1
+    endurance: 2
+    wil: 0
+    health: 18
+    attacks:
+      - name: venomous bite
+        type: Melee
+        dice: "2d4"
+        damageType: Piercing

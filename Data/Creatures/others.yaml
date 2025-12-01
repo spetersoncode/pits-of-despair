@@ -3,28 +3,6 @@ defaults:
   color: Palette.Minion
 
 entries:
-  cave_lizard:
-    name: cave lizard
-    description: A pale reptile with unblinking eyes, adapted to the eternal darkness below. It prowls silently through the tunnels, hunting for warmth and movement.
-    glyph: l
-    threat: 1
-    strength: 0
-    agility: 1
-    endurance: 0
-    wil: -1
-    health: 5
-    ai:
-      - type: Patrol
-        mode: FreeRoaming
-        scope: Extended
-        minDistance: 5
-        maxDistance: 15
-    attacks:
-      - name: bite
-        type: Melee
-        dice: "1d3"
-        damageType: Piercing
-
   wild_boar:
     name: wild boar
     description: A bristly pig with curved tusks and a foul temper. It lowers its head and charges without hesitation, trampling anything in its path.
@@ -33,9 +11,9 @@ entries:
     threat: 2
     strength: 1
     agility: -1
-    endurance: 1
+    endurance: 2
     wil: 1
-    health: 6
+    health: 10
     attacks:
       - name: headbutt
         type: Melee
