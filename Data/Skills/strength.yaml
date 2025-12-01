@@ -4,7 +4,7 @@ entries:
   power_attack:
     name: Power Attack
     flavor: Channel raw strength into a devastating blow.
-    description: "Prepare: On next melee attack, +3 accuracy and +3 damage. Only one prepare can be active at a time."
+    description: "Prepare: On next melee attack, +3 accuracy and +3 damage."
     category: active
     targeting: self
     willpowerCost: 3
@@ -44,7 +44,7 @@ entries:
   cleave:
     name: Cleave
     flavor: Swing wide and let none escape your wrath.
-    description: "Prepare: On next melee attack, attack enemies in a 3-tile arc. Only one prepare can be active at a time."
+    description: "Prepare: On next melee attack, attack enemies in a 3-tile arc."
     category: active
     targeting: self
     willpowerCost: 6
@@ -91,7 +91,7 @@ entries:
   aggressive_stance:
     name: Aggressive Stance
     flavor: Abandon defense and commit fully to the attack.
-    description: "Stance: +2 melee damage, -2 melee accuracy. Only one stance can be active at a time."
+    description: "Stance: +2 melee damage, -2 melee accuracy."
     category: toggle
     targeting: self
     willpowerCost: 0

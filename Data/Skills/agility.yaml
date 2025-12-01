@@ -22,7 +22,7 @@ entries:
   defensive_stance:
     name: Defensive Stance
     flavor: Focus on reading your opponent's moves.
-    description: "Stance: +1 evasion, -1 melee accuracy. Only one stance can be active at a time."
+    description: "Stance: +1 evasion, -1 melee accuracy."
     category: toggle
     targeting: self
     willpowerCost: 0
@@ -44,7 +44,7 @@ entries:
   pinning_shot:
     name: Pinning Shot
     flavor: A well-placed arrow leaves your target reeling.
-    description: "Prepare: On next ranged attack, daze target for 1 turn. Only one prepare can be active at a time."
+    description: "Prepare: On next ranged attack, daze target for 1 turn."
     category: active
     targeting: self
     willpowerCost: 3

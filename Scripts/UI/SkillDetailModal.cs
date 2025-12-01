@@ -138,8 +138,39 @@ public partial class SkillDetailModal : CenterContainer
         }
 
         sb.Append(BuildEffectsSection(skill));
+        sb.Append(BuildSpecialNotesSection(skill));
         sb.Append(BuildPrerequisitesSection(skill));
         sb.Append(BuildCloseHint());
+
+        return sb.ToString();
+    }
+
+    private static string BuildSpecialNotesSection(SkillDefinition skill)
+    {
+        var notes = new List<string>();
+
+        bool isPrepare = skill.Tags?.Contains("prepare") == true;
+        bool isStance = skill.Tags?.Contains("stance") == true;
+
+        if (isPrepare)
+        {
+            notes.Add("Prepare affects your next attack. Only one prepare can be active at a time. Prepare wears off after five turns.");
+        }
+
+        if (isStance)
+        {
+            notes.Add("Only one stance can be active at a time.");
+        }
+
+        if (notes.Count == 0)
+            return "";
+
+        var sb = new StringBuilder();
+        sb.Append($"\n\n[color={Palette.ToHex(Palette.Disabled)}]NOTE[/color]");
+        foreach (var note in notes)
+        {
+            sb.Append($"\n[color={Palette.ToHex(Palette.Caution)}]{note}[/color]");
+        }
 
         return sb.ToString();
     }
