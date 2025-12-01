@@ -18,3 +18,14 @@ entries:
       dice: "1d4"
       range: 8
       ammoType: arrow
+
+  hunting_bow:
+    name: hunting bow
+    introFloor: 4
+    color: Palette.Yew
+    description: A well-crafted bow with good draw weight and balance. Built for bringing down game, it serves equally well against dungeon denizens.
+    attack:
+      type: Ranged
+      dice: "1d6"
+      range: 7
+      ammoType: arrow
