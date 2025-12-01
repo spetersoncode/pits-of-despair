@@ -26,6 +26,9 @@ public partial class LevelUpModal : PanelContainer
     [Signal]
     public delegate void ConfirmedEventHandler(int statIndex, string skillId);
 
+    [Signal]
+    public delegate void SkillPreviewRequestedEventHandler(string skillId);
+
     private RichTextLabel _contentLabel;
     private int _newLevel;
     private readonly KeybindingService _keybindingService = KeybindingService.Instance;
@@ -53,6 +56,9 @@ public partial class LevelUpModal : PanelContainer
     private List<SkillDefinition> _availableSkills = new();
     private List<SkillDefinition> _newlyUnlockedSkills = new();
     private Dictionary<char, SkillDefinition> _skillLetterMap = new();
+
+    // Selection navigation state for skill selection
+    private int _selectedSkillIndex = 0;
 
     public override void _Ready()
     {
@@ -415,9 +421,13 @@ public partial class LevelUpModal : PanelContainer
 
         if (_availableSkills.Count == 0)
         {
-            // No skills available - don't transition
+            // No skills available - skip to confirmation
+            TransitionToConfirmation();
             return;
         }
+
+        // Reset selection index
+        _selectedSkillIndex = 0;
 
         _currentPhase = LevelUpPhase.SkillSelection;
         UpdateSkillSelectionContent();
@@ -466,6 +476,7 @@ public partial class LevelUpModal : PanelContainer
 
     /// <summary>
     /// Updates the modal content for skill selection phase.
+    /// Shows multi-line format with flavor text, grouped by category.
     /// </summary>
     private void UpdateSkillSelectionContent()
     {
@@ -487,67 +498,193 @@ public partial class LevelUpModal : PanelContainer
         else
         {
             char maxLetter = (char)('a' + System.Math.Min(_availableSkills.Count, 26) - 1);
-            content.AppendLine($"[center][color={Palette.ToHex(Palette.Alert)}]Choose a skill (a-{maxLetter}):[/color][/center]");
+            content.AppendLine($"[center][color={Palette.ToHex(Palette.Alert)}]Choose a skill (a-{maxLetter}, ↑/↓ navigate, ? preview):[/color][/center]");
             content.AppendLine();
 
+            // Assign letters to skills
             for (int i = 0; i < _availableSkills.Count && i < 26; i++)
             {
-                var skill = _availableSkills[i];
                 char letter = (char)('a' + i);
-                _skillLetterMap[letter] = skill;
-                bool isNewlyUnlocked = _newlyUnlockedSkills.Contains(skill);
+                _skillLetterMap[letter] = _availableSkills[i];
+            }
 
-                content.AppendLine(BuildSkillOption(letter, skill, isNewlyUnlocked));
+            // Group by category for display
+            var grouped = _availableSkills
+                .Take(26)
+                .Select((skill, index) => (skill, index, letter: (char)('a' + index)))
+                .GroupBy(x => x.skill.GetCategory())
+                .OrderBy(g => GetCategoryOrder(g.Key));
+
+            foreach (var group in grouped)
+            {
+                content.AppendLine($"[color={Palette.ToHex(Palette.Disabled)}]{GetCategoryHeader(group.Key)}[/color]");
+
+                foreach (var (skill, index, letter) in group)
+                {
+                    bool isSelected = index == _selectedSkillIndex;
+                    bool isNewlyUnlocked = _newlyUnlockedSkills.Contains(skill);
+
+                    content.AppendLine(BuildSkillOption(letter, skill, isNewlyUnlocked, isSelected));
+                }
+                content.AppendLine();
             }
         }
 
         _contentLabel.Text = content.ToString();
     }
 
-    /// <summary>
-    /// Builds a single skill option line for the skill selection UI.
-    /// </summary>
-    private string BuildSkillOption(char letter, SkillDefinition skill, bool isNewlyUnlocked)
+    private static int GetCategoryOrder(SkillCategory cat) => cat switch
     {
-        var line = new System.Text.StringBuilder();
+        SkillCategory.Active => 0,
+        SkillCategory.Toggle => 1,
+        SkillCategory.Passive => 2,
+        SkillCategory.Reactive => 3,
+        SkillCategory.Improvement => 4,
+        _ => 99
+    };
 
+    private static string GetCategoryHeader(SkillCategory cat) => cat switch
+    {
+        SkillCategory.Active => "ACTIVE SKILLS",
+        SkillCategory.Toggle => "TOGGLE SKILLS",
+        SkillCategory.Passive => "PASSIVE SKILLS",
+        SkillCategory.Reactive => "REACTIVE SKILLS",
+        SkillCategory.Improvement => "IMPROVEMENTS",
+        _ => "OTHER"
+    };
+
+    /// <summary>
+    /// Builds a multi-line skill option for the skill selection UI.
+    /// Shows name/category/cost, flavor text, and description on separate lines.
+    /// </summary>
+    private string BuildSkillOption(char letter, SkillDefinition skill, bool isNewlyUnlocked, bool isSelected)
+    {
+        var sb = new System.Text.StringBuilder();
+
+        // Colors
         string keyColor = Palette.ToHex(Palette.Default);
-        string nameColor = isNewlyUnlocked ? Palette.ToHex(Palette.Success) : Palette.ToHex(Palette.Default);
-        string categoryColor = Palette.ToHex(Palette.Cyan);
+        string nameColor = GetSkillCategoryColor(skill.GetCategory());
         string costColor = skill.WillpowerCost > 0 ? Palette.ToHex(Palette.PotionWill) : Palette.ToHex(Palette.Disabled);
-        string descColor = Palette.ToHex(Palette.Disabled);
+        string flavorColor = Palette.ToHex(Palette.AshGray);
+        string descColor = Palette.ToHex(Palette.Default);
+        string highlightColor = Palette.ToHex(Palette.Alert);
 
-        // Spell out category
-        string category = skill.GetCategory() == SkillCategory.Active ? "Active" : "Passive";
+        // Selection indicator
+        string selectionIndicator = isSelected ? ">" : " ";
 
-        // Letter and name
-        line.Append($"  [color={keyColor}]{letter})[/color] ");
-        line.Append($"[color={nameColor}]{skill.Name}[/color] ");
-        line.Append($"[color={categoryColor}]{category}[/color]");
+        // Line 1: selection indicator, letter, name, cost, NEW marker
+        if (isSelected)
+        {
+            sb.Append($"[color={highlightColor}]{selectionIndicator}[/color] ");
+        }
+        else
+        {
+            sb.Append($"  ");
+        }
 
-        // WP cost if any
+        sb.Append($"[color={keyColor}]{letter})[/color] ");
+        sb.Append($"[color={nameColor}]{skill.Name}[/color]");
+
         if (skill.WillpowerCost > 0)
         {
-            line.Append($" [color={costColor}]{skill.WillpowerCost} Willpower[/color]");
+            sb.Append($" [color={costColor}]{skill.WillpowerCost} WP[/color]");
         }
 
-        // Mark newly unlocked
+        // Reactive trigger info
+        if (skill.GetCategory() == SkillCategory.Reactive && !string.IsNullOrEmpty(skill.Trigger))
+        {
+            string trigger = skill.Trigger.Replace("_", " ");
+            sb.Append($" [color={costColor}]({trigger})[/color]");
+        }
+
         if (isNewlyUnlocked)
         {
-            line.Append($" [color={Palette.ToHex(Palette.Success)}]*NEW*[/color]");
+            sb.Append($" [color={Palette.ToHex(Palette.Success)}]*NEW*[/color]");
         }
 
-        // Description inline
-        line.Append($" [color={descColor}]- {skill.Description}[/color]");
+        // Line 2: flavor text (indented, italic)
+        if (!string.IsNullOrEmpty(skill.Flavor))
+        {
+            sb.AppendLine();
+            sb.Append($"      [color={flavorColor}][i]{skill.Flavor}[/i][/color]");
+        }
 
-        return line.ToString();
+        // Line 3: description (indented)
+        sb.AppendLine();
+        sb.Append($"      [color={descColor}]{skill.Description}[/color]");
+
+        return sb.ToString();
+    }
+
+    private static string GetSkillCategoryColor(SkillCategory category)
+    {
+        return category switch
+        {
+            SkillCategory.Active => Palette.ToHex(Palette.Cyan),
+            SkillCategory.Passive => Palette.ToHex(Palette.Success),
+            SkillCategory.Reactive => Palette.ToHex(Palette.Caution),
+            SkillCategory.Toggle => Palette.ToHex(Palette.Cyan),
+            SkillCategory.Improvement => Palette.ToHex(Palette.Wizard),
+            _ => Palette.ToHex(Palette.Default)
+        };
     }
 
     /// <summary>
     /// Handles input during skill selection phase.
+    /// Supports letter keys, arrow/j/k navigation, and ? preview.
     /// </summary>
     private void HandleSkillSelectionInput(InputEventKey keyEvent)
     {
+        int skillCount = System.Math.Min(_availableSkills.Count, 26);
+
+        // Arrow up or k - move selection up
+        if (keyEvent.Keycode == Key.Up || keyEvent.Keycode == Key.K)
+        {
+            if (_selectedSkillIndex > 0)
+            {
+                _selectedSkillIndex--;
+                UpdateSkillSelectionContent();
+            }
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Arrow down or j - move selection down
+        if (keyEvent.Keycode == Key.Down || keyEvent.Keycode == Key.J)
+        {
+            if (_selectedSkillIndex < skillCount - 1)
+            {
+                _selectedSkillIndex++;
+                UpdateSkillSelectionContent();
+            }
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // ? - preview selected skill (Shift+/)
+        if ((keyEvent.Keycode == Key.Slash && keyEvent.ShiftPressed) || keyEvent.Keycode == Key.Question)
+        {
+            if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _availableSkills.Count)
+            {
+                var skill = _availableSkills[_selectedSkillIndex];
+                EmitSignal(SignalName.SkillPreviewRequested, skill.Id);
+            }
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Enter - select highlighted skill
+        if (keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.KpEnter)
+        {
+            if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _availableSkills.Count)
+            {
+                _selectedSkillId = _availableSkills[_selectedSkillIndex].Id;
+                TransitionToConfirmation();
+            }
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         // Check for letter key selection (a-z)
         if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
         {

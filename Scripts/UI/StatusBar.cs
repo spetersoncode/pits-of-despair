@@ -76,7 +76,7 @@ public partial class StatusBar : PanelContainer
 
         var displayItems = new System.Collections.Generic.List<string>();
 
-        // Get active toggle skills - stances get [Stance] label
+        // Get active toggle skills - stances use SkillStance color, others use Cyan
         if (_toggleProcessor != null && _dataLoader != null)
         {
             foreach (var skillId in _toggleProcessor.GetActiveToggles())
@@ -85,10 +85,8 @@ public partial class StatusBar : PanelContainer
                 if (skill != null)
                 {
                     bool isStance = skill.Tags?.Contains("stance") == true;
-                    string label = isStance
-                        ? $"[color={Palette.ToHex(Palette.Cyan)}][Stance][/color] {skill.Name}"
-                        : $"[color={Palette.ToHex(Palette.Cyan)}]{skill.Name}[/color]";
-                    displayItems.Add(label);
+                    string color = isStance ? Palette.ToHex(Palette.SkillStance) : Palette.ToHex(Palette.Cyan);
+                    displayItems.Add($"[color={color}]{skill.Name}[/color]");
                 }
             }
         }
@@ -96,10 +94,10 @@ public partial class StatusBar : PanelContainer
         // Get displayable conditions
         foreach (var condition in _player.GetActiveConditions())
         {
-            // Prepared attacks get [Prep] label with just the attack name
+            // Prepared attacks use SkillPrepared color
             if (condition.TypeId == "prepared_attack")
             {
-                displayItems.Add($"[color={Palette.ToHex(Palette.StatusBuff)}][Prep][/color] {condition.Name}");
+                displayItems.Add($"[color={Palette.ToHex(Palette.SkillPrepared)}]{condition.Name}[/color]");
             }
             else if (condition.ExamineDescription != null)
             {

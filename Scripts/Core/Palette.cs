@@ -614,6 +614,16 @@ public static class Palette
 
     #endregion
 
+    #region Skills - Active State Colors
+
+    /// <summary>Prepared skill indicator (charged, ready to trigger)</summary>
+    public static readonly Color SkillPrepared = new("#55CCEE");
+
+    /// <summary>Stance skill indicator (sustained combat posture)</summary>
+    public static readonly Color SkillStance = new("#DDAA66");
+
+    #endregion
+
     #region Gems and Jewelry
 
     /// <summary>Jade (soft green gemstone)</summary>

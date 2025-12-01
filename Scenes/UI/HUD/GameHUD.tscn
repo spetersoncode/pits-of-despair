@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://dhxcfbllslpbg"]
+[gd_scene load_steps=15 format=3 uid="uid://dhxcfbllslpbg"]
 
 [ext_resource type="Script" uid="uid://bea0co2ut1ptd" path="res://Scripts/UI/GameHUD.cs" id="1"]
 [ext_resource type="PackedScene" uid="uid://cr4kky5x07a1s" path="res://Scenes/UI/HUD/SidePanel.tscn" id="2"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/Modals/EntityDetailModal.tscn" id="13"]
 [ext_resource type="PackedScene" uid="uid://cj6u6eje7c2ms" path="res://Scenes/UI/Modals/SkillsModal.tscn" id="14"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/StatusBar.tscn" id="15"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Modals/SkillDetailModal.tscn" id="16"]
 
 [node name="GameHUD" type="Control"]
 layout_mode = 3
@@ -84,4 +85,7 @@ layout_mode = 1
 layout_mode = 1
 
 [node name="SkillsModal" parent="." instance=ExtResource("14")]
+layout_mode = 1
+
+[node name="SkillDetailModal" parent="." instance=ExtResource("16")]
 layout_mode = 1

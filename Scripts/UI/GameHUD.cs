@@ -11,6 +11,7 @@ using PitsOfDespair.Systems.AutoPathing;
 using PitsOfDespair.Systems.Entity;
 using PitsOfDespair.Systems.Vision;
 using PitsOfDespair.Targeting;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PitsOfDespair.UI;
@@ -57,7 +58,11 @@ public partial class GameHUD : Control
     private DebugConsoleModal _debugConsoleModal;
     private LevelUpModal _levelUpModal;
     private SkillsModal _skillsModal;
+    private SkillDetailModal _skillDetailModal;
     private Player _player;
+
+    // Modal stack for proper input handling - only topmost modal receives input
+    private readonly Stack<Control> _modalStack = new();
     private MenuState _currentMenuState = MenuState.None;
     private CursorTargetingSystem _cursorSystem;
     private AutoExploreSystem _autoExploreSystem;
@@ -87,6 +92,7 @@ public partial class GameHUD : Control
         _debugConsoleModal = GetNode<DebugConsoleModal>("DebugConsoleModal");
         _levelUpModal = GetNode<LevelUpModal>("LevelUpModal");
         _skillsModal = GetNodeOrNull<SkillsModal>("SkillsModal");
+        _skillDetailModal = GetNodeOrNull<SkillDetailModal>("SkillDetailModal");
     }
 
     /// <summary>
@@ -154,10 +160,17 @@ public partial class GameHUD : Control
             _skillsModal.Connect(SkillsModal.SignalName.SkillSelected, Callable.From<string, char>(OnSkillSelected));
             _skillsModal.Connect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
             _skillsModal.Connect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
+            _skillsModal.Connect(SkillsModal.SignalName.SkillDescribeRequested, Callable.From<string, char>(OnSkillDescribeRequested));
+        }
+
+        if (_skillDetailModal != null)
+        {
+            _skillDetailModal.Connect(SkillDetailModal.SignalName.Cancelled, Callable.From(OnSkillDetailCancelled));
         }
 
         _levelUpModal.Connect(LevelUpModal.SignalName.Confirmed, Callable.From<int, string>(OnLevelUpConfirmed));
         _levelUpModal.Connect(LevelUpModal.SignalName.Cancelled, Callable.From(OnLevelUpCancelled));
+        _levelUpModal.Connect(LevelUpModal.SignalName.SkillPreviewRequested, Callable.From<string>(OnSkillPreviewRequested));
 
         // Connect to LevelUpSystem for showing level-up modal
         _levelUpSystem.Connect(Systems.LevelUpSystem.SignalName.ShowLevelUpModal, Callable.From<int>(OnShowLevelUpModal));
@@ -275,8 +288,42 @@ public partial class GameHUD : Control
     /// </summary>
     public bool IsAnyMenuOpen()
     {
-        return _currentMenuState != MenuState.None || _helpModal.Visible || _debugConsoleModal.Visible || _levelUpModal.Visible;
+        return _currentMenuState != MenuState.None || _helpModal.Visible || _debugConsoleModal.Visible || _levelUpModal.Visible || _modalStack.Count > 0;
     }
+
+    #region Modal Stack Management
+
+    /// <summary>
+    /// Pushes a modal onto the stack. The modal becomes the active one receiving input.
+    /// </summary>
+    public void PushModal(Control modal)
+    {
+        _modalStack.Push(modal);
+    }
+
+    /// <summary>
+    /// Pops the topmost modal from the stack and returns it.
+    /// </summary>
+    public Control PopModal()
+    {
+        return _modalStack.Count > 0 ? _modalStack.Pop() : null;
+    }
+
+    /// <summary>
+    /// Checks if the given modal is the topmost (active) modal.
+    /// Modals should only process input if they are active.
+    /// </summary>
+    public bool IsActiveModal(Control modal)
+    {
+        return _modalStack.Count > 0 && _modalStack.Peek() == modal;
+    }
+
+    /// <summary>
+    /// Gets the current modal stack depth.
+    /// </summary>
+    public int ModalStackDepth => _modalStack.Count;
+
+    #endregion
 
     /// <summary>
     /// Checks if the entity detail modal is currently open.
@@ -443,21 +490,21 @@ public partial class GameHUD : Control
 
     private void OnInventoryItemSelected(char key)
     {
-        // Hide inventory modal to avoid transparency stacking
+        // Push inventory, hide it, show detail modal
+        PushModal(_inventoryPanel);
         _inventoryPanel.Hide();
-
-        // Open ItemDetailModal for the selected item
         _itemDetailModal.ShowMenu(key);
         _currentMenuState = MenuState.ItemDetail;
     }
 
     private void OnItemDetailCancelled()
     {
-        // Close detail modal and return to inventory view
+        // Close detail modal
         _itemDetailModal.HideMenu();
 
-        // Show inventory modal again
-        _inventoryPanel.Show();
+        // Pop and restore parent modal
+        var parentModal = PopModal();
+        parentModal?.Show();
         _currentMenuState = MenuState.Inventory;
     }
 
@@ -621,6 +668,35 @@ public partial class GameHUD : Control
         }
     }
 
+    private void OnSkillDescribeRequested(string skillId, char key)
+    {
+        // Push current modal, hide it, show detail modal
+        PushModal(_skillsModal);
+        _skillsModal?.Hide();
+        _skillDetailModal?.ShowSkill(skillId, key);
+    }
+
+    /// <summary>
+    /// Called when ? is pressed in LevelUpModal skill selection to preview a skill.
+    /// </summary>
+    private void OnSkillPreviewRequested(string skillId)
+    {
+        // Push current modal, hide it, show detail modal
+        PushModal(_levelUpModal);
+        _levelUpModal?.Hide();
+        _skillDetailModal?.ShowSkill(skillId, null);
+    }
+
+    private void OnSkillDetailCancelled()
+    {
+        // Hide detail modal
+        _skillDetailModal?.HideModal();
+
+        // Pop and restore the parent modal
+        var parentModal = PopModal();
+        parentModal?.Show();
+    }
+
     /// <summary>
     /// Closes all open menus and resets menu state.
     /// </summary>
@@ -632,6 +708,7 @@ public partial class GameHUD : Control
         _equipPanel.HideMenu();
         _itemDetailModal.HideMenu();
         _skillsModal?.HideMenu();
+        _skillDetailModal?.HideModal();
         _currentMenuState = MenuState.None;
     }
 
@@ -930,8 +1007,8 @@ public partial class GameHUD : Control
         // Log cancellation message
         _messageLog.AddMessage("Level up cancelled.", Palette.ToHex(Palette.Disabled));
 
-        // Do NOT call CompleteLevelUp() - keeps the level up pending
-        // Player can press L again to retry
+        // Reset processing state but keep level up pending
+        _levelUpSystem.CancelLevelUp();
     }
 
     /// <summary>
@@ -1011,12 +1088,19 @@ public partial class GameHUD : Control
             _skillsModal.Disconnect(SkillsModal.SignalName.SkillSelected, Callable.From<string, char>(OnSkillSelected));
             _skillsModal.Disconnect(SkillsModal.SignalName.Cancelled, Callable.From(OnSkillsCancelled));
             _skillsModal.Disconnect(SkillsModal.SignalName.SkillKeyRebound, Callable.From<char, char>(OnSkillKeyRebound));
+            _skillsModal.Disconnect(SkillsModal.SignalName.SkillDescribeRequested, Callable.From<string, char>(OnSkillDescribeRequested));
+        }
+
+        if (_skillDetailModal != null)
+        {
+            _skillDetailModal.Disconnect(SkillDetailModal.SignalName.Cancelled, Callable.From(OnSkillDetailCancelled));
         }
 
         if (_levelUpModal != null)
         {
             _levelUpModal.Disconnect(LevelUpModal.SignalName.Confirmed, Callable.From<int, string>(OnLevelUpConfirmed));
             _levelUpModal.Disconnect(LevelUpModal.SignalName.Cancelled, Callable.From(OnLevelUpCancelled));
+            _levelUpModal.Disconnect(LevelUpModal.SignalName.SkillPreviewRequested, Callable.From<string>(OnSkillPreviewRequested));
         }
 
         if (_debugConsoleModal != null)

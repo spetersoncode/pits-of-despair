@@ -166,6 +166,16 @@ public partial class LevelUpSystem : Node
 		// Player must press L or trigger will happen naturally on next XP gain
 	}
 
+	/// <summary>
+	/// Called when the level-up modal is cancelled without making choices.
+	/// Resets processing state but keeps the level-up pending.
+	/// </summary>
+	public void CancelLevelUp()
+	{
+		_isProcessingLevelUp = false;
+		// Don't dequeue - level up remains pending for retry
+	}
+
 	#endregion
 
 	#region Stat Choice Application

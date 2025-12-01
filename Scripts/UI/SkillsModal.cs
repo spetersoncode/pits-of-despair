@@ -16,7 +16,7 @@ namespace PitsOfDespair.UI;
 /// Displays learned skills and allows activation of active skills.
 /// Groups skills by category: Active, Passive, Reactive.
 /// </summary>
-public partial class SkillsModal : PanelContainer
+public partial class SkillsModal : CenterContainer
 {
     [Signal]
     public delegate void SkillSelectedEventHandler(string skillId, char key);
@@ -27,9 +27,13 @@ public partial class SkillsModal : PanelContainer
     [Signal]
     public delegate void SkillKeyReboundEventHandler(char oldKey, char newKey);
 
+    [Signal]
+    public delegate void SkillDescribeRequestedEventHandler(string skillId, char key);
+
     private enum State
     {
         Viewing,
+        Describing,
         AwaitingRebind
     }
 
@@ -48,7 +52,7 @@ public partial class SkillsModal : PanelContainer
 
     public override void _Ready()
     {
-        _skillsLabel = GetNodeOrNull<RichTextLabel>("MarginContainer/VBoxContainer/SkillsLabel");
+        _skillsLabel = GetNode<RichTextLabel>("%SkillsLabel");
         _dataLoader = GetNode<DataLoader>("/root/DataLoader");
         Hide();
     }
@@ -101,6 +105,9 @@ public partial class SkillsModal : PanelContainer
             case State.Viewing:
                 HandleViewingInput(keyEvent);
                 break;
+            case State.Describing:
+                HandleDescribingInput(keyEvent);
+                break;
             case State.AwaitingRebind:
                 HandleRebindInput(keyEvent);
                 break;
@@ -113,6 +120,15 @@ public partial class SkillsModal : PanelContainer
         if (MenuInputProcessor.IsCloseKey(keyEvent))
         {
             EmitSignal(SignalName.Cancelled);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Toggle to describe mode on '!' (Shift+1)
+        if (keyEvent.ShiftPressed && MenuInputProcessor.IsKey(keyEvent, Key.Key1))
+        {
+            _currentState = State.Describing;
+            UpdateDisplay();
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -144,6 +160,52 @@ public partial class SkillsModal : PanelContainer
                 {
                     EmitSignal(SignalName.SkillSelected, selectedSkill.Id, selectedKey);
                 }
+            }
+
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    private void HandleDescribingInput(InputEventKey keyEvent)
+    {
+        // Cancel on close key - close the entire modal
+        if (MenuInputProcessor.IsCloseKey(keyEvent))
+        {
+            EmitSignal(SignalName.Cancelled);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Toggle back to viewing mode on '!' (Shift+1)
+        if (keyEvent.ShiftPressed && MenuInputProcessor.IsKey(keyEvent, Key.Key1))
+        {
+            _currentState = State.Viewing;
+            UpdateDisplay();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Enter rebind mode on '='
+        if (MenuInputProcessor.IsKey(keyEvent, Key.Equal))
+        {
+            if (_displayedSkills.Count > 0)
+            {
+                _currentState = State.AwaitingRebind;
+                _rebindSourceKey = '\0';
+                UpdateDisplay();
+            }
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        // Check for letter key selection (a-z) - open detail modal
+        if (MenuInputProcessor.TryGetLetterKey(keyEvent, out char selectedKey))
+        {
+            selectedKey = char.ToLower(selectedKey);
+
+            if (_displayedSkills.TryGetValue(selectedKey, out var selectedSkill))
+            {
+                EmitSignal(SignalName.SkillDescribeRequested, selectedSkill.Id, selectedKey);
             }
 
             GetViewport().SetInputAsHandled();
@@ -212,13 +274,17 @@ public partial class SkillsModal : PanelContainer
         var sb = new StringBuilder();
 
         // Show different header based on state
-        if (_currentState == State.AwaitingRebind)
+        switch (_currentState)
         {
-            sb.Append(BuildRebindHeader());
-        }
-        else
-        {
-            sb.Append(BuildHeader());
+            case State.AwaitingRebind:
+                sb.Append(BuildRebindHeader());
+                break;
+            case State.Describing:
+                sb.Append(BuildDescribingHeader());
+                break;
+            default:
+                sb.Append(BuildHeader());
+                break;
         }
 
         // Group by category (Active and Toggle are both manually activated, shown together)
@@ -328,7 +394,17 @@ public partial class SkillsModal : PanelContainer
         var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
         int currentWillpower = _willpowerComponent?.CurrentWillpower ?? 0;
         int maxWillpower = _willpowerComponent?.MaxWillpower ?? 0;
-        return $"[center][b]SKILLS[/b][/center]\n[center]Willpower: [color={Palette.ToHex(Palette.Wizard)}]{currentWillpower}/{maxWillpower}[/color][/center]\n[center][color={Palette.ToHex(Palette.Disabled)}][=] Rebind   ({closeKey} to close)[/color][/center]";
+        string modeIndicator = $"[color={Palette.ToHex(Palette.Disabled)}]USE[/color]";
+        return $"[center][b]SKILLS[/b] - {modeIndicator}[/center]\n[center]Willpower: [color={Palette.ToHex(Palette.Wizard)}]{currentWillpower}/{maxWillpower}[/color][/center]\n[center][color={Palette.ToHex(Palette.Disabled)}][!] Describe   [=] Rebind   ({closeKey} to close)[/color][/center]";
+    }
+
+    private string BuildDescribingHeader()
+    {
+        var closeKey = KeybindingConfig.GetKeybindingDisplay(InputAction.ModalClose);
+        int currentWillpower = _willpowerComponent?.CurrentWillpower ?? 0;
+        int maxWillpower = _willpowerComponent?.MaxWillpower ?? 0;
+        string modeIndicator = $"[color={Palette.ToHex(Palette.Alert)}]DESCRIBE[/color]";
+        return $"[center][b]SKILLS[/b] - {modeIndicator}[/center]\n[center]Willpower: [color={Palette.ToHex(Palette.Wizard)}]{currentWillpower}/{maxWillpower}[/color][/center]\n[center][color={Palette.ToHex(Palette.Disabled)}][!] Use   [=] Rebind   ({closeKey} to close)[/color][/center]";
     }
 
     private string BuildRebindHeader()
