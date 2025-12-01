@@ -5,8 +5,8 @@ floor: 2
 pipeline: bsp_standard
 
 # Difficulty curve
-minThreat: 2
-maxThreat: 3
+minThreat: 1
+maxThreat: 2
 
 # Small chance for out-of-depth
 creatureOutOfDepthChance: 0.05
