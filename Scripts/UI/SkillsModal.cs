@@ -138,8 +138,9 @@ public partial class SkillsModal : PanelContainer
 
             if (_displayedSkills.TryGetValue(selectedKey, out var selectedSkill))
             {
-                // Only allow activating active skills
-                if (selectedSkill.GetCategory() == SkillCategory.Active)
+                // Only allow activating active and toggle skills
+                var category = selectedSkill.GetCategory();
+                if (category == SkillCategory.Active || category == SkillCategory.Toggle)
                 {
                     EmitSignal(SignalName.SkillSelected, selectedSkill.Id, selectedKey);
                 }
@@ -220,10 +221,11 @@ public partial class SkillsModal : PanelContainer
             sb.Append(BuildHeader());
         }
 
-        // Group by category
-        var activeSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Active).ToList();
+        // Group by category (Active and Toggle are both manually activated, shown together)
+        var activeSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Active || s.GetCategory() == SkillCategory.Toggle).ToList();
         var passiveSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Passive).OrderBy(s => s.Name).ToList();
         var reactiveSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Reactive).OrderBy(s => s.Name).ToList();
+        var improvementSkills = learnedSkills.Where(s => s.GetCategory() == SkillCategory.Improvement).OrderBy(s => s.Name).ToList();
 
         // Build displayed skills dictionary using persistent keys
         _displayedSkills.Clear();
@@ -270,6 +272,16 @@ public partial class SkillsModal : PanelContainer
             }
         }
 
+        // Improvement Skills section
+        if (improvementSkills.Count > 0)
+        {
+            sb.AppendLine($"\n[color={Palette.ToHex(Palette.Wizard)}]IMPROVEMENTS[/color]");
+            foreach (var skill in improvementSkills)
+            {
+                sb.AppendLine(FormatImprovementSkill(skill));
+            }
+        }
+
         _skillsLabel.Text = sb.ToString();
     }
 
@@ -292,6 +304,14 @@ public partial class SkillsModal : PanelContainer
         string trigger = !string.IsNullOrEmpty(skill.Trigger) ? skill.Trigger.Replace("_", " ") : "auto";
         string wpCost = skill.WillpowerCost > 0 ? $"{skill.WillpowerCost} WP, " : "";
         return $"  [color={Palette.ToHex(Palette.Caution)}]![/color] [color={Palette.ToHex(Palette.Caution)}]{skill.Name}[/color] ({wpCost}{trigger}) - {skill.Description}";
+    }
+
+    private string FormatImprovementSkill(SkillDefinition skill)
+    {
+        string targetSkill = skill.Improves?.TargetSkill ?? "unknown";
+        var targetDef = _dataLoader?.Skills.Get(targetSkill);
+        string targetName = targetDef?.Name ?? targetSkill;
+        return $"  [color={Palette.ToHex(Palette.Wizard)}]+[/color] [color={Palette.ToHex(Palette.Wizard)}]{skill.Name}[/color] (improves {targetName}) - {skill.Description}";
     }
 
     private void ShowEmptyMessage()

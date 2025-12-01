@@ -6,6 +6,7 @@ using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
+using PitsOfDespair.Skills;
 using PitsOfDespair.Targeting;
 using PitsOfDespair.Systems.Input.Services;
 using PitsOfDespair.UI;
@@ -169,8 +170,13 @@ public class GameplayInputProcessor
         _pendingItemKey = null;
         _isReachAttack = false;
 
-        // Create targeting definition from skill
-        var definition = TargetingDefinition.FromSkill(skill);
+        // Get effective range/radius from improvement processor
+        var improvementProcessor = _player.GetNodeOrNull<ImprovementSkillProcessor>("ImprovementSkillProcessor");
+        int effectiveRange = improvementProcessor?.GetEffectiveRange(skill) ?? skill.Range;
+        int effectiveRadius = improvementProcessor?.GetEffectiveRadius(skill) ?? skill.Radius;
+
+        // Create targeting definition from skill with effective values
+        var definition = TargetingDefinition.FromSkill(skill, effectiveRange, effectiveRadius);
 
         // For reach targeting skills, use weapon reach if available
         if (skill.Targeting?.ToLower() == "reach")

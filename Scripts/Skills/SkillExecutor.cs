@@ -57,8 +57,9 @@ public static class SkillExecutor
             return false;
         }
 
-        // Check if skill is active type (only active skills can be used via action)
-        if (skillDef.GetCategory() != SkillCategory.Active)
+        // Check if skill category allows direct activation
+        var category = skillDef.GetCategory();
+        if (category != SkillCategory.Active && category != SkillCategory.Toggle)
         {
             failureReason = $"{skillDef.Name} cannot be activated directly.";
             return false;
@@ -97,6 +98,12 @@ public static class SkillExecutor
         if (!CanExecuteSkill(caster, skillDef, out string failureReason))
         {
             return SkillResult.CreateFailure(failureReason);
+        }
+
+        // Handle toggle skills specially
+        if (skillDef.GetCategory() == SkillCategory.Toggle)
+        {
+            return ExecuteToggleSkill(caster, skillDef);
         }
 
         // For line/area targeting without entity targets, use caster as effect target
@@ -152,14 +159,19 @@ public static class SkillExecutor
             return result;
         }
 
+        // Get effective range/radius from improvement processor
+        var improvementProcessor = caster.GetNodeOrNull<ImprovementSkillProcessor>("ImprovementSkillProcessor");
+        int effectiveRange = improvementProcessor?.GetEffectiveRange(skillDef) ?? skillDef.Range;
+        int effectiveRadius = improvementProcessor?.GetEffectiveRadius(skillDef) ?? skillDef.Radius;
+
         // Check if skill uses a projectile
         if (skillDef.HasProjectile)
         {
-            return ExecuteProjectileSkill(caster, skillDef, targets, context, result, targetPosition);
+            return ExecuteProjectileSkill(caster, skillDef, targets, context, result, targetPosition, effectiveRange, effectiveRadius);
         }
 
         // Non-projectile skill: apply effects immediately
-        return ExecuteImmediateSkill(caster, skillDef, targets, context, result, targetPosition);
+        return ExecuteImmediateSkill(caster, skillDef, targets, context, result, targetPosition, effectiveRange, effectiveRadius);
     }
 
     /// <summary>
@@ -171,13 +183,15 @@ public static class SkillExecutor
         List<BaseEntity> targets,
         ActionContext context,
         SkillResult result,
-        GridPosition? targetPosition = null)
+        GridPosition? targetPosition,
+        int effectiveRange,
+        int effectiveRadius)
     {
         var projectileDef = VisualEffectDefinitions.GetById(skillDef.Projectile!);
         if (projectileDef == null || projectileDef.Type != VisualEffectType.Projectile)
         {
             GD.PrintErr($"SkillExecutor: Unknown projectile type '{skillDef.Projectile}' in skill '{skillDef.Id}'");
-            return ExecuteImmediateSkill(caster, skillDef, targets, context, result, targetPosition);
+            return ExecuteImmediateSkill(caster, skillDef, targets, context, result, targetPosition, effectiveRange, effectiveRadius);
         }
 
         // Spawn projectile for each target
@@ -186,7 +200,7 @@ public static class SkillExecutor
             // Create effect chain for this target
             foreach (var effectDef in skillDef.Effects)
             {
-                var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name, skillDef.Range, skillDef.Radius);
+                var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name, effectiveRange, effectiveRadius);
                 if (effect == null)
                 {
                     GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
@@ -236,7 +250,9 @@ public static class SkillExecutor
         List<BaseEntity> targets,
         ActionContext context,
         SkillResult result,
-        GridPosition? targetPosition = null)
+        GridPosition? targetPosition,
+        int effectiveRange,
+        int effectiveRadius)
     {
         bool anyEffectSucceeded = false;
         var targetingType = skillDef.GetTargetingType();
@@ -244,7 +260,7 @@ public static class SkillExecutor
         // Effects handle their own visuals via VisualConfig
         foreach (var effectDef in skillDef.Effects)
         {
-            var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name, skillDef.Range, skillDef.Radius);
+            var effect = Effect.CreateFromSkillDefinition(effectDef, skillDef.Name, effectiveRange, effectiveRadius);
             if (effect == null)
             {
                 GD.PrintErr($"SkillExecutor: Unknown effect type '{effectDef.Type}' in skill '{skillDef.Id}'");
@@ -356,5 +372,32 @@ public static class SkillExecutor
         ActionContext context)
     {
         return ExecuteSkill(caster, skillDef, new List<BaseEntity> { caster }, context);
+    }
+
+    /// <summary>
+    /// Executes a toggle skill by activating or deactivating it.
+    /// </summary>
+    private static SkillResult ExecuteToggleSkill(BaseEntity caster, SkillDefinition skillDef)
+    {
+        var toggleProcessor = caster.GetNodeOrNull<ToggleSkillProcessor>("ToggleSkillProcessor");
+        if (toggleProcessor == null)
+        {
+            GD.PrintErr($"SkillExecutor: {caster.DisplayName} has no ToggleSkillProcessor");
+            return SkillResult.CreateFailure($"{caster.DisplayName} cannot use toggle skills.");
+        }
+
+        bool isNowActive = toggleProcessor.ToggleSkill(skillDef.Id);
+
+        var result = SkillResult.CreateSuccess();
+        if (isNowActive)
+        {
+            result.AddMessage($"{caster.DisplayName} activates {skillDef.Name}!");
+        }
+        else
+        {
+            result.AddMessage($"{caster.DisplayName} deactivates {skillDef.Name}.");
+        }
+
+        return result;
     }
 }

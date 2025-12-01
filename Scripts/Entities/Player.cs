@@ -105,12 +105,18 @@ public partial class Player : BaseEntity
         var skillComponent = new SkillComponent { Name = "SkillComponent" };
         AddChild(skillComponent);
 
-        // Skill processors for passive/reactive effects
+        // Skill processors for passive/reactive/toggle/improvement effects
         var passiveProcessor = new PassiveSkillProcessor { Name = "PassiveSkillProcessor" };
         AddChild(passiveProcessor);
 
         var reactiveProcessor = new ReactiveSkillProcessor { Name = "ReactiveSkillProcessor" };
         AddChild(reactiveProcessor);
+
+        var toggleProcessor = new ToggleSkillProcessor { Name = "ToggleSkillProcessor" };
+        AddChild(toggleProcessor);
+
+        var improvementProcessor = new ImprovementSkillProcessor { Name = "ImprovementSkillProcessor" };
+        AddChild(improvementProcessor);
 
         _inventoryComponent = new InventoryComponent { Name = "InventoryComponent" };
         AddChild(_inventoryComponent);
@@ -170,10 +176,11 @@ public partial class Player : BaseEntity
     {
         var result = base.ExecuteAction(action, context);
 
-        // If action costs time, process recharging and emit turn completed signal with delay
+        // If action costs time, process recharging/drains and emit turn completed signal with delay
         if (result.CostsTime)
         {
             ProcessItemRecharging();
+            ProcessToggleDrains();
 
             // Get the player's speed component to calculate actual delay
             var speedComponent = GetNodeOrNull<SpeedComponent>("SpeedComponent");
@@ -198,6 +205,16 @@ public partial class Player : BaseEntity
         {
             slot.Item.ProcessTurn();
         }
+    }
+
+    /// <summary>
+    /// Processes WP drain for active toggle skills.
+    /// Called each turn when an action is successfully executed.
+    /// </summary>
+    private void ProcessToggleDrains()
+    {
+        var toggleProcessor = GetNodeOrNull<ToggleSkillProcessor>("ToggleSkillProcessor");
+        toggleProcessor?.ProcessTurnDrain();
     }
 
     /// <summary>

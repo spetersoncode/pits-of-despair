@@ -201,10 +201,11 @@ public partial class PlayerActionHandler : Node
 			return;
 		}
 
-		// Check if skill is active type
-		if (skill.GetCategory() != SkillCategory.Active)
+		// Check if skill is active or toggle type (both can be manually activated)
+		var category = skill.GetCategory();
+		if (category != SkillCategory.Active && category != SkillCategory.Toggle)
 		{
-			GD.PushWarning($"PlayerActionHandler: Skill '{skillId}' is not an active skill.");
+			GD.PushWarning($"PlayerActionHandler: Skill '{skillId}' cannot be manually activated.");
 			return;
 		}
 

@@ -111,6 +111,8 @@ public partial class StatsComponent : Node
 		{ StatType.Armor, new Dictionary<string, int>() },
 		{ StatType.Evasion, new Dictionary<string, int>() },
 		{ StatType.MeleeDamage, new Dictionary<string, int>() },
+		{ StatType.MeleeAccuracy, new Dictionary<string, int>() },
+		{ StatType.RangedAccuracy, new Dictionary<string, int>() },
 	};
 
 	#endregion
@@ -156,16 +158,28 @@ public partial class StatsComponent : Node
 	public int TotalMeleeDamageBonus => GetStatModifierTotal(StatType.MeleeDamage);
 
 	/// <summary>
-	/// Melee attack modifier for attack rolls.
-	/// Based on total Strength.
+	/// Total melee accuracy modifier from all sources (toggle skills, equipment, buffs).
+	/// Added to melee attack rolls only.
 	/// </summary>
-	public int MeleeAttack => TotalStrength;
+	public int TotalMeleeAccuracyModifier => GetStatModifierTotal(StatType.MeleeAccuracy);
+
+	/// <summary>
+	/// Total ranged accuracy modifier from all sources (toggle skills, equipment, buffs).
+	/// Added to ranged attack rolls only.
+	/// </summary>
+	public int TotalRangedAccuracyModifier => GetStatModifierTotal(StatType.RangedAccuracy);
+
+	/// <summary>
+	/// Melee attack modifier for attack rolls.
+	/// Based on total Strength plus melee accuracy modifiers.
+	/// </summary>
+	public int MeleeAttack => TotalStrength + TotalMeleeAccuracyModifier;
 
 	/// <summary>
 	/// Ranged attack modifier for attack rolls.
-	/// Based on total Agility.
+	/// Based on total Agility plus ranged accuracy modifiers.
 	/// </summary>
-	public int RangedAttack => TotalAgility;
+	public int RangedAttack => TotalAgility + TotalRangedAccuracyModifier;
 
 	/// <summary>
 	/// Total evasion value for defense rolls.
@@ -233,12 +247,13 @@ public partial class StatsComponent : Node
 
 	/// <summary>
 	/// Gets the appropriate attack modifier based on weapon type.
+	/// Includes accuracy modifiers from toggle skills, equipment, and buffs.
 	/// </summary>
 	/// <param name="isMelee">True for melee weapons, false for ranged</param>
-	/// <returns>STR for melee, AGI for ranged</returns>
+	/// <returns>STR + accuracy for melee, AGI + accuracy for ranged</returns>
 	public int GetAttackModifier(bool isMelee)
 	{
-		return isMelee ? TotalStrength : TotalAgility;
+		return isMelee ? MeleeAttack : RangedAttack;
 	}
 
 	/// <summary>

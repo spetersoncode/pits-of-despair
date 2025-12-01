@@ -291,8 +291,13 @@ public class SkillCommand : DebugCommand
             );
         }
 
+        // Get effective range/radius from improvement processor
+        var improvementProcessor = player.GetNodeOrNull<ImprovementSkillProcessor>("ImprovementSkillProcessor");
+        int effectiveRange = improvementProcessor?.GetEffectiveRange(skill) ?? skill.Range;
+        int effectiveRadius = improvementProcessor?.GetEffectiveRadius(skill) ?? skill.Radius;
+
         // Resolve targets based on targeting type
-        var definition = TargetingDefinition.FromSkill(skill);
+        var definition = TargetingDefinition.FromSkill(skill, effectiveRange, effectiveRadius);
         var targetingHandler = TargetingHandler.CreateForDefinition(definition);
         List<BaseEntity> targets;
 

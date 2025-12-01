@@ -46,7 +46,7 @@ entries:
     tags:
       - ranged
       - crowd_control
-      - prime
+      - prepare
     effects:
       - steps:
           - type: apply_prepare

@@ -133,8 +133,21 @@ public class TargetingDefinition
     /// </summary>
     public static TargetingDefinition FromSkill(SkillDefinition skill)
     {
+        return FromSkill(skill, skill.Range, skill.Radius);
+    }
+
+    /// <summary>
+    /// Creates a targeting definition from a skill definition with effective values.
+    /// Use this overload when the caster has improvement skills that modify range/radius.
+    /// </summary>
+    /// <param name="skill">The skill definition</param>
+    /// <param name="effectiveRange">The effective range after applying improvements</param>
+    /// <param name="effectiveRadius">The effective radius after applying improvements</param>
+    public static TargetingDefinition FromSkill(SkillDefinition skill, int effectiveRange, int effectiveRadius)
+    {
         var skillTargeting = skill.Targeting?.ToLower() ?? "creature";
-        int range = skill.Range > 0 ? skill.Range : 1;
+        int range = effectiveRange > 0 ? effectiveRange : 1;
+        int radius = effectiveRadius;
 
         // Movement skills use Chebyshev for 8-directional targeting
         bool isMovementSkill = skill.Tags.Contains("movement");
@@ -151,9 +164,9 @@ public class TargetingDefinition
             "creature" => Creature(range, TargetFilter.Creature, DistanceMetric.Euclidean),
             "cleave" => Cleave(),
             "tile" => Tile(range),
-            "area" => Area(range, skill.Radius),
+            "area" => Area(range, radius),
             "line" => Line(range, true, isMovementSkill ? DistanceMetric.Chebyshev : DistanceMetric.Euclidean),
-            "cone" => Cone(range, skill.Radius > 0 ? skill.Radius : 2),
+            "cone" => Cone(range, radius > 0 ? radius : 2),
             _ => Creature(range, TargetFilter.Enemy, DistanceMetric.Euclidean)
         };
     }

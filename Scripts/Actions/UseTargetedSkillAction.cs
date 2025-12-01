@@ -43,8 +43,13 @@ public class UseTargetedSkillAction : Action
             return ActionResult.CreateFailure("No skill specified.");
         }
 
-        // Create targeting definition from skill
-        var definition = TargetingDefinition.FromSkill(_skill);
+        // Get effective range/radius from improvement processor
+        var improvementProcessor = actor.GetNodeOrNull<ImprovementSkillProcessor>("ImprovementSkillProcessor");
+        int effectiveRange = improvementProcessor?.GetEffectiveRange(_skill) ?? _skill.Range;
+        int effectiveRadius = improvementProcessor?.GetEffectiveRadius(_skill) ?? _skill.Radius;
+
+        // Create targeting definition from skill with effective values
+        var definition = TargetingDefinition.FromSkill(_skill, effectiveRange, effectiveRadius);
 
         // Get the targeting handler
         var handler = TargetingHandler.CreateForDefinition(definition);

@@ -87,10 +87,11 @@ public partial class SkillComponent : Node
         _learnedSkills.Add(skillId);
         SkillPointsUsed++;
 
-        // Auto-assign slot for active skills
+        // Auto-assign slot for active and toggle skills (both are manually activated)
         var dataLoader = GetNode<DataLoader>("/root/DataLoader");
         var skill = dataLoader?.Skills.Get(skillId);
-        if (skill != null && skill.GetCategory() == SkillCategory.Active)
+        var category = skill?.GetCategory();
+        if (skill != null && (category == SkillCategory.Active || category == SkillCategory.Toggle))
         {
             AssignNextAvailableSlot(skillId);
         }
@@ -199,6 +200,7 @@ public partial class SkillComponent : Node
 
     /// <summary>
     /// Gets all available skills that can be learned (meets prereqs and not already known).
+    /// Improvement skills require their target skill to be learned first.
     /// </summary>
     /// <param name="stats">The entity's stats component</param>
     /// <param name="dataLoader">DataLoader to get skill definitions</param>
@@ -209,7 +211,7 @@ public partial class SkillComponent : Node
 
         foreach (var skill in dataLoader.Skills.GetAll())
         {
-            if (!HasSkill(skill.Id) && PrerequisiteChecker.MeetsPrerequisites(skill, stats))
+            if (!HasSkill(skill.Id) && PrerequisiteChecker.MeetsPrerequisites(skill, stats, this))
             {
                 available.Add(skill);
             }
@@ -220,6 +222,7 @@ public partial class SkillComponent : Node
 
     /// <summary>
     /// Checks if a skill can be learned (meets prereqs and not already known).
+    /// Improvement skills require their target skill to be learned first.
     /// </summary>
     /// <param name="skillId">The skill ID to check</param>
     /// <param name="stats">The entity's stats component</param>
@@ -234,7 +237,7 @@ public partial class SkillComponent : Node
         if (skill == null)
             return false;
 
-        return PrerequisiteChecker.MeetsPrerequisites(skill, stats);
+        return PrerequisiteChecker.MeetsPrerequisites(skill, stats, this);
     }
 
     /// <summary>
@@ -248,7 +251,9 @@ public partial class SkillComponent : Node
         {
             [SkillCategory.Active] = new(),
             [SkillCategory.Passive] = new(),
-            [SkillCategory.Reactive] = new()
+            [SkillCategory.Reactive] = new(),
+            [SkillCategory.Toggle] = new(),
+            [SkillCategory.Improvement] = new()
         };
 
         foreach (var skillId in _learnedSkills)
@@ -293,6 +298,18 @@ public partial class SkillComponent : Node
     {
         return GetLearnedSkillDefinitions(dataLoader)
             .Where(s => s.GetCategory() == SkillCategory.Active)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets all learned toggle skills (on/off sustained skills).
+    /// </summary>
+    /// <param name="dataLoader">DataLoader to get skill definitions</param>
+    /// <returns>List of toggle skill definitions</returns>
+    public List<SkillDefinition> GetLearnedToggleSkills(DataLoader dataLoader)
+    {
+        return GetLearnedSkillDefinitions(dataLoader)
+            .Where(s => s.GetCategory() == SkillCategory.Toggle)
             .ToList();
     }
 
@@ -390,6 +407,34 @@ public partial class SkillComponent : Node
         }
 
         SkillPointsUsed = skillPointsUsed;
+
+        // Retroactively assign slots for toggle skills that don't have them (migration fix)
+        AssignMissingToggleSlots();
+    }
+
+    /// <summary>
+    /// Assigns slots to any learned toggle skills that don't have slots.
+    /// Used to migrate saves from before toggle skills had slot assignments.
+    /// </summary>
+    private void AssignMissingToggleSlots()
+    {
+        var dataLoader = GetNodeOrNull<DataLoader>("/root/DataLoader");
+        if (dataLoader == null)
+            return;
+
+        foreach (var skillId in _learnedSkills)
+        {
+            // Skip if already has a slot
+            if (GetSkillKey(skillId) != null)
+                continue;
+
+            var skill = dataLoader.Skills.Get(skillId);
+            if (skill != null && skill.GetCategory() == SkillCategory.Toggle)
+            {
+                AssignNextAvailableSlot(skillId);
+                GD.Print($"SkillComponent: Assigned slot to toggle skill '{skill.Name}' (migration)");
+            }
+        }
     }
 
     #endregion

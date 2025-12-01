@@ -83,3 +83,23 @@ entries:
             hitBonus: 0
             damageBonus: 3
             duration: 5
+
+  power_stance:
+    name: Power Stance
+    description: "Toggle. While active: +2 melee damage, -2 melee accuracy."
+    category: toggle
+    targeting: self
+    willpowerCost: 0
+    prerequisites:
+      str: 2
+    tags:
+      - melee
+      - stance
+      - toggle
+    toggle:
+      modifiers:
+        - stat: melee_damage
+          amount: 2
+        - stat: melee_accuracy
+          amount: -2
+      wpDrainPerTurn: 0

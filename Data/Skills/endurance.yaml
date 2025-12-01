@@ -104,3 +104,20 @@ entries:
               - type: apply_condition
                 conditionType: stun
                 duration: 1d4
+
+  shoulder_charge_mastery:
+    name: Shoulder Charge Mastery
+    description: Shoulder Charge knocks enemies back +2 tiles.
+    category: improvement
+    targeting: self
+    willpowerCost: 0
+    prerequisites:
+      end: 4
+    tags:
+      - melee
+      - mastery
+      - improvement
+    improves:
+      targetSkill: shoulder_charge
+      modifiers:
+        knockbackDistance: 2

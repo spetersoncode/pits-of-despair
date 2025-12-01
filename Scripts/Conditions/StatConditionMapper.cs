@@ -25,6 +25,8 @@ public static class StatConditionMapper
             "armor" => "armor_modifier",
             "evasion" => "evasion_modifier",
             "melee_damage" => "melee_damage_modifier",
+            "melee_accuracy" => "melee_accuracy_modifier",
+            "ranged_accuracy" => "ranged_accuracy_modifier",
 
             // Resource stats
             "max_hp" or "hp" => "max_hp_modifier",

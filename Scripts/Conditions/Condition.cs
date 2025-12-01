@@ -16,7 +16,9 @@ public enum StatType
     Will,
     Evasion,
     Regen,
-    MeleeDamage
+    MeleeDamage,
+    MeleeAccuracy,
+    RangedAccuracy
 }
 
 /// <summary>

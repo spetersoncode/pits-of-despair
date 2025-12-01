@@ -67,13 +67,21 @@ public class KnockbackStep : IEffectStep
                 dirX = 1;
         }
 
-        // Calculate final distance with scaling
+        // Calculate final distance with scaling and improvements
         int finalDistance = _distance;
         if (!string.IsNullOrEmpty(_scalingStat) && context.Caster != null)
         {
             int statValue = context.GetCasterStat(_scalingStat);
             finalDistance += (int)(statValue * _scalingMultiplier);
         }
+
+        // Add bonus from skill improvements
+        int bonusKnockback = context.GetBonusKnockbackDistance();
+        if (bonusKnockback > 0)
+        {
+            GD.Print($"KnockbackStep: Adding {bonusKnockback} bonus knockback from improvements");
+        }
+        finalDistance += bonusKnockback;
 
         if (finalDistance <= 0)
         {

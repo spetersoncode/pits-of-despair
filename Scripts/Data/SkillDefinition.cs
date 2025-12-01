@@ -104,6 +104,17 @@ public class SkillDefinition
     public int DelayCost { get; set; } = 10; // ActionDelay.Standard
 
     /// <summary>
+    /// Toggle skill configuration. Only used when Category is "toggle".
+    /// </summary>
+    public ToggleConfig? Toggle { get; set; } = null;
+
+    /// <summary>
+    /// Improvement skill configuration. Only used when Category is "improvement".
+    /// Specifies which skill to improve and what modifiers to apply.
+    /// </summary>
+    public ImprovementConfig? Improves { get; set; } = null;
+
+    /// <summary>
     /// Gets the skill category as an enum value.
     /// </summary>
     public SkillCategory GetCategory()
@@ -113,6 +124,8 @@ public class SkillDefinition
             "active" => SkillCategory.Active,
             "passive" => SkillCategory.Passive,
             "reactive" => SkillCategory.Reactive,
+            "toggle" => SkillCategory.Toggle,
+            "improvement" => SkillCategory.Improvement,
             _ => SkillCategory.Active
         };
     }
@@ -190,6 +203,8 @@ public class SkillDefinition
             SkillCategory.Active => "[ACT]",
             SkillCategory.Passive => "[PAS]",
             SkillCategory.Reactive => "[REA]",
+            SkillCategory.Toggle => "[TOG]",
+            SkillCategory.Improvement => "[IMP]",
             _ => "[???]"
         };
     }
@@ -374,4 +389,110 @@ public class SkillEffectDefinition
     /// Specifies projectile, impact, beam, or cone visuals to spawn.
     /// </summary>
     public VisualConfig? Visual { get; set; } = null;
+}
+
+/// <summary>
+/// Configuration for toggle skills.
+/// Defines stat modifiers and optional WP drain while active.
+/// </summary>
+public class ToggleConfig
+{
+    /// <summary>
+    /// Stat modifiers applied while the toggle is active.
+    /// Positive amounts are bonuses, negative amounts are penalties.
+    /// </summary>
+    public List<ToggleModifier> Modifiers { get; set; } = new();
+
+    /// <summary>
+    /// Willpower drained per turn while active. 0 = no drain.
+    /// Toggle auto-deactivates when WP reaches 0.
+    /// </summary>
+    public int WpDrainPerTurn { get; set; } = 0;
+}
+
+/// <summary>
+/// A single stat modifier for toggle skills.
+/// </summary>
+public class ToggleModifier
+{
+    /// <summary>
+    /// The stat to modify (e.g., "melee_damage", "accuracy", "armor").
+    /// Uses the same stat names as stat_bonus effects.
+    /// </summary>
+    public string Stat { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Amount to modify the stat by. Positive for buffs, negative for penalties.
+    /// </summary>
+    public int Amount { get; set; } = 0;
+}
+
+/// <summary>
+/// Configuration for improvement skills.
+/// Specifies which skill to improve and what property modifiers to apply.
+/// </summary>
+public class ImprovementConfig
+{
+    /// <summary>
+    /// ID of the skill this improvement enhances.
+    /// The target skill must be learned before this improvement can be learned.
+    /// </summary>
+    public string TargetSkill { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Property modifiers to apply to the target skill.
+    /// </summary>
+    public SkillModifiers Modifiers { get; set; } = new();
+}
+
+/// <summary>
+/// Property modifiers for improvement skills.
+/// All values are additive (e.g., Range: 2 adds 2 to the skill's range).
+/// </summary>
+public class SkillModifiers
+{
+    /// <summary>
+    /// Bonus range added to the skill.
+    /// </summary>
+    public int Range { get; set; } = 0;
+
+    /// <summary>
+    /// Bonus damage added to the skill's damage effects.
+    /// </summary>
+    public int Damage { get; set; } = 0;
+
+    /// <summary>
+    /// Bonus radius added to area effects.
+    /// </summary>
+    public int Radius { get; set; } = 0;
+
+    /// <summary>
+    /// Willpower cost reduction (negative value reduces cost).
+    /// </summary>
+    public int WillpowerCost { get; set; } = 0;
+
+    /// <summary>
+    /// Bonus knockback distance added to knockback effects.
+    /// </summary>
+    public int KnockbackDistance { get; set; } = 0;
+
+    /// <summary>
+    /// Returns true if any modifiers are set.
+    /// </summary>
+    public bool HasModifiers()
+    {
+        return Range != 0 || Damage != 0 || Radius != 0 || WillpowerCost != 0 || KnockbackDistance != 0;
+    }
+
+    /// <summary>
+    /// Combines this modifier with another, adding all values.
+    /// </summary>
+    public void Add(SkillModifiers other)
+    {
+        Range += other.Range;
+        Damage += other.Damage;
+        Radius += other.Radius;
+        WillpowerCost += other.WillpowerCost;
+        KnockbackDistance += other.KnockbackDistance;
+    }
 }

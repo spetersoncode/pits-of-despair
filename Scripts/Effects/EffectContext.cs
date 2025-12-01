@@ -3,6 +3,7 @@ using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Data;
 using PitsOfDespair.Entities;
+using PitsOfDespair.Skills;
 
 namespace PitsOfDespair.Effects;
 
@@ -163,5 +164,18 @@ public class EffectContext
         if (Skill != null)
             return Skill.Name;
         return "effect";
+    }
+
+    /// <summary>
+    /// Gets bonus knockback distance from skill improvements.
+    /// Returns 0 if not a skill effect or no improvements.
+    /// </summary>
+    public int GetBonusKnockbackDistance()
+    {
+        if (Skill == null || Caster == null)
+            return 0;
+
+        var improvementProcessor = Caster.GetNodeOrNull<ImprovementSkillProcessor>("ImprovementSkillProcessor");
+        return improvementProcessor?.GetBonusKnockbackDistance(Skill.Id) ?? 0;
     }
 }
