@@ -28,8 +28,9 @@ public partial class NearbyEntitiesTracker : Node
 
 	/// <summary>
 	/// Maximum number of nearby entities to track.
+	/// Set high to allow display layer to handle grouping and filtering.
 	/// </summary>
-	private const int MAX_NEARBY_ENTITIES = 12;
+	private const int MAX_NEARBY_ENTITIES = 100;
 
 	#endregion
 

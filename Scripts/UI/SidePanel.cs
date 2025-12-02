@@ -413,6 +413,11 @@ public partial class SidePanel : PanelContainer
         _statsLabel.Text = sb.ToString();
     }
 
+    /// <summary>
+    /// Maximum number of entity lines to display in the nearby panel.
+    /// </summary>
+    private const int MaxNearbyDisplayLines = 12;
+
     private void UpdateVisibleEntitiesDisplay()
     {
         if (_visibleEntitiesLabel == null || _nearbyEntitiesTracker == null)
@@ -430,35 +435,144 @@ public partial class SidePanel : PanelContainer
         }
         else
         {
-            foreach (var (entity, distance) in nearbyEntities)
+            // Group entities by display key (glyph + name + color) for consolidation
+            var groupedEntities = GroupEntitiesByType(nearbyEntities);
+
+            int linesDisplayed = 0;
+            foreach (var group in groupedEntities)
             {
-                // Convert entity color to hex for BBCode
-                string colorHex = $"#{(int)(entity.GlyphColor.R * 255):X2}{(int)(entity.GlyphColor.G * 255):X2}{(int)(entity.GlyphColor.B * 255):X2}";
+                if (linesDisplayed >= MaxNearbyDisplayLines)
+                    break;
 
-                // Use item's display name with quantity for items, otherwise use entity DisplayName
-                string displayName = entity.ItemData != null
-                    ? entity.ItemData.Template.GetDisplayName(entity.ItemData.Quantity)
-                    : entity.DisplayName;
-
-                // Check for AI component to show intent for creatures
-                var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
-                string intentSuffix = "";
-                if (aiComponent != null)
-                {
-                    var intent = aiComponent.GetIntent();
-                    string intentName = IntentHelper.GetShortName(intent);
-                    if (!string.IsNullOrEmpty(intentName))
-                    {
-                        string intentColorHex = Palette.ToHex(IntentHelper.GetColor(intent));
-                        intentSuffix = $" [color={intentColorHex}]({intentName})[/color]";
-                    }
-                }
-
-                sb.AppendLine($"[color={colorHex}]{entity.Glyph} {displayName}[/color]{intentSuffix}");
+                sb.AppendLine(FormatEntityGroup(group));
+                linesDisplayed++;
             }
         }
 
         _visibleEntitiesLabel.Text = sb.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// Groups entities by their display type (creatures by name, items by template).
+    /// Returns groups sorted by closest entity in each group.
+    /// </summary>
+    private System.Collections.Generic.List<EntityDisplayGroup> GroupEntitiesByType(
+        System.Collections.Generic.List<(Entities.BaseEntity entity, int distance)> entities)
+    {
+        var groups = new System.Collections.Generic.Dictionary<string, EntityDisplayGroup>();
+
+        foreach (var (entity, distance) in entities)
+        {
+            // Create a grouping key based on entity type
+            string groupKey = GetEntityGroupKey(entity);
+
+            if (!groups.TryGetValue(groupKey, out var group))
+            {
+                group = new EntityDisplayGroup
+                {
+                    Glyph = entity.Glyph,
+                    GlyphColor = entity.GlyphColor,
+                    DisplayName = GetEntityDisplayName(entity),
+                    MinDistance = distance,
+                    Count = 0,
+                    Entities = new System.Collections.Generic.List<Entities.BaseEntity>()
+                };
+                groups[groupKey] = group;
+            }
+
+            group.Count++;
+            group.Entities.Add(entity);
+            if (distance < group.MinDistance)
+                group.MinDistance = distance;
+        }
+
+        // Sort groups by minimum distance (closest first)
+        var sortedGroups = groups.Values.ToList();
+        sortedGroups.Sort((a, b) => a.MinDistance.CompareTo(b.MinDistance));
+        return sortedGroups;
+    }
+
+    /// <summary>
+    /// Gets a grouping key for an entity. Creatures group by name, items by template.
+    /// </summary>
+    private string GetEntityGroupKey(Entities.BaseEntity entity)
+    {
+        if (entity.ItemData != null)
+        {
+            // Items: group by template DataFileId and glyph (different item types stay separate)
+            return $"item:{entity.ItemData.Template.DataFileId}:{entity.Glyph}";
+        }
+        else
+        {
+            // Creatures/other: group by display name and glyph
+            return $"creature:{entity.DisplayName}:{entity.Glyph}";
+        }
+    }
+
+    /// <summary>
+    /// Gets the base display name for an entity (without quantity for items).
+    /// </summary>
+    private string GetEntityDisplayName(Entities.BaseEntity entity)
+    {
+        if (entity.ItemData != null)
+        {
+            // For items, use singular name (quantity handled in formatting)
+            return entity.ItemData.Template.GetDisplayName(1);
+        }
+        return entity.DisplayName;
+    }
+
+    /// <summary>
+    /// Formats an entity group for display (e.g., "3 rats" or "r rat (hostile)").
+    /// </summary>
+    private string FormatEntityGroup(EntityDisplayGroup group)
+    {
+        string colorHex = ColorToHex(group.GlyphColor);
+
+        // Build the name with count if multiple
+        string displayText;
+        if (group.Count > 1)
+        {
+            // Multiple entities: "3 rats" - pluralize the name
+            displayText = Pluralizer.FormatCount(group.DisplayName, group.Count);
+        }
+        else
+        {
+            displayText = group.DisplayName;
+        }
+
+        // For single creatures, show intent; for groups, skip (too complex)
+        string intentSuffix = "";
+        if (group.Count == 1 && group.Entities.Count > 0)
+        {
+            var entity = group.Entities[0];
+            var aiComponent = entity.GetNodeOrNull<AIComponent>("AIComponent");
+            if (aiComponent != null)
+            {
+                var intent = aiComponent.GetIntent();
+                string intentName = IntentHelper.GetShortName(intent);
+                if (!string.IsNullOrEmpty(intentName))
+                {
+                    string intentColorHex = Palette.ToHex(IntentHelper.GetColor(intent));
+                    intentSuffix = $" [color={intentColorHex}]({intentName})[/color]";
+                }
+            }
+        }
+
+        return $"[color={colorHex}]{group.Glyph} {displayText}[/color]{intentSuffix}";
+    }
+
+    /// <summary>
+    /// Helper class for grouping entities by type for display.
+    /// </summary>
+    private class EntityDisplayGroup
+    {
+        public string Glyph;
+        public Color GlyphColor;
+        public string DisplayName;
+        public int MinDistance;
+        public int Count;
+        public System.Collections.Generic.List<Entities.BaseEntity> Entities;
     }
 
     public override void _ExitTree()
