@@ -1,6 +1,27 @@
 type: agility
 
 entries:
+  stab:
+    name: Stab
+    flavor: Find the gap. Drive it home.
+    description: "Short blade hits deal double damage to distracted enemies."
+    category: reactive
+    targeting: self
+    willpowerCost: 0
+    triggerCost: 0
+    trigger: on_hit
+    autoTrigger: true
+    requireWeaponCategory: Short Blades
+    requireTargetDistracted: true
+    prerequisites:
+      agi: 2
+    tags:
+      - melee
+      - damage
+      - passive
+    effects:
+      - type: extra_weapon_attack
+
   quick_step:
     name: Quick Step
     flavor: Swift footwork carries you past danger.

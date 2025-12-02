@@ -70,6 +70,12 @@ public class StepDefinition
     public string? AttackStat { get; set; }
 
     /// <summary>
+    /// Multiple attack stats to average for hybrid skills (e.g., ["agi", "end"]).
+    /// Takes precedence over AttackStat if specified.
+    /// </summary>
+    public List<string>? AttackStats { get; set; }
+
+    /// <summary>
     /// Modifier to the caster's roll.
     /// </summary>
     public int SaveModifier { get; set; } = 0;

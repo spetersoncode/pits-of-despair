@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PitsOfDespair.Components;
 using PitsOfDespair.Core;
 using PitsOfDespair.Effects.Composition;
@@ -8,11 +9,13 @@ namespace PitsOfDespair.Effects.Steps;
 /// <summary>
 /// Step that performs an opposed saving throw.
 /// Sets SaveSucceeded/SaveFailed in state and optionally stops pipeline.
+/// Supports both single AttackStat and multiple AttackStats (averaged for hybrid skills).
 /// </summary>
 public class SaveCheckStep : IEffectStep
 {
     private readonly string? _saveStat;
     private readonly string? _attackStat;
+    private readonly List<string>? _attackStats;
     private readonly int _saveModifier;
     private readonly bool _stopOnSuccess;
     private readonly bool _halfOnSuccess;
@@ -21,6 +24,7 @@ public class SaveCheckStep : IEffectStep
     {
         _saveStat = definition.SaveStat;
         _attackStat = definition.AttackStat;
+        _attackStats = definition.AttackStats;
         _saveModifier = definition.SaveModifier;
         _stopOnSuccess = definition.StopOnSuccess;
         _halfOnSuccess = definition.HalfOnSuccess;
@@ -36,7 +40,10 @@ public class SaveCheckStep : IEffectStep
         }
 
         // Perform the save check silently (MessageCollector handles messaging)
-        bool resisted = SavingThrow.TryResistSilent(context, _saveStat, _attackStat, _saveModifier);
+        // AttackStats (averaged) takes precedence over single AttackStat
+        bool resisted = _attackStats is { Count: > 0 }
+            ? SavingThrow.TryResistSilent(context, _saveStat, _attackStats, _saveModifier)
+            : SavingThrow.TryResistSilent(context, _saveStat, _attackStat, _saveModifier);
 
         if (resisted)
         {

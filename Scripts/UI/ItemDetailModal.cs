@@ -231,8 +231,8 @@ public partial class ItemDetailModal : CenterContainer
 		}
 
 		string damageType = attack.DamageType.ToString().ToLower();
-		string strNote = attack.Type == AttackType.Melee ? " (+STR)" : "";
 		int maxStrBonus = attack.GetMaxStrengthBonus();
+		string strNote = attack.Type == AttackType.Melee ? $" (+STR, {maxStrBonus} max)" : "";
 
 		var (speedText, speedColor) = SpeedStatus.GetWeaponSpeedDisplay(attack.Delay);
 
@@ -253,10 +253,6 @@ public partial class ItemDetailModal : CenterContainer
 		}
 
 		sb.Append($"\n[color={disabled}]Damage:[/color] [color={defaultColor}]{attack.DiceNotation} {damageType}{strNote}[/color]");
-		if (attack.Type == AttackType.Melee)
-		{
-			sb.Append($"\n[color={disabled}]Max STR Bonus:[/color] [color={defaultColor}]+{maxStrBonus}[/color]");
-		}
 		sb.Append($"\n[color={disabled}]Speed:[/color] [color={Palette.ToHex(speedColor)}]{speedText}[/color]");
 		sb.Append($"\n[color={disabled}]Base Damage/Turn:[/color] [color={defaultColor}]{baseDpt:F1}[/color]");
 		sb.Append($"\n[color={disabled}]Equipped Damage/Turn:[/color] [color={defaultColor}]{equippedDpt:F1}[/color]");

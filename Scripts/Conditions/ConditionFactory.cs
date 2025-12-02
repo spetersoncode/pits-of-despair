@@ -51,6 +51,7 @@ public static class ConditionFactory
             // Debuffs / Status effects
             "confusion" => new ConfusionCondition(duration),
             "daze" => new DazeCondition(duration),
+            "dazzled" => new DazzledCondition(duration),
             "fear" => new FearCondition(duration),
             "grappled" => new GrappledCondition(duration),
             "sleep" => new SleepCondition(duration),
@@ -104,6 +105,7 @@ public static class ConditionFactory
             "regen_modifier" => true,
             "confusion" => true,
             "daze" => true,
+            "dazzled" => true,
             "fear" => true,
             "grappled" => true,
             "sleep" => true,

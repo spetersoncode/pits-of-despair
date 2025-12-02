@@ -9,7 +9,6 @@ using PitsOfDespair.Data;
 using PitsOfDespair.Effects;
 using PitsOfDespair.Entities;
 using PitsOfDespair.Helpers;
-
 using PitsOfDespair.Systems;
 
 namespace PitsOfDespair.Skills;
@@ -98,7 +97,7 @@ public partial class ReactiveSkillProcessor : Node
         if (_combatSystem != null)
         {
             _combatSystem.Connect(CombatSystem.SignalName.AttackHit,
-                Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
+                Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit));
             _combatSystem.Connect(CombatSystem.SignalName.AttackMissed,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         }
@@ -114,7 +113,7 @@ public partial class ReactiveSkillProcessor : Node
         if (_combatSystem != null && IsInstanceValid(_combatSystem))
         {
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackHit,
-                Callable.From<BaseEntity, BaseEntity, int, string, AttackType>(OnAttackHit));
+                Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         }
@@ -135,7 +134,7 @@ public partial class ReactiveSkillProcessor : Node
     /// Called when an attack hits and deals damage.
     /// Checks for on_kill and on_hit triggers.
     /// </summary>
-    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType)
+    private void OnAttackHit(BaseEntity attacker, BaseEntity target, int damage, string attackName, AttackType attackType, DamageType damageType)
     {
         if (_entity == null || _dataLoader == null) return;
 
@@ -145,14 +144,14 @@ public partial class ReactiveSkillProcessor : Node
             var targetHealth = target.GetNodeOrNull<HealthComponent>("HealthComponent");
             if (targetHealth != null && !targetHealth.IsAlive())
             {
-                TriggerReactiveSkills("on_kill", target);
+                TriggerReactiveSkills("on_kill", target, attackType: attackType);
             }
         }
 
         // Check for on_hit: player hit an enemy
         if (attacker == _entity && target != _entity)
         {
-            TriggerReactiveSkills("on_hit", target);
+            TriggerReactiveSkills("on_hit", target, attackType: attackType);
         }
     }
 
@@ -197,7 +196,7 @@ public partial class ReactiveSkillProcessor : Node
     /// <summary>
     /// Finds and triggers all learned reactive skills with the given trigger type.
     /// </summary>
-    private void TriggerReactiveSkills(string triggerType, BaseEntity? triggerSource, int damageAmount = 0)
+    private void TriggerReactiveSkills(string triggerType, BaseEntity? triggerSource, int damageAmount = 0, AttackType? attackType = null)
     {
         if (_skillComponent == null || _dataLoader == null) return;
 
@@ -209,9 +208,45 @@ public partial class ReactiveSkillProcessor : Node
         {
             if (skill.Trigger?.ToLower() == triggerType)
             {
+                // Check weapon category requirement
+                if (!string.IsNullOrEmpty(skill.RequireWeaponCategory))
+                {
+                    if (!CheckWeaponCategory(skill.RequireWeaponCategory, attackType))
+                        continue;
+                }
+
+                // Check distracted requirement
+                if (skill.RequireTargetDistracted)
+                {
+                    if (!ConditionHelper.IsDistracted(triggerSource))
+                        continue;
+                }
+
                 TryTriggerSkill(skill, triggerSource, damageAmount);
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if the equipped weapon matches the required category.
+    /// </summary>
+    private bool CheckWeaponCategory(string requiredCategory, AttackType? attackType)
+    {
+        if (_entity == null) return false;
+
+        var equipComponent = _entity.GetNodeOrNull<EquipComponent>("EquipComponent");
+        if (equipComponent == null) return false;
+
+        // Determine which slot to check based on attack type
+        var slot = attackType == AttackType.Ranged
+            ? EquipmentSlot.RangedWeapon
+            : EquipmentSlot.MeleeWeapon;
+
+        var equippedItem = equipComponent.GetEquippedItem(slot);
+        if (equippedItem?.Template?.Category == null)
+            return false;
+
+        return equippedItem.Template.Category.Equals(requiredCategory, System.StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -307,6 +342,14 @@ public partial class ReactiveSkillProcessor : Node
                 if (triggerSource != null)
                 {
                     PerformCounterAttack(triggerSource);
+                }
+                break;
+
+            case "extra_weapon_attack":
+                // Deal additional weapon damage to trigger source (e.g., Stab)
+                if (triggerSource != null)
+                {
+                    PerformExtraWeaponAttack(triggerSource, skill.Name);
                 }
                 break;
 
@@ -455,6 +498,76 @@ public partial class ReactiveSkillProcessor : Node
         // Request counter-attack
         attackComponent.RequestAttack(target, 0);
         GD.Print($"ReactiveSkillProcessor: Counter-attack against {target.DisplayName}");
+    }
+
+    /// <summary>
+    /// Performs extra weapon damage against an enemy (no attack roll, already hit).
+    /// Used by Stab to deal bonus damage against distracted enemies.
+    /// </summary>
+    private void PerformExtraWeaponAttack(BaseEntity target, string skillName)
+    {
+        if (_entity == null) return;
+
+        var attackComponent = _entity.GetNodeOrNull<AttackComponent>("AttackComponent");
+        if (attackComponent == null) return;
+
+        // Check if target is still valid
+        var targetHealth = target.GetNodeOrNull<HealthComponent>("HealthComponent");
+        if (targetHealth == null || !targetHealth.IsAlive())
+            return;
+
+        // Get the primary melee attack for damage calculation
+        var attackData = attackComponent.GetAttack(0);
+        if (attackData == null || attackData.Type != AttackType.Melee)
+            return;
+
+        // Get stats for damage calculation
+        var attackerStats = _entity.GetNodeOrNull<StatsComponent>("StatsComponent");
+        var targetStats = target.GetNodeOrNull<StatsComponent>("StatsComponent");
+
+        // Calculate damage (weapon dice + STR bonus - armor)
+        int baseDamage = DiceRoller.Roll(attackData.DiceNotation);
+        int strBonus = attackerStats?.GetDamageBonus(isMelee: true) ?? 0;
+        // Cap STR bonus at weapon's max base roll
+        int maxStrBonus = attackData.GetMaxStrengthBonus();
+        strBonus = Mathf.Min(strBonus, maxStrBonus);
+        int armor = targetStats?.TotalArmor ?? 0;
+
+        int finalDamage = Mathf.Max(0, baseDamage + strBonus - armor);
+
+        if (finalDamage > 0)
+        {
+            // Calculate actual damage after resistances
+            int actualDamage = targetHealth.CalculateDamage(finalDamage, attackData.DamageType);
+
+            // Emit flavorful message based on damage type
+            string[] flavors = attackData.DamageType switch
+            {
+                DamageType.Piercing => new[] {
+                    "finding the gap",
+                    "driving it home",
+                    "slipping between the ribs"
+                },
+                DamageType.Slashing => new[] {
+                    "opening a deep gash",
+                    "carving through flesh",
+                    "leaving a bloody trail"
+                },
+                _ => new[] {
+                    "striking true",
+                    "exploiting the opening"
+                }
+            };
+            string flavor = flavors[GD.RandRange(0, flavors.Length - 1)];
+            _combatSystem?.EmitActionMessage(
+                _entity,
+                $"You stab the {target.DisplayName}, {flavor}!",
+                Palette.ToHex(Palette.CombatDamage)
+            );
+
+            // Apply the damage
+            targetHealth.TakeDamage(finalDamage, attackData.DamageType, _entity);
+        }
     }
 
     #endregion

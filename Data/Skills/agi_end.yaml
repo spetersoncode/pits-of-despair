@@ -1,0 +1,30 @@
+type: agi_end
+
+entries:
+  pocket_sand:
+    name: Pocket Sand
+    flavor: A handful of grit to the eyes works wonders.
+    description: "Cone: END save or dazzled 2d3 turns. -2 accuracy, -2 evasion."
+    category: active
+    targeting: cone
+    range: 3
+    radius: 2
+    willpowerCost: 5
+    tier: 2
+    prerequisites:
+      agi: 2
+      end: 2
+    tags:
+      - crowd_control
+      - cone
+      - debuff
+    effects:
+      - steps:
+          - type: save_check
+            saveStat: end
+            attackStats: [agi, end]
+            stopOnSuccess: true
+          - type: apply_condition
+            conditionType: dazzled
+            duration: "2d3"
+            requireSaveFailed: true

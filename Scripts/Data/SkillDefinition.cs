@@ -80,6 +80,18 @@ public class SkillDefinition
     public bool AutoTrigger { get; set; } = true;
 
     /// <summary>
+    /// Required weapon category for reactive skills (e.g., "Short Blades").
+    /// If set, skill only triggers when attacking with matching weapon category.
+    /// </summary>
+    public string? RequireWeaponCategory { get; set; } = null;
+
+    /// <summary>
+    /// Whether reactive skill requires target to be "distracted" (dazed, stunned, etc.).
+    /// Used by assassin skills like Stab for bonus damage.
+    /// </summary>
+    public bool RequireTargetDistracted { get; set; } = false;
+
+    /// <summary>
     /// Effect definitions for this skill (processed in later phases).
     /// </summary>
     public List<SkillEffectDefinition> Effects { get; set; } = new();
