@@ -1,0 +1,29 @@
+type: end_wil
+
+entries:
+  vampiric_touch:
+    name: Vampiric Touch
+    flavor: Draw the life from your enemy to mend your own wounds.
+    description: "Melee: 1d6+WIL necrotic damage. Heal for damage dealt."
+    category: active
+    targeting: adjacent
+    willpowerCost: 4
+    prerequisites:
+      end: 2
+      wil: 2
+    tags:
+      - melee
+      - spell
+      - damage
+      - heal
+      - necrotic
+    effects:
+      - steps:
+          - type: attack_roll
+            attackStat: wil
+          - type: damage
+            dice: 1d6
+            damageType: Necrotic
+            scalingStat: wil
+            scalingMultiplier: 1
+            lifestealPercent: 100

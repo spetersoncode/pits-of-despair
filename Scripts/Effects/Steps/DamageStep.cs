@@ -20,6 +20,7 @@ public class DamageStep : IEffectStep
     private readonly bool _halfOnSave;
     private readonly string? _scalingStat;
     private readonly float _scalingMultiplier;
+    private readonly int _lifestealPercent;
 
     public DamageStep(StepDefinition definition)
     {
@@ -29,6 +30,7 @@ public class DamageStep : IEffectStep
         _halfOnSave = definition.HalfOnSave;
         _scalingStat = definition.ScalingStat;
         _scalingMultiplier = definition.ScalingMultiplier;
+        _lifestealPercent = definition.LifestealPercent;
 
         // Parse damage type
         if (!string.IsNullOrEmpty(definition.DamageType) &&
@@ -98,6 +100,21 @@ public class DamageStep : IEffectStep
         {
             state.Success = true;
             messages.AddDamage(target, actualDamage, _damageType);
+
+            // Apply lifesteal if configured
+            if (_lifestealPercent > 0 && context.Caster != null)
+            {
+                var casterHealth = context.Caster.GetNodeOrNull<HealthComponent>("HealthComponent");
+                if (casterHealth != null)
+                {
+                    int healAmount = (actualDamage * _lifestealPercent) / 100;
+                    if (healAmount > 0)
+                    {
+                        casterHealth.Heal(healAmount);
+                        messages.AddHeal(context.Caster, healAmount);
+                    }
+                }
+            }
         }
     }
 }

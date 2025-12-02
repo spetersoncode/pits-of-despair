@@ -55,6 +55,12 @@ public class StepDefinition
     /// </summary>
     public bool HalfOnSave { get; set; } = false;
 
+    /// <summary>
+    /// Percentage of damage dealt to heal the caster (0-100).
+    /// E.g., 100 = heal for 100% of damage dealt (vampiric touch).
+    /// </summary>
+    public int LifestealPercent { get; set; } = 0;
+
     #endregion
 
     #region Save/Attack Properties
