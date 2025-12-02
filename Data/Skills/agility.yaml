@@ -103,21 +103,3 @@ entries:
       - type: ranged_attack
         count: 2
 
-  riposte:
-    name: Riposte
-    flavor: Turn your enemy's failure into your opportunity.
-    description: "On enemy miss: Counter-attack."
-    category: reactive
-    targeting: self
-    willpowerCost: 0
-    triggerCost: 0
-    trigger: on_enemy_miss
-    autoTrigger: true
-    prerequisites:
-      agi: 3
-    tags:
-      - melee
-      - defense
-      - combat
-    effects:
-      - type: counter_attack

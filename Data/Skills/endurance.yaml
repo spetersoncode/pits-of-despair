@@ -1,83 +1,23 @@
 type: endurance
 
 entries:
-  thick_skin:
-    name: Thick Skin
-    flavor: Scars upon scars have made you harder to hurt.
-    description: "+1 armor."
-    category: passive
+  second_wind:
+    name: Second Wind
+    flavor: Dig deep and find the strength to carry on.
+    description: "Heal END x 3 HP. Once per floor."
+    category: active
     targeting: self
-    willpowerCost: 0
+    willpowerCost: 4
     prerequisites:
       end: 1
     tags:
-      - defense
-    effects:
-      - type: armor_bonus
-        amount: 1
-
-  recover:
-    name: Recover
-    flavor: Draw upon your reserves to mend your wounds.
-    description: "Heal END x 3 HP."
-    category: active
-    targeting: self
-    willpowerCost: 5
-    prerequisites:
-      end: 2
-    tags:
       - heal
+      - once_per_floor
     effects:
       - steps:
           - type: heal
             scalingStat: end
             scalingMultiplier: 3
-
-  die_hard:
-    name: Die Hard
-    flavor: Sheer stubbornness keeps you standing when others would fall.
-    description: "Once per floor: Survive lethal damage at 1 HP."
-    category: reactive
-    targeting: self
-    willpowerCost: 0
-    triggerCost: 0
-    trigger: on_lethal
-    autoTrigger: true
-    prerequisites:
-      end: 4
-    tags:
-      - survival
-      - defense
-      - once_per_floor
-    effects:
-      - type: survive_lethal
-
-  grapple:
-    name: Grapple
-    flavor: Get your hands on them and don't let go.
-    description: "END vs END: Daze 1 turn, immobilize 3 turns. Moving breaks grapple."
-    category: active
-    targeting: adjacent
-    willpowerCost: 3
-    prerequisites:
-      end: 2
-    tags:
-      - melee
-      - crowd_control
-    effects:
-      - steps:
-          - type: save_check
-            saveStat: end
-            attackStat: end
-            stopOnSuccess: true
-          - type: apply_condition
-            conditionType: daze
-            duration: "1"
-            requireSaveFailed: true
-          - type: apply_condition
-            conditionType: grappled
-            duration: "3"
-            requireSaveFailed: true
 
   shoulder_charge:
     name: Shoulder Charge
@@ -110,20 +50,44 @@ entries:
                 conditionType: stun
                 duration: 1d4
 
-  shoulder_charge_mastery:
-    name: Shoulder Charge Mastery
-    flavor: Hit them so hard they forget where they started.
-    description: "Shoulder Charge knockback +2 tiles."
-    category: improvement
+  grapple:
+    name: Grapple
+    flavor: Get your hands on them and don't let go.
+    description: "END save or daze 1 turn, grapple 3 turns. Moving breaks grapple."
+    category: active
+    targeting: adjacent
+    willpowerCost: 4
+    prerequisites:
+      end: 3
+    tags:
+      - melee
+      - crowd_control
+    effects:
+      - steps:
+          - type: save_check
+            saveStat: end
+            attackStat: end
+            stopOnSuccess: true
+          - type: apply_condition
+            conditionType: daze
+            duration: "1"
+            requireSaveFailed: true
+          - type: apply_condition
+            conditionType: grappled
+            duration: "3"
+            requireSaveFailed: true
+
+  thick_skin:
+    name: Thick Skin
+    flavor: Scars upon scars have made you harder to hurt.
+    description: "+1 armor."
+    category: passive
     targeting: self
     willpowerCost: 0
     prerequisites:
       end: 4
     tags:
-      - melee
-      - mastery
-      - improvement
-    improves:
-      targetSkill: shoulder_charge
-      modifiers:
-        knockbackDistance: 2
+      - defense
+    effects:
+      - type: armor_bonus
+        amount: 1

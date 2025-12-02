@@ -1,0 +1,23 @@
+type: str_agi
+
+entries:
+  riposte:
+    name: Riposte
+    flavor: Turn your enemy's failure into your opportunity.
+    description: "On enemy miss: Counter-attack. Once per round."
+    category: reactive
+    targeting: self
+    willpowerCost: 0
+    triggerCost: 0
+    trigger: on_enemy_miss
+    autoTrigger: true
+    prerequisites:
+      str: 2
+      agi: 2
+    tags:
+      - melee
+      - defense
+      - combat
+      - once_per_turn
+    effects:
+      - type: counter_attack

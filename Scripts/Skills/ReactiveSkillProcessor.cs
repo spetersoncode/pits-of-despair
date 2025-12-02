@@ -39,6 +39,14 @@ public partial class ReactiveSkillProcessor : Node
     /// </summary>
     private readonly HashSet<string> _usedThisFloor = new();
 
+    /// <summary>
+    /// Flags for one-time-per-turn reactive skills (e.g., Riposte).
+    /// Reset at the start of each turn.
+    /// </summary>
+    private readonly HashSet<string> _usedThisTurn = new();
+
+    private TurnManager? _turnManager;
+
     public override void _Ready()
     {
         _entity = GetParent<BaseEntity>();
@@ -78,17 +86,18 @@ public partial class ReactiveSkillProcessor : Node
     }
 
     /// <summary>
-    /// Connects to CombatSystem after the scene tree is ready.
+    /// Connects to CombatSystem and TurnManager after the scene tree is ready.
     /// </summary>
     private void ConnectToCombatSystem()
     {
-        // Find CombatSystem by traversing up to GameLevel
+        // Find CombatSystem and TurnManager by traversing up to GameLevel
         Node? current = this;
         while (current != null)
         {
             if (current.Name == "GameLevel")
             {
                 _combatSystem = current.GetNodeOrNull<CombatSystem>("CombatSystem");
+                _turnManager = current.GetNodeOrNull<TurnManager>("TurnManager");
                 break;
             }
             current = current.GetParent();
@@ -101,6 +110,23 @@ public partial class ReactiveSkillProcessor : Node
             _combatSystem.Connect(CombatSystem.SignalName.AttackMissed,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
         }
+
+        // Connect to turn signals to reset per-turn cooldowns
+        if (_turnManager != null && _entity != null)
+        {
+            if (_entity is Player)
+                _turnManager.Connect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnTurnStarted));
+            else
+                _turnManager.Connect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnTurnStarted));
+        }
+    }
+
+    /// <summary>
+    /// Resets per-turn cooldowns at the start of each turn.
+    /// </summary>
+    private void OnTurnStarted()
+    {
+        _usedThisTurn.Clear();
     }
 
     public override void _ExitTree()
@@ -116,6 +142,14 @@ public partial class ReactiveSkillProcessor : Node
                 Callable.From<BaseEntity, BaseEntity, int, string, AttackType, DamageType>(OnAttackHit));
             _combatSystem.Disconnect(CombatSystem.SignalName.AttackMissed,
                 Callable.From<BaseEntity, BaseEntity, string>(OnAttackMissed));
+        }
+
+        if (_turnManager != null && IsInstanceValid(_turnManager) && _entity != null)
+        {
+            if (_entity is Player)
+                _turnManager.Disconnect(TurnManager.SignalName.PlayerTurnStarted, Callable.From(OnTurnStarted));
+            else
+                _turnManager.Disconnect(TurnManager.SignalName.CreatureTurnsStarted, Callable.From(OnTurnStarted));
         }
     }
 
@@ -254,19 +288,19 @@ public partial class ReactiveSkillProcessor : Node
     /// </summary>
     private void TryTriggerSkill(SkillDefinition skill, BaseEntity? triggerSource, int damageAmount)
     {
-        // Check cooldown
+        // Check floor cooldown
         if (_usedThisFloor.Contains(skill.Id))
-        {
             return;
-        }
+
+        // Check per-turn cooldown (e.g., Riposte)
+        if (skill.Tags.Contains("once_per_turn") && _usedThisTurn.Contains(skill.Id))
+            return;
 
         // Check WP cost
         if (skill.TriggerCost > 0 && _willpowerComponent != null)
         {
             if (_willpowerComponent.CurrentWillpower < skill.TriggerCost)
-            {
                 return;
-            }
         }
 
         // Auto-trigger or would need player confirmation
@@ -298,11 +332,11 @@ public partial class ReactiveSkillProcessor : Node
             }
         }
 
-        // Mark as used if it has a floor cooldown (check for tag or specific skills)
+        // Mark as used for cooldown tracking
         if (skill.Tags.Contains("once_per_floor"))
-        {
             _usedThisFloor.Add(skill.Id);
-        }
+        if (skill.Tags.Contains("once_per_turn"))
+            _usedThisTurn.Add(skill.Id);
 
         GD.Print($"ReactiveSkillProcessor: Triggered '{skill.Name}'");
 

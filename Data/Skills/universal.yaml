@@ -1,23 +1,6 @@
 type: universal
 
 entries:
-  second_wind:
-    name: Second Wind
-    flavor: Dig deep and find the strength to carry on.
-    description: "Heal 20% max HP. Once per floor."
-    category: active
-    targeting: self
-    willpowerCost: 5
-    tags:
-      - heal
-      - utility
-      - once_per_floor
-    effects:
-      - steps:
-          - type: heal
-            amount: 20
-            percent: true
-
   keen_hearing:
     name: Keen Hearing
     flavor: Every footstep, every breath - nothing escapes your notice.
